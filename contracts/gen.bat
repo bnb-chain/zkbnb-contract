@@ -1,0 +1,2 @@
+@echo off
+solcjs --abi --bin --optimize --base-path . ./ZecreyVerifier.sol && solcjs --abi --bin --optimize --base-path . ./Governance.sol && solcjs --abi --bin --optimize --base-path . ./AssetGovernance.sol && solcjs --abi --bin --optimize --base-path . ./Zecrey.sol && solcjs --abi --bin --optimize --base-path . ./MyERC20.sol
