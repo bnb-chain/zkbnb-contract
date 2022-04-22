@@ -2,7 +2,7 @@
 
 pragma solidity ^0.7.6;
 
-library StringUtils {
+library Names {
 
     /**
      * @dev Returns the length of a given string, the length of each byte is self defined
