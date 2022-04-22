@@ -141,6 +141,28 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         }
     }
 
+    /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
+    /// @dev Exodus mode must be entered in case of current ethereum block number is higher than the oldest
+    /// @dev of existed priority requests expiration block number.
+    /// @return bool flag that is true if the Exodus mode must be entered.
+    function activateDesertMode() public returns (bool) {
+        // #if EASY_EXODUS
+        bool trigger = true;
+        // #else
+        bool trigger = block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
+        priorityRequests[firstPriorityRequestId].expirationBlock != 0;
+        // #endif
+        if (trigger) {
+            if (!desertMode) {
+                desertMode = true;
+                emit DesertMode();
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /// @notice Zecrey contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
     /// @param initializationParameters Encoded representation of initialization parameters:
     /// @dev _governanceAddress The address of Governance contract
@@ -307,6 +329,7 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         } catch {
             success = false;
         }
+        return success;
     }
 
     /// @notice Get pending balance that the user can withdraw
