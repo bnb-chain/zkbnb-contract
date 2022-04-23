@@ -1,0 +1,581 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint16",
+						"name": "newListingCap",
+						"type": "uint16"
+					}
+				],
+				"name": "ListingCapUpdate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "contract IERC20",
+						"name": "newListingFeeToken",
+						"type": "address"
+					}
+				],
+				"name": "ListingFeeTokenUpdate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "newListingFee",
+						"type": "uint256"
+					}
+				],
+				"name": "ListingFeeUpdate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "tokenLister",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "bool",
+						"name": "isActive",
+						"type": "bool"
+					}
+				],
+				"name": "TokenListerUpdate",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "newTreasury",
+						"type": "address"
+					}
+				],
+				"name": "TreasuryUpdate",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "governance",
+				"outputs": [
+					{
+						"internalType": "contract Governance",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "initializationParameters",
+						"type": "bytes"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "listingCap",
+				"outputs": [
+					{
+						"internalType": "uint16",
+						"name": "",
+						"type": "uint16"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "listingFee",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "listingFeeToken",
+				"outputs": [
+					{
+						"internalType": "contract IERC20",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_assetAddress",
+						"type": "address"
+					}
+				],
+				"name": "setAsset",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_listerAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "bool",
+						"name": "_active",
+						"type": "bool"
+					}
+				],
+				"name": "setLister",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint16",
+						"name": "_newListingCap",
+						"type": "uint16"
+					}
+				],
+				"name": "setListingCap",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_newListingFee",
+						"type": "uint256"
+					}
+				],
+				"name": "setListingFee",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract IERC20",
+						"name": "_newListingFeeToken",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_newListingFee",
+						"type": "uint256"
+					}
+				],
+				"name": "setListingFeeToken",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_newTreasury",
+						"type": "address"
+					}
+				],
+				"name": "setTreasury",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "tokenLister",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "treasury",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "upgradeParameters",
+						"type": "bytes"
+					}
+				],
+				"name": "upgrade",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"author": "Zecrey Team",
+			"kind": "dev",
+			"methods": {
+				"upgrade(bytes)": {
+					"params": {
+						"upgradeParameters": "Encoded representation of upgrade parameters"
+					}
+				}
+			},
+			"title": "Asset Governance Contract",
+			"version": 1
+		},
+		"userdoc": {
+			"events": {
+				"ListingCapUpdate(uint16)": {
+					"notice": "Maximum number of listed tokens updated"
+				},
+				"ListingFeeTokenUpdate(address)": {
+					"notice": "Listing fee token set"
+				},
+				"ListingFeeUpdate(uint256)": {
+					"notice": "Listing fee set"
+				},
+				"TokenListerUpdate(address,bool)": {
+					"notice": "Token lister added or removed (see `tokenLister`)"
+				},
+				"TreasuryUpdate(address)": {
+					"notice": "The treasury (the account which will receive the fee) was updated"
+				}
+			},
+			"kind": "user",
+			"methods": {
+				"governance()": {
+					"notice": "Zecrey governance contract"
+				},
+				"listingCap()": {
+					"notice": "Max number of tokens that can be listed using this contract"
+				},
+				"listingFee()": {
+					"notice": "Token listing fee"
+				},
+				"listingFeeToken()": {
+					"notice": "Token used to collect listing fee for addition of new token to Zecrey network"
+				},
+				"setAsset(address)": {
+					"notice": "Adds new ERC20 token to Zecrey network.If caller is not present in the `tokenLister` map payment of `listingFee` in `listingFeeToken` should be made.NOTE: before calling this function make sure to approve `listingFeeToken` transfer for this contract."
+				},
+				"setLister(address,bool)": {
+					"notice": "Enable or disable token lister. If enabled new tokens can be added by that address without paymentCan be called only by Zecrey governor"
+				},
+				"setListingCap(uint16)": {
+					"notice": "Change maximum amount of tokens that can be listed using this methodCan be called only by Zecrey governor"
+				},
+				"setListingFee(uint256)": {
+					"notice": "Set new listing feeCan be called only by Zecrey governor"
+				},
+				"setListingFeeToken(address,uint256)": {
+					"notice": "Set new listing token and feeCan be called only by Zecrey governor"
+				},
+				"setTreasury(address)": {
+					"notice": "Change address that collects payments for listing tokens.Can be called only by Zecrey governor"
+				},
+				"tokenLister(address)": {
+					"notice": "Addresses that can list tokens without fee"
+				},
+				"treasury()": {
+					"notice": "Address that collects listing payments"
+				},
+				"upgrade(bytes)": {
+					"notice": "Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function."
+				}
+			},
+			"notice": "Contract is used to allow anyone to add new ERC20 tokens to Zecrey given sufficient payment",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/AssetGovernance.sol": "AssetGovernance"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/AdditionalZecreyLegend.sol": {
+			"keccak256": "0x56a4fb6eaca5a3b800ebbba2935925abd6000cba5261880624c95df027f9646e",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://b014ebf3752d6493e4762634b71e98565cf91f5bba92b244b926fdbc72e0090c",
+				"dweb:/ipfs/QmNgrqhTUcBKbbNLUGt2Nksy9tBFnvXSCgWSyALDhZm4cm"
+			]
+		},
+		"contracts/AssetGovernance.sol": {
+			"keccak256": "0x6690e2c3f155df70b48800dae935e2bfba998ce5553cdb931e5b8a04b9e9e231",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://1357132ad1cc31fdc7f22fb19d38b17c5134d6b10691b42cd8a8f6b56a2e0a77",
+				"dweb:/ipfs/QmWtY4KtUJ31h1Z9S1gSDbJu6cyYSJtCALE4K6g1P8Mftk"
+			]
+		},
+		"contracts/Bytes.sol": {
+			"keccak256": "0xa8005f882d82cd05326ef4eed935af5801d4b1b027bcedbc01ea121625473688",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://44421d171d49527888b830c0ea7efd9d3d951dd0383deac5f72902d0de47a3e7",
+				"dweb:/ipfs/QmTYD74wW8Xy9Pm5QcKzyqupeL3gsKqULH56nx8wHPf1qV"
+			]
+		},
+		"contracts/Config.sol": {
+			"keccak256": "0x7e399f75b278938e11a6b301d2e22902f134f691331b70440d06d04614789fff",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://d8536af699a838f5aa103fa526272aa88bc5ea70195d65a06ff3ac32b95110a1",
+				"dweb:/ipfs/QmUNH6NDMfoCJozKe46DhebTKqZu2YUJkVvkAVcRUSQ35J"
+			]
+		},
+		"contracts/Events.sol": {
+			"keccak256": "0xeb0ef7253d62b88cf77155aefd6331c4e5b1a41838eaa81b8daeca6b4608f10a",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://8bf194f8e6bd37b07457bae82d4562a59f4ea88d991245085c7ef568cfa7bda9",
+				"dweb:/ipfs/QmbdMKiucFHJCrRfGQ5mFfjvJv8M7EsXVpnydcYTc2tXPj"
+			]
+		},
+		"contracts/Governance.sol": {
+			"keccak256": "0x97fc2812e2de4549ab3f4037d55f0caa35c8ec5e36e71e2b8d02d478ca9e79e7",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://8db8a8970175a486f18ec3cead86217766c3d7ad5f1d80f356f596ffe63faf77",
+				"dweb:/ipfs/QmeG2Yb3AnzwVUSk36XpDusfcGdLwbypqJb4LVNwu76zVs"
+			]
+		},
+		"contracts/IBaseRegistrar.sol": {
+			"keccak256": "0x0b9cc2c012c58eab5422ed9c1fe9e58d8b15b13d013f836bd5d2af6a9fc11f27",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://56cbc0b53528b24aa8ae3e5916bb6f8b247c8f27b46e085dd561bce7c7022dc3",
+				"dweb:/ipfs/QmQ6x181Yetu66Lm7bgU5twczS2HuNdBYrtSQNQLuY2DC5"
+			]
+		},
+		"contracts/IERC1155.sol": {
+			"keccak256": "0xf1e3e28642f3d0c68e52fef2c3b5c52a2e495fa3433d8213bd89f69f45fdb7ee",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://c6fec83de612ff61b970a135ec3abd2823f4904083771a4ec029dd4f572524d5",
+				"dweb:/ipfs/QmV5F5DxAL5sixKNDgNrLA2AiFN7z8VC9xYNdMmsNYymAL"
+			]
+		},
+		"contracts/IERC165.sol": {
+			"keccak256": "0xbfae31be27997c5af4b67af52fcc834ed63e9c58cf90ca9cd019c8cc5420fccd",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://16dbe542a4c9c8c336b464743f126389ac2c266b4efd8265bbdf1044fcfe2d5a",
+				"dweb:/ipfs/QmRfsWR1f6WT9vr5y76d2KzzgiCVM6nKNdUZnbg9JvJDk6"
+			]
+		},
+		"contracts/IERC20.sol": {
+			"keccak256": "0x2add7135df03770ca7c4bf4715257b4230f433efed9c526a9802971696769599",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://cd9de6fd72348f224117221164449eb4269a1fc176c5ccb9e9a21d605b695015",
+				"dweb:/ipfs/QmXRX2gmG3nKK9vNV8hbhAzKqTvrsbH9YEYRdZYUypqehv"
+			]
+		},
+		"contracts/IERC721.sol": {
+			"keccak256": "0x8548847b3eb9e205d9ee073e9f531233b28c2cf6f60df5e4ef23db2ee76a149e",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://fb0d276cca1b45dd12084530048194d575f29d56e0e5dd06cfaebceab10f16ea",
+				"dweb:/ipfs/QmT17wowtXbnm59YFa8EhrjAeyjdtUQvwjLemKHLh8ZHDT"
+			]
+		},
+		"contracts/Ownable.sol": {
+			"keccak256": "0x4a7b7d2ab0364f6bce20df0a87ec6ac6138172b04e551fc665d36112eeeb5869",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://70a62c43a9a7880b631fc6d50e4b5d9fa9d4ed0ff66a79725d49cbaae06e34e2",
+				"dweb:/ipfs/QmdRePNZLkt2QGgYS9fqAkGUJvvYLBKVdcLbtDCMJDVWJZ"
+			]
+		},
+		"contracts/Pairing.sol": {
+			"keccak256": "0x71ddce87ef82ca4526ffc275be599cfd1b36fb6c3e59b6723ef9194749c68c70",
+			"license": "AML",
+			"urls": [
+				"bzz-raw://bb8847a18af5ead3e55cc1dcf14b18f86597a93973803b42ebe660aba4106c7b",
+				"dweb:/ipfs/QmWoyUMfjxx3TTL8bJzDDaRtW5JScfZVyAZktH8qZwQokv"
+			]
+		},
+		"contracts/ReentrancyGuard.sol": {
+			"keccak256": "0xc8dfcc2fe5632305fae70b5bc888ec1220315f6f73430be3c66efce7b87fd7ae",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://fde54476d0fb4a5904e4801c46b8bd350fa5ae4c17f77362d333bd2b861fbab2",
+				"dweb:/ipfs/QmYJ2WVkRSbJFSve3HbE7HLLEAGY44RZcGj8KVJNnMJHTM"
+			]
+		},
+		"contracts/SafeCast.sol": {
+			"keccak256": "0x2c55d4cae3609db3a7594ef13c2fcac4a90467a615688be698c5db46eab763dd",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://921f6bd8c999a64969e445715b5653b7448ed9eefa56c810044f7dd455f2e7b6",
+				"dweb:/ipfs/QmV6JxpbZHrEvf4LUHJDddWUjqrpvJdJXGdptvJxKxhpag"
+			]
+		},
+		"contracts/SafeMath.sol": {
+			"keccak256": "0xf9ae924a763e15733f169ecd1a27642d8c4764aedb3af2abace45238935ea70c",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://e32713abc94ce69b42c2a05fd25a985317499bc2f0f486fa599d64460f06d339",
+				"dweb:/ipfs/QmVaPWvUmmpARCSjgSn1iyaU8UGaaUEs9F2wZnetkr1cdj"
+			]
+		},
+		"contracts/SafeMathUInt128.sol": {
+			"keccak256": "0xb73334e88634a7621db8bd8eba20622b50de91013249c18d9c5e19d30baed556",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://a6389d54baff652ab9faf31268e789a13c422aa8a662cc07d2d768fe57fc4c3d",
+				"dweb:/ipfs/QmZnhWca3ih1DMQKeEoa353VERYtm1nf9315rAVgcqdgwM"
+			]
+		},
+		"contracts/Storage.sol": {
+			"keccak256": "0x2bdce1592aca0d0a8713a7f5fdcecffbb7731f74b68806ca627c97f1e28bab4a",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://8912f839d8ef9fa7078e98d0d455a1c9d15d8e727ff60e1e71ee96de629b77f3",
+				"dweb:/ipfs/QmURsAnTSbP1ogPH11PgnmRf8aJd5sD4f8Km2dFL1boc5f"
+			]
+		},
+		"contracts/TxTypes.sol": {
+			"keccak256": "0xab85f42bf9dcc1da827d043ffc7ce99b5bb87d380f8e037064096a0893e39c13",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://d090e8b36444a728446762ddbf1e8e7fbace5d8e40282f4731eb8a88e9509e44",
+				"dweb:/ipfs/QmSkBDkgeoxTnd9K9BxTMu1WqpRGTLNsfigVyWWdZAoqnS"
+			]
+		},
+		"contracts/Upgradeable.sol": {
+			"keccak256": "0x342911c81845cd493ddd2f06d2dbccab5ad230c36c1051c903a23ba697b3c9c4",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://d9a04ad85e9a9714d2c00c95b0a5a8ff2bc670b5cc78743d53dd76f6a9df81b9",
+				"dweb:/ipfs/QmQuHhHEm2tSmJXCt7exCgSNHCm1iYAgqTin6S3V25pfSn"
+			]
+		},
+		"contracts/UpgradeableMaster.sol": {
+			"keccak256": "0x6c35dbac13375fe02c8bda04122be1bdf75dd797242cda08f1447729e6de1908",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://57c9885d0b8f21c33b4e501b03bf8080ebace3170e911e495224a599be287c24",
+				"dweb:/ipfs/QmVXkxySjaERVy6GhQopRRDBLMxjus2vEth87xXYndtETg"
+			]
+		},
+		"contracts/Utils.sol": {
+			"keccak256": "0x9308fe5d2c6ce9a71abc3995b4b81532ad53a808b045c6ae630b49484a0295ea",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://7de002e08e7dc1020bc7a85fab76de1461740c471dd0a492ed7b861a4bd544c5",
+				"dweb:/ipfs/QmdtNPkAoiXejN4pUP3SsGEyLPQWFdLh4cDYpzaPpTuTi6"
+			]
+		},
+		"contracts/ZNS.sol": {
+			"keccak256": "0x20229f553c6f4e2ff1c1ab2b10b56d3d65304cdc0b928f864a4db931441759d6",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://bdee2fb7d4749e35db1be63ced699199a47300db22007038f9d3fe3b030df9bc",
+				"dweb:/ipfs/QmTHbNvnAEzgArKc9ohjNZMCHczkY3zRcMAC7VMX5c7PrR"
+			]
+		},
+		"contracts/ZNSFIFSRegistrar.sol": {
+			"keccak256": "0xa70c61c67629aef46a923f6ba3cefc19e102a429166dc891f6b045b08faea7a5",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://a07537cf6378bdae9d77d2bd58ca85c193cb8d24a0e9b0acfb5fa117f3d30431",
+				"dweb:/ipfs/QmaKLfYtEtertMg5kiwBkSDGZfZsmKMqgtERYaHBL6k1eG"
+			]
+		},
+		"contracts/ZecreyVerifier.sol": {
+			"keccak256": "0xcbe23df26461aafb609d53430428aba27ac8c4e2b12d8d1460704c152f6c2238",
+			"license": "AML",
+			"urls": [
+				"bzz-raw://830bb77626c6d5121c625dc0246c1393b1618199f36fb85370d06966b12ded8c",
+				"dweb:/ipfs/QmY2gveYbMmiGktr2gWaWVoVaHA9wNmkVfzja6FaffESC5"
+			]
+		},
+		"contracts/utils/Names.sol": {
+			"keccak256": "0xfaf6024928eee108f72ef07872c7f12405a6ac934f8e3a593a4d01e6499e13dd",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://6d1d804365b4a09c36e47a610e94f0ff706605af9e364d316a2e33e7eeb47f1a",
+				"dweb:/ipfs/QmPNRP1nXMMhPiHjjLK4oLakkmKQWuxb2AhybS63zggNYY"
+			]
+		}
+	},
+	"version": 1
+}

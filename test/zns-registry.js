@@ -1,87 +1,61 @@
 const {expect} = require("chai");
 const {ethers} = require("hardhat");
+const namehash = require('eth-ens-namehash')
 
 describe("Zecrey-Legend contract", function () {
 
-    let ZecreyLegend;
-    let zecreyLegend;
+    let ZecreyLegend, zecreyLegend;
+    let ZNS, zns;
     let owner, addr1, addr2, addrs;
 
     // `beforeEach` will run before each test, re-deploying the contract every
     // time. It receives a callback, which can be async.
     beforeEach(async function () {
-        // deploy zecrey
-        ZecreyLegend = await ethers.getContractFactory("ZecreyLegend");
-        [owner, addr1, addr2, ...addrs] = await ethers.getSigners()
+        [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
 
-        zecreyLegend = await ZecreyLegend.deploy()
+        // deploy zecrey
+        ZNS = await ethers.getContractFactory("ZNSRegistry");
+        zns = await ZNS.deploy()
+        await zns.deployed()
+
+        ZecreyLegend = await ethers.getContractFactory("ZecreyLegend");
+        zecreyLegend = await ZecreyLegend.deploy(zns.address);
+        await zecreyLegend.deployed();
     });
 
     describe('ZNS Registry', function () {
-        it("register and register subname", async function () {
+        it("register", async function () {
+            // register root node
+            const rootL2Acoount = ethers.utils.formatBytes32String('legend');
+            const rootNode = namehash.hash('');
+            expect(await zns.owner(rootNode)).to.equal(await owner.getAddress());
+
+            const baseNameHash = getKeccak256('legend');
+            const baseNode = namehash.hash('legend');
+            // The owner of ZNS should be registrar
+            const setRootTx = await zns.setSubnodeOwner(rootNode, baseNameHash, zecreyLegend.address, rootL2Acoount);
+            await setRootTx.wait();
+            expect(await zns.owner(baseNode)).to.equal(await zecreyLegend.address);
+
             // register
-            const ownerL2Account1 = ethers.utils.formatBytes32String('zecrey')
-            const registerTx = await zecreyLegend.register('zecrey', await owner.getAddress(), ownerL2Account1);
+            const addr1L2Account = ethers.utils.formatBytes32String('zecrey.legend');
+            const registerTx = await zecreyLegend.connect(owner).register('zecrey', await addr1.getAddress(), addr1L2Account)
             await registerTx.wait()
-            // keccak256('zecrey') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
-            expect(await zecreyLegend.getOwner(getNameHash('zecrey'))).to.equal(await owner.getAddress());
+            expect(await zns.owner(namehash.hash('zecrey.legend'))).to.equal(await addr1.getAddress());
 
-            // registerSubName
-            const pnd = getNameHash('zecrey') // parent node
-            const ownerL2Account2 = ethers.utils.formatBytes32String('test.zecrey')
-            const registerSubNameTx = await zecreyLegend.registerSubName('test', pnd, owner.getAddress(), ownerL2Account2)
-            await registerSubNameTx.wait()
-            expect(await zecreyLegend.getOwner(getNameHash('test.zecrey'))).to.equal(await owner.getAddress());
-        });
-
-        it("Should fail if name is not legal", async function () {
-            const ownerL2Account1 = ethers.utils.formatBytes32String('zecrey')
-            // register with illegal name
+            // register illegal name
+            const addr2L2Account = ethers.utils.formatBytes32String('zecrey2.legend');
             await expect(
-                zecreyLegend.register('id', await owner.getAddress(), ownerL2Account1)
+                zecreyLegend.connect(owner).register('id', await addr2.getAddress(), addr2L2Account)
             ).to.be.revertedWith("invalid name");
             await expect(
-                zecreyLegend.register('id-a', await owner.getAddress(), ownerL2Account1)
+                zecreyLegend.connect(owner).register('id-a', await addr2.getAddress(), addr2L2Account)
             ).to.be.revertedWith("invalid name");
+
+            // duplicated L2 owner
             await expect(
-                zecreyLegend.register('Adas', await owner.getAddress(), ownerL2Account1)
-            ).to.be.revertedWith("invalid name");
-        });
-
-        it("transfer, should fail if not authorized", async function () {
-            // register
-            const ownerL2Account = ethers.utils.formatBytes32String('zecrey')
-            const registerTx = await zecreyLegend.register('zecrey', await owner.getAddress(), ownerL2Account);
-            await registerTx.wait()
-            expect(await zecreyLegend.getOwner(getNameHash('zecrey'))).to.equal(await owner.getAddress());
-
-            // transfer
-            const addr1L2Account = ethers.utils.formatBytes32String('test1')
-            const transferTx = await zecreyLegend.connect(owner).transfer(getNameHash('zecrey'), addr1.getAddress(), addr1L2Account)
-            await transferTx.wait()
-            expect(await zecreyLegend.getOwner(getNameHash('zecrey'))).to.equal(await addr1.getAddress());
-
-            // reTransfer to addr2 will fail
-            const addr2L2Account = ethers.utils.formatBytes32String('test2')
-            await expect(
-                zecreyLegend.connect(owner).transfer(getNameHash('zecrey'), addr2.getAddress(), addr2L2Account)
-            ).to.be.revertedWith("unauthorized");
-        });
-
-        it("transferL2, should fail if not authorized", async function () {
-            // register
-            const ownerL2Account = ethers.utils.formatBytes32String('zecrey')
-            const registerTx = await zecreyLegend.register('zecrey', await owner.getAddress(), ownerL2Account);
-            await registerTx.wait()
-            expect(await zecreyLegend.getOwner(getNameHash('zecrey'))).to.equal(await owner.getAddress());
-            expect(await zecreyLegend.getL2Owner(getNameHash('zecrey'))).to.equal(ownerL2Account);
-
-            // transferL2
-            const ownerL2Account2 = ethers.utils.formatBytes32String('test1')
-            const transferTx = await zecreyLegend.connect(owner).transferL2(getNameHash('zecrey'), ownerL2Account2)
-            await transferTx.wait()
-            expect(await zecreyLegend.getOwner(getNameHash('zecrey'))).to.equal(await owner.getAddress());
-            expect(await zecreyLegend.getL2Owner(getNameHash('zecrey'))).to.equal(ownerL2Account2);
+                zecreyLegend.connect(owner).register('foo', await addr1.getAddress(), addr1L2Account)
+            ).to.be.revertedWith('L2 owner existed');
         });
     });
 
@@ -92,19 +66,26 @@ describe("Zecrey-Legend contract", function () {
     }
 
     // recursively get the keccak256 hash of a specified sub name with its parent node
-    // eg: getNameHash('test.zecrey') = '0x41a39b3b92a0c1452758f455cd6d8d9d635e6ed5d48a89e74661da49e3a043a9'
-    const getNameHash = (name) => {
-        if (name === '') {
-            return '\0' * 32;
-        }
-
-        if (name.includes('.')) {
-            const parts = name.split('.', 2);
-            const label = getKeccak256(parts[0])
-            const remainder = getNameHash(parts[1])
-            return ethers.utils.keccak256('0x' + remainder.replace('0x', '') + label.replace('0x', ''))
-        } else {
-            return getKeccak256(name)
-        }
-    }
+    // const getNameHash = (name) => {
+    //     var node = ''
+    //     for (var i = 0; i < 32; i++) {
+    //         node += '00'
+    //     }
+    //
+    //     if (name === '') {
+    //         return '0x' + '0'.repeat(64)
+    //     }
+    //
+    //     // split the name into 2 parts, if it contains '.', eg 'a.zecrey.legend' is split into 'a' and 'zecrey.legend'
+    //     // or we add '' into the second place, eg 'legend' is split into 'legend' and ''
+    //     const parts = name.split('.', 2);
+    //     if(parts.length === 1) {
+    //         parts.push('')
+    //     }
+    //
+    //     const label = parts[0]
+    //     const remainder = parts[1]
+    //     console.log(label, remainder)
+    //     return getKeccak256('0x' + getNameHash(remainder) + getKeccak256(label))
+    // }
 });

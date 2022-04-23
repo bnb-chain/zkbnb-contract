@@ -28,7 +28,7 @@ Contracts of ZNS are consists of three parts: ZNSRegistry, ZNSRegistrarControlle
 
 A ZNSRegistry contains records of name node. It will be owned as a member variable by ZNSRegistrarController.
 
-All ENS lookups start by querying the registry. The registry contains records of Zecrey Legend short name, recording the
+All ZNS lookups start by querying the registry. The registry contains records of Zecrey Legend short name, recording the
 owner, L2 owner and resolver of each name, and allows the owner of a domain to make changes to these data.
 
 #### ZNS.sol

@@ -1,5 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-tracer");
+require('@openzeppelin/hardhat-upgrades');
 
 /**
  * @type import('hardhat/config').HardhatUserConfig

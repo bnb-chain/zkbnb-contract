@@ -1,0 +1,98 @@
+{
+	"deploy": {
+		"VM:-": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"main:1": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"ropsten:3": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"rinkeby:4": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"kovan:42": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"görli:5": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		},
+		"Custom": {
+			"linkReferences": {},
+			"autoDeployLib": true
+		}
+	},
+	"data": {
+		"bytecode": {
+			"generatedSources": [],
+			"linkReferences": {},
+			"object": "",
+			"opcodes": "",
+			"sourceMap": ""
+		},
+		"deployedBytecode": {
+			"generatedSources": [],
+			"immutableReferences": {},
+			"linkReferences": {},
+			"object": "",
+			"opcodes": "",
+			"sourceMap": ""
+		},
+		"gasEstimates": null,
+		"methodIdentifiers": {
+			"mintFromZecrey(address,address,address,uint256,uint32,bytes32,bytes)": "54f8b152"
+		}
+	},
+	"abi": [
+		{
+			"inputs": [
+				{
+					"internalType": "address",
+					"name": "_creatorAddress",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "_toAddress",
+					"type": "address"
+				},
+				{
+					"internalType": "address",
+					"name": "_factoryAddress",
+					"type": "address"
+				},
+				{
+					"internalType": "uint256",
+					"name": "_nftTokenId",
+					"type": "uint256"
+				},
+				{
+					"internalType": "uint32",
+					"name": "_amount",
+					"type": "uint32"
+				},
+				{
+					"internalType": "bytes32",
+					"name": "_nftContentHash",
+					"type": "bytes32"
+				},
+				{
+					"internalType": "bytes",
+					"name": "_extraData",
+					"type": "bytes"
+				}
+			],
+			"name": "mintFromZecrey",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		}
+	]
+}
