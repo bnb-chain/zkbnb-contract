@@ -9,21 +9,15 @@ import "./UpgradeGatekeeper.sol";
 import "./ZecreyLegend.sol";
 import "./ZecreyVerifier.sol";
 import "./Config.sol";
+import "./ZNSFIFSRegistrar.sol";
 
 contract DeployFactory {
-    Proxy config;
     Proxy governance;
     Proxy assetGovernance;
     Proxy verifier;
+    Proxy znsFifsRegistrar;
+    Proxy additionalZecreyLegend;
     Proxy zecrey;
-
-    function initConfig(
-        Config _configTarget, uint8 _chainId,
-        uint16 _nativeAssetId,
-        uint16 _maxPendingBlocks
-    ) external {
-        config = new Proxy(address(_configTarget), abi.encode(_chainId, _nativeAssetId, _maxPendingBlocks));
-    }
 
     function initAssetGovernance(
         AssetGovernance _assetGovTarget,
@@ -40,7 +34,7 @@ contract DeployFactory {
         Governance _govTarget,
         address _governor
     ) external {
-        governance = new Proxy(address(_govTarget), abi.encode(_governor, config));
+        governance = new Proxy(address(_govTarget), abi.encode(_governor));
     }
 
     function initVerifier(
@@ -49,33 +43,37 @@ contract DeployFactory {
         verifier = new Proxy(address(_verifierTarget), abi.encode());
     }
 
+    function initZnsFifsRegistrar(
+        ZNSFIFSRegistrar _znsFifsRegistrar,
+        address _zns,
+        bytes32 _node
+    ) external {
+        znsFifsRegistrar = new Proxy(address(_znsFifsRegistrar), abi.encode(_zns, _node));
+    }
+
+    function initAdditionalZecreyLegend(
+        AdditionalZecreyLegend _additionalZecreyLegend
+    ) external {
+        additionalZecreyLegend = new Proxy(address(_additionalZecreyLegend), abi.encode());
+    }
+
+
     function initZecrey(
-        Zecrey _zecreyTarget,
-        uint32 _genesisBlockNumber,
-        bytes32 _genesisOnchainOpsRoot,
-        bytes32 _genesisStateRoot,
-        uint256 _genesisTimestamp,
-        bytes32 _genesisCommitment,
-        bool[6] memory _onchainOpsHelper,
-        address _committer,
-        address _verifier,
-        address _executor,
-        address _monitor,
+        ZecreyLegend _zecreyTarget,
+        bytes32 _genesisAccountRoot,
+        address _validator,
         address _governor
     ) external {
-        require(_committer != address(0), "committer check");
-        require(_verifier != address(0), "verifier check");
-        require(_executor != address(0), "executor check");
-        require(_monitor != address(0), "monitor check");
+        require(_validator != address(0), "committer check");
         require(_governor != address(0), "governor check");
         zecrey = new Proxy(
             address(_zecreyTarget),
-            abi.encode(address(config), address(governance), address(verifier),
-            _genesisBlockNumber, _genesisOnchainOpsRoot, _genesisStateRoot, _genesisTimestamp, _genesisCommitment, _onchainOpsHelper)
+            abi.encode(address(governance), address(verifier), address(additionalZecreyLegend), address(znsFifsRegistrar),
+            _genesisAccountRoot)
         );
     }
 
-    event Addresses(address config, address governance, address assetGovernance, address zecrey, address verifier, address gatekeeper);
+    event Addresses(address governance, address assetGovernance, address verifier, address znsFifsRegistrar, address additionalZecreyLegend, address zecrey, address gatekeeper);
 
     function deployProxyContracts(
         address _validator,
@@ -83,9 +81,6 @@ contract DeployFactory {
     ) external {
 
         UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecrey, msg.sender);
-
-        config.transferMastership(address(upgradeGatekeeper));
-        upgradeGatekeeper.addUpgradeable(address(config));
 
         governance.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(governance));
@@ -96,15 +91,22 @@ contract DeployFactory {
         verifier.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(verifier));
 
+        znsFifsRegistrar.transferMastership(address(upgradeGatekeeper));
+        upgradeGatekeeper.addUpgradeable(address(znsFifsRegistrar));
+
+        additionalZecreyLegend.transferMastership(address(upgradeGatekeeper));
+        upgradeGatekeeper.addUpgradeable(address(additionalZecreyLegend));
+
         zecrey.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(zecrey));
 
         upgradeGatekeeper.transferMastership(_governor);
 
-        emit Addresses(address(config), address(governance), address(assetGovernance), address(zecrey), address(verifier), address(upgradeGatekeeper));
+        emit Addresses(address(governance), address(assetGovernance), address(verifier), address(znsFifsRegistrar),
+            address(additionalZecreyLegend), address(zecrey), address(upgradeGatekeeper));
 
         finalizeGovernance(Governance(address(governance)), address(assetGovernance), _validator);
-
+        finalizeZnsFifsRegistrar(ZNSFIFSRegistrar(address(znsFifsRegistrar)), address(zecrey));
         // TODO
 
         selfdestruct(payable(address(this)));
@@ -117,5 +119,12 @@ contract DeployFactory {
     ) internal {
         _governance.changeAssetGovernance(AssetGovernance(_assetGovernance));
         _governance.setValidator(_validator, true);
+    }
+
+    function finalizeZnsFifsRegistrar(
+        ZNSFIFSRegistrar _znsFifsRegistrar,
+        address _zecrey
+    ) internal {
+        _znsFifsRegistrar.addController(_zecrey);
     }
 }

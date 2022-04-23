@@ -1,0 +1,361 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "controller",
+						"type": "address"
+					}
+				],
+				"name": "ControllerAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "controller",
+						"type": "address"
+					}
+				],
+				"name": "ControllerRemoved",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousOwner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "L2Owner",
+						"type": "bytes32"
+					}
+				],
+				"name": "ZNSRegistered",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_controller",
+						"type": "address"
+					}
+				],
+				"name": "addController",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "baseNode",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "controllers",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					}
+				],
+				"name": "getOwner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "initializationParameters",
+						"type": "bytes"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "addr",
+						"type": "address"
+					}
+				],
+				"name": "isOwner",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_zecreyPubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "registerZNS",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_controller",
+						"type": "address"
+					}
+				],
+				"name": "removeController",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_resolver",
+						"type": "address"
+					}
+				],
+				"name": "setThisResolver",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "_zecreyPubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "setZecreyPubKey",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newOwner",
+						"type": "address"
+					}
+				],
+				"name": "transferOwnership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "zns",
+				"outputs": [
+					{
+						"internalType": "contract ZNS",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"registerZNS(string,address,bytes32)": {
+					"details": "Register a new node under base node if it not exists.",
+					"params": {
+						"_name": "The plaintext of the name to register",
+						"_owner": "The address to receive this name",
+						"_zecreyPubKey": "The L2 owner to receive this name"
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"notice": "ZNSFIFSRegistrar is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ZNSFIFSRegistrar.sol": "ZNSFIFSRegistrar"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/IBaseRegistrar.sol": {
+			"keccak256": "0x0b9cc2c012c58eab5422ed9c1fe9e58d8b15b13d013f836bd5d2af6a9fc11f27",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://56cbc0b53528b24aa8ae3e5916bb6f8b247c8f27b46e085dd561bce7c7022dc3",
+				"dweb:/ipfs/QmQ6x181Yetu66Lm7bgU5twczS2HuNdBYrtSQNQLuY2DC5"
+			]
+		},
+		"contracts/Ownable.sol": {
+			"keccak256": "0x4a7b7d2ab0364f6bce20df0a87ec6ac6138172b04e551fc665d36112eeeb5869",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://70a62c43a9a7880b631fc6d50e4b5d9fa9d4ed0ff66a79725d49cbaae06e34e2",
+				"dweb:/ipfs/QmdRePNZLkt2QGgYS9fqAkGUJvvYLBKVdcLbtDCMJDVWJZ"
+			]
+		},
+		"contracts/ZNS.sol": {
+			"keccak256": "0x20229f553c6f4e2ff1c1ab2b10b56d3d65304cdc0b928f864a4db931441759d6",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://bdee2fb7d4749e35db1be63ced699199a47300db22007038f9d3fe3b030df9bc",
+				"dweb:/ipfs/QmTHbNvnAEzgArKc9ohjNZMCHczkY3zRcMAC7VMX5c7PrR"
+			]
+		},
+		"contracts/ZNSFIFSRegistrar.sol": {
+			"keccak256": "0xa70c61c67629aef46a923f6ba3cefc19e102a429166dc891f6b045b08faea7a5",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://a07537cf6378bdae9d77d2bd58ca85c193cb8d24a0e9b0acfb5fa117f3d30431",
+				"dweb:/ipfs/QmaKLfYtEtertMg5kiwBkSDGZfZsmKMqgtERYaHBL6k1eG"
+			]
+		},
+		"contracts/utils/Names.sol": {
+			"keccak256": "0xfaf6024928eee108f72ef07872c7f12405a6ac934f8e3a593a4d01e6499e13dd",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://6d1d804365b4a09c36e47a610e94f0ff706605af9e364d316a2e33e7eeb47f1a",
+				"dweb:/ipfs/QmPNRP1nXMMhPiHjjLK4oLakkmKQWuxb2AhybS63zggNYY"
+			]
+		}
+	},
+	"version": 1
+}

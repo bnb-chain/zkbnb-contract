@@ -188,7 +188,7 @@ library Bytes {
     }
 
     // NOTE: theoretically possible overflow of (_offset + 1)
-    function readUint8(bytes memory _data, uint256 _offset) internal pure returns (uint256 newOffset, uint8 r) {
+    function readUInt8(bytes memory _data, uint256 _offset) internal pure returns (uint256 newOffset, uint8 r) {
         newOffset = _offset + 1;
         r = uint8(_data[_offset]);
     }

@@ -30,24 +30,12 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
         pendingBalances[_packedBalanceKey] = PendingBalance(balance.add(_amount), FILLED_GAS_RESERVE_VALUE);
     }
 
-    /// @notice Withdraws token from ZkSync to root chain in case of desert mode. User must provide proof that he owns funds
-    /// @param _storedBlockHeader Last verified block
-    /// @param _owner Owner of the account
-    /// @param _accountId Id of the account in the tree
-    /// @param _proof Proof
-    /// @param _tokenId Verified token id
-    /// @param _amount Amount for owner (must be total amount, not part of it)
     function performDesert(
         BlockHeader memory _storedBlockHeader,
         address _owner,
         uint32 _accountId,
         uint32 _tokenId,
-        uint128 _amount,
-        uint32 _nftCreatorAccountId,
-        address _nftCreatorAddress,
-        uint32 _nftSerialId,
-        bytes32 _nftContentHash,
-        uint256[] memory _proof
+        uint128 _amount
     ) external {
         require(_accountId <= MAX_ACCOUNT_INDEX, "e");
         require(_accountId != SPECIAL_ACCOUNT_ID, "v");
@@ -83,16 +71,16 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
             // TODO
             require(_amount != 0, "Z");
             // Unsupported nft amount
-            TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({
-            txType : uint8(TxTypes.TxType.WithdrawNFT),
-            accountIndex : _nftCreatorAccountId,
-            toAddress : _nftCreatorAddress,
-            proxyAddress : _nftCreatorAddress,
-            nftAssetId : _nftSerialId,
-            gasFeeAccountIndex : 0,
-            gasFeeAssetId : 0,
-            gasFeeAssetAmount : 0
-            });
+//            TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({
+//            txType : uint8(TxTypes.TxType.WithdrawNFT),
+//            accountIndex : _nftCreatorAccountId,
+//            toAddress : _nftCreatorAddress,
+//            proxyAddress : _nftCreatorAddress,
+//            nftAssetId : _nftSerialId,
+//            gasFeeAccountIndex : 0,
+//            gasFeeAssetId : 0,
+//            gasFeeAssetAmount : 0
+//            });
             //            pendingWithdrawnNFTs[_tokenId] = withdrawNftOp;
             //            emit WithdrawalNFTPending(_tokenId);
         }
@@ -114,9 +102,9 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
 
                 // TODO get address by account name
                 address owner = address(0x0);
-                TxTypes.Deposit memory tx = TxTypes.readDepositPubdata(depositPubdata);
-                bytes22 packedBalanceKey = packAddressAndAssetId(owner, uint16(tx.assetId));
-                pendingBalances[packedBalanceKey].balanceToWithdraw += tx.amount;
+                TxTypes.Deposit memory _tx = TxTypes.readDepositPubdata(depositPubdata);
+                bytes22 packedBalanceKey = packAddressAndAssetId(owner, uint16(_tx.assetId));
+                pendingBalances[packedBalanceKey].balanceToWithdraw += _tx.amount;
             }
             delete priorityRequests[id];
         }

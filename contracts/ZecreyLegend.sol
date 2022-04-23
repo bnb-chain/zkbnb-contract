@@ -9,23 +9,21 @@ import "./SafeMath.sol";
 import "./SafeMathUInt128.sol";
 import "./SafeMathUInt32.sol";
 import "./SafeCast.sol";
-import "./Utils.sol";
-
 import "./Storage.sol";
 import "./Events.sol";
-
+import "./Utils.sol";
 import "./Bytes.sol";
 import "./TxTypes.sol";
-
 import "./UpgradeableMaster.sol";
 import "./IERC1155.sol";
 import "./IERC721.sol";
-import "./IL2MintableNFT.sol";
+import "./NFTFactory.sol";
 import "./Config.sol";
+import "./ZNSFIFSRegistrar.sol";
 
 /// @title Zecrey main contract
 /// @author Zecrey Team
-contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
+contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
@@ -72,10 +70,10 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
     function clearUpgradeStatus() internal {
         upgradePreparationActive = false;
         upgradePreparationActivationTime = 0;
-        approvedUpgradeNoticePeriod = config.UPGRADE_NOTICE_PERIOD();
+        approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
         emit NoticePeriodChange(approvedUpgradeNoticePeriod);
         upgradeStartTimestamp = 0;
-        for (uint256 i = 0; i < config.SECURITY_COUNCIL_MEMBERS_NUMBER(); ++i) {
+        for (uint256 i = 0; i < SECURITY_COUNCIL_MEMBERS_NUMBER; ++i) {
             securityCouncilApproves[i] = false;
         }
         numberOfApprovalsFromSecurityCouncil = 0;
@@ -102,54 +100,19 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
     function upgrade(bytes calldata upgradeParameters) external nonReentrant {}
 
     function cutUpgradeNoticePeriod() external {
-        // security council members
-        // TODO to be confirmed
-        address payable[3] memory SECURITY_COUNCIL_MEMBERS = [
-        payable(address(0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449)),
-        payable(address(0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449)),
-        payable(address(0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449))
-        ];
-        uint256 SECURITY_COUNCIL_2_WEEKS_THRESHOLD = 1;
-        uint256 SECURITY_COUNCIL_1_WEEK_THRESHOLD = 2;
-        uint256 SECURITY_COUNCIL_3_DAYS_THRESHOLD = 3;
-        for (uint256 id = 0; id < config.SECURITY_COUNCIL_MEMBERS_NUMBER(); ++id) {
-            if (SECURITY_COUNCIL_MEMBERS[id] == msg.sender) {
-                require(upgradeStartTimestamp != 0);
-                require(securityCouncilApproves[id] == false);
-                securityCouncilApproves[id] = true;
-                numberOfApprovalsFromSecurityCouncil++;
-
-                if (numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_2_WEEKS_THRESHOLD) {
-                    if (approvedUpgradeNoticePeriod > 2 weeks) {
-                        approvedUpgradeNoticePeriod = 2 weeks;
-                        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-                    }
-                } else if (numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_1_WEEK_THRESHOLD) {
-                    if (approvedUpgradeNoticePeriod > 1 weeks) {
-                        approvedUpgradeNoticePeriod = 1 weeks;
-                        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-                    }
-                } else if (numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_3_DAYS_THRESHOLD) {
-                    if (approvedUpgradeNoticePeriod > 3 days) {
-                        approvedUpgradeNoticePeriod = 3 days;
-                        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-                    }
-                }
-
-                break;
-            }
-        }
+        /// All functions delegated to additional contract should NOT be nonReentrant
+        delegateAdditional();
     }
 
     /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
-    /// @dev Exodus mode must be entered in case of current ethereum block number is higher than the oldest
+    /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
     /// @dev of existed priority requests expiration block number.
     /// @return bool flag that is true if the Exodus mode must be entered.
     function activateDesertMode() public returns (bool) {
         // #if EASY_EXODUS
         bool trigger = true;
         // #else
-        bool trigger = block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
+        trigger = block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
         priorityRequests[firstPriorityRequestId].expirationBlock != 0;
         // #endif
         if (trigger) {
@@ -175,19 +138,21 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         address _governanceAddress,
         address _verifierAddress,
         address _additionalZecreylegend,
-        bytes32 _genesisStateHash
-        ) = abi.decode(initializationParameters, (address, address, address, bytes32));
+        address _znsFifsRegistrar,
+        bytes32 _genesisAccountRoot
+        ) = abi.decode(initializationParameters, (address, address, address, address, bytes32));
 
         verifier = ZecreyVerifier(_verifierAddress);
         governance = Governance(_governanceAddress);
         additionalZecreyLegend = AdditionalZecreyLegend(_additionalZecreylegend);
+        znsFifsRegistrar = ZNSFIFSRegistrar(_znsFifsRegistrar);
 
         BlockHeader memory zeroBlockHeader = BlockHeader(
             0,
             0,
             EMPTY_STRING_KECCAK,
             0,
-            _genesisStateHash,
+            _genesisAccountRoot,
             bytes32(0)
         );
         storedBlockHeaderHashes[0] = hashBlockHeader(zeroBlockHeader);
@@ -220,6 +185,24 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         // wtg12 - rollup balance difference (before and after transfer) is bigger than _maxAmount
 
         return SafeCast.toUint128(balanceDiff);
+    }
+
+    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external nonReentrant {
+        // TODO not sure if we have the auth
+        znsFifsRegistrar.registerZNS(_name, _owner, _zecreyPubKey);
+        // Priority Queue request
+        TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
+        txType : uint8(TxTypes.TxType.RegisterZNS),
+        accountName : Utils.stringToBytes32(_name),
+        pubKey : _zecreyPubKey
+        });
+        // compact pub data
+        bytes memory pubData = TxTypes.writeRegisterZNSPubdataForPriorityQueue(_tx);
+
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
+
+        emit RegisterZNS(_name, _owner, _zecreyPubKey);
     }
 
     /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
@@ -256,73 +239,93 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
     }
 
     /// @notice Deposit NFT to Layer 2, both ERC721 and ERC1155 is supported
-    // TODO maybe support ERC1155
-    function depositERC721(
+    function depositNFT(
         bytes32 _accountNameHash,
         address _tokenAddress,
-        uint256 _nftTokenId
+        TxTypes.NftType _nftType,
+        uint256 _nftTokenId,
+        uint32 _amount // can be zero
     ) external nonReentrant {
-        // not desert mode
-        requireActive();
         // Transfer the tokens to this contract
-        bool success = Utils.transferFromERC721(msg.sender, address(this), _tokenAddress, _nftTokenId);
+        bool success = Utils.transferFromNFT(msg.sender, address(this), _nftType, _tokenAddress, _nftTokenId, _amount);
 
         require(success, "nft transfer failure");
 
         // Priority Queue request
-        TxTypes.DepositERC721 memory tx = TxTypes.DepositERC721({
+        TxTypes.DepositNFT memory _tx = TxTypes.DepositNFT({
         txType : uint8(TxTypes.TxType.DepositERC721),
         accountNameHash : _accountNameHash,
         tokenAddress : _tokenAddress,
-        nftTokenId : _nftTokenId
+        nftType : uint8(_nftType),
+        nftTokenId : _nftTokenId,
+        amount : _amount
         });
         // compact pub data
-        bytes memory pubData = TxTypes.writeDepositERC721PubdataForPriorityQueue(tx);
+        bytes memory pubData = TxTypes.writeDepositNFTPubdataForPriorityQueue(_tx);
 
         // add into priority request queue
-        addPriorityRequest(TxTypes.TxType.DepositERC721, pubData);
+        addPriorityRequest(TxTypes.TxType.DepositNFT, pubData);
 
-        emit DepositERC721(_accountNameHash, _tokenAddress, _nftTokenId);
+        emit DepositNFT(_accountNameHash, _tokenAddress, uint8(_nftType), _nftTokenId, _amount);
     }
 
-    // TODO
-    function withdrawERC721(
-        bytes32 _accountNameHash,
+    function withdrawNFT(
+        bytes32 _creatorAccountNameHash,
         address _tokenAddress,
-        address _minter,
-        uint256 _nftTokenId
-    ) internal nonReentrant {
+        address _toAddress,
+        address _proxyAddress,
+        TxTypes.NftType _nftType,
+        uint256 _nftTokenId,
+        uint32 _amount,
+        bytes32 _nftContentHash
+    ) internal {
+        // get layer-1 address by account name hash
+        address _creatorAddress = getAddressByAccountNameHash(_creatorAccountNameHash);
+        bytes memory _emptyExtraData;
         bool success;
-        if (_minter == _tokenAddress) {
+        if (_tokenAddress != address(0x00)) {
             /// This is a NFT from layer 1, withdraw id directly
-            success = Utils.transferFromERC721(address(this), msg.sender, _tokenAddress, _nftTokenId);
+            success = Utils.transferFromNFT(_creatorAddress, _toAddress, _nftType, _tokenAddress, _nftTokenId, _amount);
         } else {
             /// This is a NFT from layer 2
-            // TODO
-            //            success = mintFromL2(msg.sender, _tokenAddress, _nftID, _amount, _minter, _extraData);
+            // TODO minter _proxyAddress
+            if (_proxyAddress != address(0x00)) {
+                success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftTokenId, _amount, _nftContentHash, _emptyExtraData);
+            } else {
+                // TODO mint nft from Zecrey nft factory
+                if (_amount == 1) {// ERC721
+                    // TODO 721 address
+                    success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftTokenId, _amount, _nftContentHash, _emptyExtraData);
+                } else {// ERC1155
+                    // TODO 1155 address
+                    success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftTokenId, _amount, _nftContentHash, _emptyExtraData);
+                }
+            }
         }
 
         require(success, "nft transfer failure");
 
-        // TODO
-        //        emit WithdrawNFT(msg.sender, _accountNameHash, _tokenAddress, _minter, uint8(_nftType), _nftID, _amount);
+        emit WithdrawNFT(_creatorAccountNameHash, _tokenAddress, _toAddress, _proxyAddress, uint8(_nftType), _nftTokenId, _amount);
     }
 
-    function mintFromL2(
-        address _to,
-        address _tokenAddress,
-        uint256 _nftID,
+    function mintFromZecrey(
+        address _creatorAddress,
+        address _toAddress,
+        address _factoryAddress,
+        uint256 _nftTokenId,
         uint32 _amount,
-        address _minter,
+        bytes32 _nftContentHash,
         bytes memory _extraData
     ) internal returns (bool success) {
         if (_amount == 0) return true;
 
-        try IL2MintableNFT(_tokenAddress).mintFromL2(
-            _to,
-            _nftID,
+        try NFTFactory(_factoryAddress).mintFromZecrey(
+            _creatorAddress,
+            _toAddress,
+            _factoryAddress,
+            _nftTokenId,
             _amount,
-            _minter,
+            _nftContentHash,
             _extraData
         ) {
             success = true;
@@ -357,8 +360,8 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         if (_token == address(0)) {
             registerWithdrawal(0, _amount, _owner);
             (bool success,) = _owner.call{value : _amount}("");
-            require(success, "d");
             // Native Asset withdraw failed
+            require(success, "d");
         } else {
             uint16 assetId = governance.validateAssetAddress(_token);
             bytes22 packedBalanceKey = packAddressAndAssetId(_owner, assetId);
@@ -381,6 +384,7 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
     /// @dev returns new block BlockHeader
     function commitOneBlock(BlockHeader memory _previousBlock, CommitBlockInfo memory _newBlock)
     internal
+    view
     returns (BlockHeader memory storedNewBlock)
     {
         // only commit next block
@@ -441,6 +445,10 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         require(totalCommittedPriorityRequests <= totalOpenPriorityRequests, "j");
     }
 
+    function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
+        return znsFifsRegistrar.getOwner(accountNameHash);
+    }
+
     /// @notice Verify block index and proofs
     function verifyOneBlock(VerifyBlockInfo memory _block, uint32 _verifiedBlockIdx) internal {
         // Ensure block was committed
@@ -459,29 +467,27 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
             TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[0]));
 
             if (txType == TxTypes.TxType.Withdraw) {
-                TxTypes.Withdraw memory tx = TxTypes.readWithdrawPubdata(pubData);
+                TxTypes.Withdraw memory _tx = TxTypes.readWithdrawPubdata(pubData);
                 // Circuit guarantees that partial exits are available only for fungible tokens
-                require(tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
-                withdrawOrStore(uint16(tx.assetId), tx.toAddress, tx.assetAmount);
+                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
+                withdrawOrStore(uint16(_tx.assetId), _tx.toAddress, _tx.assetAmount);
             } else if (txType == TxTypes.TxType.FullExit) {
-                // TODO get layer-1 address by account name
-                address toAddress = address(0x00);
-                TxTypes.FullExit memory tx = TxTypes.readFullExitPubdata(pubData);
-                require(tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
-                withdrawOrStore(uint16(tx.assetId), toAddress, tx.assetAmount);
+                TxTypes.FullExit memory _tx = TxTypes.readFullExitPubdata(pubData);
+                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
+                // get layer-1 address by account name hash
+                address creatorAddress = getAddressByAccountNameHash(_tx.accountNameHash);
+                withdrawOrStore(uint16(_tx.assetId), creatorAddress, _tx.assetAmount);
             } else if (txType == TxTypes.TxType.FullExitNFT) {
-                // TODO get layer-1 address by account name
-                address toAddress = address(0x00);
                 // TODO check params for NFT address
-                TxTypes.FullExitNFT memory tx = TxTypes.readFullExitNFTPubdata(pubData);
-                // TODO withdraw NFT, minter
-                withdrawERC721(tx.accountNameHash, tx.nftAddress, tx.nftAddress, tx.nftTokenId);
+                TxTypes.FullExitNFT memory _tx = TxTypes.readFullExitNFTPubdata(pubData);
+                // withdraw nft
+                withdrawNFT(_tx.accountNameHash, _tx.tokenAddress, _tx.toAddress, _tx.proxyAddress, TxTypes.NftType(_tx.nftType), _tx.nftTokenId, _tx.amount, _tx.nftContentHash);
             } else if (txType == TxTypes.TxType.WithdrawNFT) {
-                TxTypes.WithdrawNFT memory tx = TxTypes.readWithdrawNFTPubdata(pubData);
-                // TODO withdraw NFT
-                //                withdrawERC721(tx.accountNameHash, tx.toAddress, tx.nftAddress, tx.nftTokenId);
+                TxTypes.WithdrawNFT memory _tx = TxTypes.readWithdrawNFTPubdata(pubData);
+                // withdraw NFT
+                withdrawNFT(_tx.accountNameHash, _tx.tokenAddress, _tx.toAddress, _tx.proxyAddress, TxTypes.NftType(_tx.nftType), _tx.nftTokenId, _tx.amount, _tx.nftContentHash);
             } else {
-                // unsupported tx in block verification
+                // unsupported _tx in block verification
                 revert("l");
             }
 
@@ -493,10 +499,10 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
 
     /// @notice Verify layer-2 blocks proofs
     /// @param _blocks Verified blocks info
+    /// @param _proofs proofs
     function verifyBlocks(VerifyBlockInfo[] memory _blocks, uint256[] memory _proofs) external nonReentrant {
         requireActive();
         governance.requireActiveValidator(msg.sender);
-        uint32 currentTotalBlocksVerified = totalBlocksVerified;
 
         uint64 priorityRequestsExecuted = 0;
         uint32 nBlocks = uint32(_blocks.length);
@@ -542,7 +548,7 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
             // We use `_transferERC20` here to check that `ERC20` token indeed transferred `_amount`
             // and fail if token subtracted from Zecrey balance more then `_amount` that was requested.
             // This can happen if token subtracts fee from sender while transferring `_amount` that was requested to transfer.
-            try this._transferERC20{gas : config.WITHDRAWAL_GAS_LIMIT()}(IERC20(tokenAddr), _recipient, _amount, _amount) {
+            try this._transferERC20{gas : WITHDRAWAL_GAS_LIMIT}(IERC20(tokenAddr), _recipient, _amount, _amount) {
                 sent = true;
             } catch {
                 sent = false;
@@ -566,7 +572,7 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         bytes32 _accountNameHash
     ) internal {
         // Priority Queue request
-        TxTypes.Deposit memory tx = TxTypes.Deposit({
+        TxTypes.Deposit memory _tx = TxTypes.Deposit({
         txType : uint8(TxTypes.TxType.Deposit),
         accountIndex : 0, // unknown at the moment
         accountNameHash : _accountNameHash,
@@ -574,7 +580,7 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         amount : _amount
         });
         // compact pub data
-        bytes memory pubData = TxTypes.writeDepositPubdataForPriorityQueue(tx);
+        bytes memory pubData = TxTypes.writeDepositPubdataForPriorityQueue(_tx);
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.Deposit, pubData);
         emit Deposit(_assetId, _accountNameHash, _amount);
@@ -582,8 +588,8 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
 
     /// @notice Saves priority request in storage
     /// @dev Calculates expiration block for request, store this request and emit NewPriorityRequest event
-    /// @param _txType Rollup tx type
-    /// @param _pubData tx pub data
+    /// @param _txType Rollup _tx type
+    /// @param _pubData _tx pub data
     function addPriorityRequest(TxTypes.TxType _txType, bytes memory _pubData) internal {
         // Expiration block is: current block number + priority expiration delta
         uint64 expirationBlock = uint64(block.number + PRIORITY_EXPIRATION);
@@ -679,7 +685,7 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
                     );
                     priorityOperationsProcessed++;
                 } else {
-                    // unsupported tx
+                    // unsupported _tx
                     revert("F");
                 }
                 processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
@@ -687,48 +693,48 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
         }
     }
 
-    /// @notice Checks that register zns is same as tx in priority queue
+    /// @notice Checks that register zns is same as _tx in priority queue
     /// @param _registerZNS register zns
-    /// @param _priorityRequestId tx's id in priority queue
+    /// @param _priorityRequestId _tx's id in priority queue
     function checkPriorityOperation(TxTypes.RegisterZNS memory _registerZNS, uint64 _priorityRequestId) internal view {
         TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority tx type
+        // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.RegisterZNS, "H");
 
         bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
         require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubdata), "I");
     }
 
-    /// @notice Checks that deposit is same as tx in priority queue
+    /// @notice Checks that deposit is same as _tx in priority queue
     /// @param _deposit Deposit data
-    /// @param _priorityRequestId tx's id in priority queue
+    /// @param _priorityRequestId _tx's id in priority queue
     function checkPriorityOperation(TxTypes.Deposit memory _deposit, uint64 _priorityRequestId) internal view {
         TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority tx type
+        // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.Deposit, "H");
 
         bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
         require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubdata), "I");
     }
 
-    /// @notice Checks that FullExit is same as tx in priority queue
+    /// @notice Checks that FullExit is same as _tx in priority queue
     /// @param _fullExit FullExit data
-    /// @param _priorityRequestId tx's id in priority queue
+    /// @param _priorityRequestId _tx's id in priority queue
     function checkPriorityOperation(TxTypes.FullExit memory _fullExit, uint64 _priorityRequestId) internal view {
         TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority tx type
+        // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.FullExit, "J");
 
         bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
         require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubdata), "K");
     }
 
-    /// @notice Checks that FullExitNFT is same as tx in priority queue
+    /// @notice Checks that FullExitNFT is same as _tx in priority queue
     /// @param _fullExitNFT FullExit nft data
-    /// @param _priorityRequestId tx's id in priority queue
+    /// @param _priorityRequestId _tx's id in priority queue
     function checkPriorityOperation(TxTypes.FullExitNFT memory _fullExitNFT, uint64 _priorityRequestId) internal view {
         TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority tx type
+        // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.FullExitNFT, "J");
 
 
@@ -762,7 +768,7 @@ contract Zecrey is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
     /// @param _amount Amount of tokens to transfer
     /// @return bool flag indicating that transfer is successful
     function sendBNBNoRevert(address payable _to, uint256 _amount) internal returns (bool) {
-        (bool callSuccess,) = _to.call{gas : config.WITHDRAWAL_GAS_LIMIT(), value : _amount}("");
+        (bool callSuccess,) = _to.call{gas : WITHDRAWAL_GAS_LIMIT, value : _amount}("");
         return callSuccess;
     }
 

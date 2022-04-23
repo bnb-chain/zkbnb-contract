@@ -5,13 +5,13 @@ pragma experimental ABIEncoderV2;
 
 import "./SafeMath.sol";
 import "./Events.sol";
-import "./Ownable.sol";
+import "./ZecreyOwnable.sol";
 import "./Upgradeable.sol";
 import "./UpgradeableMaster.sol";
 
 /// @title Upgrade Gatekeeper Contract
 /// @author Zecrey Team
-contract UpgradeGatekeeper is UpgradeEvents, Ownable {
+contract UpgradeGatekeeper is UpgradeEvents, ZecreyOwnable {
     using SafeMath for uint256;
 
     /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
@@ -43,7 +43,7 @@ contract UpgradeGatekeeper is UpgradeEvents, Ownable {
     /// @notice Contract constructor
     /// @param _mainContract Contract which defines notice period duration and allows finish upgrade during preparation of it
     /// @dev Calls Ownable contract constructor
-    constructor(UpgradeableMaster _mainContract, address sender) Ownable(sender) {
+    constructor(UpgradeableMaster _mainContract, address sender) ZecreyOwnable(sender) {
         mainContract = _mainContract;
         versionId = 0;
     }

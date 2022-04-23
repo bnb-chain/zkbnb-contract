@@ -40,6 +40,12 @@ interface Events {
         uint256 expirationBlock
     );
 
+    event RegisterZNS(
+        string name,
+        address owner,
+        bytes32 zecreyPubKey
+    );
+
     /// @notice Deposit committed event.
     event DepositCommit(
         uint32 indexed zecreyBlockNumber,
@@ -62,20 +68,22 @@ interface Events {
     event NoticePeriodChange(uint256 newNoticePeriod);
 
     /// @notice NFT deposit event.
-    event DepositERC721(
+    event DepositNFT(
         bytes32 accountNameHash,
         address tokenAddress,
-        uint256 nftTokenId
+        uint8 nftType,
+        uint256 nftTokenId,
+        uint32 amount
     );
 
     /// @notice NFT withdraw event.
     event WithdrawNFT (
-        address sender,
-        bytes32 accountName,
+        bytes32 accountNameHash,
         address tokenAddress,
-        address minter,
+        address toAddress,
+        address proxyAddress,
         uint8 nftType,
-        uint256 nftID,
+        uint256 nftTokenId,
         uint amount
     );
 }

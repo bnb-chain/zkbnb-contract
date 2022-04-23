@@ -44,7 +44,8 @@ contract AssetGovernance {
     address public treasury;
 
     function initialize(bytes calldata initializationParameters) external {
-        (address _governance, address _listingFeeToken, uint256 _listingFee, uint16 _listingCap, address _treasury) = abi.decode(initializationParameters, (address, address, uint256, uint16, address));
+        (address _governance, address _listingFeeToken, uint256 _listingFee, uint16 _listingCap, address _treasury) = 
+        abi.decode(initializationParameters, (address, address, uint256, uint16, address));
 
         governance = Governance(_governance);
         listingFeeToken = IERC20(_listingFeeToken);
@@ -65,7 +66,7 @@ contract AssetGovernance {
     /// @notice Adds new ERC20 token to Zecrey network.
     /// @notice If caller is not present in the `tokenLister` map payment of `listingFee` in `listingFeeToken` should be made.
     /// @notice NOTE: before calling this function make sure to approve `listingFeeToken` transfer for this contract.
-    function setAsset(uint16 _assetId, address _assetAddress) external {
+    function addAsset(address _assetAddress) external {
         require(governance.totalAssets() < listingCap, "can't add more tokens");
         // Impossible to add more tokens using this contract
         if (!tokenLister[msg.sender]) {

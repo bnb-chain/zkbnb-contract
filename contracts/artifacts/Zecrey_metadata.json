@@ -1,0 +1,1512 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint32",
+						"name": "blockNumber",
+						"type": "uint32"
+					}
+				],
+				"name": "BlockCommit",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint32",
+						"name": "blockNumber",
+						"type": "uint32"
+					}
+				],
+				"name": "BlockExecution",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint32",
+						"name": "blockNumber",
+						"type": "uint32"
+					}
+				],
+				"name": "BlockVerification",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint32",
+						"name": "totalBlocksVerified",
+						"type": "uint32"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint32",
+						"name": "totalBlocksCommitted",
+						"type": "uint32"
+					}
+				],
+				"name": "BlocksRevert",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint16",
+						"name": "assetId",
+						"type": "uint16"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "accountName",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint128",
+						"name": "amount",
+						"type": "uint128"
+					}
+				],
+				"name": "Deposit",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint32",
+						"name": "zecreyBlockNumber",
+						"type": "uint32"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint32",
+						"name": "accountIndex",
+						"type": "uint32"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "accountName",
+						"type": "bytes32"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint16",
+						"name": "assetId",
+						"type": "uint16"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint128",
+						"name": "amount",
+						"type": "uint128"
+					}
+				],
+				"name": "DepositCommit",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "accountNameHash",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "nftType",
+						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "nftTokenId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint32",
+						"name": "amount",
+						"type": "uint32"
+					}
+				],
+				"name": "DepositNFT",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [],
+				"name": "DesertMode",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "uint32",
+						"name": "zecreyBlockId",
+						"type": "uint32"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint32",
+						"name": "accountId",
+						"type": "uint32"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "uint16",
+						"name": "tokenId",
+						"type": "uint16"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint128",
+						"name": "amount",
+						"type": "uint128"
+					}
+				],
+				"name": "FullExitCommit",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint64",
+						"name": "serialId",
+						"type": "uint64"
+					},
+					{
+						"indexed": false,
+						"internalType": "enum TxTypes.TxType",
+						"name": "txType",
+						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes",
+						"name": "pubData",
+						"type": "bytes"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "expirationBlock",
+						"type": "uint256"
+					}
+				],
+				"name": "NewPriorityRequest",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "newNoticePeriod",
+						"type": "uint256"
+					}
+				],
+				"name": "NoticePeriodChange",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "zecreyPubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "RegisterZNS",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "accountNameHash",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "toAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "proxyAddress",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint8",
+						"name": "nftType",
+						"type": "uint8"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "nftTokenId",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "WithdrawNFT",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint16",
+						"name": "assetId",
+						"type": "uint16"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint128",
+						"name": "amount",
+						"type": "uint128"
+					}
+				],
+				"name": "Withdrawal",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint16",
+						"name": "assetId",
+						"type": "uint16"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint128",
+						"name": "amount",
+						"type": "uint128"
+					}
+				],
+				"name": "WithdrawalPending",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "MAX_ACCOUNT_INDEX",
+				"outputs": [
+					{
+						"internalType": "uint32",
+						"name": "",
+						"type": "uint32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "MAX_AMOUNT_OF_REGISTERED_ASSETS",
+				"outputs": [
+					{
+						"internalType": "uint16",
+						"name": "",
+						"type": "uint16"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "MAX_DEPOSIT_AMOUNT",
+				"outputs": [
+					{
+						"internalType": "uint128",
+						"name": "",
+						"type": "uint128"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "MAX_FUNGIBLE_ASSET_ID",
+				"outputs": [
+					{
+						"internalType": "uint32",
+						"name": "",
+						"type": "uint32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "SECURITY_COUNCIL_MEMBERS_NUMBER",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "SPECIAL_ACCOUNT_ADDRESS",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "SPECIAL_ACCOUNT_ID",
+				"outputs": [
+					{
+						"internalType": "uint32",
+						"name": "",
+						"type": "uint32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "UPGRADE_NOTICE_PERIOD",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "WITHDRAWAL_GAS_LIMIT",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract IERC20",
+						"name": "_token",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint128",
+						"name": "_amount",
+						"type": "uint128"
+					},
+					{
+						"internalType": "uint128",
+						"name": "_maxAmount",
+						"type": "uint128"
+					}
+				],
+				"name": "_transferERC20",
+				"outputs": [
+					{
+						"internalType": "uint128",
+						"name": "withdrawnAmount",
+						"type": "uint128"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "accountRoot",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "activateDesertMode",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"components": [
+							{
+								"internalType": "uint32",
+								"name": "blockNumber",
+								"type": "uint32"
+							},
+							{
+								"internalType": "uint64",
+								"name": "priorityOperations",
+								"type": "uint64"
+							},
+							{
+								"internalType": "bytes32",
+								"name": "pendingOnchainOperationsHash",
+								"type": "bytes32"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							},
+							{
+								"internalType": "bytes32",
+								"name": "accountRoot",
+								"type": "bytes32"
+							},
+							{
+								"internalType": "bytes32",
+								"name": "commitment",
+								"type": "bytes32"
+							}
+						],
+						"internalType": "struct Storage.BlockHeader",
+						"name": "_lastCommittedBlockData",
+						"type": "tuple"
+					},
+					{
+						"components": [
+							{
+								"internalType": "bytes32",
+								"name": "newAccountRoot",
+								"type": "bytes32"
+							},
+							{
+								"internalType": "bytes",
+								"name": "publicData",
+								"type": "bytes"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint32[]",
+								"name": "publicDataOffsets",
+								"type": "uint32[]"
+							},
+							{
+								"internalType": "uint32",
+								"name": "blockNumber",
+								"type": "uint32"
+							}
+						],
+						"internalType": "struct Zecrey.CommitBlockInfo[]",
+						"name": "_newBlocksData",
+						"type": "tuple[]"
+					}
+				],
+				"name": "commitBlocks",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "_onchainOpsPubData",
+						"type": "bytes"
+					}
+				],
+				"name": "computeOnchainOpsHash",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "onchainOpsDataHash",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "cutUpgradeNoticePeriod",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "contract IERC20",
+						"name": "_token",
+						"type": "address"
+					},
+					{
+						"internalType": "uint104",
+						"name": "_amount",
+						"type": "uint104"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_accountName",
+						"type": "bytes32"
+					}
+				],
+				"name": "depositBEP20",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "_accountNameHash",
+						"type": "bytes32"
+					}
+				],
+				"name": "depositBNB",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "_accountNameHash",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "_tokenAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "enum TxTypes.NftType",
+						"name": "_nftType",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_nftTokenId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint32",
+						"name": "_amount",
+						"type": "uint32"
+					}
+				],
+				"name": "depositNFT",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "desertMode",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "firstPriorityRequestId",
+				"outputs": [
+					{
+						"internalType": "uint64",
+						"name": "",
+						"type": "uint64"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "accountNameHash",
+						"type": "bytes32"
+					}
+				],
+				"name": "getAddressByAccountNameHash",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getNoticePeriod",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_address",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_assetAddr",
+						"type": "address"
+					}
+				],
+				"name": "getPendingBalance",
+				"outputs": [
+					{
+						"internalType": "uint128",
+						"name": "",
+						"type": "uint128"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "initializationParameters",
+						"type": "bytes"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "isReadyForUpgrade",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_zecreyPubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "registerZNS",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"components": [
+							{
+								"internalType": "bytes32",
+								"name": "newAccountRoot",
+								"type": "bytes32"
+							},
+							{
+								"internalType": "bytes",
+								"name": "publicData",
+								"type": "bytes"
+							},
+							{
+								"internalType": "uint256",
+								"name": "timestamp",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint32[]",
+								"name": "publicDataOffsets",
+								"type": "uint32[]"
+							},
+							{
+								"internalType": "uint32",
+								"name": "blockNumber",
+								"type": "uint32"
+							}
+						],
+						"internalType": "struct Zecrey.CommitBlockInfo[]",
+						"name": "_blocksToRevert",
+						"type": "tuple[]"
+					}
+				],
+				"name": "revertBlocks",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint32",
+						"name": "",
+						"type": "uint32"
+					}
+				],
+				"name": "storedBlockHeaderHashes",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalBlocksCommitted",
+				"outputs": [
+					{
+						"internalType": "uint32",
+						"name": "",
+						"type": "uint32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalBlocksVerified",
+				"outputs": [
+					{
+						"internalType": "uint32",
+						"name": "",
+						"type": "uint32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalOpenPriorityRequests",
+				"outputs": [
+					{
+						"internalType": "uint64",
+						"name": "",
+						"type": "uint64"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "upgradeParameters",
+						"type": "bytes"
+					}
+				],
+				"name": "upgrade",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "upgradeCanceled",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "upgradeFinishes",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "upgradeNoticePeriodStarted",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "upgradePreparationStarted",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"components": [
+							{
+								"components": [
+									{
+										"internalType": "uint32",
+										"name": "blockNumber",
+										"type": "uint32"
+									},
+									{
+										"internalType": "uint64",
+										"name": "priorityOperations",
+										"type": "uint64"
+									},
+									{
+										"internalType": "bytes32",
+										"name": "pendingOnchainOperationsHash",
+										"type": "bytes32"
+									},
+									{
+										"internalType": "uint256",
+										"name": "timestamp",
+										"type": "uint256"
+									},
+									{
+										"internalType": "bytes32",
+										"name": "accountRoot",
+										"type": "bytes32"
+									},
+									{
+										"internalType": "bytes32",
+										"name": "commitment",
+										"type": "bytes32"
+									}
+								],
+								"internalType": "struct Storage.BlockHeader",
+								"name": "blockHeader",
+								"type": "tuple"
+							},
+							{
+								"internalType": "bytes[]",
+								"name": "pendingOnchainOpsPubdata",
+								"type": "bytes[]"
+							}
+						],
+						"internalType": "struct Zecrey.VerifyBlockInfo[]",
+						"name": "_blocks",
+						"type": "tuple[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "_proofs",
+						"type": "uint256[]"
+					}
+				],
+				"name": "verifyBlocks",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address payable",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_token",
+						"type": "address"
+					},
+					{
+						"internalType": "uint128",
+						"name": "_amount",
+						"type": "uint128"
+					}
+				],
+				"name": "withdrawPendingBalance",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"author": "Zecrey Team",
+			"kind": "dev",
+			"methods": {
+				"_transferERC20(address,address,uint128,uint128)": {
+					"details": "NOTE: will revert if transfer call fails or rollup balance difference (before and after transfer) is bigger than _maxAmountThis function is used to allow tokens to spend Zecrey contract balance up to amount that is requested",
+					"params": {
+						"_amount": "Amount of tokens to transfer",
+						"_maxAmount": "Maximum possible amount of tokens to transfer to this account",
+						"_to": "Address of recipient",
+						"_token": "Token address"
+					}
+				},
+				"activateDesertMode()": {
+					"details": "Desert mode must be entered in case of current ethereum block number is higher than the oldestof existed priority requests expiration block number.",
+					"returns": {
+						"_0": "bool flag that is true if the Exodus mode must be entered."
+					}
+				},
+				"computeOnchainOpsHash(bytes)": {
+					"params": {
+						"_onchainOpsPubData": "The public data of onchain operations"
+					}
+				},
+				"depositBEP20(address,uint104,bytes32)": {
+					"params": {
+						"_accountName": "Receiver Layer 2 account name",
+						"_amount": "Token amount",
+						"_token": "Token address"
+					}
+				},
+				"depositBNB(bytes32)": {
+					"params": {
+						"_accountNameHash": "The receiver Layer 2 account name"
+					}
+				},
+				"getPendingBalance(address,address)": {
+					"params": {
+						"_address": "The layer-1 address",
+						"_assetAddr": "Token address"
+					}
+				},
+				"initialize(bytes)": {
+					"details": "_governanceAddress The address of Governance contract_verifierAddress The address of Verifier contract_genesisStateHash Genesis blocks (first block) state tree root hash",
+					"params": {
+						"initializationParameters": "Encoded representation of initialization parameters:"
+					}
+				},
+				"isReadyForUpgrade()": {
+					"returns": {
+						"_0": "bool flag indicating that contract is ready for upgrade"
+					}
+				},
+				"upgradeCanceled()": {
+					"details": "Can be external because Proxy contract intercepts illegal calls of this function"
+				},
+				"upgradeFinishes()": {
+					"details": "Can be external because Proxy contract intercepts illegal calls of this function"
+				},
+				"upgradeNoticePeriodStarted()": {
+					"details": "Can be external because Proxy contract intercepts illegal calls of this function"
+				},
+				"upgradePreparationStarted()": {
+					"details": "Can be external because Proxy contract intercepts illegal calls of this function"
+				},
+				"verifyBlocks(((uint32,uint64,bytes32,uint256,bytes32,bytes32),bytes[])[],uint256[])": {
+					"params": {
+						"_blocks": "Verified blocks info",
+						"_proofs": "proofs"
+					}
+				},
+				"withdrawPendingBalance(address,address,uint128)": {
+					"params": {
+						"_amount": "Amount to withdraw to request.         NOTE: We will call ERC20.transfer(.., _amount), but if according to internal logic of ERC20 token Zecrey contract         balance will be decreased by value more then _amount we will try to subtract this value from user pending balance",
+						"_owner": "Address of the tokens owner",
+						"_token": "Address of tokens, zero address is used for Native Asset"
+					}
+				}
+			},
+			"title": "Zecrey main contract",
+			"version": 1
+		},
+		"userdoc": {
+			"events": {
+				"BlockCommit(uint32)": {
+					"notice": "Event emitted when a block is committed"
+				},
+				"BlockVerification(uint32)": {
+					"notice": "Event emitted when a block is verified"
+				},
+				"BlocksRevert(uint32,uint32)": {
+					"notice": "Event emitted when blocks are reverted"
+				},
+				"Deposit(uint16,bytes32,uint128)": {
+					"notice": "Event emitted when user funds are deposited to the zecrey account"
+				},
+				"DepositCommit(uint32,uint32,bytes32,uint16,uint128)": {
+					"notice": "Deposit committed event."
+				},
+				"DepositNFT(bytes32,address,uint8,uint256,uint32)": {
+					"notice": "NFT deposit event."
+				},
+				"DesertMode()": {
+					"notice": "Exodus mode entered event"
+				},
+				"FullExitCommit(uint32,uint32,address,uint16,uint128)": {
+					"notice": "Full exit committed event."
+				},
+				"NewPriorityRequest(address,uint64,uint8,bytes,uint256)": {
+					"notice": "New priority request event. Emitted when a request is placed into mapping"
+				},
+				"NoticePeriodChange(uint256)": {
+					"notice": "Notice period changed"
+				},
+				"WithdrawNFT(bytes32,address,address,address,uint8,uint256,uint256)": {
+					"notice": "NFT withdraw event."
+				},
+				"Withdrawal(uint16,uint128)": {
+					"notice": "Event emitted when user funds are withdrawn from the Zecrey state and contract"
+				},
+				"WithdrawalPending(uint16,uint128)": {
+					"notice": "Event emitted when user funds are withdrawn from the Zecrey state but not from contract"
+				}
+			},
+			"kind": "user",
+			"methods": {
+				"_transferERC20(address,address,uint128,uint128)": {
+					"notice": "Sends tokens"
+				},
+				"activateDesertMode()": {
+					"notice": "Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event."
+				},
+				"commitBlocks((uint32,uint64,bytes32,uint256,bytes32,bytes32),(bytes32,bytes,uint256,uint32[],uint32)[])": {
+					"notice": "Commit block1. Checks onchain operations, timestamp."
+				},
+				"computeOnchainOpsHash(bytes)": {
+					"notice": "Compute onchain operations hash"
+				},
+				"depositBEP20(address,uint104,bytes32)": {
+					"notice": "Deposit or Lock ERC20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit"
+				},
+				"depositBNB(bytes32)": {
+					"notice": "Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit"
+				},
+				"depositNFT(bytes32,address,uint8,uint256,uint32)": {
+					"notice": "Deposit NFT to Layer 2, both ERC721 and ERC1155 is supported"
+				},
+				"getNoticePeriod()": {
+					"notice": "Notice period before activation preparation status of upgrade mode"
+				},
+				"getPendingBalance(address,address)": {
+					"notice": "Get pending balance that the user can withdraw"
+				},
+				"initialize(bytes)": {
+					"notice": "Zecrey contract initialization. Can be external because Proxy contract intercepts illegal calls of this function."
+				},
+				"isReadyForUpgrade()": {
+					"notice": "Checks that contract is ready for upgrade"
+				},
+				"revertBlocks((bytes32,bytes,uint256,uint32[],uint32)[])": {
+					"notice": "Reverts unverified blocks"
+				},
+				"totalBlocksCommitted()": {
+					"notice": "Total number of committed blocks i.e. blocks[totalBlocksCommitted] points at the latest committed block"
+				},
+				"upgradeCanceled()": {
+					"notice": "Notification that upgrade canceled"
+				},
+				"upgradeFinishes()": {
+					"notice": "Notification that upgrade finishes"
+				},
+				"upgradeNoticePeriodStarted()": {
+					"notice": "Notification that upgrade notice period started"
+				},
+				"upgradePreparationStarted()": {
+					"notice": "Notification that upgrade preparation status is activated"
+				},
+				"verifyBlocks(((uint32,uint64,bytes32,uint256,bytes32,bytes32),bytes[])[],uint256[])": {
+					"notice": "Verify layer-2 blocks proofs"
+				},
+				"withdrawPendingBalance(address,address,uint128)": {
+					"notice": "Withdraws tokens from Zecrey contract to the owner"
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ZecreyLegend.sol": "Zecrey"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/AdditionalZecreyLegend.sol": {
+			"keccak256": "0x6a70263b1a5fc4844719e2d3a2bee5fb666b5c024b27e7b5ed5fb8ca8cab49e5",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://be74b25a559620cee12f50ed7462a8424a76435277e0c7ee3242646153791e6c",
+				"dweb:/ipfs/QmNVzh2FyJ8TKU9ZigJqzSJVWM8hfBAfeG4o9H27fch6Mq"
+			]
+		},
+		"contracts/AssetGovernance.sol": {
+			"keccak256": "0x8915104d8f3b4d733395409925b2b0ee58fc08f86c87d99b423a8e7fef4a4350",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://540608a5c6eafeee4dd446043d4ddced8e9661811e45f0332ae1119d0c27d47b",
+				"dweb:/ipfs/QmaWoae8yRjWEM8R5uuDz4oB2Yi6TeiBCZf23pcRDLyWev"
+			]
+		},
+		"contracts/Bytes.sol": {
+			"keccak256": "0xa8005f882d82cd05326ef4eed935af5801d4b1b027bcedbc01ea121625473688",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://44421d171d49527888b830c0ea7efd9d3d951dd0383deac5f72902d0de47a3e7",
+				"dweb:/ipfs/QmTYD74wW8Xy9Pm5QcKzyqupeL3gsKqULH56nx8wHPf1qV"
+			]
+		},
+		"contracts/Config.sol": {
+			"keccak256": "0x7e399f75b278938e11a6b301d2e22902f134f691331b70440d06d04614789fff",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://d8536af699a838f5aa103fa526272aa88bc5ea70195d65a06ff3ac32b95110a1",
+				"dweb:/ipfs/QmUNH6NDMfoCJozKe46DhebTKqZu2YUJkVvkAVcRUSQ35J"
+			]
+		},
+		"contracts/Events.sol": {
+			"keccak256": "0xeb0ef7253d62b88cf77155aefd6331c4e5b1a41838eaa81b8daeca6b4608f10a",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://8bf194f8e6bd37b07457bae82d4562a59f4ea88d991245085c7ef568cfa7bda9",
+				"dweb:/ipfs/QmbdMKiucFHJCrRfGQ5mFfjvJv8M7EsXVpnydcYTc2tXPj"
+			]
+		},
+		"contracts/Governance.sol": {
+			"keccak256": "0x97fc2812e2de4549ab3f4037d55f0caa35c8ec5e36e71e2b8d02d478ca9e79e7",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://8db8a8970175a486f18ec3cead86217766c3d7ad5f1d80f356f596ffe63faf77",
+				"dweb:/ipfs/QmeG2Yb3AnzwVUSk36XpDusfcGdLwbypqJb4LVNwu76zVs"
+			]
+		},
+		"contracts/IBaseRegistrar.sol": {
+			"keccak256": "0x0b9cc2c012c58eab5422ed9c1fe9e58d8b15b13d013f836bd5d2af6a9fc11f27",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://56cbc0b53528b24aa8ae3e5916bb6f8b247c8f27b46e085dd561bce7c7022dc3",
+				"dweb:/ipfs/QmQ6x181Yetu66Lm7bgU5twczS2HuNdBYrtSQNQLuY2DC5"
+			]
+		},
+		"contracts/IERC1155.sol": {
+			"keccak256": "0xf1e3e28642f3d0c68e52fef2c3b5c52a2e495fa3433d8213bd89f69f45fdb7ee",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://c6fec83de612ff61b970a135ec3abd2823f4904083771a4ec029dd4f572524d5",
+				"dweb:/ipfs/QmV5F5DxAL5sixKNDgNrLA2AiFN7z8VC9xYNdMmsNYymAL"
+			]
+		},
+		"contracts/IERC165.sol": {
+			"keccak256": "0xbfae31be27997c5af4b67af52fcc834ed63e9c58cf90ca9cd019c8cc5420fccd",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://16dbe542a4c9c8c336b464743f126389ac2c266b4efd8265bbdf1044fcfe2d5a",
+				"dweb:/ipfs/QmRfsWR1f6WT9vr5y76d2KzzgiCVM6nKNdUZnbg9JvJDk6"
+			]
+		},
+		"contracts/IERC20.sol": {
+			"keccak256": "0x2add7135df03770ca7c4bf4715257b4230f433efed9c526a9802971696769599",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://cd9de6fd72348f224117221164449eb4269a1fc176c5ccb9e9a21d605b695015",
+				"dweb:/ipfs/QmXRX2gmG3nKK9vNV8hbhAzKqTvrsbH9YEYRdZYUypqehv"
+			]
+		},
+		"contracts/IERC721.sol": {
+			"keccak256": "0x8548847b3eb9e205d9ee073e9f531233b28c2cf6f60df5e4ef23db2ee76a149e",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://fb0d276cca1b45dd12084530048194d575f29d56e0e5dd06cfaebceab10f16ea",
+				"dweb:/ipfs/QmT17wowtXbnm59YFa8EhrjAeyjdtUQvwjLemKHLh8ZHDT"
+			]
+		},
+		"contracts/NFTFactory.sol": {
+			"keccak256": "0x2b89dc0efebdc883876f9603c770e1489786b220abc8290574ea5d626e714750",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://97895fe8ccf1c9c9d9fd2c77b2a3c59318de8c949203a406558043a8cc04f6f7",
+				"dweb:/ipfs/QmV1asxkdGBXfN7v4L8LTkZSjtVciscm4NeyRTjoRbMbBd"
+			]
+		},
+		"contracts/Ownable.sol": {
+			"keccak256": "0x4a7b7d2ab0364f6bce20df0a87ec6ac6138172b04e551fc665d36112eeeb5869",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://70a62c43a9a7880b631fc6d50e4b5d9fa9d4ed0ff66a79725d49cbaae06e34e2",
+				"dweb:/ipfs/QmdRePNZLkt2QGgYS9fqAkGUJvvYLBKVdcLbtDCMJDVWJZ"
+			]
+		},
+		"contracts/Pairing.sol": {
+			"keccak256": "0x71ddce87ef82ca4526ffc275be599cfd1b36fb6c3e59b6723ef9194749c68c70",
+			"license": "AML",
+			"urls": [
+				"bzz-raw://bb8847a18af5ead3e55cc1dcf14b18f86597a93973803b42ebe660aba4106c7b",
+				"dweb:/ipfs/QmWoyUMfjxx3TTL8bJzDDaRtW5JScfZVyAZktH8qZwQokv"
+			]
+		},
+		"contracts/ReentrancyGuard.sol": {
+			"keccak256": "0xc8dfcc2fe5632305fae70b5bc888ec1220315f6f73430be3c66efce7b87fd7ae",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://fde54476d0fb4a5904e4801c46b8bd350fa5ae4c17f77362d333bd2b861fbab2",
+				"dweb:/ipfs/QmYJ2WVkRSbJFSve3HbE7HLLEAGY44RZcGj8KVJNnMJHTM"
+			]
+		},
+		"contracts/SafeCast.sol": {
+			"keccak256": "0x2c55d4cae3609db3a7594ef13c2fcac4a90467a615688be698c5db46eab763dd",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://921f6bd8c999a64969e445715b5653b7448ed9eefa56c810044f7dd455f2e7b6",
+				"dweb:/ipfs/QmV6JxpbZHrEvf4LUHJDddWUjqrpvJdJXGdptvJxKxhpag"
+			]
+		},
+		"contracts/SafeMath.sol": {
+			"keccak256": "0xf9ae924a763e15733f169ecd1a27642d8c4764aedb3af2abace45238935ea70c",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://e32713abc94ce69b42c2a05fd25a985317499bc2f0f486fa599d64460f06d339",
+				"dweb:/ipfs/QmVaPWvUmmpARCSjgSn1iyaU8UGaaUEs9F2wZnetkr1cdj"
+			]
+		},
+		"contracts/SafeMathUInt128.sol": {
+			"keccak256": "0xb73334e88634a7621db8bd8eba20622b50de91013249c18d9c5e19d30baed556",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://a6389d54baff652ab9faf31268e789a13c422aa8a662cc07d2d768fe57fc4c3d",
+				"dweb:/ipfs/QmZnhWca3ih1DMQKeEoa353VERYtm1nf9315rAVgcqdgwM"
+			]
+		},
+		"contracts/SafeMathUInt32.sol": {
+			"keccak256": "0xd93722d4a31ba470179651597d0b25c92537f4dd15055c5b4eda8f0882da6661",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://73c4f65c486905f0759fe61e5f228a6b32c4a922243c2dd2fb9d1edeb4a94a46",
+				"dweb:/ipfs/QmNrMRDyFSncrs2Da6A73goJ9NiQgiBN2hZoyG9VXpHNcB"
+			]
+		},
+		"contracts/Storage.sol": {
+			"keccak256": "0x2bdce1592aca0d0a8713a7f5fdcecffbb7731f74b68806ca627c97f1e28bab4a",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://8912f839d8ef9fa7078e98d0d455a1c9d15d8e727ff60e1e71ee96de629b77f3",
+				"dweb:/ipfs/QmURsAnTSbP1ogPH11PgnmRf8aJd5sD4f8Km2dFL1boc5f"
+			]
+		},
+		"contracts/TxTypes.sol": {
+			"keccak256": "0xab85f42bf9dcc1da827d043ffc7ce99b5bb87d380f8e037064096a0893e39c13",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://d090e8b36444a728446762ddbf1e8e7fbace5d8e40282f4731eb8a88e9509e44",
+				"dweb:/ipfs/QmSkBDkgeoxTnd9K9BxTMu1WqpRGTLNsfigVyWWdZAoqnS"
+			]
+		},
+		"contracts/Upgradeable.sol": {
+			"keccak256": "0x342911c81845cd493ddd2f06d2dbccab5ad230c36c1051c903a23ba697b3c9c4",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://d9a04ad85e9a9714d2c00c95b0a5a8ff2bc670b5cc78743d53dd76f6a9df81b9",
+				"dweb:/ipfs/QmQuHhHEm2tSmJXCt7exCgSNHCm1iYAgqTin6S3V25pfSn"
+			]
+		},
+		"contracts/UpgradeableMaster.sol": {
+			"keccak256": "0x6c35dbac13375fe02c8bda04122be1bdf75dd797242cda08f1447729e6de1908",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://57c9885d0b8f21c33b4e501b03bf8080ebace3170e911e495224a599be287c24",
+				"dweb:/ipfs/QmVXkxySjaERVy6GhQopRRDBLMxjus2vEth87xXYndtETg"
+			]
+		},
+		"contracts/Utils.sol": {
+			"keccak256": "0x9308fe5d2c6ce9a71abc3995b4b81532ad53a808b045c6ae630b49484a0295ea",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://7de002e08e7dc1020bc7a85fab76de1461740c471dd0a492ed7b861a4bd544c5",
+				"dweb:/ipfs/QmdtNPkAoiXejN4pUP3SsGEyLPQWFdLh4cDYpzaPpTuTi6"
+			]
+		},
+		"contracts/ZNS.sol": {
+			"keccak256": "0x20229f553c6f4e2ff1c1ab2b10b56d3d65304cdc0b928f864a4db931441759d6",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://bdee2fb7d4749e35db1be63ced699199a47300db22007038f9d3fe3b030df9bc",
+				"dweb:/ipfs/QmTHbNvnAEzgArKc9ohjNZMCHczkY3zRcMAC7VMX5c7PrR"
+			]
+		},
+		"contracts/ZNSFIFSRegistrar.sol": {
+			"keccak256": "0xa70c61c67629aef46a923f6ba3cefc19e102a429166dc891f6b045b08faea7a5",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://a07537cf6378bdae9d77d2bd58ca85c193cb8d24a0e9b0acfb5fa117f3d30431",
+				"dweb:/ipfs/QmaKLfYtEtertMg5kiwBkSDGZfZsmKMqgtERYaHBL6k1eG"
+			]
+		},
+		"contracts/ZecreyLegend.sol": {
+			"keccak256": "0x4b269b5cbb07a6473ec26be9b83d5c85e84baa792b5064f8e65bcaa71d2e6aea",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://7a1ee680cc3bf9b8db8ed80bf52f8c2f2b6565bbc914bea1755cdc7dd7f7703d",
+				"dweb:/ipfs/QmRRvhweH7RtNNBsc9qMjTGCSFzXcWd9Bp7CC3tENFisTR"
+			]
+		},
+		"contracts/ZecreyVerifier.sol": {
+			"keccak256": "0xcbe23df26461aafb609d53430428aba27ac8c4e2b12d8d1460704c152f6c2238",
+			"license": "AML",
+			"urls": [
+				"bzz-raw://830bb77626c6d5121c625dc0246c1393b1618199f36fb85370d06966b12ded8c",
+				"dweb:/ipfs/QmY2gveYbMmiGktr2gWaWVoVaHA9wNmkVfzja6FaffESC5"
+			]
+		},
+		"contracts/utils/Names.sol": {
+			"keccak256": "0xfaf6024928eee108f72ef07872c7f12405a6ac934f8e3a593a4d01e6499e13dd",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://6d1d804365b4a09c36e47a610e94f0ff706605af9e364d316a2e33e7eeb47f1a",
+				"dweb:/ipfs/QmPNRP1nXMMhPiHjjLK4oLakkmKQWuxb2AhybS63zggNYY"
+			]
+		}
+	},
+	"version": 1
+}

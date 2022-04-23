@@ -1,0 +1,390 @@
+{
+	"id": "b3877283acdbdbc283bea16eec176a7f",
+	"_format": "hh-sol-build-info-1",
+	"solcVersion": "0.7.6",
+	"solcLongVersion": "0.7.6+commit.7338295f",
+	"input": {
+		"language": "Solidity",
+		"sources": {
+			"contracts/NFTFactory.sol": {
+				"content": "// SPDX-License-Identifier: UNLICENSED\n\npragma solidity ^0.7.6;\n\n\ninterface NFTFactory\n{\n\n    function mintFromZecrey(\n        address _creatorAddress,\n        address _toAddress,\n        address _factoryAddress,\n        uint256 _nftTokenId,\n        uint32 _amount,\n        bytes32 _nftContentHash,\n        bytes memory _extraData\n    )\n    external;\n}"
+			}
+		},
+		"settings": {
+			"optimizer": {
+				"enabled": true,
+				"runs": 200
+			},
+			"outputSelection": {
+				"*": {
+					"": [
+						"ast"
+					],
+					"*": [
+						"abi",
+						"metadata",
+						"devdoc",
+						"userdoc",
+						"storageLayout",
+						"evm.legacyAssembly",
+						"evm.bytecode",
+						"evm.deployedBytecode",
+						"evm.methodIdentifiers",
+						"evm.gasEstimates",
+						"evm.assembly"
+					]
+				}
+			}
+		}
+	},
+	"output": {
+		"contracts": {
+			"contracts/NFTFactory.sol": {
+				"NFTFactory": {
+					"abi": [
+						{
+							"inputs": [
+								{
+									"internalType": "address",
+									"name": "_creatorAddress",
+									"type": "address"
+								},
+								{
+									"internalType": "address",
+									"name": "_toAddress",
+									"type": "address"
+								},
+								{
+									"internalType": "address",
+									"name": "_factoryAddress",
+									"type": "address"
+								},
+								{
+									"internalType": "uint256",
+									"name": "_nftTokenId",
+									"type": "uint256"
+								},
+								{
+									"internalType": "uint32",
+									"name": "_amount",
+									"type": "uint32"
+								},
+								{
+									"internalType": "bytes32",
+									"name": "_nftContentHash",
+									"type": "bytes32"
+								},
+								{
+									"internalType": "bytes",
+									"name": "_extraData",
+									"type": "bytes"
+								}
+							],
+							"name": "mintFromZecrey",
+							"outputs": [],
+							"stateMutability": "nonpayable",
+							"type": "function"
+						}
+					],
+					"devdoc": {
+						"kind": "dev",
+						"methods": {},
+						"version": 1
+					},
+					"evm": {
+						"assembly": "",
+						"bytecode": {
+							"generatedSources": [],
+							"linkReferences": {},
+							"object": "",
+							"opcodes": "",
+							"sourceMap": ""
+						},
+						"deployedBytecode": {
+							"generatedSources": [],
+							"immutableReferences": {},
+							"linkReferences": {},
+							"object": "",
+							"opcodes": "",
+							"sourceMap": ""
+						},
+						"gasEstimates": null,
+						"legacyAssembly": null,
+						"methodIdentifiers": {
+							"mintFromZecrey(address,address,address,uint256,uint32,bytes32,bytes)": "54f8b152"
+						}
+					},
+					"metadata": "{\"compiler\":{\"version\":\"0.7.6+commit.7338295f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_creatorAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_toAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_factoryAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_nftTokenId\",\"type\":\"uint256\"},{\"internalType\":\"uint32\",\"name\":\"_amount\",\"type\":\"uint32\"},{\"internalType\":\"bytes32\",\"name\":\"_nftContentHash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"mintFromZecrey\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/NFTFactory.sol\":\"NFTFactory\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/NFTFactory.sol\":{\"keccak256\":\"0x2b89dc0efebdc883876f9603c770e1489786b220abc8290574ea5d626e714750\",\"license\":\"UNLICENSED\",\"urls\":[\"bzz-raw://97895fe8ccf1c9c9d9fd2c77b2a3c59318de8c949203a406558043a8cc04f6f7\",\"dweb:/ipfs/QmV1asxkdGBXfN7v4L8LTkZSjtVciscm4NeyRTjoRbMbBd\"]}},\"version\":1}",
+					"storageLayout": {
+						"storage": [],
+						"types": null
+					},
+					"userdoc": {
+						"kind": "user",
+						"methods": {},
+						"version": 1
+					}
+				}
+			}
+		},
+		"sources": {
+			"contracts/NFTFactory.sol": {
+				"ast": {
+					"absolutePath": "contracts/NFTFactory.sol",
+					"exportedSymbols": {
+						"NFTFactory": [
+							19
+						]
+					},
+					"id": 20,
+					"license": "UNLICENSED",
+					"nodeType": "SourceUnit",
+					"nodes": [
+						{
+							"id": 1,
+							"literals": [
+								"solidity",
+								"^",
+								"0.7",
+								".6"
+							],
+							"nodeType": "PragmaDirective",
+							"src": "40:23:0"
+						},
+						{
+							"abstract": false,
+							"baseContracts": [],
+							"contractDependencies": [],
+							"contractKind": "interface",
+							"fullyImplemented": false,
+							"id": 19,
+							"linearizedBaseContracts": [
+								19
+							],
+							"name": "NFTFactory",
+							"nodeType": "ContractDefinition",
+							"nodes": [
+								{
+									"functionSelector": "54f8b152",
+									"id": 18,
+									"implemented": false,
+									"kind": "function",
+									"modifiers": [],
+									"name": "mintFromZecrey",
+									"nodeType": "FunctionDefinition",
+									"parameters": {
+										"id": 16,
+										"nodeType": "ParameterList",
+										"parameters": [
+											{
+												"constant": false,
+												"id": 3,
+												"mutability": "mutable",
+												"name": "_creatorAddress",
+												"nodeType": "VariableDeclaration",
+												"scope": 18,
+												"src": "127:23:0",
+												"stateVariable": false,
+												"storageLocation": "default",
+												"typeDescriptions": {
+													"typeIdentifier": "t_address",
+													"typeString": "address"
+												},
+												"typeName": {
+													"id": 2,
+													"name": "address",
+													"nodeType": "ElementaryTypeName",
+													"src": "127:7:0",
+													"stateMutability": "nonpayable",
+													"typeDescriptions": {
+														"typeIdentifier": "t_address",
+														"typeString": "address"
+													}
+												},
+												"visibility": "internal"
+											},
+											{
+												"constant": false,
+												"id": 5,
+												"mutability": "mutable",
+												"name": "_toAddress",
+												"nodeType": "VariableDeclaration",
+												"scope": 18,
+												"src": "160:18:0",
+												"stateVariable": false,
+												"storageLocation": "default",
+												"typeDescriptions": {
+													"typeIdentifier": "t_address",
+													"typeString": "address"
+												},
+												"typeName": {
+													"id": 4,
+													"name": "address",
+													"nodeType": "ElementaryTypeName",
+													"src": "160:7:0",
+													"stateMutability": "nonpayable",
+													"typeDescriptions": {
+														"typeIdentifier": "t_address",
+														"typeString": "address"
+													}
+												},
+												"visibility": "internal"
+											},
+											{
+												"constant": false,
+												"id": 7,
+												"mutability": "mutable",
+												"name": "_factoryAddress",
+												"nodeType": "VariableDeclaration",
+												"scope": 18,
+												"src": "188:23:0",
+												"stateVariable": false,
+												"storageLocation": "default",
+												"typeDescriptions": {
+													"typeIdentifier": "t_address",
+													"typeString": "address"
+												},
+												"typeName": {
+													"id": 6,
+													"name": "address",
+													"nodeType": "ElementaryTypeName",
+													"src": "188:7:0",
+													"stateMutability": "nonpayable",
+													"typeDescriptions": {
+														"typeIdentifier": "t_address",
+														"typeString": "address"
+													}
+												},
+												"visibility": "internal"
+											},
+											{
+												"constant": false,
+												"id": 9,
+												"mutability": "mutable",
+												"name": "_nftTokenId",
+												"nodeType": "VariableDeclaration",
+												"scope": 18,
+												"src": "221:19:0",
+												"stateVariable": false,
+												"storageLocation": "default",
+												"typeDescriptions": {
+													"typeIdentifier": "t_uint256",
+													"typeString": "uint256"
+												},
+												"typeName": {
+													"id": 8,
+													"name": "uint256",
+													"nodeType": "ElementaryTypeName",
+													"src": "221:7:0",
+													"typeDescriptions": {
+														"typeIdentifier": "t_uint256",
+														"typeString": "uint256"
+													}
+												},
+												"visibility": "internal"
+											},
+											{
+												"constant": false,
+												"id": 11,
+												"mutability": "mutable",
+												"name": "_amount",
+												"nodeType": "VariableDeclaration",
+												"scope": 18,
+												"src": "250:14:0",
+												"stateVariable": false,
+												"storageLocation": "default",
+												"typeDescriptions": {
+													"typeIdentifier": "t_uint32",
+													"typeString": "uint32"
+												},
+												"typeName": {
+													"id": 10,
+													"name": "uint32",
+													"nodeType": "ElementaryTypeName",
+													"src": "250:6:0",
+													"typeDescriptions": {
+														"typeIdentifier": "t_uint32",
+														"typeString": "uint32"
+													}
+												},
+												"visibility": "internal"
+											},
+											{
+												"constant": false,
+												"id": 13,
+												"mutability": "mutable",
+												"name": "_nftContentHash",
+												"nodeType": "VariableDeclaration",
+												"scope": 18,
+												"src": "274:23:0",
+												"stateVariable": false,
+												"storageLocation": "default",
+												"typeDescriptions": {
+													"typeIdentifier": "t_bytes32",
+													"typeString": "bytes32"
+												},
+												"typeName": {
+													"id": 12,
+													"name": "bytes32",
+													"nodeType": "ElementaryTypeName",
+													"src": "274:7:0",
+													"typeDescriptions": {
+														"typeIdentifier": "t_bytes32",
+														"typeString": "bytes32"
+													}
+												},
+												"visibility": "internal"
+											},
+											{
+												"constant": false,
+												"id": 15,
+												"mutability": "mutable",
+												"name": "_extraData",
+												"nodeType": "VariableDeclaration",
+												"scope": 18,
+												"src": "307:23:0",
+												"stateVariable": false,
+												"storageLocation": "memory",
+												"typeDescriptions": {
+													"typeIdentifier": "t_bytes_memory_ptr",
+													"typeString": "bytes"
+												},
+												"typeName": {
+													"id": 14,
+													"name": "bytes",
+													"nodeType": "ElementaryTypeName",
+													"src": "307:5:0",
+													"typeDescriptions": {
+														"typeIdentifier": "t_bytes_storage_ptr",
+														"typeString": "bytes"
+													}
+												},
+												"visibility": "internal"
+											}
+										],
+										"src": "117:219:0"
+									},
+									"returnParameters": {
+										"id": 17,
+										"nodeType": "ParameterList",
+										"parameters": [],
+										"src": "349:0:0"
+									},
+									"scope": 19,
+									"src": "94:256:0",
+									"stateMutability": "nonpayable",
+									"virtual": false,
+									"visibility": "external"
+								}
+							],
+							"scope": 20,
+							"src": "66:286:0"
+						}
+					],
+					"src": "40:312:0"
+				},
+				"id": 0
+			}
+		}
+	}
+}

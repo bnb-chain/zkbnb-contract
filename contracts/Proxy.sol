@@ -2,14 +2,14 @@
 
 pragma solidity ^0.7.6;
 
-import "./Ownable.sol";
+import "./ZecreyOwnable.sol";
 import "./Upgradeable.sol";
 import "./UpgradeableMaster.sol";
 
 /// @title Proxy Contract
 /// @dev NOTICE: Proxy must implement UpgradeableMaster interface to prevent calling some function of it not by master of proxy
 /// @author Zecrey Team
-contract Proxy is Upgradeable, UpgradeableMaster, Ownable {
+contract Proxy is Upgradeable, UpgradeableMaster, ZecreyOwnable {
     /// @dev Storage position of "target" (actual implementation address: keccak256('eip1967.proxy.implementation') - 1)
     bytes32 private constant TARGET_POSITION = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
@@ -17,7 +17,7 @@ contract Proxy is Upgradeable, UpgradeableMaster, Ownable {
     /// @dev Calls Ownable contract constructor and initialize target
     /// @param target Initial implementation address
     /// @param targetInitializationParameters Target initialization parameters
-    constructor(address target, bytes memory targetInitializationParameters) Ownable(msg.sender) {
+    constructor(address target, bytes memory targetInitializationParameters) ZecreyOwnable(msg.sender) {
         setTarget(target);
         (bool initializationSuccess,) = getTarget().delegatecall(
             abi.encodeWithSignature("initialize(bytes)", targetInitializationParameters)

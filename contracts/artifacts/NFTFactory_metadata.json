@@ -1,0 +1,89 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_creatorAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_toAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_factoryAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_nftTokenId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint32",
+						"name": "_amount",
+						"type": "uint32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_nftContentHash",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes",
+						"name": "_extraData",
+						"type": "bytes"
+					}
+				],
+				"name": "mintFromZecrey",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/NFTFactory.sol": "NFTFactory"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/NFTFactory.sol": {
+			"keccak256": "0x2b89dc0efebdc883876f9603c770e1489786b220abc8290574ea5d626e714750",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://97895fe8ccf1c9c9d9fd2c77b2a3c59318de8c949203a406558043a8cc04f6f7",
+				"dweb:/ipfs/QmV1asxkdGBXfN7v4L8LTkZSjtVciscm4NeyRTjoRbMbBd"
+			]
+		}
+	},
+	"version": 1
+}
