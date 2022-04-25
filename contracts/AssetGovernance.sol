@@ -14,7 +14,7 @@ contract AssetGovernance {
     event TokenListerUpdate(address indexed tokenLister, bool isActive);
 
     /// @notice Listing fee token set
-    event ListingFeeTokenUpdate(IERC20 indexed newListingFeeToken);
+    event ListingFeeTokenUpdate(IERC20 indexed newListingFeeToken, uint256 newListingFee);
 
     /// @notice Listing fee set
     event ListingFeeUpdate(uint256 newListingFee);
@@ -44,7 +44,7 @@ contract AssetGovernance {
     address public treasury;
 
     function initialize(bytes calldata initializationParameters) external {
-        (address _governance, address _listingFeeToken, uint256 _listingFee, uint16 _listingCap, address _treasury) = 
+        (address _governance, address _listingFeeToken, uint256 _listingFee, uint16 _listingCap, address _treasury) =
         abi.decode(initializationParameters, (address, address, uint256, uint16, address));
 
         governance = Governance(_governance);
@@ -87,7 +87,7 @@ contract AssetGovernance {
         listingFeeToken = _newListingFeeToken;
         listingFee = _newListingFee;
 
-        emit ListingFeeTokenUpdate(_newListingFeeToken);
+        emit ListingFeeTokenUpdate(_newListingFeeToken, _newListingFee);
     }
 
     /// @notice Set new listing fee
