@@ -65,9 +65,17 @@ async function main() {
     const Verifier = await ethers.getContractFactory('ZecreyVerifier')
     const verifier = await Verifier.deploy()
     await verifier.deployed()
+    // deploy utils
+    const Utils = await ethers.getContractFactory("Utils")
+    const utils = await Utils.deploy()
+    await utils.deployed()
     // deploy zecrey legend
     console.log('start deploy zecrey legend.....')
-    const ZecreyLegend = await ethers.getContractFactory('ZecreyLegend')
+    const ZecreyLegend = await ethers.getContractFactory('ZecreyLegend', {
+        libraries: {
+            Utils: utils.address
+        }
+    })
     const zecreyLegend = await ZecreyLegend.deploy()
     await zecreyLegend.deployed()
 
