@@ -19,8 +19,8 @@ import "./TxTypes.sol";
 
 import "./UpgradeableMaster.sol";
 
-/// @title zkSync additional main contract
-/// @author Matter Labs
+/// @title Zecrey additional main contract
+/// @author Zecrey
 contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
