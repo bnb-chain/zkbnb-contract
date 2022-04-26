@@ -6,11 +6,12 @@ import "./ZNS.sol";
 import "./IBaseRegistrar.sol";
 import "./Ownable.sol";
 import "./utils/Names.sol";
+import "./ReentrancyGuard.sol";
 
 /**
  * ZNSFIFSRegistrar is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
  */
-contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable {
+contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable, ReentrancyGuard {
 
     using Names for string;
 
@@ -21,8 +22,8 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable {
     // A map of addresses that are authorized to controll the registrar(eg, register names)
     mapping(address => bool) public controllers;
     // A map to record the L2 owner of each node. A L2 owner can own only 1 name.
-    // zecreyPubKey => nodeHash
-    mapping(bytes32 => bytes32) ZNSZecreyPubKeyMapper;
+    // pubKey => nodeHash
+    mapping(bytes32 => bytes32) ZNSPubKeyMapper;
 
     modifier onlyController {
         require(controllers[msg.sender]);
@@ -34,14 +35,12 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable {
         _;
     }
 
-    //    constructor(ZNS _zns, bytes32 _node) {
-    //        zns = _zns;
-    //        baseNode = _node;
-    //
-    //        controllers[msg.sender] = true;
-    //    }
+    constructor() {
+        initializeReentrancyGuard();
+    }
 
     function initialize(bytes calldata initializationParameters) external {
+        initializeReentrancyGuard();
         (address _znsAddr, bytes32 _node) = abi.decode(initializationParameters, (address, bytes32));
         zns = ZNS(_znsAddr);
         baseNode = _node;
@@ -66,12 +65,6 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable {
         zns.setResolver(baseNode, _resolver);
     }
 
-    // Set L2 owner for the node this registrar manages.
-    // This msg.sender must be the owner of base node.
-    function setZecreyPubKey(bytes32 _zecreyPubKey) external override onlyOwner {
-        zns.setZecreyPubKey(baseNode, _zecreyPubKey);
-    }
-
     function getOwner(bytes32 node) external view returns (address){
         return zns.owner(node);
     }
@@ -80,25 +73,25 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable {
      * @dev Register a new node under base node if it not exists.
      * @param _name The plaintext of the name to register
      * @param _owner The address to receive this name
-     * @param _zecreyPubKey The L2 owner to receive this name
+     * @param _pubKey The pub key of the owner
      */
-    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external override onlyController {
+    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey) external override onlyController {
         // Check if this name is valid
         require(_valid(_name), "invalid name");
         // This L2 owner should not own any name before
-        require(_validZecreyPubKey(_zecreyPubKey), "L2 owner existed");
+        require(_validPubKey(_pubKey), "pub key existed");
 
         // Get the name hash
         bytes32 label = keccak256(bytes(_name));
         // This subnode should not be registered before
         require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
 
-        bytes32 subnode = zns.setSubnodeOwner(baseNode, label, _owner, _zecreyPubKey);
+        bytes32 subnode = zns.setSubnodeOwner(baseNode, label, _owner, _pubKey);
 
         // Update L2 owner mapper
-        ZNSZecreyPubKeyMapper[_zecreyPubKey] = subnode;
+        ZNSPubKeyMapper[_pubKey] = subnode;
 
-        emit ZNSRegistered(_name, subnode, _owner, _zecreyPubKey);
+        emit ZNSRegistered(_name, subnode, _owner, _pubKey);
     }
 
     function _valid(string memory _name) internal pure returns (bool) {
@@ -113,7 +106,7 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable {
         return _name.strlen() >= 3 && _name.strlen() <= 32;
     }
 
-    function _validZecreyPubKey(bytes32 _zecreyPubKey) internal view returns (bool) {
-        return ZNSZecreyPubKeyMapper[_zecreyPubKey] == 0x0;
+    function _validPubKey(bytes32 _pubKey) internal view returns (bool) {
+        return ZNSPubKeyMapper[_pubKey] == 0x0;
     }
 }

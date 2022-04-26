@@ -21,7 +21,7 @@ contract ZNSRegistry is ZNS {
         // 3. Change the L2 owner of this account name
         // 4. Set the ttl and resolver of node
         address owner;
-        bytes32 zecreyPubKey;
+        bytes32 pubKey;
         address resolver;
         // bool dirty; // dirty is a flag to indicate whether the L2Owner of a node is set
     }
@@ -35,60 +35,21 @@ contract ZNSRegistry is ZNS {
         records[0x0].owner = msg.sender;
     }
 
-    //    /**
-    //     * @dev Transfer a name to another account with its L2 account
-    //     * @param nameHash The hashed specified name
-    //     * @param to The mew address to receive this name
-    //     * @param toL2Account The new L2 address to receive this name
-    //     */
-    //    function transfer(bytes32 nameHash, address to, bytes32 toL2Account) external authorized(nameHash) {
-    //        // This toL2Account should not owned any name in L2
-    //        require(_L2AccountValid(toL2Account), "L2 account has owned an account name");
-    //
-    //        // Get original owner of this name
-    //        address from = records[nameHash].owner;
-    //        bytes32 fromL2Account = records[nameHash].L2Owner;
-    //        require(from == msg.sender, "unauthorized");
-    //
-    //        _setOwner(nameHash, to, toL2Account);
-    //
-    //        emit ZNSTransfer(nameHash, from, fromL2Account, to, toL2Account);
-    //    }
-    //
-    //    /**
-    //     * @dev Transfer a name to another account in L2, this operation must be sent by this name's owner
-    //     * @param nameHash The hashed specified name
-    //     * @param toL2Account The new L2 address to receive this name
-    //     */
-    //    function transferL2(bytes32 nameHash, bytes32 toL2Account) external authorized(nameHash) {
-    //        // This toL2Account should not owned any name in L2.
-    //        require(_L2AccountValid(toL2Account), "L2 account has owned an account name");
-    //
-    //        // Get original owner of this name
-    //        address addr = records[nameHash].owner;
-    //        bytes32 fromL2Account = records[nameHash].L2Owner;
-    //        require(addr == msg.sender, "unauthorized");
-    //
-    //        _setL2Owner(nameHash, toL2Account);
-    //
-    //        emit ZNSL2Transfer(nameHash, addr, fromL2Account, toL2Account);
-    //    }
-
     /**
      * @dev Set the record for a node.
      * @param _node The node to update.
      * @param _owner The address of the new owner.
      * @param _resolver The address of the resolver.
-     * @param _zecreyPubKey The L2Owner of the node
+     * @param _pubKey The pub key of the node
      */
     function setRecord(
         bytes32 _node,
         address _owner,
-        bytes32 _zecreyPubKey,
+        bytes32 _pubKey,
         address _resolver
     ) external override {
-        setOwner(_node, _owner);
-        _setZecreyPubKey(_node, _zecreyPubKey);
+        _setOwner(_node, _owner);
+        _setPubKey(_node, _pubKey);
         _setResolver(_node, _resolver);
     }
 
@@ -113,15 +74,6 @@ contract ZNSRegistry is ZNS {
     }
 
     /**
-     * @dev Set the ownership of a node to a new address. May only be called by the current owner of the node.
-     * @param _node The node to transfer ownership of.
-     * @param _owner The address of the new owner.
-     */
-    function setOwner(bytes32 _node, address _owner) public override authorized(_node) {
-        _setOwner(_node, _owner);
-    }
-
-    /**
      * @dev Set the ownership of a subnode keccak256(node, label) to a new address. May only be called by the owner of the parent node.
      * @param _node The parent node.
      * @param _label The hash of the label specifying the subnode.
@@ -136,7 +88,7 @@ contract ZNSRegistry is ZNS {
     ) public override authorized(_node) returns (bytes32) {
         bytes32 subnode = keccak256(abi.encodePacked(_node, _label));
         _setOwner(subnode, _owner);
-        _setZecreyPubKey(subnode, _zecreyPubKey);
+        _setPubKey(subnode, _zecreyPubKey);
         return subnode;
     }
 
@@ -147,15 +99,6 @@ contract ZNSRegistry is ZNS {
      */
     function setResolver(bytes32 _node, address _resolver) public override authorized(_node) {
         _setResolver(_node, _resolver);
-    }
-
-    /**
-     * @dev Set the L2 owner for the specified node.
-     * @param _node The node to update.
-     * @param _zecreyPubKey The bytes32 public key of the L2 owner.
-     */
-    function setZecreyPubKey(bytes32 _node, bytes32 _zecreyPubKey) public override authorized(_node) {
-        _setZecreyPubKey(_node, _zecreyPubKey);
     }
 
     /**
@@ -186,8 +129,8 @@ contract ZNSRegistry is ZNS {
      * @param node The specified node.
      * @return L2 owner of the node.
      */
-    function zecreyPubKey(bytes32 node) public view override returns (bytes32) {
-        return records[node].zecreyPubKey;
+    function pubKey(bytes32 node) public view override returns (bytes32) {
+        return records[node].pubKey;
     }
 
     /**
@@ -224,10 +167,10 @@ contract ZNSRegistry is ZNS {
         }
     }
 
-    function _setZecreyPubKey(bytes32 _node, bytes32 _zecreyPubKey) internal {
-        if (_zecreyPubKey != records[_node].zecreyPubKey) {
-            records[_node].zecreyPubKey = _zecreyPubKey;
-            emit NewZecreyPubKey(_node, _zecreyPubKey);
+    function _setPubKey(bytes32 _node, bytes32 _pubKey) internal {
+        if (_pubKey != records[_node].pubKey) {
+            records[_node].pubKey = _pubKey;
+            emit NewPubKey(_node, _pubKey);
         }
     }
 

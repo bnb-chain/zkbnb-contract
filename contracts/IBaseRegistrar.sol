@@ -29,9 +29,6 @@ interface IBaseRegistrar {
     // Set resolver for the node this registrar manages.
     function setThisResolver(address resolver) external;
 
-    // Set L2 owner for the node this registrar manages.
-    function setZecreyPubKey(bytes32 zecreyPubKey) external;
-
     // Register a node under the base node.
     function registerZNS(string calldata _name, address _owner, bytes32 zecreyPubKey) external;
 }
