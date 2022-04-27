@@ -122,7 +122,7 @@ library TxTypes {
     function writeDepositPubdataForPriorityQueue(Deposit memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
-            _tx.accountIndex,
+            uint32(0),
             _tx.accountNameHash, // account name hash
             _tx.assetId, // asset id
             _tx.amount // state amount
@@ -348,10 +348,10 @@ library TxTypes {
     function writeFullExitPubdataForPriorityQueue(FullExit memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
-            _tx.accountIndex,
+            uint32(0),
             _tx.accountNameHash, // account name
             _tx.assetId, // asset id
-            _tx.assetAmount // asset amount
+            uint128(0) // asset amount
         );
     }
 
@@ -400,14 +400,14 @@ library TxTypes {
     function writeFullExitNFTPubdataForPriorityQueue(FullExitNFT memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
-            _tx.accountIndex,
+            uint32(0),
             _tx.accountNameHash, // account name
-            _tx.tokenAddress, // nft l1 address
+            address(0x0), // nft l1 address
             _tx.toAddress, // receiver address
-            _tx.proxyAddress, // proxy address
-            _tx.nftTokenId, // token id
-            _tx.amount,
-            _tx.nftContentHash,
+            address(0x0), // proxy address
+            uint256(0), // token id
+            uint32(0),
+            bytes32(0),
             _tx.nftAssetId
         );
     }
