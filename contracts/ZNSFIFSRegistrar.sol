@@ -94,6 +94,10 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable, ReentrancyGuard {
         emit ZNSRegistered(_name, subnode, _owner, _pubKey);
     }
 
+    function isRegisteredHash(bytes32 _nameHash) external view returns (bool){
+        return zns.subNodeRecordExists(baseNode, _nameHash);
+    }
+
     function _valid(string memory _name) internal pure returns (bool) {
         return _validCharset(_name) && _validLength(_name);
     }

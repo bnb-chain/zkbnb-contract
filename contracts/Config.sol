@@ -40,7 +40,7 @@ contract Config {
     uint32 public constant SPECIAL_ACCOUNT_ID = 0;
     address public constant SPECIAL_ACCOUNT_ADDRESS = address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF);
 
-    uint32 public constant MAX_FUNGIBLE_ASSET_ID = (2 ** 16) - 1;
+    uint32 public constant MAX_FUNGIBLE_ASSET_ID = (2 ** 32) - 1;
 
     // TODO
     uint32 internal constant SPECIAL_NFT_TOKEN_ID = (2 ** 31) - 2;

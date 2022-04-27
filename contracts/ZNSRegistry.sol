@@ -59,16 +59,16 @@ contract ZNSRegistry is ZNS {
      * @param _label The hash of the subnode name
      * @param _owner The address of the new owner.
      * @param _resolver The address of the resolver.
-     * @param _zecreyPubKey The L2Owner of the subnode
+     * @param _pubKey The layer-2 public key
      */
     function setSubnodeRecord(
         bytes32 _node,
         bytes32 _label,
         address _owner,
-        bytes32 _zecreyPubKey,
+        bytes32 _pubKey,
         address _resolver
     ) external override returns (bytes32){
-        bytes32 subnode = setSubnodeOwner(_node, _label, _owner, _zecreyPubKey);
+        bytes32 subnode = setSubnodeOwner(_node, _label, _owner, _pubKey);
         _setResolver(subnode, _resolver);
         return subnode;
     }
