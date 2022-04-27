@@ -18,12 +18,13 @@ contract ZNSRegistry is ZNS {
         // The owner of a record may:
         // 1. Transfer ownership of the name to another address
         // 2. Change the ownership of sub account name
-        // 3. Change the L2 owner of this account name
-        // 4. Set the ttl and resolver of node
+        // 3. Set the resolver and related information of this node
         address owner;
-        bytes32 pubKey;
         address resolver;
-        // bool dirty; // dirty is a flag to indicate whether the L2Owner of a node is set
+        bytes32 pubKey;
+        // These fields may be remained for future use.
+        // string slot1;
+        // string slot2;
     }
 
     mapping(bytes32 => Record) records; // nameHash of node => Record
@@ -78,17 +79,17 @@ contract ZNSRegistry is ZNS {
      * @param _node The parent node.
      * @param _label The hash of the label specifying the subnode.
      * @param _owner The address of the new owner.
-     * @param _zecreyPubKey The L2 owner of the subnode
+     * @param _pubKey The L2 owner of the subnode
      */
     function setSubnodeOwner(
         bytes32 _node,
         bytes32 _label,
         address _owner,
-        bytes32 _zecreyPubKey
+        bytes32 _pubKey
     ) public override authorized(_node) returns (bytes32) {
         bytes32 subnode = keccak256(abi.encodePacked(_node, _label));
         _setOwner(subnode, _owner);
-        _setPubKey(subnode, _zecreyPubKey);
+        _setPubKey(subnode, _pubKey);
         return subnode;
     }
 
