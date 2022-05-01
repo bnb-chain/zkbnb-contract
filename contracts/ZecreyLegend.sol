@@ -189,7 +189,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external nonReentrant {
-        znsController.registerZNS(_name, _owner, _zecreyPubKey, _znsResolver);
+        znsController.registerZNS(_name, _owner, _zecreyPubKey, address(znsResolver));
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),
@@ -200,7 +200,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         bytes memory pubData = TxTypes.writeRegisterZNSPubdataForPriorityQueue(_tx);
 
         // add into priority request queue
-        addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData, address(znsResolver));
+        addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
 
         emit RegisterZNS(_name, _owner, _zecreyPubKey);
     }
