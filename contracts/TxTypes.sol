@@ -62,11 +62,9 @@ library TxTypes {
     // address bytes
     uint8 internal constant ADDRESS_BYTES = 20;
     // nft asset id
-    uint8 internal constant NFT_ASSET_ID_BYTES = 4;
+    uint8 internal constant NFT_INDEX_BYTES = 5;
     // nft token id bytes
     uint8 internal constant NFT_TOKEN_ID_BYTES = 32;
-    // nft index bytes
-    uint8 internal constant NFT_INDEX_BYTES = 32;
     // nft content hash bytes
     uint8 internal constant NFT_CONTENT_HASH_BYTES = 32;
     // pair index
@@ -283,23 +281,23 @@ library TxTypes {
         uint8 txType;
         uint32 accountIndex;
         bytes32 accountNameHash;
-        address tokenAddress;
+        uint8 nftType;
+        uint40 nftIndex;
+        bytes32 nftContentHash;
+        address nftL1Address;
+        uint256 nftL1TokenId;
+        uint32 amount;
         address toAddress;
         address proxyAddress;
-        uint8 nftType;
-        uint256 nftTokenId;
-        uint32 amount;
-        bytes32 nftContentHash;
-        uint32 nftAssetId;
         uint32 gasFeeAccountIndex;
         uint16 gasFeeAssetId;
         uint16 gasFeeAssetAmount;
     }
 
     uint256 internal constant PACKED_WITHDRAWNFT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + ADDRESS_BYTES + ADDRESS_BYTES + ADDRESS_BYTES +
-    NFT_TYPE_BYTES + NFT_TOKEN_ID_BYTES + NFT_AMOUNT_BYTES + NFT_CONTENT_HASH_BYTES +
-    NFT_ASSET_ID_BYTES + ACCOUNT_INDEX_BYTES + ASSET_ID_BYTES + PACKED_FEE_AMOUNT_BYTES;
+    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES +
+    NFT_TYPE_BYTES + NFT_INDEX_BYTES + NFT_CONTENT_HASH_BYTES + ADDRESS_BYTES + NFT_TOKEN_ID_BYTES + NFT_AMOUNT_BYTES
+    + ADDRESS_BYTES + ADDRESS_BYTES + ACCOUNT_INDEX_BYTES + ASSET_ID_BYTES + PACKED_FEE_AMOUNT_BYTES;
 
     /// Deserialize withdraw pubdata
     function readWithdrawNFTPubdata(bytes memory _data) internal pure returns (WithdrawNFT memory parsed) {
@@ -309,22 +307,18 @@ library TxTypes {
         (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
         // account name hash
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-        // token address
-        (offset, parsed.tokenAddress) = Bytes.readAddress(_data, offset);
-        // to address
-        (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
-        // proxy address
-        (offset, parsed.proxyAddress) = Bytes.readAddress(_data, offset);
-        // amount
-        (offset, parsed.amount) = Bytes.readUInt32(_data, offset);
+        // nft type
+        (offset, parsed.nftType) = Bytes.readUInt8(_data, offset);
+        // nft index
+        (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
         // nft content hash
         (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
-        // nft token type
-        (offset, parsed.nftType) = Bytes.readUInt8(_data, offset);
+        // nft l1 address
+        (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // nft token id
-        (offset, parsed.nftTokenId) = Bytes.readUInt256(_data, offset);
-        // nft asset id
-        (offset, parsed.nftAssetId) = Bytes.readUInt32(_data, offset);
+        (offset, parsed.nftL1TokenId) = Bytes.readUInt256(_data, offset);
+        // nft amount
+        (offset, parsed.amount) = Bytes.readUInt32(_data, offset);
         // gas fee account index
         (offset, parsed.gasFeeAccountIndex) = Bytes.readUInt32(_data, offset);
         // gas fee asset id
@@ -386,19 +380,19 @@ library TxTypes {
         uint8 txType;
         uint32 accountIndex;
         bytes32 accountNameHash;
-        address tokenAddress;
+        uint8 nftType;
+        uint40 nftIndex;
+        bytes32 nftContentHash;
+        address nftL1Address;
+        uint256 nftL1TokenId;
+        uint32 amount;
         address toAddress;
         address proxyAddress;
-        uint8 nftType;
-        uint256 nftTokenId;
-        uint32 amount;
-        bytes32 nftContentHash;
-        uint32 nftAssetId;
     }
 
     uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + ADDRESS_BYTES + ADDRESS_BYTES + ADDRESS_BYTES +
-    NFT_TYPE_BYTES + NFT_TOKEN_ID_BYTES + NFT_AMOUNT_BYTES + NFT_CONTENT_HASH_BYTES + NFT_ASSET_ID_BYTES;
+    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + NFT_TYPE_BYTES + NFT_INDEX_BYTES + NFT_CONTENT_HASH_BYTES
+    + ADDRESS_BYTES + NFT_TOKEN_ID_BYTES + NFT_AMOUNT_BYTES + ADDRESS_BYTES + ADDRESS_BYTES;
 
     /// Serialize full exit nft pubdata
     function writeFullExitNFTPubdataForPriorityQueue(FullExitNFT memory _tx) internal pure returns (bytes memory buf) {
@@ -406,13 +400,14 @@ library TxTypes {
             _tx.txType,
             uint32(0),
             _tx.accountNameHash, // account name
-            address(0x0), // nft l1 address
-            _tx.toAddress, // receiver address
-            address(0x0), // proxy address
-            uint256(0), // token id
-            uint32(0),
+            uint8(0),
+            _tx.nftIndex,
             bytes32(0),
-            _tx.nftAssetId
+            address(0x0), // nft l1 address
+            uint256(0), // token id
+            uint32(0), // amount
+            _tx.toAddress, // receiver address
+            address(0x0) // proxy address
         );
     }
 
@@ -424,20 +419,22 @@ library TxTypes {
         (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
         // account name
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-        // nft address
-        (offset, parsed.tokenAddress) = Bytes.readAddress(_data, offset);
-        // nft address
-        (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
-        // nft address
-        (offset, parsed.proxyAddress) = Bytes.readAddress(_data, offset);
-        // nft token id
-        (offset, parsed.nftTokenId) = Bytes.readUInt256(_data, offset);
-        // nft amount
-        (offset, parsed.amount) = Bytes.readUInt32(_data, offset);
+        // nft type
+        (offset, parsed.nftType) = Bytes.readUInt8(_data, offset);
+        // nft index
+        (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
         // nft content hash
         (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
-        // nft asset id
-        (offset, parsed.nftAssetId) = Bytes.readUInt32(_data, offset);
+        // nft l1 address
+        (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
+        // nft l1 token id
+        (offset, parsed.nftL1TokenId) = Bytes.readUInt256(_data, offset);
+        // nft amount
+        (offset, parsed.amount) = Bytes.readUInt32(_data, offset);
+        // to address
+        (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
+        // proxy address
+        (offset, parsed.proxyAddress) = Bytes.readAddress(_data, offset);
 
         require(offset == PACKED_FULLEXITNFT_PUBDATA_BYTES, "N");
         return parsed;

@@ -9,9 +9,9 @@ import "./utils/Names.sol";
 import "./ReentrancyGuard.sol";
 
 /**
- * ZNSFIFSRegistrar is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
+ * ZNSController is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
  */
-contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable, ReentrancyGuard {
+contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
 
     using Names for string;
 
@@ -34,10 +34,6 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable, ReentrancyGuard {
     modifier live {
         require(zns.owner(baseNode) == address(this));
         _;
-    }
-
-    constructor() {
-        initializeReentrancyGuard();
     }
 
     function initialize(bytes calldata initializationParameters) external {
@@ -76,7 +72,7 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable, ReentrancyGuard {
      * @param _owner The address to receive this name
      * @param _pubKey The pub key of the owner
      */
-    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey) external override onlyController {
+    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey, address _resolver) external override onlyController {
         // Check if this name is valid
         require(_valid(_name), "invalid name");
         // This L2 owner should not own any name before
@@ -87,7 +83,7 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable, ReentrancyGuard {
         // This subnode should not be registered before
         require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
 
-        bytes32 subnode = zns.setSubnodeOwner(baseNode, label, _owner, _pubKey);
+        bytes32 subnode = zns.setSubnodeRecord(baseNode, label, _owner, _pubKey, _resolver);
 
         // Update L2 owner mapper
         ZNSPubKeyMapper[_pubKey] = subnode;

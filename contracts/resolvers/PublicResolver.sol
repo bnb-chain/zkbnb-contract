@@ -9,19 +9,21 @@ import "./profile/PubKeyResolver.sol";
 import "./profile/NameResolver.sol";
 import "../ZNS.sol";
 import "./profile/ZecreyPubKeyResolver.sol";
+import "../ReentrancyGuard.sol";
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its address.
  */
 contract PublicResolver is
-    Multicallable,
-    ABIResolver,
-    AddrResolver,
-    NameResolver,
-    PubKeyResolver,
-    ZecreyPubKeyResolver
+Multicallable,
+ABIResolver,
+AddrResolver,
+NameResolver,
+PubKeyResolver,
+ZecreyPubKeyResolver,
+ReentrancyGuard
 {
-    ZNS immutable zns;
+    ZNS zns;
 
     /**
      * @dev A mapping of operators. An address that is authorised for an address
@@ -38,8 +40,13 @@ contract PublicResolver is
         bool approved
     );
 
-    constructor(ZNS _zns) {
-        zns = _zns;
+    function initialize(bytes calldata initializationParameters) external {
+        initializeReentrancyGuard();
+
+        (
+        address _zns
+        ) = abi.decode(initializationParameters, (address));
+        zns = ZNS(_zns);
     }
 
     function zecreyPubKey(bytes32 node) override external view returns (bytes32 pubKey) {
@@ -79,12 +86,12 @@ contract PublicResolver is
     public
     pure
     override(
-        Multicallable,
-        ABIResolver,
-        AddrResolver,
-        NameResolver,
-        PubKeyResolver,
-        ZecreyPubKeyResolver
+    Multicallable,
+    ABIResolver,
+    AddrResolver,
+    NameResolver,
+    PubKeyResolver,
+    ZecreyPubKeyResolver
     )
     returns (bool)
     {

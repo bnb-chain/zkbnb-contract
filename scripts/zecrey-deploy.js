@@ -7,15 +7,22 @@ async function main() {
     const znsRegistry = await ZNSRegistry.deploy();
     await znsRegistry.deployed();
 
-    // deploy zns fifs registrar
-    const ZNSFIFSRegistrar = await ethers.getContractFactory('ZNSFIFSRegistrar');
-    const znsFIFSRegistrar = await ZNSFIFSRegistrar.deploy();
-    await znsFIFSRegistrar.deployed();
-    // initialize zns fifs registrar
+    // deploy zns resolver
+    const PublicResolver = await ethers.getContractFactory('PublicResolver');
+    const publicResolver = await PublicResolver.deploy();
+    await publicResolver.deployed()
+    const initResolverParams = ethers.utils.defaultAbiCoder.encode(['address'], [znsRegistry.address])
+    const initResolverTx = await publicResolver.initialize(initResolverParams);
+    await initResolverTx.wait();
+    // deploy zns controller
+    const ZNSController = await ethers.getContractFactory('ZNSController');
+    const znsController = await ZNSController.deploy();
+    await znsController.deployed();
+    // initialize zns controller
     const baseNode = namehash.hash('legend');
-    const initZnsFifsRegistrarParams = ethers.utils.defaultAbiCoder.encode(['address', 'bytes32'], [znsRegistry.address, baseNode])
-    const initZnsFifsTx = await znsFIFSRegistrar.initialize(initZnsFifsRegistrarParams);
-    await initZnsFifsTx.wait();
+    const initZnsControllerParams = ethers.utils.defaultAbiCoder.encode(['address', 'bytes32'], [znsRegistry.address, baseNode])
+    const initZnsControllerTx = await znsController.initialize(initZnsControllerParams);
+    await initZnsControllerTx.wait();
     // deploy governance
     // governance
     const Governance = await ethers.getContractFactory('Governance')
@@ -80,7 +87,7 @@ async function main() {
     await zecreyLegend.deployed()
 
     // add controller for zns fifs registrar
-    const addControllerTx = await znsFIFSRegistrar.addController(zecreyLegend.address);
+    const addControllerTx = await znsController.addController(zecreyLegend.address);
     await addControllerTx.wait();
 
     // deploy additional zecrey legend
@@ -99,12 +106,13 @@ async function main() {
     */
     const _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a'
     const zecreyInitParams = ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address', 'address', 'address', 'bytes32'],
+        ['address', 'address', 'address', 'address', 'address', 'bytes32'],
         [
             governance.address,
             verifier.address,
             additionalZecreyLegend.address,
-            znsFIFSRegistrar.address,
+            znsController.address,
+            publicResolver.address,
             _genesisAccountRoot,
         ],
     )

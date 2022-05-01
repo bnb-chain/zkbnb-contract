@@ -98,6 +98,15 @@ library Bytes {
         }
     }
 
+    // NOTE: theoretically possible overflow of (_start + 0x5)
+    function bytesToUInt40(bytes memory _bytes, uint256 _start) internal pure returns (uint40 r) {
+        uint256 offset = _start + 0x5;
+        require(_bytes.length >= offset, "V");
+        assembly {
+            r := mload(add(_bytes, offset))
+        }
+    }
+
     // NOTE: theoretically possible overflow of (_start + 0x10)
     function bytesToUInt128(bytes memory _bytes, uint256 _start) internal pure returns (uint128 r) {
         uint256 offset = _start + 0x10;
@@ -209,6 +218,12 @@ library Bytes {
     function readUInt32(bytes memory _data, uint256 _offset) internal pure returns (uint256 newOffset, uint32 r) {
         newOffset = _offset + 4;
         r = bytesToUInt32(_data, _offset);
+    }
+
+    // NOTE: theoretically possible overflow of (_offset + 5)
+    function readUInt40(bytes memory _data, uint256 _offset) internal pure returns (uint256 newOffset, uint40 r) {
+        newOffset = _offset + 5;
+        r = bytesToUInt40(_data, _offset);
     }
 
     // NOTE: theoretically possible overflow of (_offset + 16)

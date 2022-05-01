@@ -12,7 +12,8 @@ import "./Governance.sol";
 import "./ZecreyVerifier.sol";
 import "./TxTypes.sol";
 import "./AdditionalZecreyLegend.sol";
-import "./ZNSFIFSRegistrar.sol";
+import "./ZNSController.sol";
+import "./resolvers/PublicResolver.sol";
 
 /// @title zecrey storage contract
 /// @author Zecrey Labs
@@ -62,7 +63,8 @@ contract Storage {
     /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
     Governance internal governance;
 
-    ZNSFIFSRegistrar internal znsFifsRegistrar;
+    ZNSController internal znsController;
+    PublicResolver internal znsResolver;
 
     uint8 internal constant FILLED_GAS_RESERVE_VALUE = 0xff; // we use it to set gas revert value so slot will not be emptied with 0 balance
     struct PendingBalance {
