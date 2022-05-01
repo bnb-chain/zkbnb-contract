@@ -380,12 +380,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         }
     }
 
-    /// @notice Compute onchain operations hash
-    /// @param _onchainOpsPubData The public data of onchain operations
-    function computeOnchainOpsHash(bytes memory _onchainOpsPubData) public pure returns (bytes32 onchainOpsDataHash){
-        return keccak256(_onchainOpsPubData);
-    }
-
     /// @dev Process one block commit using previous block BlockHeader,
     /// @dev returns new block BlockHeader
     function commitOneBlock(BlockHeader memory _previousBlock, CommitBlockInfo memory _newBlock)

@@ -90,6 +90,9 @@ async function main() {
     const addControllerTx = await znsController.addController(zecreyLegend.address);
     await addControllerTx.wait();
 
+    const isController = await znsController.controllers(zecreyLegend.address)
+    console.log(isController)
+
     // deploy additional zecrey legend
     const AdditionalZecreyLegend = await ethers.getContractFactory('AdditionalZecreyLegend')
     const additionalZecreyLegend = await AdditionalZecreyLegend.deploy()
@@ -125,6 +128,7 @@ async function main() {
     console.log('asset governance:', assetGovernance.address)
     console.log('governance:', governance.address)
     console.log('verifier:', verifier.address)
+    console.log('utils:', utils.address)
     console.log('zecrey legend:', zecreyLegend.address)
     console.log('additional zecrey legend:', additionalZecreyLegend.address)
 
