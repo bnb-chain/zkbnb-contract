@@ -17,6 +17,7 @@ contract ZNSFIFSRegistrar is IBaseRegistrar, Ownable, ReentrancyGuard {
 
     // ZNS registry
     ZNS public zns;
+
     // The nodehash/namehash of the root node this registrar owns (eg, .legend)
     bytes32 public baseNode;
     // A map of addresses that are authorized to controll the registrar(eg, register names)

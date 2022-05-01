@@ -6,19 +6,10 @@ interface IBaseRegistrar {
 
     event ControllerAdded(address indexed controller);
 
-    event ControllerRemoved(address indexed controller);    // Notify a new owner of one name.
+    event ControllerRemoved(address indexed controller);
 
     // Notify a node is registered.
-    event ZNSRegistered(string name, bytes32 node, address owner, bytes32 L2Owner);
-
-    // Notify a sub account name is registered to a account with its account public key in L2.
-    // event ZNSRegisterSubName(string name, bytes32 childNameHash, bytes32 parentNameHash, address to, bytes32 toL2Account);
-
-    // Notify one name is transferred from one account to another.
-    // event ZNSTransfer(bytes32 nameHash, address from, bytes32 fromL2Account, address to, bytes32 toL2Account);
-
-    // Notify one name is transferred from one L2 account to another L2 account.
-    // event ZNSL2Transfer(bytes32 name, address owner, bytes32 from, bytes32 to);
+    event ZNSRegistered(string name, bytes32 node, address owner, bytes32 pubKey);
 
     // Authorizes a controller, who can control this registrar.
     function addController(address controller) external;
