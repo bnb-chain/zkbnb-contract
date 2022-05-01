@@ -119,6 +119,15 @@ async function main() {
     const zecreyInitTx = await zecreyLegend.initialize(zecreyInitParams)
     await zecreyInitTx.wait()
 
+    console.log('zns:', znsRegistry.address)
+    console.log('zns resolver:', publicResolver.address)
+    console.log('zns controller:', znsController.address)
+    console.log('asset governance:', assetGovernance.address)
+    console.log('governance:', governance.address)
+    console.log('verifier:', verifier.address)
+    console.log('zecrey legend:', zecreyLegend.address)
+    console.log('additional zecrey legend:', additionalZecreyLegend.address)
+
 }
 
 // get the keccak256 hash of a specified string name
