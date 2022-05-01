@@ -3,7 +3,6 @@
 pragma solidity ^0.7.6;
 
 import "./ZNS.sol";
-import "hardhat/console.sol";
 
 contract ZNSRegistry is ZNS {
 

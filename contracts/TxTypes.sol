@@ -153,6 +153,7 @@ library TxTypes {
 
     struct DepositNFT {
         uint8 txType;
+        uint32 accountIndex;
         bytes32 accountNameHash;
         address tokenAddress;
         uint8 nftType;
@@ -161,12 +162,13 @@ library TxTypes {
     }
 
     uint256 internal constant PACKED_DEPOSIT_NFT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_NAME_HASH_BYTES + ADDRESS_BYTES + NFT_TYPE_BYTES + NFT_TOKEN_ID_BYTES + NFT_AMOUNT_BYTES;
+    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + ADDRESS_BYTES + NFT_TYPE_BYTES + NFT_TOKEN_ID_BYTES + NFT_AMOUNT_BYTES;
 
     /// Serialize deposit pubdata
     function writeDepositNFTPubdataForPriorityQueue(DepositNFT memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
+            uint32(0),
             _tx.accountNameHash, // account name hash
             _tx.tokenAddress, // token address
             _tx.nftType, // nft type
@@ -179,6 +181,8 @@ library TxTypes {
     function readDepositNFTPubdata(bytes memory _data) internal pure returns (DepositNFT memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
+        // account index
+        (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
         // account name
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
         // asset id

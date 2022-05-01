@@ -14,8 +14,6 @@ interface Events {
     /// @notice Event emitted when a block is verified
     event BlockVerification(uint32 blockNumber);
 
-    event BlockExecution(uint32 blockNumber);
-
     /// @notice Event emitted when user funds are withdrawn from the Zecrey state and contract
     event Withdrawal(uint16 assetId, uint128 amount);
 

@@ -62,7 +62,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     function upgradePreparationStarted() external override {
         upgradePreparationActive = true;
         upgradePreparationActivationTime = block.timestamp;
-
         require(block.timestamp >= upgradeStartTimestamp.add(approvedUpgradeNoticePeriod));
     }
 
@@ -260,6 +259,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         TxTypes.DepositNFT memory _tx = TxTypes.DepositNFT({
         txType : uint8(TxTypes.TxType.DepositERC721),
         accountNameHash : _accountNameHash,
+        accountIndex : 0, // unknown at this point
         tokenAddress : _tokenAddress,
         nftType : uint8(_nftType),
         nftTokenId : _nftTokenId,
