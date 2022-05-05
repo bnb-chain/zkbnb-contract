@@ -19,7 +19,7 @@ import "./IERC1155.sol";
 import "./IERC721.sol";
 import "./NFTFactory.sol";
 import "./Config.sol";
-import "./ZNSFIFSRegistrar.sol";
+import "./ZNSController.sol";
 
 /// @title Zecrey main contract
 /// @author Zecrey Team
@@ -48,7 +48,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
 
     /// @notice Notice period before activation preparation status of upgrade mode
     function getNoticePeriod() external pure override returns (uint256) {
-        return 0;
+        return UPGRADE_NOTICE_PERIOD;
     }
 
     /// @notice Notification that upgrade notice period started
@@ -62,7 +62,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     function upgradePreparationStarted() external override {
         upgradePreparationActive = true;
         upgradePreparationActivationTime = block.timestamp;
-
         require(block.timestamp >= upgradeStartTimestamp.add(approvedUpgradeNoticePeriod));
     }
 
@@ -138,14 +137,16 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         address _governanceAddress,
         address _verifierAddress,
         address _additionalZecreylegend,
-        address _znsFifsRegistrar,
+        address _znsController,
+        address _znsResolver,
         bytes32 _genesisAccountRoot
-        ) = abi.decode(initializationParameters, (address, address, address, address, bytes32));
+        ) = abi.decode(initializationParameters, (address, address, address, address, address, bytes32));
 
         verifier = ZecreyVerifier(_verifierAddress);
         governance = Governance(_governanceAddress);
         additionalZecreyLegend = AdditionalZecreyLegend(_additionalZecreylegend);
-        znsFifsRegistrar = ZNSFIFSRegistrar(_znsFifsRegistrar);
+        znsController = ZNSController(_znsController);
+        znsResolver = PublicResolver(_znsResolver);
 
         BlockHeader memory zeroBlockHeader = BlockHeader(
             0,
@@ -188,8 +189,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external nonReentrant {
-        // TODO not sure if we have the auth
-        znsFifsRegistrar.registerZNS(_name, _owner, _zecreyPubKey);
+        znsController.registerZNS(_name, _owner, _zecreyPubKey, address(znsResolver));
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),
@@ -210,7 +210,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     function depositBNB(bytes32 _accountNameHash) external payable {
         require(msg.value != 0, "ia");
         requireActive();
-        require(znsFifsRegistrar.isRegisteredHash(_accountNameHash), "not registered");
+        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
         registerDeposit(0, SafeCast.toUint128(msg.value), _accountNameHash);
     }
 
@@ -225,7 +225,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     ) external nonReentrant {
         require(_amount != 0, "ia");
         requireActive();
-        require(znsFifsRegistrar.isRegisteredHash(_accountNameHash), "not registered");
+        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
         // Get asset id by its address
         uint16 assetId = governance.validateAssetAddress(address(_token));
         require(!governance.pausedAssets(assetId), "b");
@@ -250,7 +250,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         uint32 _amount // can be zero
     ) external nonReentrant {
         requireActive();
-        require(znsFifsRegistrar.isRegisteredHash(_accountNameHash), "not registered");
+        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
         // Transfer the tokens to this contract
         bool success = Utils.transferFromNFT(msg.sender, address(this), _nftType, _tokenAddress, _nftTokenId, _amount);
 
@@ -260,6 +260,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         TxTypes.DepositNFT memory _tx = TxTypes.DepositNFT({
         txType : uint8(TxTypes.TxType.DepositERC721),
         accountNameHash : _accountNameHash,
+        accountIndex : 0, // unknown at this point
         tokenAddress : _tokenAddress,
         nftType : uint8(_nftType),
         nftTokenId : _nftTokenId,
@@ -276,11 +277,11 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
 
     function withdrawNFT(
         bytes32 _creatorAccountNameHash,
-        address _tokenAddress,
+        address _nftL1Address,
         address _toAddress,
         address _proxyAddress,
         TxTypes.NftType _nftType,
-        uint256 _nftTokenId,
+        uint256 _nftL1TokenId,
         uint32 _amount,
         bytes32 _nftContentHash
     ) internal {
@@ -288,29 +289,29 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         address _creatorAddress = getAddressByAccountNameHash(_creatorAccountNameHash);
         bytes memory _emptyExtraData;
         bool success;
-        if (_tokenAddress != address(0x00)) {
+        if (_nftL1Address != address(0x00)) {
             /// This is a NFT from layer 1, withdraw id directly
-            success = Utils.transferFromNFT(_creatorAddress, _toAddress, _nftType, _tokenAddress, _nftTokenId, _amount);
+            success = Utils.transferFromNFT(_creatorAddress, _toAddress, _nftType, _nftL1Address, _nftL1TokenId, _amount);
         } else {
             /// This is a NFT from layer 2
             // TODO minter _proxyAddress
             if (_proxyAddress != address(0x00)) {
-                success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftTokenId, _amount, _nftContentHash, _emptyExtraData);
+                success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftL1TokenId, _amount, _nftContentHash, _emptyExtraData);
             } else {
                 // TODO mint nft from Zecrey nft factory
                 if (_amount == 1) {// ERC721
                     // TODO 721 address
-                    success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftTokenId, _amount, _nftContentHash, _emptyExtraData);
+                    success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftL1TokenId, _amount, _nftContentHash, _emptyExtraData);
                 } else {// ERC1155
                     // TODO 1155 address
-                    success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftTokenId, _amount, _nftContentHash, _emptyExtraData);
+                    success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftL1TokenId, _amount, _nftContentHash, _emptyExtraData);
                 }
             }
         }
 
         require(success, "nft transfer failure");
 
-        emit WithdrawNFT(_creatorAccountNameHash, _tokenAddress, _toAddress, _proxyAddress, uint8(_nftType), _nftTokenId, _amount);
+        emit WithdrawNFT(_creatorAccountNameHash, _nftL1Address, _toAddress, _proxyAddress, uint8(_nftType), _nftL1TokenId, _amount);
     }
 
     function mintFromZecrey(
@@ -377,12 +378,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             uint128 withdrawnAmount = this._transferERC20(IERC20(_token), _owner, _amount, balance);
             registerWithdrawal(assetId, withdrawnAmount, _owner);
         }
-    }
-
-    /// @notice Compute onchain operations hash
-    /// @param _onchainOpsPubData The public data of onchain operations
-    function computeOnchainOpsHash(bytes memory _onchainOpsPubData) public pure returns (bytes32 onchainOpsDataHash){
-        return keccak256(_onchainOpsPubData);
     }
 
     /// @dev Process one block commit using previous block BlockHeader,
@@ -452,7 +447,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
-        return znsFifsRegistrar.getOwner(accountNameHash);
+        return znsController.getOwner(accountNameHash);
     }
 
     /// @notice Verify block index and proofs
@@ -488,11 +483,13 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                 // TODO check params for NFT address
                 TxTypes.FullExitNFT memory _tx = TxTypes.readFullExitNFTPubdata(pubData);
                 // withdraw nft
-                withdrawNFT(_tx.accountNameHash, _tx.tokenAddress, _tx.toAddress, _tx.proxyAddress, TxTypes.NftType(_tx.nftType), _tx.nftTokenId, _tx.amount, _tx.nftContentHash);
+                if (_tx.amount != 0) {
+                    withdrawNFT(_tx.accountNameHash, _tx.nftL1Address, _tx.toAddress, _tx.proxyAddress, TxTypes.NftType(_tx.nftType), _tx.nftL1TokenId, _tx.amount, _tx.nftContentHash);
+                }
             } else if (txType == TxTypes.TxType.WithdrawNFT) {
                 TxTypes.WithdrawNFT memory _tx = TxTypes.readWithdrawNFTPubdata(pubData);
                 // withdraw NFT
-                withdrawNFT(_tx.accountNameHash, _tx.tokenAddress, _tx.toAddress, _tx.proxyAddress, TxTypes.NftType(_tx.nftType), _tx.nftTokenId, _tx.amount, _tx.nftContentHash);
+                withdrawNFT(_tx.accountNameHash, _tx.nftL1Address, _tx.toAddress, _tx.proxyAddress, TxTypes.NftType(_tx.nftType), _tx.nftL1TokenId, _tx.amount, _tx.nftContentHash);
             } else {
                 // unsupported _tx in block verification
                 revert("l");
@@ -754,7 +751,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     /// @param _asset Token address, 0 address for BNB
     function requestFullExit(bytes32 _accountNameHash, address _asset) public nonReentrant {
         requireActive();
-        require(znsFifsRegistrar.isRegisteredHash(_accountNameHash), "not registered");
+        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
         // get address by account name hash
         address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
         require(msg.sender == creatorAddress, "invalid address");
@@ -787,12 +784,12 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
 
     /// @notice Register full exit nft request - pack pubdata, add priority request
     /// @param _accountNameHash account name hash
-    /// @param _nftAssetId account NFT asset id in zecrey network
+    /// @param _nftIndex account NFT index in zecrey network
     // TODO
-    function requestFullExitNFT(bytes32 _accountNameHash, uint32 _nftAssetId) public nonReentrant {
+    function requestFullExitNFT(bytes32 _accountNameHash, uint32 _nftIndex) public nonReentrant {
         requireActive();
-        require(znsFifsRegistrar.isRegisteredHash(_accountNameHash), "not registered");
-        require(_nftAssetId < MAX_FUNGIBLE_ASSET_ID, "T");
+        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
+        require(_nftIndex < MAX_FUNGIBLE_ASSET_ID, "T");
         // get address by account name hash
         address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
         require(msg.sender == creatorAddress, "invalid address");
@@ -802,14 +799,14 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         txType : uint8(TxTypes.TxType.FullExitNFT),
         accountIndex : 0, // unknown
         accountNameHash : _accountNameHash,
-        tokenAddress : address(0x0), // unknown
-        toAddress : creatorAddress,
-        proxyAddress : address(0x0), // unknown
         nftType : 0, // unknown
-        nftTokenId : 0, // unknown
-        amount : 0, //unknown
+        nftIndex : _nftIndex,
         nftContentHash : bytes32(0x0), // unknown,
-        nftAssetId : _nftAssetId
+        nftL1Address : address(0x0), // unknown
+        nftL1TokenId : 0, // unknown
+        amount : 0, //unknown
+        toAddress : creatorAddress,
+        proxyAddress : address(0x0) // unknown
         });
         bytes memory pubData = TxTypes.writeFullExitNFTPubdataForPriorityQueue(_tx);
         addPriorityRequest(TxTypes.TxType.FullExitNFT, pubData);

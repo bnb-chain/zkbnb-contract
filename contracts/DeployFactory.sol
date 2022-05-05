@@ -9,7 +9,7 @@ import "./UpgradeGatekeeper.sol";
 import "./ZecreyLegend.sol";
 import "./ZecreyVerifier.sol";
 import "./Config.sol";
-import "./ZNSFIFSRegistrar.sol";
+import "./ZNSController.sol";
 
 contract DeployFactory {
     Proxy governance;
@@ -44,7 +44,7 @@ contract DeployFactory {
     }
 
     function initZnsFifsRegistrar(
-        ZNSFIFSRegistrar _znsFifsRegistrar,
+        ZNSController _znsFifsRegistrar,
         address _zns,
         bytes32 _node
     ) external {
@@ -106,7 +106,7 @@ contract DeployFactory {
             address(additionalZecreyLegend), address(zecrey), address(upgradeGatekeeper));
 
         finalizeGovernance(Governance(address(governance)), address(assetGovernance), _validator);
-        finalizeZnsFifsRegistrar(ZNSFIFSRegistrar(address(znsFifsRegistrar)), address(zecrey));
+        finalizeZnsFifsRegistrar(ZNSController(address(znsFifsRegistrar)), address(zecrey));
         // TODO
 
         selfdestruct(payable(address(this)));
@@ -122,7 +122,7 @@ contract DeployFactory {
     }
 
     function finalizeZnsFifsRegistrar(
-        ZNSFIFSRegistrar _znsFifsRegistrar,
+        ZNSController _znsFifsRegistrar,
         address _zecrey
     ) internal {
         _znsFifsRegistrar.addController(_zecrey);
