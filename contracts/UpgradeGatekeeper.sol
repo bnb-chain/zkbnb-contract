@@ -10,6 +10,7 @@ import "./Upgradeable.sol";
 import "./UpgradeableMaster.sol";
 
 /// @title Upgrade Gatekeeper Contract
+/// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
 /// @author Zecrey Team
 contract UpgradeGatekeeper is UpgradeEvents, ZecreyOwnable {
     using SafeMath for uint256;

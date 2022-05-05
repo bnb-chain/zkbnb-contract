@@ -2,7 +2,7 @@
 
 pragma solidity ^0.7.6;
 
-/// @title Ownable Contract
+/// @title ZecreyOwnable Contract
 /// @author Zecrey Team
 contract ZecreyOwnable {
     /// @dev Storage position of the masters address (keccak256('eip1967.proxy.admin') - 1)

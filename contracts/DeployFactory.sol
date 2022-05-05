@@ -79,7 +79,7 @@ contract DeployFactory {
         address _validator,
         address _governor
     ) external {
-
+        // TODO Change msg.sender to this contract
         UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecrey, msg.sender);
 
         governance.transferMastership(address(upgradeGatekeeper));
