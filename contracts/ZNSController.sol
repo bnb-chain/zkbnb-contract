@@ -7,6 +7,7 @@ import "./IBaseRegistrar.sol";
 import "./Ownable.sol";
 import "./utils/Names.sol";
 import "./ReentrancyGuard.sol";
+import "hardhat/console.sol";
 
 /**
  * ZNSController is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
@@ -41,7 +42,9 @@ contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
         (address _znsAddr, bytes32 _node) = abi.decode(initializationParameters, (address, bytes32));
         zns = ZNS(_znsAddr);
         baseNode = _node;
-        zns._setOwner();
+
+        // initialize ownership
+        owner = msg.sender;
         controllers[msg.sender] = true;
     }
 

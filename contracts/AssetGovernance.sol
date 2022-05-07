@@ -2,6 +2,7 @@
 
 pragma solidity ^0.7.6;
 
+import "./ReentrancyGuard.sol";
 import "./Governance.sol";
 import "./IERC20.sol";
 import "./Utils.sol";
@@ -9,7 +10,7 @@ import "./Utils.sol";
 /// @title Asset Governance Contract
 /// @author Zecrey Team
 /// @notice Contract is used to allow anyone to add new ERC20 tokens to Zecrey given sufficient payment
-contract AssetGovernance {
+contract AssetGovernance is ReentrancyGuard {
     /// @notice Token lister added or removed (see `tokenLister`)
     event TokenListerUpdate(address indexed tokenLister, bool isActive);
 
@@ -43,15 +44,21 @@ contract AssetGovernance {
     /// @notice Address that collects listing payments
     address public treasury;
 
-    function initialize(bytes calldata initializationParameters) external {
-        (address _governance, address _listingFeeToken, uint256 _listingFee, uint16 _listingCap, address _treasury) =
-        abi.decode(initializationParameters, (address, address, uint256, uint16, address));
+    constructor (
+        address _governance,
+        address _listingFeeToken,
+        uint256 _listingFee,
+        uint16 _listingCap,
+        address _treasury
+    ) {
+        initializeReentrancyGuard();
 
         governance = Governance(_governance);
         listingFeeToken = IERC20(_listingFeeToken);
         listingFee = _listingFee;
         listingCap = _listingCap;
         treasury = _treasury;
+
         address governor = governance.networkGovernor();
         // We add Zecrey governor as a first token lister.
         tokenLister[governor] = true;

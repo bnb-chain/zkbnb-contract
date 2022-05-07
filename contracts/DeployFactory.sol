@@ -14,7 +14,6 @@ import "./ZNSController.sol";
 contract DeployFactory {
 
     Proxy governance;
-    Proxy assetGovernance;
     Proxy verifier;
     Proxy znsController;
     Proxy znsResolver;
@@ -23,7 +22,6 @@ contract DeployFactory {
     /// @dev Doing development in constructor method costs lower gas fee,
     ///      giving us simplicity and atomicity of our deployment.
     constructor(
-        AssetGovernance _assetGovernanceTarget,
         Governance _governanceTarget,
         ZecreyVerifier _verifierTarget,
         ZecreyLegend _zecreyLegendTarget,
@@ -42,7 +40,6 @@ contract DeployFactory {
         require(_governor != address(0), "governor check");
 
         deployProxyContracts(
-            _assetGovernanceTarget,
             _governanceTarget,
             _verifierTarget,
             _zecreyLegendTarget,
@@ -64,7 +61,6 @@ contract DeployFactory {
     event Addresses(address governance, address assetGovernance, address verifier, address znsController, address znsResolver, address zecreyLegend, address gatekeeper);
 
     function deployProxyContracts(
-        AssetGovernance _assetGovernanceTarget,
         Governance _governanceTarget,
         ZecreyVerifier _verifierTarget,
         ZecreyLegend _zecreyLegendTarget,
@@ -79,8 +75,8 @@ contract DeployFactory {
         address _zns,
         bytes32 _baseNode
     ) internal {
-        governance = new Proxy(address(_governanceTarget), abi.encode(this));
-        assetGovernance = new Proxy(address(_assetGovernanceTarget), abi.encode(address(governance), _listingToken, _listingFee, _listingCap, _governor));
+        governance = new Proxy(address(_governanceTarget), abi.encode(this)); // Here temporarily give this contract the governor right.
+        AssetGovernance assetGovernance = new AssetGovernance(address(governance), _listingToken, _listingFee, _listingCap, _governor);
         verifier = new Proxy(address(_verifierTarget), abi.encode());
         znsController = new Proxy(address(_znsControllerTarget), abi.encode(_zns, _baseNode));
         znsResolver = new Proxy(address(_znsResolverTarget), abi.encode(_zns));
@@ -93,9 +89,6 @@ contract DeployFactory {
 
         governance.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(governance));
-
-        assetGovernance.transferMastership(address(upgradeGatekeeper));
-        upgradeGatekeeper.addUpgradeable(address(assetGovernance));
 
         verifier.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(verifier));
@@ -114,26 +107,27 @@ contract DeployFactory {
         emit Addresses(address(governance), address(assetGovernance), address(verifier), address(znsController),
             address(znsResolver), address(zecreyLegend), address(upgradeGatekeeper));
 
-        finalizeGovernance(Governance(address(governance)), address(assetGovernance), _validator, _governor);
-        //finalizeZNSController(ZNSController(address(znsController)), address(zecreyLegend));
-        // TODO
+        // finally set governance
+        finalizeGovernance(Governance(address(governance)), assetGovernance, _validator, _governor);
+        finalizeZNSController(ZNSController(address(znsController)), address(zecreyLegend));
     }
 
     function finalizeGovernance(
         Governance _governance,
-        address _assetGovernance,
+        AssetGovernance _assetGovernance,
         address _validator,
         address _governor
     ) internal {
-        _governance.changeAssetGovernance(AssetGovernance(_assetGovernance));
+        _governance.changeAssetGovernance(_assetGovernance);
         _governance.setValidator(_validator, true);
         _governance.changeGovernor(_governor);
     }
 
-//    function finalizeZNSController(
-//        ZNSController _znsController,
-//        address _zecreyLegend
-//    ) internal {
-//        _znsController.addController(_zecreyLegend);
-//    }
+    function finalizeZNSController(
+        ZNSController _znsController,
+        address _zecreyLegend
+    ) internal {
+        _znsController.addController(_zecreyLegend);
+        _znsController.transferOwnership(_zecreyLegend);
+    }
 }
