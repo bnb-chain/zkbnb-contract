@@ -92,7 +92,7 @@ contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
     }
 
     function isRegisteredHash(bytes32 _nameHash) external view returns (bool){
-        return zns.subNodeRecordExists(baseNode, _nameHash);
+        return zns.recordExists(_nameHash);
     }
 
     function _valid(string memory _name) internal pure returns (bool) {

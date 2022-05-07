@@ -18,11 +18,28 @@ async function main() {
     const ZNSController = await ethers.getContractFactory('ZNSController');
     const znsController = await ZNSController.deploy();
     await znsController.deployed();
-    // initialize zns controller
+
     const baseNode = namehash.hash('legend');
+    // initialize zns controller
     const initZnsControllerParams = ethers.utils.defaultAbiCoder.encode(['address', 'bytes32'], [znsRegistry.address, baseNode])
     const initZnsControllerTx = await znsController.initialize(initZnsControllerParams);
     await initZnsControllerTx.wait();
+
+    // set base node owner
+    /*
+        bytes32 _node,
+        bytes32 _label,
+        address _owner,
+        bytes32 _pubKey
+     */
+    const legendNode = getKeccak256('legend')
+    const setBaseNodeTx = await znsRegistry.setSubnodeOwner(
+        ethers.constants.HashZero,
+        legendNode,
+        znsController.address,
+        ethers.constants.HashZero,
+    )
+    await setBaseNodeTx.wait()
     // deploy governance
     // governance
     const Governance = await ethers.getContractFactory('Governance')
