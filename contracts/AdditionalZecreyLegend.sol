@@ -30,6 +30,21 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
         pendingBalances[_packedBalanceKey] = PendingBalance(balance.add(_amount), FILLED_GAS_RESERVE_VALUE);
     }
 
+    /*
+        StateRoot
+            AccountRoot
+            NftRoot
+        Account
+            AccountIndex
+            AccountNameHash bytes32
+            PublicKey
+            AssetRoot
+            LiquidityRoot
+        Asset
+           AssetId
+           Balance
+        Nft
+    */
     function performDesert(
         BlockHeader memory _storedBlockHeader,
         address _owner,

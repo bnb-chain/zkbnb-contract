@@ -1,8 +1,8 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-const zecreyLegendAddr = '0xe7112456F5f54D642097dae24c695Ad1130dfd4B'
-const utilsAddr = '0xdA634D1f99a50d9A59E6C1e7604B4e8274AADF34'
+const zecreyLegendAddr = '0x9bFE5149E86Cd8A47DddB82b7800813d5A3adab6'
+const utilsAddr = '0x0D3014961da0f9603Dee59B63c703eA6202AD480'
 
 async function main() {
     // zecrey legend
@@ -16,11 +16,11 @@ async function main() {
     var registerZnsTx = await zecreyLegend.registerZNS(
         'sher',
         '0xDA00601380Bc7aE4fe67dA2EB78f9161570c9EB4',
-        '0x6788fdbc635cf86e266853a628b2743643df5c1db1a4f9afbb13bca103322e9a')
+        '0x63c4c6aff36c8ef69f6fb8e217930722c5d8819c3a30db783c54f8d94a2b2b2d')
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS('gavin',
         '0xd5Aa3B56a2E2139DB315CdFE3b34149c8ed09171',
-        '0xc47ae844d054fa24fb27d18cd9ff5c99df93aab03c389d8d4a292c54f44a320b')
+        '0x3eea11654758743beaf11610b88e739ba6c126f0bd39880c279ee633eb615b8c')
     await registerZnsTx.wait()
 
     const hashVal = namehash.hash('gavin.legend');

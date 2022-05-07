@@ -1,17 +1,24 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
+const zecreyLegendAddr = '0x9bFE5149E86Cd8A47DddB82b7800813d5A3adab6'
+const utilsAddr = '0x0D3014961da0f9603Dee59B63c703eA6202AD480'
+
 async function main() {
     // zecrey legend
     const ZecreyLegend = await ethers.getContractFactory('ZecreyLegend', {
         libraries: {
-            Utils: '0xa32b47E2D8634b611660238f66E6fD2148d093CE'
+            Utils: utilsAddr
         }
     });
-    const zecreyLegend = await ZecreyLegend.attach('0x53152a8f7C18FD7530f046E7D4Cee4D579743922')
+    const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
 
-    const hashVal = namehash.hash('sher.legend');
-    const depositBNBTx = await zecreyLegend.depositBNB(hashVal, {value: ethers.utils.parseEther('0.01')})
+    const sher = namehash.hash('sher.legend');
+    var depositBNBTx = await zecreyLegend.depositBNB(sher, {value: ethers.utils.parseEther('0.01')})
+    await depositBNBTx.wait()
+
+    const gavin = namehash.hash('gavin.legend');
+    depositBNBTx = await zecreyLegend.depositBNB(gavin, {value: ethers.utils.parseEther('0.01')})
     await depositBNBTx.wait()
 
 }
