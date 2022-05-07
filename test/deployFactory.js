@@ -34,9 +34,9 @@ describe("Zecrey-Legend contract", function () {
         governance = await Governance.deploy();
         await governance.deployed();
         // asset governance
-        AssetGovernance = await ethers.getContractFactory('AssetGovernance')
-        assetGovernance = await AssetGovernance.deploy()
-        await assetGovernance.deployed()
+        // AssetGovernance = await ethers.getContractFactory('AssetGovernance')
+        // assetGovernance = await AssetGovernance.deploy()
+        // await assetGovernance.deployed()
         // verifier
         Verifier = await ethers.getContractFactory('ZecreyVerifier')
         verifier = await Verifier.deploy()
@@ -59,7 +59,7 @@ describe("Zecrey-Legend contract", function () {
         // ZNS resolver
         PublicResolver = await ethers.getContractFactory('PublicResolver');
         znsResolver = await PublicResolver.deploy();
-        await znsResolver.deployed();
+        await znsResolver.deployed()
 
         // Step 3: initialize deploy factory and finish deployment
         const _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
