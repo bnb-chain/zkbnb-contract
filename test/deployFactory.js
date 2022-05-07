@@ -34,7 +34,7 @@ describe("Zecrey-Legend contract", function () {
         governance = await Governance.deploy();
         await governance.deployed();
         // asset governance
-        // AssetGovernance = await ethers.getContractFactory('AssetGovernance')
+        AssetGovernance = await ethers.getContractFactory('AssetGovernance')
         // assetGovernance = await AssetGovernance.deploy()
         // await assetGovernance.deployed()
         // verifier
@@ -83,6 +83,7 @@ describe("Zecrey-Legend contract", function () {
         let event = AddressesInterface.decodeEventLog("Addresses", deployFactoryTxReceipt.logs[7].data, deployFactoryTxReceipt.logs[7].topics);
         // Get inner contract proxy address
         // console.log(event)
+        assetGovernance = AssetGovernance.attach(event[1])
         znsControllerProxy = ZNSController.attach(event[3])
         zecreyLegendProxy = ZecreyLegend.attach(event[5])
 
@@ -105,6 +106,51 @@ describe("Zecrey-Legend contract", function () {
             expect(await zecreyLegendProxy.connect(owner).getAddressByAccountNameHash(sherNameHash)).to.equal(await addr1.getAddress());
             expect(await znsRegistry.owner(sherNameHash)).to.equal(await addr1.getAddress());
         });
+
+        it("test Deposit BNB", async function () {
+            // register ZNS
+            const sherPubKey = ethers.utils.formatBytes32String('sher.legend')
+            const registerZNSTx = await zecreyLegendProxy.registerZNS('sher', await addr1.getAddress(), sherPubKey)
+            await registerZNSTx.wait()
+
+            const sherNameHash = namehash.hash('sher.legend');
+            expect(await zecreyLegendProxy.connect(owner).getAddressByAccountNameHash(sherNameHash)).to.equal(await addr1.getAddress());
+            expect(await znsRegistry.owner(sherNameHash)).to.equal(await addr1.getAddress());
+
+            const depositBNBTx = await zecreyLegendProxy.connect(addr1).depositBNB(sherNameHash, {
+                value: ethers.utils.parseEther('1.0'),
+            });
+            await depositBNBTx.wait()
+        })
+
+        it("test Deposit BEP20", async function () {
+            // deploy BEP20 token
+            const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+            const token = await TokenFactory.connect(addr1).deploy(10000, '', '')
+            await token.deployed()
+            expect(await token.balanceOf(addr1.address)).to.equal(10000)
+            // set allowance
+            const setAllowanceTx = await token.connect(addr1).approve(zecreyLegendProxy.address, 10000)
+            await setAllowanceTx.wait()
+            expect(await token.allowance(addr1.address, zecreyLegendProxy.address)).to.equal(10000)
+
+            // add asset
+            const addAssetTx = await assetGovernance.connect(owner).addAsset(token.address)
+            await addAssetTx.wait()
+
+            // register ZNS
+            const sherPubKey = ethers.utils.formatBytes32String('sher.legend')
+            const registerZNSTx = await zecreyLegendProxy.registerZNS('sher', await addr1.getAddress(), sherPubKey)
+            await registerZNSTx.wait()
+
+            const sherNameHash = namehash.hash('sher.legend');
+            expect(await zecreyLegendProxy.connect(owner).getAddressByAccountNameHash(sherNameHash)).to.equal(await addr1.getAddress());
+            expect(await znsRegistry.owner(sherNameHash)).to.equal(await addr1.getAddress());
+
+            const depositBEP20Tx = await zecreyLegendProxy.connect(addr1).depositBEP20(token.address, 100, sherNameHash);
+            await depositBEP20Tx.wait()
+            expect(await token.balanceOf(zecreyLegendProxy.address)).to.equal(100);
+        })
     });
 
     // get the keccak256 hash of a specified string name

@@ -58,11 +58,9 @@ contract AssetGovernance is ReentrancyGuard {
         listingFee = _listingFee;
         listingCap = _listingCap;
         treasury = _treasury;
-
-        address governor = governance.networkGovernor();
-        // We add Zecrey governor as a first token lister.
-        tokenLister[governor] = true;
-        emit TokenListerUpdate(governor, true);
+        // We add treasury as the first token lister
+        tokenLister[treasury] = true;
+        emit TokenListerUpdate(treasury, true);
     }
 
     /// @notice Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
