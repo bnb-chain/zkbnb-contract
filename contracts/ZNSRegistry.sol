@@ -8,7 +8,7 @@ contract ZNSRegistry is ZNS {
 
     // @dev Require the msg.sender is the owner of this node
     modifier authorized(bytes32 node) {
-        require(records[node].owner == address(0x0), "unauthorized");
+        require(records[node].owner == msg.sender, "unauthorized");
         _;
     }
 
