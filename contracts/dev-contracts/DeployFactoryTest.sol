@@ -24,7 +24,7 @@ contract DeployFactoryTest {
         Proxy bank = new Proxy(address(_bank), abi.encode());
         Proxy zecrey = new Proxy(address(_zecreyTest), abi.encode(address(bank)));
 
-        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecrey, address(this));
+        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecrey);
 
         zecrey.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(zecrey));

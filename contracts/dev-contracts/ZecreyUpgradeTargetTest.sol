@@ -63,7 +63,7 @@ contract ZecreyUpgradeTargetTest is UpgradeableMaster, Config, StorageTest {
 
     /// @notice Checks that contract is ready for upgrade
     /// @return bool flag indicating that contract is ready for upgrade
-    function isReadyForUpgrade() external view override returns (bool) {
+    function isReadyForUpgrade() external pure override returns (bool) {
         return true;
     }
 

@@ -12,75 +12,84 @@ import "./Config.sol";
 import "./ZNSController.sol";
 
 contract DeployFactory {
+
     Proxy governance;
     Proxy assetGovernance;
     Proxy verifier;
-    Proxy znsFifsRegistrar;
-    Proxy additionalZecreyLegend;
-    Proxy zecrey;
+    Proxy znsController;
+    Proxy znsResolver;
+    Proxy zecreyLegend;
 
-    function initAssetGovernance(
-        AssetGovernance _assetGovTarget,
-        address _governance,
+    /// @dev Doing development in constructor method costs lower gas fee,
+    ///      giving us simplicity and atomicity of our deployment.
+    constructor(
+        AssetGovernance _assetGovernanceTarget,
+        Governance _governanceTarget,
+        ZecreyVerifier _verifierTarget,
+        ZecreyLegend _zecreyLegendTarget,
+        ZNSController _znsControllerTarget,
+        PublicResolver _znsResolverTarget,
+        bytes32 _genesisAccountRoot,
+        address _validator,
+        address _governor,
         address _listingToken,
         uint256 _listingFee,
         uint16 _listingCap,
-        address _governor
-    ) external {
-        assetGovernance = new Proxy(address(_assetGovTarget), abi.encode(_governance, _listingToken, _listingFee, _listingCap, _governor));
-    }
-
-    function initGovernance(
-        Governance _govTarget,
-        address _governor
-    ) external {
-        governance = new Proxy(address(_govTarget), abi.encode(_governor));
-    }
-
-    function initVerifier(
-        ZecreyVerifier _verifierTarget
-    ) external {
-        verifier = new Proxy(address(_verifierTarget), abi.encode());
-    }
-
-    function initZnsFifsRegistrar(
-        ZNSController _znsFifsRegistrar,
         address _zns,
-        bytes32 _node
-    ) external {
-        znsFifsRegistrar = new Proxy(address(_znsFifsRegistrar), abi.encode(_zns, _node));
-    }
-
-    function initAdditionalZecreyLegend(
-        AdditionalZecreyLegend _additionalZecreyLegend
-    ) external {
-        additionalZecreyLegend = new Proxy(address(_additionalZecreyLegend), abi.encode());
-    }
-
-
-    function initZecrey(
-        ZecreyLegend _zecreyTarget,
-        bytes32 _genesisAccountRoot,
-        address _validator,
-        address _governor
-    ) external {
-        require(_validator != address(0), "committer check");
+        bytes32 _baseNode
+    ) {
+        require(_validator != address(0), "validator check");
         require(_governor != address(0), "governor check");
-        zecrey = new Proxy(
-            address(_zecreyTarget),
-            abi.encode(address(governance), address(verifier), address(additionalZecreyLegend), address(znsFifsRegistrar),
-            _genesisAccountRoot)
+
+        deployProxyContracts(
+            _assetGovernanceTarget,
+            _governanceTarget,
+            _verifierTarget,
+            _zecreyLegendTarget,
+            _znsControllerTarget,
+            _znsResolverTarget,
+            _genesisAccountRoot,
+            _validator,
+            _governor,
+            _listingToken,
+            _listingFee,
+            _listingCap,
+            _zns,
+            _baseNode
         );
+
+        selfdestruct(msg.sender);
     }
 
-    event Addresses(address governance, address assetGovernance, address verifier, address znsFifsRegistrar, address additionalZecreyLegend, address zecrey, address gatekeeper);
+    event Addresses(address governance, address assetGovernance, address verifier, address znsController, address znsResolver, address zecreyLegend, address gatekeeper);
 
     function deployProxyContracts(
+        AssetGovernance _assetGovernanceTarget,
+        Governance _governanceTarget,
+        ZecreyVerifier _verifierTarget,
+        ZecreyLegend _zecreyLegendTarget,
+        ZNSController _znsControllerTarget,
+        PublicResolver _znsResolverTarget,
+        bytes32 _genesisAccountRoot,
         address _validator,
-        address _governor
-    ) external {
-        // TODO Change msg.sender to this contract
-        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecrey, msg.sender);
+        address _governor,
+        address _listingToken,
+        uint256 _listingFee,
+        uint16 _listingCap,
+        address _zns,
+        bytes32 _baseNode
+    ) internal {
+        governance = new Proxy(address(_governanceTarget), abi.encode(this));
+        assetGovernance = new Proxy(address(_assetGovernanceTarget), abi.encode(address(governance), _listingToken, _listingFee, _listingCap, _governor));
+        verifier = new Proxy(address(_verifierTarget), abi.encode());
+        znsController = new Proxy(address(_znsControllerTarget), abi.encode(_zns, _baseNode));
+        znsResolver = new Proxy(address(_znsResolverTarget), abi.encode(_zns));
+        AdditionalZecreyLegend additionalZecreyLegend = new AdditionalZecreyLegend();
+        zecreyLegend = new Proxy(
+            address(_zecreyLegendTarget),
+            abi.encode(address(governance), address(verifier), address(additionalZecreyLegend), address(znsController), address(znsResolver), _genesisAccountRoot));
+
+        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecreyLegend);
 
         governance.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(governance));
@@ -91,40 +100,40 @@ contract DeployFactory {
         verifier.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(verifier));
 
-        znsFifsRegistrar.transferMastership(address(upgradeGatekeeper));
-        upgradeGatekeeper.addUpgradeable(address(znsFifsRegistrar));
+        znsController.transferMastership(address(upgradeGatekeeper));
+        upgradeGatekeeper.addUpgradeable(address(znsController));
 
-        additionalZecreyLegend.transferMastership(address(upgradeGatekeeper));
-        upgradeGatekeeper.addUpgradeable(address(additionalZecreyLegend));
+        znsResolver.transferMastership(address(upgradeGatekeeper));
+        upgradeGatekeeper.addUpgradeable(address(znsResolver));
 
-        zecrey.transferMastership(address(upgradeGatekeeper));
-        upgradeGatekeeper.addUpgradeable(address(zecrey));
+        zecreyLegend.transferMastership(address(upgradeGatekeeper));
+        upgradeGatekeeper.addUpgradeable(address(zecreyLegend));
 
         upgradeGatekeeper.transferMastership(_governor);
 
-        emit Addresses(address(governance), address(assetGovernance), address(verifier), address(znsFifsRegistrar),
-            address(additionalZecreyLegend), address(zecrey), address(upgradeGatekeeper));
+        emit Addresses(address(governance), address(assetGovernance), address(verifier), address(znsController),
+            address(znsResolver), address(zecreyLegend), address(upgradeGatekeeper));
 
-        finalizeGovernance(Governance(address(governance)), address(assetGovernance), _validator);
-        finalizeZnsFifsRegistrar(ZNSController(address(znsFifsRegistrar)), address(zecrey));
+        finalizeGovernance(Governance(address(governance)), address(assetGovernance), _validator, _governor);
+        //finalizeZNSController(ZNSController(address(znsController)), address(zecreyLegend));
         // TODO
-
-        selfdestruct(payable(address(this)));
     }
 
     function finalizeGovernance(
         Governance _governance,
         address _assetGovernance,
-        address _validator
+        address _validator,
+        address _governor
     ) internal {
         _governance.changeAssetGovernance(AssetGovernance(_assetGovernance));
         _governance.setValidator(_validator, true);
+        _governance.changeGovernor(_governor);
     }
 
-    function finalizeZnsFifsRegistrar(
-        ZNSController _znsFifsRegistrar,
-        address _zecrey
-    ) internal {
-        _znsFifsRegistrar.addController(_zecrey);
-    }
+//    function finalizeZNSController(
+//        ZNSController _znsController,
+//        address _zecreyLegend
+//    ) internal {
+//        _znsController.addController(_zecreyLegend);
+//    }
 }

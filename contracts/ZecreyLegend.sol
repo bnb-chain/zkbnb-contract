@@ -45,9 +45,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     // Upgrade functional
-    /// @notice Notice period before activation preparation status of upgrade mode
+    /// @notice Shortest Notice period before activation preparation status of upgrade mode
+    ///         Notice period can be set by secure council
     function getNoticePeriod() external pure override returns (uint256) {
-        return UPGRADE_NOTICE_PERIOD;
+        return SHORTEST_UPGRADE_NOTICE_PERIOD;
     }
 
     /// @notice Notification that upgrade notice period started
@@ -61,6 +62,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     function upgradePreparationStarted() external override {
         upgradePreparationActive = true;
         upgradePreparationActivationTime = block.timestamp;
+        // Check if the approvedUpgradeNoticePeriod is passed
         require(block.timestamp >= upgradeStartTimestamp.add(approvedUpgradeNoticePeriod));
     }
 
@@ -135,7 +137,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         (
         address _governanceAddress,
         address _verifierAddress,
-        address _additionalZecreylegend,
+        address _additionalZecreyLegend,
         address _znsController,
         address _znsResolver,
         bytes32 _genesisAccountRoot
@@ -143,7 +145,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
 
         verifier = ZecreyVerifier(_verifierAddress);
         governance = Governance(_governanceAddress);
-        additionalZecreyLegend = AdditionalZecreyLegend(_additionalZecreylegend);
+        additionalZecreyLegend = AdditionalZecreyLegend(_additionalZecreyLegend);
         znsController = ZNSController(_znsController);
         znsResolver = PublicResolver(_znsResolver);
 
