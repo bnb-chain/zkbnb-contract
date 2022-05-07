@@ -72,7 +72,7 @@ contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
      * @param _owner The address to receive this name
      * @param _pubKey The pub key of the owner
      */
-    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey, address _resolver) external override onlyController {
+    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey, address _resolver) external override onlyController returns (bytes32 subnode){
         // Check if this name is valid
         require(_valid(_name), "invalid name");
         // This L2 owner should not own any name before
@@ -89,6 +89,7 @@ contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
         ZNSPubKeyMapper[_pubKey] = subnode;
 
         emit ZNSRegistered(_name, subnode, _owner, _pubKey);
+        return subnode;
     }
 
     function isRegisteredHash(bytes32 _nameHash) external view returns (bool){

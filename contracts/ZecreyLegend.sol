@@ -189,11 +189,12 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external nonReentrant {
-        znsController.registerZNS(_name, _owner, _zecreyPubKey, address(znsResolver));
+        bytes32 node = znsController.registerZNS(_name, _owner, _zecreyPubKey, address(znsResolver));
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),
         accountName : Utils.stringToBytes32(_name),
+        accountNameHash : node,
         pubKey : _zecreyPubKey
         });
         // compact pub data
@@ -202,7 +203,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
 
-        emit RegisterZNS(_name, _owner, _zecreyPubKey);
+        emit RegisterZNS(_name, node, _owner, _zecreyPubKey);
     }
 
     /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit

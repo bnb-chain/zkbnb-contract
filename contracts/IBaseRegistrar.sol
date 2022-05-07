@@ -21,5 +21,5 @@ interface IBaseRegistrar {
     function setThisResolver(address resolver) external;
 
     // Register a node under the base node.
-    function registerZNS(string calldata _name, address _owner, bytes32 zecreyPubKey, address _resolver) external;
+    function registerZNS(string calldata _name, address _owner, bytes32 zecreyPubKey, address _resolver) external returns(bytes32);
 }

@@ -40,6 +40,7 @@ interface Events {
 
     event RegisterZNS(
         string name,
+        bytes32 nameHash,
         address owner,
         bytes32 zecreyPubKey
     );

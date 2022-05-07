@@ -73,16 +73,18 @@ library TxTypes {
     struct RegisterZNS {
         uint8 txType;
         bytes32 accountName;
+        bytes32 accountNameHash;
         bytes32 pubKey;
     }
 
-    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = TX_TYPE_BYTES + ACCOUNT_NAME_BYTES + PUBKEY_BYTES;
+    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = TX_TYPE_BYTES + ACCOUNT_NAME_BYTES + ACCOUNT_NAME_HASH_BYTES + PUBKEY_BYTES;
 
     /// Serialize register zns pubdata
     function writeRegisterZNSPubdataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
-            _tx.accountName, // account name
+            _tx.accountName,
+            _tx.accountNameHash, // account name hash
             _tx.pubKey
         );
     }
@@ -93,6 +95,7 @@ library TxTypes {
         uint256 offset = TX_TYPE_BYTES;
         // account name
         (offset, parsed.accountName) = Bytes.readBytes32(_data, offset);
+        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
         (offset, parsed.pubKey) = Bytes.readBytes32(_data, offset);
 
         require(offset == PACKED_REGISTERZNS_PUBDATA_BYTES, "N");
