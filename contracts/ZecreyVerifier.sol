@@ -4,6 +4,12 @@ pragma solidity ^0.7.6;
 
 contract ZecreyVerifier {
 
+    function initialize(bytes calldata) external {}
+
+    /// @notice Verifier contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+    /// @param upgradeParameters Encoded representation of upgrade parameters
+    function upgrade(bytes calldata upgradeParameters) external {}
+
     function ScalarField()
     public pure returns (uint256)
     {
@@ -207,11 +213,6 @@ contract ZecreyVerifier {
     // e(proof.A, proof.B)*e(-vk.alpha, vk.beta)*e(-vk_x, vk.gamma)*e(-proof.C, vk.delta) == 1
     // accumulation of inputs
     // gammaABC[0] + sum[ gammaABC[i+1]^proof_inputs[i] ]
-
-    /// @notice Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
-    /// @param upgradeParameters Encoded representation of upgrade parameters
-    // solhint-disable-next-line no-empty-blocks
-    function upgrade(bytes calldata upgradeParameters) external {}
 
     function verifyBatchProofs(
         uint256[] memory in_proof, // proof itself, length is 8 * num_proofs

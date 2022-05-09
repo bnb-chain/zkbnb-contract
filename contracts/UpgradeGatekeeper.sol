@@ -10,6 +10,7 @@ import "./Upgradeable.sol";
 import "./UpgradeableMaster.sol";
 
 /// @title Upgrade Gatekeeper Contract
+/// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
 /// @author Zecrey Team
 contract UpgradeGatekeeper is UpgradeEvents, ZecreyOwnable {
     using SafeMath for uint256;
@@ -43,7 +44,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZecreyOwnable {
     /// @notice Contract constructor
     /// @param _mainContract Contract which defines notice period duration and allows finish upgrade during preparation of it
     /// @dev Calls Ownable contract constructor
-    constructor(UpgradeableMaster _mainContract, address sender) ZecreyOwnable(sender) {
+    constructor(UpgradeableMaster _mainContract) ZecreyOwnable(msg.sender) {
         mainContract = _mainContract;
         versionId = 0;
     }
@@ -68,6 +69,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZecreyOwnable {
         require(newTargets.length == managedContracts.length, "spu12");
         // spu12 - number of new targets must be equal to the number of managed contracts
 
+        // this noticePeriod is a configurable shortest notice period
         uint256 noticePeriod = mainContract.getNoticePeriod();
         mainContract.upgradeNoticePeriodStarted();
         upgradeStatus = UpgradeStatus.NoticePeriod;
@@ -90,20 +92,16 @@ contract UpgradeGatekeeper is UpgradeEvents, ZecreyOwnable {
     }
 
     /// @notice Activates preparation status
-    /// @return Bool flag indicating that preparation status has been successfully activated
-    function startPreparation() external returns (bool) {
+    function startPreparation() external {
         requireMaster(msg.sender);
         require(upgradeStatus == UpgradeStatus.NoticePeriod, "ugp11");
         // ugp11 - unable to activate preparation status in case of not active notice period status
+        require(block.timestamp >= noticePeriodFinishTimestamp, "ugp12");
+        // upg12 - shortest notice period not passed
 
-        if (block.timestamp >= noticePeriodFinishTimestamp) {
-            upgradeStatus = UpgradeStatus.Preparation;
-            mainContract.upgradePreparationStarted();
-            emit PreparationStart(versionId);
-            return true;
-        } else {
-            return false;
-        }
+        upgradeStatus = UpgradeStatus.Preparation;
+        mainContract.upgradePreparationStarted();
+        emit PreparationStart(versionId);
     }
 
     /// @notice Finishes upgrade
