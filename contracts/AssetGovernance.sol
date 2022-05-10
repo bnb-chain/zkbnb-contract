@@ -4,7 +4,7 @@ pragma solidity ^0.7.6;
 
 import "./ReentrancyGuard.sol";
 import "./Governance.sol";
-import "./IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Utils.sol";
 
 /// @title Asset Governance Contract

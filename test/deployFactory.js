@@ -80,7 +80,7 @@ describe("Zecrey-Legend contract", function () {
         const AddressesInterface = new ethers.utils.Interface(["event Addresses(address governance, address assetGovernance, address verifier, address znsController, address znsResolver, address zecreyLegend, address gatekeeper)"]);
         // The event 2 is the required event.
         // console.log(deployFactoryTxReceipt.logs)
-        let event = AddressesInterface.decodeEventLog("Addresses", deployFactoryTxReceipt.logs[7].data, deployFactoryTxReceipt.logs[7].topics);
+        let event = AddressesInterface.decodeEventLog("Addresses", deployFactoryTxReceipt.logs[8].data, deployFactoryTxReceipt.logs[8].topics);
         // Get inner contract proxy address
         // console.log(event)
         assetGovernance = AssetGovernance.attach(event[1])
