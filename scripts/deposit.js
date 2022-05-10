@@ -1,8 +1,8 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-const zecreyLegendAddr = '0x9bFE5149E86Cd8A47DddB82b7800813d5A3adab6'
-const utilsAddr = '0x0D3014961da0f9603Dee59B63c703eA6202AD480'
+const zecreyLegendAddr = '0xD27624F18D423b990A7859A3d72916A3DD783EEE'
+const utilsAddr = '0x01f7Ce1045B1B50Edd5CC117272B6059dDe8c29c'
 
 async function main() {
     // zecrey legend
