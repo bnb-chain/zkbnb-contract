@@ -5,7 +5,7 @@ import "../UpgradeableMaster.sol";
 import "./StorageTest.sol";
 import "../Config.sol";
 import "../SafeMathUInt128.sol";
-import "../SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract ZecreyUpgradeTest is UpgradeableMaster, StorageTest, Config {
     using SafeMath for uint256;

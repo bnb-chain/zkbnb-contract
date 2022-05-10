@@ -2,12 +2,12 @@
 
 pragma solidity ^0.7.6;
 
-import "./IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Bytes.sol";
 import "./Storage.sol";
 
-import "./IERC721.sol";
-import "./IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
 library Utils {
     /// @notice Returns lesser of two values

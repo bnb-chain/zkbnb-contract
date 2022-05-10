@@ -3,7 +3,7 @@ pragma solidity ^0.7.6;
 
 import "../Config.sol";
 import "./StorageTest.sol";
-import "../SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../SafeMathUInt128.sol";
 import "../UpgradeableMaster.sol";
 

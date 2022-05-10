@@ -4,14 +4,15 @@ pragma solidity ^0.7.6;
 
 import "./ZNS.sol";
 import "./IBaseRegistrar.sol";
-import "./Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./utils/Names.sol";
-import "./ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+
 
 /**
  * ZNSController is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
  */
-contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
+contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     using Names for string;
 
@@ -36,14 +37,15 @@ contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
         _;
     }
 
-    function initialize(bytes calldata initializationParameters) external {
-        initializeReentrancyGuard();
+    function initialize(bytes calldata initializationParameters) external initializer {
+        __Ownable_init();
+        __ReentrancyGuard_init();
+
         (address _znsAddr, bytes32 _node) = abi.decode(initializationParameters, (address, bytes32));
         zns = ZNS(_znsAddr);
         baseNode = _node;
 
         // initialize ownership
-        owner = msg.sender;
         controllers[msg.sender] = true;
     }
 
