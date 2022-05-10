@@ -37,7 +37,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         _;
     }
 
-    function initialize(bytes calldata initializationParameters) external {
+    function initialize(bytes calldata initializationParameters) external initializer {
         __Ownable_init();
         __ReentrancyGuard_init();
 
