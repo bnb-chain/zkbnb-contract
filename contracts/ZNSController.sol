@@ -41,6 +41,9 @@ contract ZNSController is IBaseRegistrar, Ownable, ReentrancyGuard {
         (address _znsAddr, bytes32 _node) = abi.decode(initializationParameters, (address, bytes32));
         zns = ZNS(_znsAddr);
         baseNode = _node;
+
+        // initialize ownership
+        owner = msg.sender;
         controllers[msg.sender] = true;
     }
 

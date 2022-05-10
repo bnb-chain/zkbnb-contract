@@ -6,9 +6,11 @@ pragma solidity ^0.7.6;
 /// @author Zecrey Team
 contract Config {
 
+    /// @dev Configurable notice period
     uint256 public constant UPGRADE_NOTICE_PERIOD = 4 weeks;
+    /// @dev Shortest notice period
+    uint256 public constant SHORTEST_UPGRADE_NOTICE_PERIOD = 0;
 
-    // TODO to be confirmed
     uint256 public constant SECURITY_COUNCIL_MEMBERS_NUMBER = 3;
 
     /// @dev ERC20 tokens and ETH withdrawals gas limit, used only for complete withdrawals

@@ -88,7 +88,7 @@ interface Events {
 }
 
 /// @title Upgrade events
-/// @author Matter Labs
+/// @author Zecrey Team
 interface UpgradeEvents {
     /// @notice Event emitted when new upgradeable contract is added to upgrade gatekeeper's list of managed contracts
     event NewUpgradable(uint256 indexed versionId, address indexed upgradeable);

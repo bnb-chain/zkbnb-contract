@@ -1,2 +1,2 @@
 @echo off
-npx hardhat --network local run .\scripts\zecrey-deploy.js > info\zecreyLegend.txt
+npx hardhat --network local run .\scripts\deployFactory.js > info\zecreyLegend.txt
