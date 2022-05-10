@@ -2,7 +2,7 @@
 
 pragma solidity ^0.7.6;
 
-import "./ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./Governance.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Utils.sol";
@@ -51,7 +51,6 @@ contract AssetGovernance is ReentrancyGuard {
         uint16 _listingCap,
         address _treasury
     ) {
-        initializeReentrancyGuard();
 
         governance = Governance(_governance);
         listingFeeToken = IERC20(_listingFeeToken);
