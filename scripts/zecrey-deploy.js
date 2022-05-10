@@ -74,10 +74,10 @@ async function main() {
     const initAssetGovernanceParams = ethers.utils.defaultAbiCoder.encode(
         ['address', 'address', 'uint256', 'uint16', 'address'],
         [governance.address, governance.address, _listingFee, _listingCap, governor])
-    const assetGovernance = await AssetGovernance.deploy()
+    const assetGovernance = await AssetGovernance.deploy(
+        governance.address, governance.address, _listingFee, _listingCap, governor
+    )
     await assetGovernance.deployed()
-    const initAssetGovernanceTx = await assetGovernance.initialize(initAssetGovernanceParams)
-    await initAssetGovernanceTx.wait()
     // set lister
     const setListerTx = await assetGovernance.setLister(governor, true)
     await setListerTx.wait()
