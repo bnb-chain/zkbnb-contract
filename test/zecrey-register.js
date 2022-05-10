@@ -26,6 +26,15 @@ describe("Zecrey-Legend contract", function () {
             const initZnsControllerParams = ethers.utils.defaultAbiCoder.encode(['address', 'bytes32'], [znsRegistry.address, baseNode])
             const initZnsControllerTx = await znsController.initialize(initZnsControllerParams);
             await initZnsControllerTx.wait();
+
+            const legendNode = getKeccak256('legend')
+            const setBaseNodeTx = await znsRegistry.setSubnodeOwner(
+                ethers.constants.HashZero,
+                legendNode,
+                znsController.address,
+                ethers.constants.HashZero,
+            )
+            await setBaseNodeTx.wait()
             // deploy governance
             // governance
             const Governance = await ethers.getContractFactory('Governance')
@@ -55,15 +64,18 @@ describe("Zecrey-Legend contract", function () {
             uint16 _listingCap,
             address _treasury
              */
+
+            const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+            const token = await TokenFactory.deploy(10000, '', '')
+            await token.deployed()
+
             const _listingFee = ethers.utils.parseEther('100')
             const _listingCap = 2 ** 16 - 1
-            const initAssetGovernanceParams = ethers.utils.defaultAbiCoder.encode(
-                ['address', 'address', 'uint256', 'uint16', 'address'],
-                [governance.address, governance.address, _listingFee, _listingCap, governor])
-            const assetGovernance = await AssetGovernance.deploy()
+            const assetGovernance = await AssetGovernance.deploy(
+                governance.address,
+                token.address, _listingFee, _listingCap, governor
+            )
             await assetGovernance.deployed()
-            const initAssetGovernanceTx = await assetGovernance.initialize(initAssetGovernanceParams)
-            await initAssetGovernanceTx.wait()
             // set lister
             const setListerTx = await assetGovernance.setLister(governor, true)
             await setListerTx.wait()
@@ -127,3 +139,7 @@ describe("Zecrey-Legend contract", function () {
         });
     });
 });
+
+const getKeccak256 = (name) => {
+    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name))
+}

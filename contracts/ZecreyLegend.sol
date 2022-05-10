@@ -216,7 +216,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         registerDeposit(0, SafeCast.toUint128(msg.value), _accountNameHash);
     }
 
-    /// @notice Deposit or Lock ERC20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
+    /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
     /// @param _token Token address
     /// @param _amount Token amount
     /// @param _accountNameHash Receiver Layer 2 account name hash
