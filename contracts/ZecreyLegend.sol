@@ -4,11 +4,11 @@ pragma solidity ^0.7.6;
 
 pragma experimental ABIEncoderV2;
 
-import "./ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeMathUInt128.sol";
 import "./SafeMathUInt32.sol";
-import "./SafeCast.sol";
+import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "./Storage.sol";
 import "./Events.sol";
 import "./Utils.sol";
@@ -23,7 +23,7 @@ import "./ZNSController.sol";
 
 /// @title Zecrey main contract
 /// @author Zecrey Team
-contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard {
+contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
@@ -131,8 +131,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     /// @dev _governanceAddress The address of Governance contract
     /// @dev _verifierAddress The address of Verifier contract
     /// @dev _genesisStateHash Genesis blocks (first block) state tree root hash
-    function initialize(bytes calldata initializationParameters) external {
-        initializeReentrancyGuard();
+    function initialize(bytes calldata initializationParameters) external initializer {
+        __ReentrancyGuard_init();
 
         (
         address _governanceAddress,
