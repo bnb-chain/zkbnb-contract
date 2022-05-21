@@ -87,12 +87,12 @@ contract AssetGovernance is ReentrancyGuard {
 
     /// @notice Set new listing token and fee
     /// @notice Can be called only by Zecrey governor
-    function setListingFeeToken(IERC20 _newListingFeeToken, uint256 _newListingFee) external {
+    function setListingFeeAsset(IERC20 _newListingFeeAsset, uint256 _newListingFee) external {
         governance.requireGovernor(msg.sender);
-        listingFeeToken = _newListingFeeToken;
+        listingFeeToken = _newListingFeeAsset;
         listingFee = _newListingFee;
 
-        emit ListingFeeTokenUpdate(_newListingFeeToken, _newListingFee);
+        emit ListingFeeTokenUpdate(_newListingFeeAsset, _newListingFee);
     }
 
     /// @notice Set new listing fee

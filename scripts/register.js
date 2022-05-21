@@ -1,8 +1,8 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-const zecreyLegendAddr = '0xD27624F18D423b990A7859A3d72916A3DD783EEE'
-const utilsAddr = '0x01f7Ce1045B1B50Edd5CC117272B6059dDe8c29c'
+const zecreyLegendAddr = '0x700A9288d64e9994eF29CA09BE857A6d831850B4'
+const utilsAddr = '0xB317C7D6763F64aBd871E3B75850e572d552606f'
 
 async function main() {
     // zecrey legend
@@ -14,11 +14,6 @@ async function main() {
     const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
     // seed = d892d866c5d0569e39e23c7bd46d63373d95197483e1a9af491e7098913a39ac
     var registerZnsTx = await zecreyLegend.registerZNS(
-        'pool',
-        '0x4A807505796c29AbBD7dc65D78dC59d772a7f67e',
-        '0x24a6806904f7a0517060044735b3e072c06abbfafa3090a7ca3bfd74e625d7aa')
-    await registerZnsTx.wait()
-    registerZnsTx = await zecreyLegend.registerZNS(
         'treasury',
         '0x49D35436e9B460275Bd927CAFCcEaEc8223cb84c',
         '0x0648bf303726d039c22588f9c6b63558a3ea07d845f35ce833909ba8611db9ab')

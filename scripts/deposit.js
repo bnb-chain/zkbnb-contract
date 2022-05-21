@@ -1,8 +1,11 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
+const {expect} = require("chai");
 
-const zecreyLegendAddr = '0xD27624F18D423b990A7859A3d72916A3DD783EEE'
-const utilsAddr = '0x01f7Ce1045B1B50Edd5CC117272B6059dDe8c29c'
+const REYBEP20Addr = '0xf4594B4438bebC738380c7106D06Cfb4BD6900e6'
+const LEGBEP20Addr = '0xD448121586875996cfb7e0E65d44361e2F6bD6c0'
+const zecreyLegendAddr = '0x700A9288d64e9994eF29CA09BE857A6d831850B4'
+const utilsAddr = '0xB317C7D6763F64aBd871E3B75850e572d552606f'
 
 async function main() {
     // zecrey legend
@@ -13,12 +16,28 @@ async function main() {
     });
     const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
 
+    const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+    const LEGToken = await TokenFactory.attach(LEGBEP20Addr)
+    const REYToken = await TokenFactory.attach(REYBEP20Addr)
+
     const sher = namehash.hash('sher.legend');
-    var depositBNBTx = await zecreyLegend.depositBNB(sher, {value: ethers.utils.parseEther('0.01')})
+    var depositBNBTx = await zecreyLegend.depositBNB(sher, {value: ethers.utils.parseEther('0.1')})
     await depositBNBTx.wait()
 
+    // set allowance
+    var setAllowanceTx = await LEGToken.approve(zecreyLegend.address, 100000000000)
+    await setAllowanceTx.wait()
+    setAllowanceTx = await REYToken.approve(zecreyLegend.address, 100000000000)
+    await setAllowanceTx.wait()
+
+    var depositBEP20 = await zecreyLegend.depositBEP20(LEGToken.address, '100', sher)
+    await depositBEP20.wait()
+
+    depositBEP20 = await zecreyLegend.depositBEP20(REYToken.address, '100', sher)
+    await depositBEP20.wait()
+
     const gavin = namehash.hash('gavin.legend');
-    depositBNBTx = await zecreyLegend.depositBNB(gavin, {value: ethers.utils.parseEther('0.01')})
+    depositBNBTx = await zecreyLegend.depositBNB(gavin, {value: ethers.utils.parseEther('0.1')})
     await depositBNBTx.wait()
 
 }

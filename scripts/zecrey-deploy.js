@@ -60,6 +60,13 @@ async function main() {
     const setCommitterTx = await governance.setValidator(governor, true);
     await setCommitterTx.wait();
 
+    // ERC20
+    const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+    const LEGToken = await TokenFactory.deploy(1000000, 'LEG', 'LEG')
+    await LEGToken.deployed()
+    const REYToken = await TokenFactory.deploy(1000000, 'REY', 'REY')
+    await REYToken.deployed()
+
     // asset governance
     const AssetGovernance = await ethers.getContractFactory('AssetGovernance')
     /*
@@ -69,13 +76,11 @@ async function main() {
     uint16 _listingCap,
     address _treasury
      */
+
     const _listingFee = ethers.utils.parseEther('100')
     const _listingCap = 2 ** 16 - 1
-    const initAssetGovernanceParams = ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address', 'uint256', 'uint16', 'address'],
-        [governance.address, governance.address, _listingFee, _listingCap, governor])
     const assetGovernance = await AssetGovernance.deploy(
-        governance.address, governance.address, _listingFee, _listingCap, governor
+        governance.address, LEGToken.address, _listingFee, _listingCap, governor
     )
     await assetGovernance.deployed()
     // set lister
@@ -84,6 +89,12 @@ async function main() {
     // changeAssetGovernance
     const changeAssetGovernanceTx = await governance.changeAssetGovernance(assetGovernance.address)
     await changeAssetGovernanceTx.wait()
+
+    // add asset
+    var addAssetTx = await assetGovernance.addAsset(LEGToken.address)
+    await addAssetTx.wait()
+    addAssetTx = await assetGovernance.addAsset(REYToken.address)
+    await addAssetTx.wait()
 
     // deploy verifier
     const Verifier = await ethers.getContractFactory('ZecreyVerifier')
@@ -148,6 +159,8 @@ async function main() {
     console.log('utils:', utils.address)
     console.log('zecrey legend:', zecreyLegend.address)
     console.log('additional zecrey legend:', additionalZecreyLegend.address)
+    console.log('LEG BEP20:', LEGToken.address)
+    console.log('REY BEP20:', REYToken.address)
 
 }
 

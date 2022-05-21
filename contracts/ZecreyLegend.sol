@@ -850,7 +850,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     /// @notice Reverts unverified blocks
-    function revertBlocks(CommitBlockInfo[] memory _blocksToRevert) external {
+    function revertBlocks(BlockHeader[] memory _blocksToRevert) external {
         delegateAdditional();
     }
 
