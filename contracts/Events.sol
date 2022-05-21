@@ -85,6 +85,24 @@ interface Events {
         uint256 nftTokenId,
         uint amount
     );
+
+    /// @notice Token pair created event.
+    event CreateTokenPair (
+        uint16 pairIndex,
+        uint16 asset0Id,
+        uint16 asset1Id,
+        uint16 feeRate,
+        uint32 treasuryAccountIndex,
+        uint16 treasuryRate
+    );
+
+    /// @notice Update token pair event.
+    event UpdateTokenPair (
+        uint16 pairIndex,
+        uint16 feeRate,
+        uint32 treasuryAccountIndex,
+        uint16 treasuryRate
+    );
 }
 
 /// @title Upgrade events

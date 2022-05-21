@@ -189,6 +189,83 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         return SafeCast.toUint128(balanceDiff);
     }
 
+    function createTokenPair(address _tokenA, address _tokenB) external nonReentrant {
+        require(_tokenA != _tokenB, 'identical address');
+        requireActive();
+        (address _token0, address _token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
+        require(_token0 != address(0), 'zero addr');
+        // Get asset id by its address
+        uint16 asset0Id = governance.validateAssetAddress(address(_token0));
+        require(!governance.pausedAssets(asset0Id), "paused asset");
+        uint16 asset1Id = governance.validateAssetAddress(address(_token1));
+        require(!governance.pausedAssets(asset1Id), "paused asset");
+
+        // Check asset exist
+        require(tokenPairs[asset0Id][asset1Id] == 0, 'token pair exists');
+
+        // Create token pair
+        governance.validateAssetTokenLister(msg.sender);
+        // new token pair index
+        totalTokenPairs++;
+        tokenPairs[asset0Id][asset1Id] = totalTokenPairs;
+        TokenPairInfo memory newPair = TokenPairInfo({
+        token0 : _token0,
+        token1 : _token1,
+        feeRate : governance.assetGovernance().feeRate(),
+        treasuryAccountIndex :  governance.assetGovernance().treasuryAccountIndex(),
+        treasuryRate :  governance.assetGovernance().treasuryRate()
+        });
+        tokenPairsInfo[totalTokenPairs] = newPair;
+
+        // Priority Queue request
+        TxTypes.CreatePair memory _tx = TxTypes.CreatePair({
+        txType : uint8(TxTypes.TxType.CreatePair),
+        pairIndex : totalTokenPairs,
+        asset0Id : asset0Id,
+        asset1Id : asset1Id,
+        feeRate : newPair.feeRate,
+        treasuryAccountIndex : newPair.treasuryAccountIndex,
+        treasuryRate : newPair.treasuryRate
+        });
+        // compact pub data
+        bytes memory pubData = TxTypes.writeCreatePairPubdataForPriorityQueue(_tx);
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.CreatePair, pubData);
+
+        emit CreateTokenPair(totalTokenPairs, asset0Id, asset1Id, newPair.feeRate, newPair.treasuryAccountIndex, newPair.treasuryRate);
+    }
+
+    function updateTokenPair(uint16 _pairIndex, uint16 _feeRate, uint32 _treasuryAccountIndex, uint16 _treasuryRate) external nonReentrant {
+        // Only governor can update token pair
+        governance.requireGovernor(msg.sender);
+        requireActive();
+        require(_pairIndex != 0, 'pair index 0');
+
+        // Check token pair exists
+        TokenPairInfo memory pair = tokenPairsInfo[_pairIndex];
+        require(pair.token0 != address(0x0) && pair.token1 != address(0x0), 'pair not exists');
+        // Update token pair
+        pair.feeRate = _feeRate;
+        pair.treasuryAccountIndex = _treasuryAccountIndex;
+        pair.treasuryRate = _treasuryRate;
+        tokenPairsInfo[_pairIndex] = pair;
+
+        // Priority Queue request
+        TxTypes.UpdatePair memory _tx = TxTypes.UpdatePair({
+        txType : uint8(TxTypes.TxType.UpdatePair),
+        pairIndex : _pairIndex,
+        feeRate : pair.feeRate,
+        treasuryAccountIndex : pair.treasuryAccountIndex,
+        treasuryRate : pair.treasuryRate
+        });
+        // compact pub data
+        bytes memory pubData = TxTypes.writeUpdatePairPubdataForPriorityQueue(_tx);
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.UpdatePair, pubData);
+
+        emit UpdateTokenPair(_pairIndex, pair.feeRate, pair.treasuryAccountIndex, pair.treasuryRate);
+    }
+
     function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external nonReentrant {
         bytes32 node = znsController.registerZNS(_name, _owner, _zecreyPubKey, address(znsResolver));
         // Priority Queue request
@@ -243,7 +320,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         registerDeposit(assetId, depositAmount, _accountNameHash);
     }
 
-    /// @notice Deposit NFT to Layer 2, both ERC721 and ERC1155 is supported
+    /// @notice Deposit NFT to Layer 2, ERC721 is supported
     function depositNFT(
         bytes32 _accountNameHash,
         address _tokenAddress,
@@ -650,7 +727,20 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             require(pubdataOffset < pubData.length, "A1");
 
             TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
-            if (txType == TxTypes.TxType.RegisterZNS) {
+
+            if (txType == TxTypes.TxType.UpdatePair) {
+                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_UPDATEPAIR_PUBDATA_BYTES);
+
+                TxTypes.UpdatePair memory updatePairData = TxTypes.readUpdatePairPubdata(txPubData);
+                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+                priorityOperationsProcessed++;
+            } else if (txType == TxTypes.TxType.CreatePair) {
+                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_CREATEPAIR_PUBDATA_BYTES);
+
+                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubdata(txPubData);
+                checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+                priorityOperationsProcessed++;
+            } else if (txType == TxTypes.TxType.RegisterZNS) {
                 bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_REGISTERZNS_PUBDATA_BYTES);
 
                 TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubdata(txPubData);
@@ -697,6 +787,30 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                 processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
             }
         }
+    }
+
+    /// @notice Checks that update pair is same as _tx in priority queue
+    /// @param _updatePair update pair
+    /// @param _priorityRequestId _tx's id in priority queue
+    function checkPriorityOperation(TxTypes.UpdatePair memory _updatePair, uint64 _priorityRequestId) internal view {
+        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+        // incorrect priority _tx type
+        require(priorReqType == TxTypes.TxType.UpdatePair, "H");
+
+        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkUpdatePairInPriorityQueue(_updatePair, hashedPubdata), "I");
+    }
+
+    /// @notice Checks that create pair is same as _tx in priority queue
+    /// @param _createPair create pair
+    /// @param _priorityRequestId _tx's id in priority queue
+    function checkPriorityOperation(TxTypes.CreatePair memory _createPair, uint64 _priorityRequestId) internal view {
+        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+        // incorrect priority _tx type
+        require(priorReqType == TxTypes.TxType.CreatePair, "H");
+
+        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubdata), "I");
     }
 
     /// @notice Checks that register zns is same as _tx in priority queue

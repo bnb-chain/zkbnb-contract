@@ -151,6 +151,53 @@ describe("Zecrey-Legend contract", function () {
             await depositBEP20Tx.wait()
             expect(await token.balanceOf(zecreyLegendProxy.address)).to.equal(100);
         })
+
+
+        it("test create and update Token Pair", async function () {
+            // deploy BEP20 token
+            const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+            const token0 = await TokenFactory.connect(addr1).deploy(10000, '', '')
+            await token0.deployed()
+            expect(await token0.balanceOf(addr1.address)).to.equal(10000)
+            const token1 = await TokenFactory.connect(addr1).deploy(10000, '', '')
+            await token1.deployed()
+            expect(await token1.balanceOf(addr1.address)).to.equal(10000)
+            // check 1i
+            await expect(
+                zecreyLegendProxy.connect(owner).createTokenPair(token0.address, token1.address)
+            ).to.be.revertedWith('1i')
+
+            // add asset
+            const addAssetTx0 = await assetGovernance.connect(owner).addAsset(token0.address)
+            await addAssetTx0.wait()
+            const addAssetTx1 = await assetGovernance.connect(owner).addAsset(token1.address)
+            await addAssetTx1.wait()
+            // check fee limit
+            await expect(
+                zecreyLegendProxy.connect(addr1).createTokenPair(token0.address, token1.address)
+            ).to.be.revertedWith('fee transfer failed')
+            // create pair
+            const createTokenPairTx0 = await zecreyLegendProxy.connect(owner).createTokenPair(token0.address, token1.address)
+            await createTokenPairTx0.wait()
+            await expect(
+                await zecreyLegendProxy.totalTokenPairs()
+            ).to.equal(1)
+            // check token pair exists
+            await expect(
+                zecreyLegendProxy.connect(owner).createTokenPair(token1.address, token0.address)
+            ).to.be.revertedWith('token pair exists')
+
+            // check pair 0
+            await expect(
+                zecreyLegendProxy.connect(owner).updateTokenPair(0, 30, 0 ,5)
+            ).to.be.revertedWith('pair index 0')
+            await expect(
+                zecreyLegendProxy.connect(owner).updateTokenPair(2, 30, 0 ,5)
+            ).to.be.revertedWith('pair not exists')
+            // update
+            const updateTokenPairTx0 = await zecreyLegendProxy.connect(owner).updateTokenPair(1, 30, 0, 5)
+            await updateTokenPairTx0.wait()
+        })
     });
 
     // get the keccak256 hash of a specified string name
