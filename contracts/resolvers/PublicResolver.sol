@@ -9,7 +9,7 @@ import "./profile/PubKeyResolver.sol";
 import "./profile/NameResolver.sol";
 import "../ZNS.sol";
 import "./profile/ZecreyPubKeyResolver.sol";
-import "../ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its address.
@@ -21,7 +21,7 @@ AddrResolver,
 NameResolver,
 PubKeyResolver,
 ZecreyPubKeyResolver,
-ReentrancyGuard
+ReentrancyGuardUpgradeable
 {
     ZNS zns;
 
@@ -40,8 +40,8 @@ ReentrancyGuard
         bool approved
     );
 
-    function initialize(bytes calldata initializationParameters) external {
-        initializeReentrancyGuard();
+    function initialize(bytes calldata initializationParameters) external initializer {
+        __ReentrancyGuard_init();
 
         (
         address _zns

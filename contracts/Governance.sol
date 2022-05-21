@@ -5,6 +5,7 @@ pragma solidity ^0.7.6;
 import "./Config.sol";
 import "./Utils.sol";
 import "./AssetGovernance.sol";
+import "./SafeMathUInt32.sol";
 
 /// @title Governance Contract
 /// @author Zecrey Team
@@ -78,11 +79,14 @@ contract Governance is Config {
     /// @param _asset Token address
     function addAsset(address _asset) external {
         require(msg.sender == address(assetGovernance), "1E");
-        require(assetsList[_asset] == 0, "1e"); // token exists
-        require(totalAssets < MAX_AMOUNT_OF_REGISTERED_ASSETS, "1f"); // no free identifiers for tokens
+        require(assetsList[_asset] == 0, "1e");
+        // token exists
+        require(totalAssets < MAX_AMOUNT_OF_REGISTERED_ASSETS, "1f");
+        // no free identifiers for tokens
 
         totalAssets++;
-        uint16 newAssetId = totalAssets; // it is not `totalTokens - 1` because tokenId = 0 is reserved for eth
+        uint16 newAssetId = totalAssets;
+        // it is not `totalTokens - 1` because tokenId = 0 is reserved for eth
 
         assetAddresses[newAssetId] = _asset;
         assetsList[_asset] = newAssetId;
@@ -114,7 +118,7 @@ contract Governance is Config {
         // only by governor
     }
 
-    function requireActiveValidator(address _address) external view{
+    function requireActiveValidator(address _address) external view {
         require(validators[_address], "invalid validator");
     }
 
@@ -125,5 +129,18 @@ contract Governance is Config {
         return assetId;
     }
 
+    function validateAssetTokenLister(address _address) external {
+        // If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
+        if (!assetGovernance.tokenLister(_address)) {
+            // Collect fees
+            bool feeTransferOk = Utils.transferFromERC20(
+                assetGovernance.listingFeeToken(),
+                _address,
+                assetGovernance.treasury(),
+                assetGovernance.listingFee()
+            );
+            require(feeTransferOk, "fee transfer failed");
+        }
+    }
 
 }

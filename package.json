@@ -30,6 +30,8 @@
     "hardhat": "^2.9.3"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^3.4.2",
+    "@openzeppelin/contracts-upgradeable": "^3.4.2",
     "eth-ens-namehash": "^2.0.8",
     "hardhat-tracer": "^1.0.0-alpha.6",
     "solc": "^0.7.6",

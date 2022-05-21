@@ -5,7 +5,7 @@ pragma solidity ^0.7.6;
 
 pragma experimental ABIEncoderV2;
 
-import "./IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./Config.sol";
 import "./Governance.sol";
@@ -124,6 +124,20 @@ contract Storage {
     function requireActive() internal view {
         require(!desertMode, "L");
         // exodus mode activated
+    }
+
+    /// @notice All token pairs in Zecrey Network
+
+    /// @notice Total number of tokens pairs registered in the network (start from 1)
+    uint16 public totalTokenPairs;
+    mapping(uint16 => mapping(uint16 => uint16)) tokenPairs;
+    mapping(uint16 => TokenPairInfo) tokenPairsInfo;
+    struct TokenPairInfo {
+        address token0;
+        address token1;
+        uint16 feeRate;
+        uint32 treasuryAccountIndex;
+        uint16 treasuryRate;
     }
 
 }

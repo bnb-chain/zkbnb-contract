@@ -80,7 +80,7 @@ describe("Zecrey-Legend contract", function () {
         const AddressesInterface = new ethers.utils.Interface(["event Addresses(address governance, address assetGovernance, address verifier, address znsController, address znsResolver, address zecreyLegend, address gatekeeper)"]);
         // The event 2 is the required event.
         // console.log(deployFactoryTxReceipt.logs)
-        let event = AddressesInterface.decodeEventLog("Addresses", deployFactoryTxReceipt.logs[7].data, deployFactoryTxReceipt.logs[7].topics);
+        let event = AddressesInterface.decodeEventLog("Addresses", deployFactoryTxReceipt.logs[8].data, deployFactoryTxReceipt.logs[8].topics);
         // Get inner contract proxy address
         // console.log(event)
         assetGovernance = AssetGovernance.attach(event[1])
@@ -150,6 +150,53 @@ describe("Zecrey-Legend contract", function () {
             const depositBEP20Tx = await zecreyLegendProxy.connect(addr1).depositBEP20(token.address, 100, sherNameHash);
             await depositBEP20Tx.wait()
             expect(await token.balanceOf(zecreyLegendProxy.address)).to.equal(100);
+        })
+
+
+        it("test create and update Token Pair", async function () {
+            // deploy BEP20 token
+            const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+            const token0 = await TokenFactory.connect(addr1).deploy(10000, '', '')
+            await token0.deployed()
+            expect(await token0.balanceOf(addr1.address)).to.equal(10000)
+            const token1 = await TokenFactory.connect(addr1).deploy(10000, '', '')
+            await token1.deployed()
+            expect(await token1.balanceOf(addr1.address)).to.equal(10000)
+            // check 1i
+            await expect(
+                zecreyLegendProxy.connect(owner).createTokenPair(token0.address, token1.address)
+            ).to.be.revertedWith('1i')
+
+            // add asset
+            const addAssetTx0 = await assetGovernance.connect(owner).addAsset(token0.address)
+            await addAssetTx0.wait()
+            const addAssetTx1 = await assetGovernance.connect(owner).addAsset(token1.address)
+            await addAssetTx1.wait()
+            // check fee limit
+            await expect(
+                zecreyLegendProxy.connect(addr1).createTokenPair(token0.address, token1.address)
+            ).to.be.revertedWith('fee transfer failed')
+            // create pair
+            const createTokenPairTx0 = await zecreyLegendProxy.connect(owner).createTokenPair(token0.address, token1.address)
+            await createTokenPairTx0.wait()
+            await expect(
+                await zecreyLegendProxy.totalTokenPairs()
+            ).to.equal(1)
+            // check token pair exists
+            await expect(
+                zecreyLegendProxy.connect(owner).createTokenPair(token1.address, token0.address)
+            ).to.be.revertedWith('token pair exists')
+
+            // check pair 0
+            await expect(
+                zecreyLegendProxy.connect(owner).updateTokenPair(0, 30, 0 ,5)
+            ).to.be.revertedWith('pair index 0')
+            await expect(
+                zecreyLegendProxy.connect(owner).updateTokenPair(2, 30, 0 ,5)
+            ).to.be.revertedWith('pair not exists')
+            // update
+            const updateTokenPairTx0 = await zecreyLegendProxy.connect(owner).updateTokenPair(1, 30, 0, 5)
+            await updateTokenPairTx0.wait()
         })
     });
 

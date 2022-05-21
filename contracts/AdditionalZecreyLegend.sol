@@ -4,10 +4,10 @@ pragma solidity ^0.7.0;
 
 pragma experimental ABIEncoderV2;
 
-import "./ReentrancyGuard.sol";
-import "./SafeMath.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeMathUInt128.sol";
-import "./SafeCast.sol";
+import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "./Utils.sol";
 
 import "./Storage.sol";
