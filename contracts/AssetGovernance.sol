@@ -67,7 +67,10 @@ contract AssetGovernance is ReentrancyGuard {
         address _listingFeeToken,
         uint256 _listingFee,
         uint16 _listingCap,
-        address _treasury
+        address _treasury,
+        uint16 _feeRate,
+        uint32 _treasuryAccountIndex,
+        uint16 _treasuryRate
     ) {
 
         governance = Governance(_governance);
@@ -75,6 +78,9 @@ contract AssetGovernance is ReentrancyGuard {
         listingFee = _listingFee;
         listingCap = _listingCap;
         treasury = _treasury;
+        treasuryAccountIndex = _treasuryAccountIndex;
+        feeRate = _feeRate;
+        treasuryRate = _treasuryRate;
         // We add treasury as the first token lister
         tokenLister[treasury] = true;
         emit TokenListerUpdate(treasury, true);
@@ -104,12 +110,12 @@ contract AssetGovernance is ReentrancyGuard {
 
     /// @notice Set new listing token and fee
     /// @notice Can be called only by Zecrey governor
-    function setListingFeeToken(IERC20 _newListingFeeToken, uint256 _newListingFee) external {
+    function setListingFeeAsset(IERC20 _newListingFeeAsset, uint256 _newListingFee) external {
         governance.requireGovernor(msg.sender);
-        listingFeeToken = _newListingFeeToken;
+        listingFeeToken = _newListingFeeAsset;
         listingFee = _newListingFee;
 
-        emit ListingFeeTokenUpdate(_newListingFeeToken, _newListingFee);
+        emit ListingFeeTokenUpdate(_newListingFeeAsset, _newListingFee);
     }
 
     /// @notice Set new listing fee

@@ -27,13 +27,15 @@
     "chai": "^4.3.6",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.4",
-    "hardhat": "^2.9.3"
+    "hardhat": "^2.9.3",
+    "hardhat-abi-exporter": "^2.9.0"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.4.2",
     "@openzeppelin/contracts-upgradeable": "^3.4.2",
     "eth-ens-namehash": "^2.0.8",
     "hardhat-tracer": "^1.0.0-alpha.6",
+    "npm": "^8.10.0",
     "solc": "^0.7.6",
     "web3": "^1.6.1"
   }

@@ -1,8 +1,10 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-const zecreyLegendAddr = '0xD27624F18D423b990A7859A3d72916A3DD783EEE'
-const utilsAddr = '0x01f7Ce1045B1B50Edd5CC117272B6059dDe8c29c'
+const LEGBEP20Addr = '0xd6eE09FD4D75c46055eCA73F16EE0019610a4af0'
+const REYBEP20Addr = '0x3e026C07eeCb70a096946194c62922DEd4b096a1'
+const zecreyLegendAddr = '0xCb7cCE2D359CDAc59b59DB91EF5bFE9C5328730f'
+const utilsAddr = '0x22c356b3E356f327E89328CB693CE9697c7148dB'
 
 async function main() {
     // zecrey legend
@@ -13,12 +15,28 @@ async function main() {
     });
     const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
 
+    const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+    const LEGToken = await TokenFactory.attach(LEGBEP20Addr)
+    const REYToken = await TokenFactory.attach(REYBEP20Addr)
+
     const sher = namehash.hash('sher.legend');
-    var depositBNBTx = await zecreyLegend.depositBNB(sher, {value: ethers.utils.parseEther('0.01')})
+    var depositBNBTx = await zecreyLegend.depositBNB(sher, {value: ethers.utils.parseEther('0.1')})
     await depositBNBTx.wait()
 
+    // set allowance
+    var setAllowanceTx = await LEGToken.approve(zecreyLegend.address, ethers.utils.parseEther('100000000000'))
+    await setAllowanceTx.wait()
+    setAllowanceTx = await REYToken.approve(zecreyLegend.address, ethers.utils.parseEther('100000000000'))
+    await setAllowanceTx.wait()
+
+    var depositBEP20 = await zecreyLegend.depositBEP20(LEGToken.address, ethers.utils.parseEther('100'), sher)
+    await depositBEP20.wait()
+
+    depositBEP20 = await zecreyLegend.depositBEP20(REYToken.address, ethers.utils.parseEther('100'), sher)
+    await depositBEP20.wait()
+
     const gavin = namehash.hash('gavin.legend');
-    depositBNBTx = await zecreyLegend.depositBNB(gavin, {value: ethers.utils.parseEther('0.01')})
+    depositBNBTx = await zecreyLegend.depositBNB(gavin, {value: ethers.utils.parseEther('0.1')})
     await depositBNBTx.wait()
 
 }

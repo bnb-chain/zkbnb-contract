@@ -15,6 +15,7 @@ async function main() {
     const initResolverTx = await publicResolver.initialize(initResolverParams);
     await initResolverTx.wait();
     // deploy zns controller
+    console.log('start ZNSController...')
     const ZNSController = await ethers.getContractFactory('ZNSController');
     const znsController = await ZNSController.deploy();
     await znsController.deployed();
@@ -41,6 +42,7 @@ async function main() {
     )
     await setBaseNodeTx.wait()
     // deploy governance
+    console.log('start Governance...')
     // governance
     const Governance = await ethers.getContractFactory('Governance')
     /*
@@ -60,7 +62,16 @@ async function main() {
     const setCommitterTx = await governance.setValidator(governor, true);
     await setCommitterTx.wait();
 
+    // ERC20
+    const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+    const totalSupply = ethers.utils.parseEther('100000000')
+    const LEGToken = await TokenFactory.deploy(totalSupply, 'LEG', 'LEG')
+    await LEGToken.deployed()
+    const REYToken = await TokenFactory.deploy(totalSupply, 'REY', 'REY')
+    await REYToken.deployed()
+
     // asset governance
+    console.log('start AssetGovernance...')
     const AssetGovernance = await ethers.getContractFactory('AssetGovernance')
     /*
     Governance _governance,
@@ -69,13 +80,14 @@ async function main() {
     uint16 _listingCap,
     address _treasury
      */
+
     const _listingFee = ethers.utils.parseEther('100')
     const _listingCap = 2 ** 16 - 1
-    const initAssetGovernanceParams = ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address', 'uint256', 'uint16', 'address'],
-        [governance.address, governance.address, _listingFee, _listingCap, governor])
+    const _treasuryAccountIndex = 0
+    const _feeRate = 30
+    const _treasuryRate = 5
     const assetGovernance = await AssetGovernance.deploy(
-        governance.address, governance.address, _listingFee, _listingCap, governor
+        governance.address, LEGToken.address, _listingFee, _listingCap, governor, _feeRate, _treasuryAccountIndex, _treasuryRate
     )
     await assetGovernance.deployed()
     // set lister
@@ -85,7 +97,14 @@ async function main() {
     const changeAssetGovernanceTx = await governance.changeAssetGovernance(assetGovernance.address)
     await changeAssetGovernanceTx.wait()
 
+    // add asset
+    var addAssetTx = await assetGovernance.addAsset(LEGToken.address)
+    await addAssetTx.wait()
+    addAssetTx = await assetGovernance.addAsset(REYToken.address)
+    await addAssetTx.wait()
+
     // deploy verifier
+    console.log('start Verifier...')
     const Verifier = await ethers.getContractFactory('ZecreyVerifier')
     const verifier = await Verifier.deploy()
     await verifier.deployed()
@@ -100,7 +119,9 @@ async function main() {
             Utils: utils.address
         }
     })
-    const zecreyLegend = await ZecreyLegend.deploy()
+    const zecreyLegend = await ZecreyLegend.deploy({
+        gasLimit: 8000000,
+    })
     await zecreyLegend.deployed()
 
     // add controller for zns fifs registrar
@@ -148,6 +169,8 @@ async function main() {
     console.log('utils:', utils.address)
     console.log('zecrey legend:', zecreyLegend.address)
     console.log('additional zecrey legend:', additionalZecreyLegend.address)
+    console.log('LEG BEP20:', LEGToken.address)
+    console.log('REY BEP20:', REYToken.address)
 
 }
 

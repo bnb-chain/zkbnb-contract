@@ -73,7 +73,8 @@ describe("Zecrey-Legend contract", function () {
             const _listingCap = 2 ** 16 - 1
             const assetGovernance = await AssetGovernance.deploy(
                 governance.address,
-                token.address, _listingFee, _listingCap, governor
+                token.address, _listingFee, _listingCap, governor,
+                30, 0, 5
             )
             await assetGovernance.deployed()
             // set lister
