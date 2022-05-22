@@ -64,9 +64,10 @@ async function main() {
 
     // ERC20
     const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
-    const LEGToken = await TokenFactory.deploy(1000000, 'LEG', 'LEG')
+    const totalSupply = ethers.utils.parseEther('100000000')
+    const LEGToken = await TokenFactory.deploy(totalSupply, 'LEG', 'LEG')
     await LEGToken.deployed()
-    const REYToken = await TokenFactory.deploy(1000000, 'REY', 'REY')
+    const REYToken = await TokenFactory.deploy(totalSupply, 'REY', 'REY')
     await REYToken.deployed()
 
     // asset governance

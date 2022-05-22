@@ -86,16 +86,16 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
             // TODO
             require(_amount != 0, "Z");
             // Unsupported nft amount
-//            TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({
-//            txType : uint8(TxTypes.TxType.WithdrawNFT),
-//            accountIndex : _nftCreatorAccountId,
-//            toAddress : _nftCreatorAddress,
-//            proxyAddress : _nftCreatorAddress,
-//            nftAssetId : _nftSerialId,
-//            gasFeeAccountIndex : 0,
-//            gasFeeAssetId : 0,
-//            gasFeeAssetAmount : 0
-//            });
+            //            TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({
+            //            txType : uint8(TxTypes.TxType.WithdrawNFT),
+            //            accountIndex : _nftCreatorAccountId,
+            //            toAddress : _nftCreatorAddress,
+            //            proxyAddress : _nftCreatorAddress,
+            //            nftAssetId : _nftSerialId,
+            //            gasFeeAccountIndex : 0,
+            //            gasFeeAssetId : 0,
+            //            gasFeeAssetAmount : 0
+            //            });
             //            pendingWithdrawnNFTs[_tokenId] = withdrawNftOp;
             //            emit WithdrawalNFTPending(_tokenId);
         }
@@ -202,10 +202,15 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
         requireActive();
         (address _token0, address _token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
         // Get asset id by its address
-        uint16 assetAId = governance.validateAssetAddress(address(_token0));
+        uint16 assetAId = 0;
+        uint16 assetBId;
+        if (_token0 != address(0)) {
+            assetAId = governance.validateAssetAddress(_token0);
+        }
         require(!governance.pausedAssets(assetAId), "ia2");
-        uint16 assetBId = governance.validateAssetAddress(address(_token1));
+        assetBId = governance.validateAssetAddress(_token1);
         require(!governance.pausedAssets(assetBId), "ia3");
+        (assetAId, assetBId) = assetAId < assetBId ? (assetAId, assetBId) : (assetBId, assetAId);
 
         // Check asset exist
         require(!tokenPairs[assetAId][assetBId], 'ip');

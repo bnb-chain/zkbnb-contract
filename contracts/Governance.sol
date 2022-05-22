@@ -123,9 +123,6 @@ contract Governance is Config {
     }
 
     function validateAssetAddress(address _assetAddr) external view returns (uint16) {
-        if (_assetAddr == address(0)) {
-            return 0;
-        }
         uint16 assetId = assetsList[_assetAddr];
         require(assetId != 0, "1i");
         require(!pausedAssets[assetId], "2i");

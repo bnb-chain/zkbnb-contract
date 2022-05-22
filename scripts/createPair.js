@@ -1,10 +1,10 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-const REYBEP20Addr = '0xb0Eb8D52c7760B0F76a015443bB5367600ed627D'
-const LEGBEP20Addr = '0x01531005834e4fEB117957eBd9Dee6AAf78a6153'
-const zecreyLegendAddr = '0xB0fE6AE96Db933140551b03c731043B502EAd393'
-const utilsAddr = '0xc92d4a9Ee676744eD6edDff7Fd70ABf47F822846'
+const LEGBEP20Addr = '0xd6eE09FD4D75c46055eCA73F16EE0019610a4af0'
+const REYBEP20Addr = '0x3e026C07eeCb70a096946194c62922DEd4b096a1'
+const zecreyLegendAddr = '0xCb7cCE2D359CDAc59b59DB91EF5bFE9C5328730f'
+const utilsAddr = '0x22c356b3E356f327E89328CB693CE9697c7148dB'
 
 async function main() {
     // zecrey legend
