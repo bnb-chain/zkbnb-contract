@@ -11,7 +11,6 @@ interface NFTFactory
         address _toAddress,
         address _factoryAddress,
         uint256 _nftTokenId,
-        uint32 _amount,
         bytes32 _nftContentHash,
         bytes memory _extraData
     )

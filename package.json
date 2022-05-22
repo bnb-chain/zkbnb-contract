@@ -34,6 +34,7 @@
     "@openzeppelin/contracts-upgradeable": "^3.4.2",
     "eth-ens-namehash": "^2.0.8",
     "hardhat-tracer": "^1.0.0-alpha.6",
+    "npm": "^8.10.0",
     "solc": "^0.7.6",
     "web3": "^1.6.1"
   }

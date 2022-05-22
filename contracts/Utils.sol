@@ -65,39 +65,18 @@ library Utils {
     function transferFromNFT(
         address _from,
         address _to,
-        TxTypes.NftType _nftType,
-        address _tokenAddress,
-        uint256 _nftTokenId,
-        uint32 _amount
+        address _nftL1Address,
+        uint256 _nftL1TokenId
     ) internal returns (bool success) {
-        if (_amount == 0) return false;
 
-        if (_nftType == TxTypes.NftType.ERC1155) {
-            bytes memory _emptyExtraData;
-            try IERC1155(_tokenAddress).safeTransferFrom(
-                _from,
-                _to,
-                _nftTokenId,
-                _amount,
-                _emptyExtraData
-            ) {
-                success = true;
-            } catch {
-                success = false;
-            }
-        } else if (_nftType == TxTypes.NftType.ERC721) {
-            require(_amount == 1, "invalid nft amount");
-            try IERC721(_tokenAddress).safeTransferFrom(
-                _from,
-                _to,
-                _nftTokenId
-            ) {
-                success = true;
-            } catch {
-                success = false;
-            }
-        } else {
-            revert("invalid nft type");
+        try IERC721(_nftL1Address).safeTransferFrom(
+            _from,
+            _to,
+            _nftL1TokenId
+        ) {
+            success = true;
+        } catch {
+            success = false;
         }
         return success;
     }

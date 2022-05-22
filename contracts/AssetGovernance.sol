@@ -67,7 +67,10 @@ contract AssetGovernance is ReentrancyGuard {
         address _listingFeeToken,
         uint256 _listingFee,
         uint16 _listingCap,
-        address _treasury
+        address _treasury,
+        uint16 _feeRate,
+        uint32 _treasuryAccountIndex,
+        uint16 _treasuryRate
     ) {
 
         governance = Governance(_governance);
@@ -75,6 +78,9 @@ contract AssetGovernance is ReentrancyGuard {
         listingFee = _listingFee;
         listingCap = _listingCap;
         treasury = _treasury;
+        treasuryAccountIndex = _treasuryAccountIndex;
+        feeRate = _feeRate;
+        treasuryRate = _treasuryRate;
         // We add treasury as the first token lister
         tokenLister[treasury] = true;
         emit TokenListerUpdate(treasury, true);

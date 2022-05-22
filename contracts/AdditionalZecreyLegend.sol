@@ -196,4 +196,87 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
 
         emit BlocksRevert(totalBlocksVerified, blocksCommitted);
     }
+
+    function createPair(address _tokenA, address _tokenB) external {
+        require(_tokenA != _tokenB, 'ia1');
+        requireActive();
+        (address _token0, address _token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
+        // Get asset id by its address
+        uint16 assetAId = governance.validateAssetAddress(address(_token0));
+        require(!governance.pausedAssets(assetAId), "ia2");
+        uint16 assetBId = governance.validateAssetAddress(address(_token1));
+        require(!governance.pausedAssets(assetBId), "ia3");
+
+        // Check asset exist
+        require(!tokenPairs[assetAId][assetBId], 'ip');
+
+        // Create token pair
+        governance.validateAssetTokenLister(msg.sender);
+        // new token pair index
+        tokenPairs[assetAId][assetBId] = true;
+        isPairExist[totalTokenPairs] = true;
+
+        // Priority Queue request
+        TxTypes.CreatePair memory _tx = TxTypes.CreatePair({
+        txType : uint8(TxTypes.TxType.CreatePair),
+        pairIndex : totalTokenPairs,
+        assetAId : assetAId,
+        assetBId : assetBId,
+        feeRate : governance.assetGovernance().feeRate(),
+        treasuryAccountIndex : governance.assetGovernance().treasuryAccountIndex(),
+        treasuryRate : governance.assetGovernance().treasuryRate()
+        });
+        // compact pub data
+        bytes memory pubData = TxTypes.writeCreatePairPubdataForPriorityQueue(_tx);
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.CreatePair, pubData);
+        totalTokenPairs++;
+
+        emit CreateTokenPair(_tx.pairIndex, assetAId, assetBId, _tx.feeRate, _tx.treasuryAccountIndex, _tx.treasuryRate);
+    }
+
+    function updatePairRate(uint16 _pairIndex, uint16 _feeRate, uint32 _treasuryAccountIndex, uint16 _treasuryRate) external {
+        // Only governor can update token pair
+        governance.requireGovernor(msg.sender);
+        requireActive();
+        require(isPairExist[_pairIndex], 'pne');
+
+        // Priority Queue request
+        TxTypes.UpdatePairRate memory _tx = TxTypes.UpdatePairRate({
+        txType : uint8(TxTypes.TxType.UpdatePairRate),
+        pairIndex : _pairIndex,
+        feeRate : _feeRate,
+        treasuryAccountIndex : _treasuryAccountIndex,
+        treasuryRate : _treasuryRate
+        });
+        // compact pub data
+        bytes memory pubData = TxTypes.writeUpdatePairRatePubdataForPriorityQueue(_tx);
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.UpdatePairRate, pubData);
+
+        emit UpdateTokenPair(_pairIndex, _feeRate, _treasuryAccountIndex, _treasuryRate);
+    }
+
+    /// @notice Saves priority request in storage
+    /// @dev Calculates expiration block for request, store this request and emit NewPriorityRequest event
+    /// @param _txType Rollup _tx type
+    /// @param _pubData _tx pub data
+    function addPriorityRequest(TxTypes.TxType _txType, bytes memory _pubData) internal {
+        // Expiration block is: current block number + priority expiration delta
+        uint64 expirationBlock = uint64(block.number + PRIORITY_EXPIRATION);
+
+        uint64 nextPriorityRequestId = firstPriorityRequestId + totalOpenPriorityRequests;
+
+        bytes20 hashedPubData = Utils.hashBytesToBytes20(_pubData);
+
+        priorityRequests[nextPriorityRequestId] = PriorityTx({
+        hashedPubData : hashedPubData,
+        expirationBlock : expirationBlock,
+        txType : _txType
+        });
+
+        emit NewPriorityRequest(msg.sender, nextPriorityRequestId, _txType, _pubData, uint256(expirationBlock));
+
+        totalOpenPriorityRequests++;
+    }
 }

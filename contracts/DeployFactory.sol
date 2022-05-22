@@ -75,8 +75,11 @@ contract DeployFactory {
         address _zns,
         bytes32 _baseNode
     ) internal {
-        governance = new Proxy(address(_governanceTarget), abi.encode(this)); // Here temporarily give this contract the governor right.
-        AssetGovernance assetGovernance = new AssetGovernance(address(governance), _listingToken, _listingFee, _listingCap, _governor);
+        governance = new Proxy(address(_governanceTarget), abi.encode(this));
+        // Here temporarily give this contract the governor right.
+        // TODO treasury rate
+        AssetGovernance assetGovernance = new AssetGovernance(address(governance), _listingToken, _listingFee, _listingCap, _governor,
+            30, 0, 5);
         verifier = new Proxy(address(_verifierTarget), abi.encode());
         znsController = new Proxy(address(_znsControllerTarget), abi.encode(_zns, _baseNode));
         znsResolver = new Proxy(address(_znsResolverTarget), abi.encode(_zns));

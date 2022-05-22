@@ -15,30 +15,8 @@ async function main() {
     });
     const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
 
-    const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
-    const LEGToken = await TokenFactory.attach(LEGBEP20Addr)
-    const REYToken = await TokenFactory.attach(REYBEP20Addr)
-
-    const sher = namehash.hash('sher.legend');
-    var depositBNBTx = await zecreyLegend.depositBNB(sher, {value: ethers.utils.parseEther('0.1')})
-    await depositBNBTx.wait()
-
-    // set allowance
-    var setAllowanceTx = await LEGToken.approve(zecreyLegend.address, 100000000000)
-    await setAllowanceTx.wait()
-    setAllowanceTx = await REYToken.approve(zecreyLegend.address, 100000000000)
-    await setAllowanceTx.wait()
-
-    var depositBEP20 = await zecreyLegend.depositBEP20(LEGToken.address, '100', sher)
-    await depositBEP20.wait()
-
-    depositBEP20 = await zecreyLegend.depositBEP20(REYToken.address, '100', sher)
-    await depositBEP20.wait()
-
-    const gavin = namehash.hash('gavin.legend');
-    depositBNBTx = await zecreyLegend.depositBNB(gavin, {value: ethers.utils.parseEther('0.1')})
-    await depositBNBTx.wait()
-
+    const updatePairRateTx = await zecreyLegend.updatePairRate(1, 50, 0, 10)
+    await updatePairRateTx.wait()
 }
 
 // get the keccak256 hash of a specified string name
