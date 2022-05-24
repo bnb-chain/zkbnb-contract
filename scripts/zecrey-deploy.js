@@ -14,6 +14,11 @@ async function main() {
     const initResolverParams = ethers.utils.defaultAbiCoder.encode(['address'], [znsRegistry.address])
     const initResolverTx = await publicResolver.initialize(initResolverParams);
     await initResolverTx.wait();
+    // deploy zns price oracle
+    const ZNSPriceOracle = await ethers.getContractFactory('StablePriceOracle');
+    const rentPrices = [0, 1, 2]
+    const znsPriceOracle = await ZNSPriceOracle.deploy(rentPrices);
+    await znsPriceOracle.deployed();
     // deploy zns controller
     console.log('start ZNSController...')
     const ZNSController = await ethers.getContractFactory('ZNSController');
@@ -22,7 +27,7 @@ async function main() {
 
     const baseNode = namehash.hash('legend');
     // initialize zns controller
-    const initZnsControllerParams = ethers.utils.defaultAbiCoder.encode(['address', 'bytes32'], [znsRegistry.address, baseNode])
+    const initZnsControllerParams = ethers.utils.defaultAbiCoder.encode(['address', 'address', 'bytes32'], [znsRegistry.address, znsPriceOracle.address, baseNode])
     const initZnsControllerTx = await znsController.initialize(initZnsControllerParams);
     await initZnsControllerTx.wait();
 
@@ -161,6 +166,7 @@ async function main() {
     await zecreyInitTx.wait()
 
     console.log('zns:', znsRegistry.address)
+    console.log('zns price oracle:', znsPriceOracle.address)
     console.log('zns resolver:', publicResolver.address)
     console.log('zns controller:', znsController.address)
     console.log('asset governance:', assetGovernance.address)
