@@ -197,8 +197,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         delegateAdditional();
     }
 
-    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external nonReentrant {
-        bytes32 node = znsController.registerZNS(_name, _owner, _zecreyPubKey, address(znsResolver));
+    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external payable nonReentrant {
+        // Register ZNS
+        bytes32 node = znsController.registerZNS{value: msg.value}(_name, _owner, _zecreyPubKey, address(znsResolver));
+
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),

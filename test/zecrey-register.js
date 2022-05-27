@@ -17,13 +17,18 @@ describe("Zecrey-Legend contract", function () {
             const initResolverParams = ethers.utils.defaultAbiCoder.encode(['address'], [znsRegistry.address])
             const initResolverTx = await publicResolver.initialize(initResolverParams);
             await initResolverTx.wait();
+            // deploy zns price oracle
+            const ZNSPriceOracle = await ethers.getContractFactory('StablePriceOracle');
+            const rentPrices = [0, 1, 2]
+            const znsPriceOracle = await ZNSPriceOracle.deploy(rentPrices);
+            await znsPriceOracle.deployed();
             // deploy zns controller
             const ZNSController = await ethers.getContractFactory('ZNSController');
             const znsController = await ZNSController.deploy();
             await znsController.deployed();
             // initialize zns controller
             const baseNode = namehash.hash('legend');
-            const initZnsControllerParams = ethers.utils.defaultAbiCoder.encode(['address', 'bytes32'], [znsRegistry.address, baseNode])
+            const initZnsControllerParams = ethers.utils.defaultAbiCoder.encode(['address', 'address', 'bytes32'], [znsRegistry.address, znsPriceOracle.address, baseNode])
             const initZnsControllerTx = await znsController.initialize(initZnsControllerParams);
             await initZnsControllerTx.wait();
 

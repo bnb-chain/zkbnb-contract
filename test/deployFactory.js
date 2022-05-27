@@ -7,6 +7,7 @@ describe("Zecrey-Legend contract", function () {
     let owner, governor, addr1, addr2, addrs;
     let ZNSRegistry, znsRegistry;
     let ZNSController, znsController;
+    let ZNSPriceOracle, znsPriceOracle;
     let PublicResolver, znsResolver;
     let ZecreyLegend, zecreyLegend;
     let Verifier, verifier;
@@ -59,7 +60,12 @@ describe("Zecrey-Legend contract", function () {
         // ZNS resolver
         PublicResolver = await ethers.getContractFactory('PublicResolver');
         znsResolver = await PublicResolver.deploy();
-        await znsResolver.deployed()
+        await znsResolver.deployed();
+        // ZNS price oracle
+        ZNSPriceOracle = await ethers.getContractFactory('StablePriceOracle');
+        const rentPrices = [0, 1, 2]
+        znsPriceOracle = await ZNSPriceOracle.connect(owner).deploy(rentPrices);
+        await znsPriceOracle.deployed();
 
         // Step 3: initialize deploy factory and finish deployment
         const _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
@@ -70,7 +76,7 @@ describe("Zecrey-Legend contract", function () {
         deployFactory = await DeployFactory.connect(owner).deploy(
             governance.address, verifier.address, zecreyLegend.address, znsController.address, znsResolver.address,
             _genesisAccountRoot, verifier.address, governor, governance.address, _listingFee, _listingCap,
-            znsRegistry.address, baseNode
+            znsRegistry.address, znsPriceOracle.address, baseNode
         );
         await deployFactory.deployed();
         // Get deployed proxy contracts and the gatekeeper contract,
@@ -99,12 +105,19 @@ describe("Zecrey-Legend contract", function () {
         it("test ZNS register", async function () {
             // register ZNS
             const sherPubKey = ethers.utils.formatBytes32String('sher.legend')
-            const registerZNSTx = await zecreyLegendProxy.registerZNS('sher', await addr1.getAddress(), sherPubKey)
+            const registerZNSTx = await zecreyLegendProxy.connect(addr1).registerZNS('sher', await addr1.getAddress(), sherPubKey)
+
             await registerZNSTx.wait()
 
             const sherNameHash = namehash.hash('sher.legend');
             expect(await zecreyLegendProxy.connect(owner).getAddressByAccountNameHash(sherNameHash)).to.equal(await addr1.getAddress());
             expect(await znsRegistry.owner(sherNameHash)).to.equal(await addr1.getAddress());
+
+            // check price oracle
+            const sherfromzecreyPubKey = ethers.utils.formatBytes32String('sherfromzecrey.legend') // need 1 bnb for fee
+            await expect(
+                zecreyLegendProxy.registerZNS('sherfromzecrey', await addr1.getAddress(), sherfromzecreyPubKey)
+            ).to.be.revertedWith('nev');
         });
 
         it("test Deposit BNB", async function () {

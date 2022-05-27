@@ -7,7 +7,7 @@ import "./IBaseRegistrar.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./utils/Names.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-
+import "./IPriceOracle.sol";
 
 /**
  * ZNSController is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
@@ -18,6 +18,10 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
 
     // ZNS registry
     ZNS public zns;
+    // Price Oracle
+    IPriceOracle public prices;
+
+    event Withdraw(address _to, uint256 _value);
 
     // The nodehash/namehash of the root node this registrar owns (eg, .legend)
     bytes32 public baseNode;
@@ -41,8 +45,9 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         __Ownable_init();
         __ReentrancyGuard_init();
 
-        (address _znsAddr, bytes32 _node) = abi.decode(initializationParameters, (address, bytes32));
+        (address _znsAddr, address _prices, bytes32 _node) = abi.decode(initializationParameters, (address, address, bytes32));
         zns = ZNS(_znsAddr);
+        prices = IPriceOracle(_prices);
         baseNode = _node;
 
         // initialize ownership
@@ -77,24 +82,53 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
      * @param _owner The address to receive this name
      * @param _pubKey The pub key of the owner
      */
-    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey, address _resolver) external override onlyController returns (bytes32 subnode){
+    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey, address _resolver) external override onlyController payable returns (bytes32 subnode){
         // Check if this name is valid
         require(_valid(_name), "invalid name");
         // This L2 owner should not own any name before
         require(_validPubKey(_pubKey), "pub key existed");
+        // Calculate price using PriceOracle
+        uint256 price = prices.price(_name);
+        // Check enough value
+        require(
+            msg.value >= price,
+            "nev"
+        );
 
         // Get the name hash
         bytes32 label = keccak256(bytes(_name));
         // This subnode should not be registered before
         require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
-
+        // Register subnode
         subnode = zns.setSubnodeRecord(baseNode, label, _owner, _pubKey, _resolver);
 
         // Update L2 owner mapper
         ZNSPubKeyMapper[_pubKey] = subnode;
 
-        emit ZNSRegistered(_name, subnode, _owner, _pubKey);
+        emit ZNSRegistered(_name, subnode, _owner, _pubKey, price);
+
+        // Refund remained value to the owner of this name
+        if (msg.value > price) {
+            payable(_owner).transfer(
+                msg.value - price
+            );
+        }
+
         return subnode;
+    }
+
+    /**
+     * @dev Withdraw BNB from this contract, only called by the owner of this contract.
+     * @param _to The address to receive
+     * @param _value The BNB amount to withdraw
+     */
+    function withdraw(address _to, uint256 _value) external onlyOwner {
+        // Check not too much value
+        require(_value < address(this).balance, "tmv");
+        // Withdraw
+        payable(_to).transfer(_value);
+
+        emit Withdraw(_to, _value);
     }
 
     function isRegisteredHash(bytes32 _nameHash) external view returns (bool){
