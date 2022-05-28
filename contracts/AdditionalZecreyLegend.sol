@@ -262,6 +262,59 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
         emit UpdateTokenPair(_pairIndex, _feeRate, _treasuryAccountIndex, _treasuryRate);
     }
 
+    /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
+    /// @param _factory Address of NFT factory
+    function setDefaultNFTFactory(address _factory) external {
+        governance.requireGovernor(msg.sender);
+        require(address(_factory) != address(0), "mb1"); // Factory should be non zero
+        require(address(defaultNFTFactory) == address(0), "mb2"); // NFTFactory is already set
+        defaultNFTFactory = NFTFactory(_factory);
+        emit NewDefaultNFTFactory(_factory);
+    }
+
+    /// @notice Register NFTFactory to this contract
+    /// @param _creatorAccountNameHash accountNameHash of the creator
+    /// @param _collectionId collection Id of the NFT related to this creator
+    /// @param _factoryAddress NFT Factory
+    function registerNFTFactory(
+        bytes32 _creatorAccountNameHash,
+        uint32 _collectionId,
+        address _factoryAddress
+    ) external {
+        require(address(nftFactories[_creatorAccountNameHash][_collectionId]) == address(0), "Q");
+        require(isContract(_factoryAddress), "nc");
+        // Check check accountNameHash belongs to msg.sender
+        address creatorAddress = getAddressByAccountNameHash(_creatorAccountNameHash);
+        require(creatorAddress == msg.sender, 'ns');
+
+        nftFactories[_creatorAccountNameHash][_collectionId] = NFTFactory(_factoryAddress);
+        emit NewNFTFactory(_creatorAccountNameHash, _collectionId, _factoryAddress);
+    }
+
+    /// @notice Get a registered NFTFactory according to the creator accountNameHash and the collectionId
+    /// @param _creatorAccountNameHash creator account name hash of the factory
+    /// @param _collectionId collection id of the nft collection related to this creator
+    function getNFTFactory(bytes32 _creatorAccountNameHash, uint32 _collectionId) external view returns (NFTFactory) {
+        NFTFactory _factory = nftFactories[_creatorAccountNameHash][_collectionId];
+        if (address(_factory) == address(0) || !isContract(address(_factory))) {
+            require(address(defaultNFTFactory) != address(0), "fs"); // NFTFactory does not set
+            return defaultNFTFactory;
+        } else {
+            return _factory;
+        }
+    }
+
+    /// @return whether the address is a contract or not
+    /// NOTE: for smart contracts that called `selfdestruct` will return a negative result
+    function isContract(address _address) internal view returns (bool) {
+        uint256 contractSize;
+        assembly {
+            contractSize := extcodesize(_address)
+        }
+
+        return contractSize != 0;
+    }
+
     /// @notice Saves priority request in storage
     /// @dev Calculates expiration block for request, store this request and emit NewPriorityRequest event
     /// @param _txType Rollup _tx type
@@ -283,5 +336,9 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
         emit NewPriorityRequest(msg.sender, nextPriorityRequestId, _txType, _pubData, uint256(expirationBlock));
 
         totalOpenPriorityRequests++;
+    }
+
+    function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
+        return znsController.getOwner(accountNameHash);
     }
 }
