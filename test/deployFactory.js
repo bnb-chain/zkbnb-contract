@@ -200,15 +200,11 @@ describe("Zecrey-Legend contract", function () {
                 zecreyLegendProxy.connect(owner).createPair(token1.address, token0.address)
             ).to.be.revertedWith('ip')
 
-            // check pair 0
-            // await expect(
-            //     zecreyLegendProxy.connect(owner).updatePairRate(1, 30, 0 ,5)
-            // ).to.be.revertedWith('pair index 0')
             await expect(
-                zecreyLegendProxy.connect(owner).updatePairRate(1, 30, 0, 5)
+                zecreyLegendProxy.connect(owner).updatePairRate(['0x0000000000000000000000000000000000000000', token0.address, 30, 0, 5])
             ).to.be.revertedWith('pne')
             // update
-            const updateTokenPairTx0 = await zecreyLegendProxy.connect(owner).updatePairRate(0, 30, 0, 5)
+            const updateTokenPairTx0 = await zecreyLegendProxy.connect(owner).updatePairRate([token0.address, token1.address, 30, 0, 5])
             await updateTokenPairTx0.wait()
         })
     });

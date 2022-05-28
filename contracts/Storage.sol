@@ -98,7 +98,7 @@ contract Storage {
         return bytes22((uint176(_address) | (uint176(_assetId) << 160)));
     }
 
-    struct BlockHeader {
+    struct StoredBlockInfo {
         uint32 blockNumber;
         uint64 priorityOperations;
         bytes32 pendingOnchainOperationsHash;
@@ -107,12 +107,12 @@ contract Storage {
         bytes32 commitment;
     }
 
-    function hashBlockHeader(BlockHeader memory _header) internal pure returns (bytes32) {
-        return keccak256(abi.encode(_header));
+    function hashStoredBlockInfo(StoredBlockInfo memory _block) internal pure returns (bytes32) {
+        return keccak256(abi.encode(_block));
     }
 
     /// @dev Stored hashed StoredBlockInfo for some block number
-    mapping(uint32 => bytes32) public storedBlockHeaderHashes;
+    mapping(uint32 => bytes32) public storedBlockHashes;
 
     /// @dev Flag indicates that exodus (mass exit) mode is triggered
     /// @dev Once it was raised, it can not be cleared again, and all users must exit
@@ -131,16 +131,17 @@ contract Storage {
 
     /// @notice Total number of tokens pairs registered in the network (start from 1)
     uint16 public totalTokenPairs;
-    mapping(uint16 => mapping(uint16 => bool)) tokenPairs;
-    mapping(uint16 => bool) isPairExist;
+    mapping(uint16 => mapping(uint16 => bool)) isTokenPairExist;
+    mapping(uint16 => mapping(uint16 => uint16)) tokenPairs;
 
 
+    mapping(uint40 => TxTypes.WithdrawNft) internal pendingWithdrawnNFTs;
 
     /// @notice NFTFactories registered.
     /// @dev creator accountNameHash => CollectionId => NFTFactory
-    mapping(bytes32 => mapping(uint32 => NFTFactory)) public nftFactories;
+    mapping(bytes32 => mapping(uint32 => address)) public nftFactories;
 
     /// @notice Address which will be used if no factories is specified.
-    NFTFactory public defaultNFTFactory;
+    address public defaultNFTFactory;
 
 }

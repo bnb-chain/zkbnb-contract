@@ -17,9 +17,6 @@ interface Events {
     /// @notice Event emitted when user funds are withdrawn from the Zecrey state and contract
     event Withdrawal(uint16 assetId, uint128 amount);
 
-    /// @notice Event emitted when user funds are withdrawn from the Zecrey state but not from contract
-    event WithdrawalPending(uint16 assetId, uint128 amount);
-
     /// @notice Event emitted when user funds are deposited to the zecrey account
     event Deposit(uint16 assetId, bytes32 accountName, uint128 amount);
 
@@ -69,6 +66,7 @@ interface Events {
     /// @notice NFT deposit event.
     event DepositNft(
         bytes32 accountNameHash,
+        bytes32 nftContentHash,
         address tokenAddress,
         uint256 nftTokenId,
         uint16 creatorTreasuryRate
@@ -76,12 +74,14 @@ interface Events {
 
     /// @notice NFT withdraw event.
     event WithdrawNft (
-        bytes32 accountNameHash,
-        address tokenAddress,
+        uint32 accountIndex,
+        address nftL1Address,
         address toAddress,
-        address proxyAddress,
-        uint256 nftTokenId
+        uint256 nftL1TokenId
     );
+
+    /// @notice Event emitted when user NFT is withdrawn from the zkSync state but not from contract
+    event WithdrawalNFTPending(uint40 indexed nftIndex);
 
     /// @notice Token pair created event.
     event CreateTokenPair (

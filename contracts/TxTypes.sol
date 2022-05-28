@@ -34,6 +34,7 @@ library TxTypes {
     }
 
     // Byte lengths
+    uint8 internal constant CHUNK_SIZE = 32;
     // operation type bytes
     uint8 internal constant TX_TYPE_BYTES = 1;
     // nft type
@@ -73,17 +74,19 @@ library TxTypes {
 
     struct RegisterZNS {
         uint8 txType;
+        uint32 accountIndex;
         bytes32 accountName;
         bytes32 accountNameHash;
         bytes32 pubKey;
     }
 
-    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = TX_TYPE_BYTES + ACCOUNT_NAME_BYTES + ACCOUNT_NAME_HASH_BYTES + PUBKEY_BYTES;
+    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = 1 * CHUNK_SIZE;
 
     /// Serialize register zns pubdata
-    function writeRegisterZNSPubdataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
+    function writeRegisterZNSPubDataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
+            uint32(0),
             _tx.accountName,
             _tx.accountNameHash, // account name hash
             _tx.pubKey
@@ -91,12 +94,18 @@ library TxTypes {
     }
 
     /// Deserialize register zns pubdata
-    function readRegisterZNSPubdata(bytes memory _data) internal pure returns (RegisterZNS memory parsed) {
+    function readRegisterZNSPubData(bytes memory _data) internal pure returns (RegisterZNS memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
+        // account index
+        (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
+        // empty data
+        offset += 27;
         // account name
         (offset, parsed.accountName) = Bytes.readBytes32(_data, offset);
+        // account name hash
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
+        // public key
         (offset, parsed.pubKey) = Bytes.readBytes32(_data, offset);
 
         require(offset == PACKED_REGISTERZNS_PUBDATA_BYTES, "N");
@@ -104,8 +113,8 @@ library TxTypes {
     }
 
     /// @notice Write register zns pubdata for priority queue check.
-    function checkRegisterZNSInPriorityQueue(RegisterZNS memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeRegisterZNSPubdataForPriorityQueue(_tx)) == hashedPubdata;
+    function checkRegisterZNSInPriorityQueue(RegisterZNS memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeRegisterZNSPubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 
     struct CreatePair {
@@ -118,9 +127,9 @@ library TxTypes {
         uint16 treasuryRate;
     }
 
-    uint256 internal constant PACKED_CREATEPAIR_PUBDATA_BYTES = TX_TYPE_BYTES + TOKEN_PAIR_ID_BYTES + ASSET_ID_BYTES * 2 + ACCOUNT_INDEX_BYTES + RATE_BYTES * 2;
+    uint256 internal constant PACKED_CREATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
 
-    function writeCreatePairPubdataForPriorityQueue(CreatePair memory _tx) internal pure returns (bytes memory buf) {
+    function writeCreatePairPubDataForPriorityQueue(CreatePair memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
             _tx.pairIndex,
@@ -133,7 +142,7 @@ library TxTypes {
     }
 
     /// Deserialize create pair pubdata
-    function readCreatePairPubdata(bytes memory _data) internal pure returns (CreatePair memory parsed) {
+    function readCreatePairPubData(bytes memory _data) internal pure returns (CreatePair memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
 
@@ -143,14 +152,15 @@ library TxTypes {
         (offset, parsed.feeRate) = Bytes.readUInt16(_data, offset);
         (offset, parsed.treasuryAccountIndex) = Bytes.readUInt32(_data, offset);
         (offset, parsed.treasuryRate) = Bytes.readUInt16(_data, offset);
+        offset += 17;
 
         require(offset == PACKED_CREATEPAIR_PUBDATA_BYTES, "N");
         return parsed;
     }
 
     /// @notice Write create pair pubdata for priority queue check.
-    function checkCreatePairInPriorityQueue(CreatePair memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeCreatePairPubdataForPriorityQueue(_tx)) == hashedPubdata;
+    function checkCreatePairInPriorityQueue(CreatePair memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeCreatePairPubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 
     struct UpdatePairRate {
@@ -161,9 +171,9 @@ library TxTypes {
         uint16 treasuryRate;
     }
 
-    uint256 internal constant PACKED_UPDATEPAIR_PUBDATA_BYTES = TX_TYPE_BYTES + TOKEN_PAIR_ID_BYTES + ACCOUNT_INDEX_BYTES + RATE_BYTES * 2;
+    uint256 internal constant PACKED_UPDATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
 
-    function writeUpdatePairRatePubdataForPriorityQueue(UpdatePairRate memory _tx) internal pure returns (bytes memory buf) {
+    function writeUpdatePairRatePubDataForPriorityQueue(UpdatePairRate memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
             _tx.pairIndex,
@@ -174,7 +184,7 @@ library TxTypes {
     }
 
     /// Deserialize update pair pubdata
-    function readUpdatePairRatePubdata(bytes memory _data) internal pure returns (UpdatePairRate memory parsed) {
+    function readUpdatePairRatePubData(bytes memory _data) internal pure returns (UpdatePairRate memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
 
@@ -183,13 +193,15 @@ library TxTypes {
         (offset, parsed.treasuryAccountIndex) = Bytes.readUInt32(_data, offset);
         (offset, parsed.treasuryRate) = Bytes.readUInt16(_data, offset);
 
+        offset += 21;
+
         require(offset == PACKED_UPDATEPAIR_PUBDATA_BYTES, "N");
         return parsed;
     }
 
     /// @notice Write update pair pubdata for priority queue check.
-    function checkUpdatePairRateInPriorityQueue(UpdatePairRate memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeUpdatePairRatePubdataForPriorityQueue(_tx)) == hashedPubdata;
+    function checkUpdatePairRateInPriorityQueue(UpdatePairRate memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeUpdatePairRatePubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 
     // Deposit pubdata
@@ -201,11 +213,10 @@ library TxTypes {
         uint128 amount;
     }
 
-    uint256 internal constant PACKED_DEPOSIT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + ASSET_ID_BYTES + STATE_AMOUNT_BYTES;
+    uint256 internal constant PACKED_DEPOSIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
     /// Serialize deposit pubdata
-    function writeDepositPubdataForPriorityQueue(Deposit memory _tx) internal pure returns (bytes memory buf) {
+    function writeDepositPubDataForPriorityQueue(Deposit memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
             uint32(0),
@@ -216,69 +227,86 @@ library TxTypes {
     }
 
     /// Deserialize deposit pubdata
-    function readDepositPubdata(bytes memory _data) internal pure returns (Deposit memory parsed) {
+    function readDepositPubData(bytes memory _data) internal pure returns (Deposit memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
         // account index
         (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-        // account name
-        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
         // asset id
         (offset, parsed.assetId) = Bytes.readUInt16(_data, offset);
         // state amount
         (offset, parsed.amount) = Bytes.readUInt128(_data, offset);
+        // empty data
+        offset += 9;
+        // account name
+        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
 
         require(offset == PACKED_DEPOSIT_PUBDATA_BYTES, "N");
         return parsed;
     }
 
     /// @notice Write deposit pubdata for priority queue check.
-    function checkDepositInPriorityQueue(Deposit memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeDepositPubdataForPriorityQueue(_tx)) == hashedPubdata;
+    function checkDepositInPriorityQueue(Deposit memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeDepositPubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 
-    // TODO
     struct DepositNft {
         uint8 txType;
         uint32 accountIndex;
-        bytes32 accountNameHash;
-        address tokenAddress;
-        uint256 nftTokenId;
+        uint40 nftIndex;
+        address nftL1Address;
         uint16 creatorTreasuryRate;
+        bytes32 nftContentHash;
+        uint256 nftL1TokenId;
+        bytes32 accountNameHash;
     }
 
-    uint256 internal constant PACKED_DEPOSIT_NFT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + ADDRESS_BYTES + NFT_TOKEN_ID_BYTES + CREATOR_TREASURY_RATE_BYTES;
+    uint256 internal constant PACKED_DEPOSIT_NFT_PUBDATA_BYTES = 5 * CHUNK_SIZE;
 
     /// Serialize deposit pubdata
-    function writeDepositNftPubdataForPriorityQueue(DepositNft memory _tx) internal pure returns (bytes memory buf) {
+    function writeDepositNftPubDataForPriorityQueue(DepositNft memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
-            _tx.accountNameHash, // account name hash
-            _tx.tokenAddress, // token address
-            _tx.nftTokenId, // nft token id
-            _tx.creatorTreasuryRate
+            uint32(0),
+            uint40(0),
+            _tx.nftL1Address, // token address
+            _tx.creatorTreasuryRate,
+            bytes32(0),
+            _tx.nftL1TokenId, // nft token id
+            _tx.accountNameHash // account name hash
         );
     }
 
     /// Deserialize deposit pubdata
-    function readDepositNftPubdata(bytes memory _data) internal pure returns (DepositNft memory parsed) {
+    function readDepositNftPubData(bytes memory _data) internal pure returns (DepositNft memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
+        // account index
+        (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
+        // nft index
+        (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
+        // nft l1 address
+        (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
+        // empty data
+        offset += 2;
+        // creator treasury rate
+        (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
+        // empty data
+        offset += 30;
+        // nft content hash
+        (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
+        // nft l1 token id
+        (offset, parsed.nftL1TokenId) = Bytes.readUInt256(_data, offset);
         // account name
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-        // asset id
-        (offset, parsed.tokenAddress) = Bytes.readAddress(_data, offset);
-        (offset, parsed.nftTokenId) = Bytes.readUInt256(_data, offset);
-        (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
 
         require(offset == PACKED_DEPOSIT_NFT_PUBDATA_BYTES, "N");
         return parsed;
     }
 
     /// @notice Write deposit pubdata for priority queue check.
-    function checkDepositNftInPriorityQueue(DepositNft memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeDepositNftPubdataForPriorityQueue(_tx)) == hashedPubdata;
+    function checkDepositNftInPriorityQueue(DepositNft memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeDepositNftPubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 
     // Withdraw pubdata
@@ -293,12 +321,10 @@ library TxTypes {
         uint16 gasFeeAssetAmount;
     }
 
-    uint256 internal constant PACKED_WITHDRAW_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ADDRESS_BYTES + ASSET_ID_BYTES +
-    STATE_AMOUNT_BYTES + ACCOUNT_INDEX_BYTES + ASSET_ID_BYTES + PACKED_FEE_AMOUNT_BYTES;
+    uint256 internal constant PACKED_WITHDRAW_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
     /// Deserialize withdraw pubdata
-    function readWithdrawPubdata(bytes memory _data) internal pure returns (Withdraw memory parsed) {
+    function readWithdrawPubData(bytes memory _data) internal pure returns (Withdraw memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
         // account index
@@ -307,6 +333,8 @@ library TxTypes {
         (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
         // asset id
         (offset, parsed.assetId) = Bytes.readUInt16(_data, offset);
+        // empty data
+        offset += 5;
         // amount
         (offset, parsed.assetAmount) = Bytes.readUInt128(_data, offset);
         // gas fee account index
@@ -316,6 +344,8 @@ library TxTypes {
         // gas fee asset amount
         (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
 
+        offset += 8;
+
         require(offset == PACKED_WITHDRAW_PUBDATA_BYTES, "N");
         return parsed;
     }
@@ -323,28 +353,25 @@ library TxTypes {
     // Withdraw Nft pubdata
     struct WithdrawNft {
         uint8 txType;
-        uint32 creatorAccountIndex;
-        bytes32 creatorAccountNameHash;
-        uint16 creatorTreasuryRate;
         uint32 fromAccountIndex;
+        uint32 creatorAccountIndex;
+        uint16 creatorTreasuryRate;
         uint40 nftIndex;
-        bytes32 nftContentHash;
         address nftL1Address;
-        uint256 nftL1TokenId;
         address toAddress;
         uint32 gasFeeAccountIndex;
         uint16 gasFeeAssetId;
         uint16 gasFeeAssetAmount;
+        bytes32 nftContentHash;
+        uint256 nftL1TokenId;
+        bytes32 creatorAccountNameHash;
         uint32 collectionId;
     }
 
-    uint256 internal constant PACKED_WITHDRAWNFT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES +
-    NFT_TYPE_BYTES + NFT_INDEX_BYTES + NFT_CONTENT_HASH_BYTES + ADDRESS_BYTES + NFT_TOKEN_ID_BYTES + NFT_AMOUNT_BYTES
-    + ADDRESS_BYTES + ADDRESS_BYTES + ACCOUNT_INDEX_BYTES + ASSET_ID_BYTES + PACKED_FEE_AMOUNT_BYTES;
+    uint256 internal constant PACKED_WITHDRAWNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
 
     /// Deserialize withdraw pubdata
-    function readWithdrawNftPubdata(bytes memory _data) internal pure returns (WithdrawNft memory parsed) {
+    function readWithdrawNftPubData(bytes memory _data) internal pure returns (WithdrawNft memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
         // account index
@@ -353,18 +380,30 @@ library TxTypes {
         (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
         // nft index
         (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
-        // nft content hash
-        (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
+        // collection id
+        (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
+        // empty data
+        offset += 14;
         // nft l1 address
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
-        // nft token id
-        (offset, parsed.nftL1TokenId) = Bytes.readUInt256(_data, offset);
+        // empty data
+        offset += 12;
+        // nft l1 address
+        (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
         // gas fee account index
         (offset, parsed.gasFeeAccountIndex) = Bytes.readUInt32(_data, offset);
         // gas fee asset id
         (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
         // gas fee asset amount
         (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
+        // empty data
+        offset += 4;
+        // nft content hash
+        (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
+        // nft token id
+        (offset, parsed.nftL1TokenId) = Bytes.readUInt256(_data, offset);
+        // account name hash
+        (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
 
         require(offset == PACKED_WITHDRAWNFT_PUBDATA_BYTES, "N");
         return parsed;
@@ -374,102 +413,119 @@ library TxTypes {
     struct FullExit {
         uint8 txType;
         uint32 accountIndex;
-        bytes32 accountNameHash;
         uint16 assetId;
         uint128 assetAmount;
+        bytes32 accountNameHash;
     }
 
-    uint256 internal constant PACKED_FULLEXIT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + ASSET_ID_BYTES + STATE_AMOUNT_BYTES;
+    uint256 internal constant PACKED_FULLEXIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
     /// Serialize full exit pubdata
-    function writeFullExitPubdataForPriorityQueue(FullExit memory _tx) internal pure returns (bytes memory buf) {
+    function writeFullExitPubDataForPriorityQueue(FullExit memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
             uint32(0),
-            _tx.accountNameHash, // account name
             _tx.assetId, // asset id
-            uint128(0) // asset amount
+            uint128(0), // asset amount
+            _tx.accountNameHash // account name
         );
     }
 
     /// Deserialize full exit pubdata
-    function readFullExitPubdata(bytes memory _data) internal pure returns (FullExit memory parsed) {
+    function readFullExitPubData(bytes memory _data) internal pure returns (FullExit memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
         // account index
         (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-        // account name
-        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
         // asset id
         (offset, parsed.assetId) = Bytes.readUInt16(_data, offset);
         // asset state amount
         (offset, parsed.assetAmount) = Bytes.readUInt128(_data, offset);
+        // empty data
+        offset += 9;
+        // account name
+        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
 
         require(offset == PACKED_FULLEXIT_PUBDATA_BYTES, "N");
         return parsed;
     }
 
     /// @notice Write full exit pubdata for priority queue check.
-    function checkFullExitInPriorityQueue(FullExit memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeFullExitPubdataForPriorityQueue(_tx)) == hashedPubdata;
+    function checkFullExitInPriorityQueue(FullExit memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeFullExitPubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 
     // full exit nft pubdata
     struct FullExitNft {
         uint8 txType;
         uint32 accountIndex;
-        bytes32 accountNameHash;
+        uint32 creatorAccountIndex;
+        uint16 creatorTreasuryRate;
         uint40 nftIndex;
-        bytes32 nftContentHash;
+        uint16 collectionId;
         address nftL1Address;
+        bytes32 accountNameHash;
+        bytes32 creatorAccountNameHash;
+        bytes32 nftContentHash;
         uint256 nftL1TokenId;
-        address toAddress;
     }
 
-    uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES =
-    TX_TYPE_BYTES + ACCOUNT_INDEX_BYTES + ACCOUNT_NAME_HASH_BYTES + NFT_INDEX_BYTES + NFT_CONTENT_HASH_BYTES
-    + ADDRESS_BYTES + NFT_TOKEN_ID_BYTES + ADDRESS_BYTES;
+    uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
 
     /// Serialize full exit nft pubdata
-    function writeFullExitNftPubdataForPriorityQueue(FullExitNft memory _tx) internal pure returns (bytes memory buf) {
+    function writeFullExitNftPubDataForPriorityQueue(FullExitNft memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
             uint32(0),
-            _tx.accountNameHash, // account name
+            uint32(0),
+            uint16(0),
             _tx.nftIndex,
-            bytes32(0),
+            uint16(0), // collection id
             address(0x0), // nft l1 address
-            uint256(0), // token id
-            _tx.toAddress // receiver address
+            _tx.accountNameHash, // account name hash
+            bytes32(0), // creator account name hash
+            bytes32(0), // nft content hash
+            uint256(0) // token id
         );
     }
 
     /// Deserialize full exit nft pubdata
-    function readFullExitNftPubdata(bytes memory _data) internal pure returns (FullExitNft memory parsed) {
+    function readFullExitNftPubData(bytes memory _data) internal pure returns (FullExitNft memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
         // account index
         (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-        // account name
+        // creator account index
+        (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
+        // creator treasury rate
+        (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
+        // nft index
+        (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
+        // collection id
+        (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
+        // empty data
+        offset += 16;
+        // nft l1 address
+        (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
+        // empty data
+        offset += 12;
+        // account name hash
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
+        // creator account name hash
+        (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
         // nft index
         (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
         // nft content hash
         (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
-        // nft l1 address
-        (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // nft l1 token id
         (offset, parsed.nftL1TokenId) = Bytes.readUInt256(_data, offset);
-        // to address
-        (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
 
         require(offset == PACKED_FULLEXITNFT_PUBDATA_BYTES, "N");
         return parsed;
     }
 
     /// @notice Write full exit nft pubdata for priority queue check.
-    function checkFullExitNftInPriorityQueue(FullExitNft memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeFullExitNftPubdataForPriorityQueue(_tx)) == hashedPubdata;
+    function checkFullExitNftInPriorityQueue(FullExitNft memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeFullExitNftPubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 }

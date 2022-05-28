@@ -15,7 +15,7 @@ async function main() {
     });
     const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
 
-    const updatePairRateTx = await zecreyLegend.updatePairRate(1, 50, 0, 10)
+    const updatePairRateTx = await zecreyLegend.updatePairRate([LEGBEP20Addr, REYBEP20Addr, 50, 0, 10])
     await updatePairRateTx.wait()
 }
 

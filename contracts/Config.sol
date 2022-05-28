@@ -44,9 +44,8 @@ contract Config {
 
     uint32 public constant MAX_FUNGIBLE_ASSET_ID = (2 ** 32) - 1;
 
-    uint40 public constant MAX_NFT_INDEX = (2 ** 40) - 1;
+    uint256 public constant CHUNK_SIZE = 32;
 
-    // TODO
-    uint32 internal constant SPECIAL_NFT_TOKEN_ID = (2 ** 31) - 2;
+    uint40 public constant MAX_NFT_INDEX = (2 ** 40) - 1;
 
 }
