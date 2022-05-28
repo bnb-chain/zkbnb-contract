@@ -19,6 +19,19 @@ contract DeployFactory {
     Proxy znsResolver;
     Proxy zecreyLegend;
 
+    // This struct is used for avoiding StackTooDeep
+    struct AdditionalParams {
+        bytes32 genesisAccountRoot;
+        address validator;
+        address governor;
+        address listingToken;
+        uint256 listingFee;
+        uint16 listingCap;
+        address zns;
+        address priceOracle;
+        bytes32 baseNode;
+    }
+
     /// @dev Doing development in constructor method costs lower gas fee,
     ///      giving us simplicity and atomicity of our deployment.
     constructor(
@@ -34,10 +47,23 @@ contract DeployFactory {
         uint256 _listingFee,
         uint16 _listingCap,
         address _zns,
+        address _priceOracle,
         bytes32 _baseNode
     ) {
         require(_validator != address(0), "validator check");
         require(_governor != address(0), "governor check");
+
+        AdditionalParams memory params = AdditionalParams({
+        genesisAccountRoot : _genesisAccountRoot,
+        validator : _validator,
+        governor : _governor,
+        listingToken : _listingToken,
+        listingFee : _listingFee,
+        listingCap : _listingCap,
+        zns : _zns,
+        priceOracle : _priceOracle,
+        baseNode : _baseNode
+        });
 
         deployProxyContracts(
             _governanceTarget,
@@ -45,14 +71,7 @@ contract DeployFactory {
             _zecreyLegendTarget,
             _znsControllerTarget,
             _znsResolverTarget,
-            _genesisAccountRoot,
-            _validator,
-            _governor,
-            _listingToken,
-            _listingFee,
-            _listingCap,
-            _zns,
-            _baseNode
+            params
         );
 
         selfdestruct(msg.sender);
@@ -66,27 +85,28 @@ contract DeployFactory {
         ZecreyLegend _zecreyLegendTarget,
         ZNSController _znsControllerTarget,
         PublicResolver _znsResolverTarget,
-        bytes32 _genesisAccountRoot,
-        address _validator,
-        address _governor,
-        address _listingToken,
-        uint256 _listingFee,
-        uint16 _listingCap,
-        address _zns,
-        bytes32 _baseNode
+        AdditionalParams memory _additionalParams
     ) internal {
         governance = new Proxy(address(_governanceTarget), abi.encode(this));
         // Here temporarily give this contract the governor right.
         // TODO treasury rate
-        AssetGovernance assetGovernance = new AssetGovernance(address(governance), _listingToken, _listingFee, _listingCap, _governor,
-            30, 0, 5);
+        AssetGovernance assetGovernance = new AssetGovernance(
+            address(governance),
+            _additionalParams.listingToken,
+            _additionalParams.listingFee,
+            _additionalParams.listingCap,
+            _additionalParams.governor,
+            30,
+            0,
+            5
+        );
         verifier = new Proxy(address(_verifierTarget), abi.encode());
-        znsController = new Proxy(address(_znsControllerTarget), abi.encode(_zns, _baseNode));
-        znsResolver = new Proxy(address(_znsResolverTarget), abi.encode(_zns));
+        znsController = new Proxy(address(_znsControllerTarget), abi.encode(_additionalParams.zns, _additionalParams.priceOracle, _additionalParams.baseNode));
+        znsResolver = new Proxy(address(_znsResolverTarget), abi.encode(_additionalParams.zns));
         AdditionalZecreyLegend additionalZecreyLegend = new AdditionalZecreyLegend();
         zecreyLegend = new Proxy(
             address(_zecreyLegendTarget),
-            abi.encode(address(governance), address(verifier), address(additionalZecreyLegend), address(znsController), address(znsResolver), _genesisAccountRoot));
+            abi.encode(address(governance), address(verifier), address(additionalZecreyLegend), address(znsController), address(znsResolver), _additionalParams.genesisAccountRoot));
 
         UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecreyLegend);
 
@@ -105,13 +125,13 @@ contract DeployFactory {
         zecreyLegend.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(zecreyLegend));
 
-        upgradeGatekeeper.transferMastership(_governor);
+        upgradeGatekeeper.transferMastership(_additionalParams.governor);
 
         emit Addresses(address(governance), address(assetGovernance), address(verifier), address(znsController),
             address(znsResolver), address(zecreyLegend), address(upgradeGatekeeper));
 
         // finally set governance
-        finalizeGovernance(Governance(address(governance)), assetGovernance, _validator, _governor);
+        finalizeGovernance(Governance(address(governance)), assetGovernance, _additionalParams.validator, _additionalParams.governor);
         finalizeZNSController(ZNSController(address(znsController)), address(zecreyLegend));
     }
 

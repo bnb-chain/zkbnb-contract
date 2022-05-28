@@ -71,44 +71,41 @@ library TxTypes {
     // fee rate bytes
     uint8 internal constant RATE_BYTES = 2;
 
-
-    struct UpdatePairRate {
+    struct RegisterZNS {
         uint8 txType;
-        uint16 pairIndex;
-        uint16 feeRate;
-        uint32 treasuryAccountIndex;
-        uint16 treasuryRate;
+        bytes32 accountName;
+        bytes32 accountNameHash;
+        bytes32 pubKey;
     }
 
-    uint256 internal constant PACKED_UPDATEPAIR_PUBDATA_BYTES = TX_TYPE_BYTES + TOKEN_PAIR_ID_BYTES + ACCOUNT_INDEX_BYTES + RATE_BYTES * 2;
+    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = TX_TYPE_BYTES + ACCOUNT_NAME_BYTES + ACCOUNT_NAME_HASH_BYTES + PUBKEY_BYTES;
 
-    function writeUpdatePairRatePubdataForPriorityQueue(UpdatePairRate memory _tx) internal pure returns (bytes memory buf) {
+    /// Serialize register zns pubdata
+    function writeRegisterZNSPubdataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
-            _tx.pairIndex,
-            _tx.feeRate,
-            _tx.treasuryAccountIndex,
-            _tx.treasuryRate
+            _tx.accountName,
+            _tx.accountNameHash, // account name hash
+            _tx.pubKey
         );
     }
 
-    /// Deserialize update pair pubdata
-    function readUpdatePairRatePubdata(bytes memory _data) internal pure returns (UpdatePairRate memory parsed) {
+    /// Deserialize register zns pubdata
+    function readRegisterZNSPubdata(bytes memory _data) internal pure returns (RegisterZNS memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
+        // account name
+        (offset, parsed.accountName) = Bytes.readBytes32(_data, offset);
+        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
+        (offset, parsed.pubKey) = Bytes.readBytes32(_data, offset);
 
-        (offset, parsed.pairIndex) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.feeRate) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.treasuryAccountIndex) = Bytes.readUInt32(_data, offset);
-        (offset, parsed.treasuryRate) = Bytes.readUInt16(_data, offset);
-
-        require(offset == PACKED_UPDATEPAIR_PUBDATA_BYTES, "N");
+        require(offset == PACKED_REGISTERZNS_PUBDATA_BYTES, "N");
         return parsed;
     }
 
-    /// @notice Write update pair pubdata for priority queue check.
-    function checkUpdatePairRateInPriorityQueue(UpdatePairRate memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeUpdatePairRatePubdataForPriorityQueue(_tx)) == hashedPubdata;
+    /// @notice Write register zns pubdata for priority queue check.
+    function checkRegisterZNSInPriorityQueue(RegisterZNS memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeRegisterZNSPubdataForPriorityQueue(_tx)) == hashedPubdata;
     }
 
     struct CreatePair {
@@ -156,41 +153,43 @@ library TxTypes {
         return Utils.hashBytesToBytes20(writeCreatePairPubdataForPriorityQueue(_tx)) == hashedPubdata;
     }
 
-    struct RegisterZNS {
+    struct UpdatePairRate {
         uint8 txType;
-        bytes32 accountName;
-        bytes32 accountNameHash;
-        bytes32 pubKey;
+        uint16 pairIndex;
+        uint16 feeRate;
+        uint32 treasuryAccountIndex;
+        uint16 treasuryRate;
     }
 
-    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = TX_TYPE_BYTES + ACCOUNT_NAME_BYTES + ACCOUNT_NAME_HASH_BYTES + PUBKEY_BYTES;
+    uint256 internal constant PACKED_UPDATEPAIR_PUBDATA_BYTES = TX_TYPE_BYTES + TOKEN_PAIR_ID_BYTES + ACCOUNT_INDEX_BYTES + RATE_BYTES * 2;
 
-    /// Serialize register zns pubdata
-    function writeRegisterZNSPubdataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
+    function writeUpdatePairRatePubdataForPriorityQueue(UpdatePairRate memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             _tx.txType,
-            _tx.accountName,
-            _tx.accountNameHash, // account name hash
-            _tx.pubKey
+            _tx.pairIndex,
+            _tx.feeRate,
+            _tx.treasuryAccountIndex,
+            _tx.treasuryRate
         );
     }
 
-    /// Deserialize register zns pubdata
-    function readRegisterZNSPubdata(bytes memory _data) internal pure returns (RegisterZNS memory parsed) {
+    /// Deserialize update pair pubdata
+    function readUpdatePairRatePubdata(bytes memory _data) internal pure returns (UpdatePairRate memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
-        // account name
-        (offset, parsed.accountName) = Bytes.readBytes32(_data, offset);
-        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-        (offset, parsed.pubKey) = Bytes.readBytes32(_data, offset);
 
-        require(offset == PACKED_REGISTERZNS_PUBDATA_BYTES, "N");
+        (offset, parsed.pairIndex) = Bytes.readUInt16(_data, offset);
+        (offset, parsed.feeRate) = Bytes.readUInt16(_data, offset);
+        (offset, parsed.treasuryAccountIndex) = Bytes.readUInt32(_data, offset);
+        (offset, parsed.treasuryRate) = Bytes.readUInt16(_data, offset);
+
+        require(offset == PACKED_UPDATEPAIR_PUBDATA_BYTES, "N");
         return parsed;
     }
 
-    /// @notice Write register zns pubdata for priority queue check.
-    function checkRegisterZNSInPriorityQueue(RegisterZNS memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeRegisterZNSPubdataForPriorityQueue(_tx)) == hashedPubdata;
+    /// @notice Write update pair pubdata for priority queue check.
+    function checkUpdatePairRateInPriorityQueue(UpdatePairRate memory _tx, bytes20 hashedPubdata) internal pure returns (bool) {
+        return Utils.hashBytesToBytes20(writeUpdatePairRatePubdataForPriorityQueue(_tx)) == hashedPubdata;
     }
 
     // Deposit pubdata
@@ -324,19 +323,19 @@ library TxTypes {
     // Withdraw Nft pubdata
     struct WithdrawNft {
         uint8 txType;
-        uint32 accountIndex;
-        bytes32 accountNameHash;
-        uint8 nftType;
+        uint32 creatorAccountIndex;
+        bytes32 creatorAccountNameHash;
+        uint16 creatorTreasuryRate;
+        uint32 fromAccountIndex;
         uint40 nftIndex;
         bytes32 nftContentHash;
         address nftL1Address;
         uint256 nftL1TokenId;
-        uint32 amount;
         address toAddress;
-        address proxyAddress;
         uint32 gasFeeAccountIndex;
         uint16 gasFeeAssetId;
         uint16 gasFeeAssetAmount;
+        uint32 collectionId;
     }
 
     uint256 internal constant PACKED_WITHDRAWNFT_PUBDATA_BYTES =
@@ -349,11 +348,9 @@ library TxTypes {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
         // account index
-        (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
+        (offset, parsed.fromAccountIndex) = Bytes.readUInt32(_data, offset);
         // account name hash
-        (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-        // nft type
-        (offset, parsed.nftType) = Bytes.readUInt8(_data, offset);
+        (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
         // nft index
         (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
         // nft content hash
@@ -362,8 +359,6 @@ library TxTypes {
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // nft token id
         (offset, parsed.nftL1TokenId) = Bytes.readUInt256(_data, offset);
-        // nft amount
-        (offset, parsed.amount) = Bytes.readUInt32(_data, offset);
         // gas fee account index
         (offset, parsed.gasFeeAccountIndex) = Bytes.readUInt32(_data, offset);
         // gas fee asset id

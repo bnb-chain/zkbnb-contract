@@ -197,8 +197,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         delegateAdditional();
     }
 
-    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external nonReentrant {
-        bytes32 node = znsController.registerZNS(_name, _owner, _zecreyPubKey, address(znsResolver));
+    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external payable nonReentrant {
+        // Register ZNS
+        bytes32 node = znsController.registerZNS{value: msg.value}(_name, _owner, _zecreyPubKey, address(znsResolver));
+
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),
@@ -486,7 +488,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             else if (txType == TxTypes.TxType.WithdrawNft) {
                 TxTypes.WithdrawNft memory _tx = TxTypes.readWithdrawNftPubdata(pubData);
                 // withdraw NFT
-                withdrawNFT(_tx.accountNameHash, _tx.nftL1Address, _tx.toAddress, _tx.toAddress, _tx.nftL1TokenId, _tx.nftContentHash);
+                withdrawNFT(_tx.creatorAccountNameHash, _tx.nftL1Address, _tx.toAddress, _tx.toAddress, _tx.nftL1TokenId, _tx.nftContentHash);
             } else {
                 // unsupported _tx in block verification
                 revert("l");
@@ -823,7 +825,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public nonReentrant {
         requireActive();
         require(znsController.isRegisteredHash(_accountNameHash), "nr");
-        require(_nftIndex < MAX_FUNGIBLE_ASSET_ID, "T");
+        require(_nftIndex < MAX_NFT_INDEX, "T");
         // get address by account name hash
         address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
         require(msg.sender == creatorAddress, "ia");
