@@ -20,6 +20,11 @@ library Utils {
         return a < b ? a : b;
     }
 
+    /// @notice Returns lesser of two values
+    function minU128(uint128 a, uint128 b) internal pure returns (uint128) {
+        return a < b ? a : b;
+    }
+
     /// @notice Sends tokens
     /// @dev NOTE: this function handles tokens that have transfer function not strictly compatible with ERC20 standard
     /// @dev NOTE: call `transfer` to this token may return (bool) or nothing

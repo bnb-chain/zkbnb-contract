@@ -15,8 +15,10 @@ async function main() {
     });
     const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
 
-    const updatePairRateTx = await zecreyLegend.updatePairRate([LEGBEP20Addr, REYBEP20Addr, 50, 0, 10])
-    await updatePairRateTx.wait()
+    const gavin = namehash.hash('gavin.legend');
+    var fullExitTx = await zecreyLegend.requestFullExit(gavin, '0x0000000000000000000000000000000000000000')
+    await fullExitTx.wait()
+
 }
 
 // get the keccak256 hash of a specified string name

@@ -28,7 +28,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
 
-    // TODO
     bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
     struct CommitBlockInfo {
@@ -40,8 +39,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     struct VerifyBlockInfo {
-        BlockHeader blockHeader;
-        bytes[] pendingOnchainOpsPubdata;
+        StoredBlockInfo blockHeader;
+        bytes[] pendingOnchainOpsPubData;
     }
 
     // Upgrade functional
@@ -149,7 +148,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         znsController = ZNSController(_znsController);
         znsResolver = PublicResolver(_znsResolver);
 
-        BlockHeader memory zeroBlockHeader = BlockHeader(
+        StoredBlockInfo memory zeroStoredBlockInfo = StoredBlockInfo(
             0,
             0,
             EMPTY_STRING_KECCAK,
@@ -157,59 +156,41 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             _genesisAccountRoot,
             bytes32(0)
         );
-        storedBlockHeaderHashes[0] = hashBlockHeader(zeroBlockHeader);
+        storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
         approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
         emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-    }
-
-    /// @notice Sends tokens
-    /// @dev NOTE: will revert if transfer call fails or rollup balance difference (before and after transfer) is bigger than _maxAmount
-    /// @dev This function is used to allow tokens to spend Zecrey contract balance up to amount that is requested
-    /// @param _token Token address
-    /// @param _to Address of recipient
-    /// @param _amount Amount of tokens to transfer
-    /// @param _maxAmount Maximum possible amount of tokens to transfer to this account
-    function _transferERC20(
-        IERC20 _token,
-        address _to,
-        uint128 _amount,
-        uint128 _maxAmount
-    ) external returns (uint128 withdrawnAmount) {
-        require(msg.sender == address(this), "5");
-        // wtg10 - can be called only from this contract as one "external" call (to revert all this function state changes if it is needed)
-
-        uint256 balanceBefore = _token.balanceOf(address(this));
-        require(Utils.sendERC20(_token, _to, _amount), "6");
-        // wtg11 - ERC20 transfer fails
-        uint256 balanceAfter = _token.balanceOf(address(this));
-        uint256 balanceDiff = balanceBefore.sub(balanceAfter);
-        require(balanceDiff <= _maxAmount, "7");
-        // wtg12 - rollup balance difference (before and after transfer) is bigger than _maxAmount
-
-        return SafeCast.toUint128(balanceDiff);
     }
 
     function createPair(address _tokenA, address _tokenB) external {
         delegateAdditional();
     }
 
-    function updatePairRate(uint16 _pairIndex, uint16 _feeRate, uint32 _treasuryAccountIndex, uint16 _treasuryRate) external {
+    struct PairInfo {
+        address tokenA;
+        address tokenB;
+        uint16 feeRate;
+        uint32 treasuryAccountIndex;
+        uint16 treasuryRate;
+    }
+
+    function updatePairRate(PairInfo memory _pairInfo) external {
         delegateAdditional();
     }
 
     function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external payable nonReentrant {
         // Register ZNS
-        bytes32 node = znsController.registerZNS{value: msg.value}(_name, _owner, _zecreyPubKey, address(znsResolver));
+        bytes32 node = znsController.registerZNS{value : msg.value}(_name, _owner, _zecreyPubKey, address(znsResolver));
 
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),
+        accountIndex : uint32(0),
         accountName : Utils.stringToBytes32(_name),
         accountNameHash : node,
         pubKey : _zecreyPubKey
         });
         // compact pub data
-        bytes memory pubData = TxTypes.writeRegisterZNSPubdataForPriorityQueue(_tx);
+        bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
 
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
@@ -253,97 +234,105 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         uint256 balanceAfter = _token.balanceOf(address(this));
         uint128 depositAmount = SafeCast.toUint128(balanceAfter.sub(balanceBefore));
         require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
+        require(depositAmount > 0, "D");
 
         registerDeposit(assetId, depositAmount, _accountNameHash);
     }
 
-    // TODO
     /// @notice Deposit NFT to Layer 2, ERC721 is supported
     function depositNft(
         bytes32 _accountNameHash,
-
-        address _tokenAddress,
-        uint256 _nftTokenId,
-        uint16 _creatorTreasuryRate
+        address _nftL1Address,
+        uint256 _nftL1TokenId
     ) external nonReentrant {
         requireActive();
         require(znsController.isRegisteredHash(_accountNameHash), "nr");
         // Transfer the tokens to this contract
-        bool success = Utils.transferFromNFT(msg.sender, address(this), _tokenAddress, _nftTokenId);
+        bool success = Utils.transferFromNFT(msg.sender, address(this), _nftL1Address, _nftL1TokenId);
         require(success, "ntf");
+        // check owner
+        require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
+
+        bytes32 nftContentHash = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
 
         // Priority Queue request
         TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
         txType : uint8(TxTypes.TxType.DepositNft),
         accountIndex : 0, // unknown at this point
-        accountNameHash : _accountNameHash,
-        tokenAddress : _tokenAddress,
-        nftTokenId : _nftTokenId,
-        creatorTreasuryRate : 0 // todo
+        nftIndex : 0, // unknown at this point
+        nftL1Address : _nftL1Address,
+        creatorTreasuryRate : 0,
+        nftContentHash : nftContentHash,
+        nftL1TokenId : _nftL1TokenId,
+        accountNameHash : _accountNameHash
         });
         // compact pub data
-        bytes memory pubData = TxTypes.writeDepositNftPubdataForPriorityQueue(_tx);
+        bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
 
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
 
-        emit DepositNft(_accountNameHash, _tokenAddress, _nftTokenId, _creatorTreasuryRate);
+        emit DepositNft(_accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, 0);
     }
 
-    // TODO
-    function withdrawNFT(
-        bytes32 _creatorAccountNameHash,
-        address _nftL1Address,
-        address _toAddress,
-        address _proxyAddress,
-        uint256 _nftL1TokenId,
-        bytes32 _nftContentHash
-
-    ) internal {
+    function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
         // get layer-1 address by account name hash
-        address _creatorAddress = getAddressByAccountNameHash(_creatorAccountNameHash);
         bytes memory _emptyExtraData;
-        bool success;
-        if (_nftL1Address != address(0x00)) {
+        if (op.nftL1Address != address(0x00)) {
             /// This is a NFT from layer 1, withdraw id directly
-            success = Utils.transferFromNFT(_creatorAddress, _toAddress, _nftL1Address, _nftL1TokenId);
+            try IERC721(op.nftL1Address).safeTransferFrom(
+                address(this),
+                op.toAddress,
+                op.nftL1TokenId
+            ) {
+                emit WithdrawNft(op.fromAccountIndex, op.nftL1Address, op.toAddress, op.nftL1TokenId);
+            }catch{
+                storePendingNFT(op);
+            }
         } else {
-            /// This is a NFT from layer 2
-            // TODO minter _proxyAddress
-            if (_proxyAddress != address(0x00)) {
-                success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftL1TokenId, _nftContentHash, _emptyExtraData);
-            } else {
-                // TODO 721 address
-                success = mintFromZecrey(_creatorAddress, _toAddress, _proxyAddress, _nftL1TokenId, _nftContentHash, _emptyExtraData);
+            address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
+            // get nft factory
+            address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
+            try NFTFactory(_factoryAddress).mintFromZecrey(
+                _creatorAddress,
+                op.toAddress,
+                op.nftIndex,
+                op.nftContentHash,
+                _emptyExtraData
+            ) {
+                emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+            } catch {
+                storePendingNFT(op);
             }
         }
-
-        require(success, "ntf");
-
-        emit WithdrawNft(_creatorAccountNameHash, _nftL1Address, _toAddress, _proxyAddress, _nftL1TokenId);
     }
 
-    function mintFromZecrey(
-        address _creatorAddress,
-        address _toAddress,
-        address _factoryAddress,
-        uint256 _nftL1TokenId,
-        bytes32 _nftContentHash,
-        bytes memory _extraData
-    ) internal returns (bool success) {
-        try NFTFactory(_factoryAddress).mintFromZecrey(
-            _creatorAddress,
-            _toAddress,
-            _factoryAddress,
-            _nftL1TokenId,
-            _nftContentHash,
-            _extraData
-        ) {
-            success = true;
-        } catch {
-            success = false;
+    /// @notice Get a registered NFTFactory according to the creator accountNameHash and the collectionId
+    /// @param _creatorAccountNameHash creator account name hash of the factory
+    /// @param _collectionId collection id of the nft collection related to this creator
+    function getNFTFactory(bytes32 _creatorAccountNameHash, uint32 _collectionId) public view returns (address) {
+        address _factoryAddr = nftFactories[_creatorAccountNameHash][_collectionId];
+        if (_factoryAddr == address(0)) {
+            require(address(defaultNFTFactory) != address(0), "fs");
+            // NFTFactory does not set
+            return defaultNFTFactory;
+        } else {
+            return _factoryAddr;
         }
-        return success;
+    }
+
+    /// @dev Save NFT as pending to withdraw
+    function storePendingNFT(TxTypes.WithdrawNft memory op) internal {
+        pendingWithdrawnNFTs[op.nftIndex] = op;
+        emit WithdrawalNFTPending(op.nftIndex);
+    }
+
+    /// @notice  Withdraws NFT from zkSync contract to the owner
+    /// @param _nftIndex Id of NFT token
+    function withdrawPendingNFTBalance(uint40 _nftIndex) external nonReentrant {
+        TxTypes.WithdrawNft memory op = pendingWithdrawnNFTs[_nftIndex];
+        withdrawOrStoreNFT(op);
+        delete pendingWithdrawnNFTs[_nftIndex];
     }
 
     /// @notice Get pending balance that the user can withdraw
@@ -368,29 +357,62 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         address _token,
         uint128 _amount
     ) external nonReentrant {
-        if (_token == address(0)) {
-            registerWithdrawal(0, _amount, _owner);
+        uint16 _assetId = 0;
+        if (_token != address(0)) {
+            _assetId = governance.validateAssetAddress(_token);
+        }
+        bytes22 packedBalanceKey = packAddressAndAssetId(_owner, _assetId);
+        uint128 balance = pendingBalances[packedBalanceKey].balanceToWithdraw;
+        uint128 amount = Utils.minU128(balance, _amount);
+        if (_assetId == 0) {
             (bool success,) = _owner.call{value : _amount}("");
             // Native Asset withdraw failed
             require(success, "d");
         } else {
-            uint16 assetId = governance.validateAssetAddress(_token);
-            bytes22 packedBalanceKey = packAddressAndAssetId(_owner, assetId);
-            uint128 balance = pendingBalances[packedBalanceKey].balanceToWithdraw;
             // We will allow withdrawals of `value` such that:
             // `value` <= user pending balance
             // `value` can be bigger then `_amount` requested if token takes fee from sender in addition to `_amount` requested
-            uint128 withdrawnAmount = this._transferERC20(IERC20(_token), _owner, _amount, balance);
-            registerWithdrawal(assetId, withdrawnAmount, _owner);
+            amount = this.transferERC20(IERC20(_token), _owner, amount, balance);
         }
+        pendingBalances[packedBalanceKey].balanceToWithdraw = balance - _amount;
+        emit Withdrawal(_assetId, _amount);
     }
 
-    /// @dev Process one block commit using previous block BlockHeader,
-    /// @dev returns new block BlockHeader
-    function commitOneBlock(BlockHeader memory _previousBlock, CommitBlockInfo memory _newBlock)
+    /// @notice Sends tokens
+    /// @dev NOTE: will revert if transfer call fails or rollup balance difference (before and after transfer) is bigger than _maxAmount
+    /// @dev This function is used to allow tokens to spend zkSync contract balance up to amount that is requested
+    /// @param _token Token address
+    /// @param _to Address of recipient
+    /// @param _amount Amount of tokens to transfer
+    /// @param _maxAmount Maximum possible amount of tokens to transfer to this account
+    function transferERC20(
+        IERC20 _token,
+        address _to,
+        uint128 _amount,
+        uint128 _maxAmount
+    ) external returns (uint128 withdrawnAmount) {
+        require(msg.sender == address(this), "5");
+        // can be called only from this contract as one "external" call (to revert all this function state changes if it is needed)
+
+        uint256 balanceBefore = _token.balanceOf(address(this));
+        _token.transfer(_to, _amount);
+        uint256 balanceAfter = _token.balanceOf(address(this));
+        uint256 balanceDiff = balanceBefore.sub(balanceAfter);
+        require(balanceDiff > 0, "c1");
+        // transfer is considered successful only if the balance of the contract decreased after transfer
+        require(balanceDiff <= _maxAmount, "7");
+        // rollup balance difference (before and after transfer) is bigger than `_maxAmount`
+
+        // It is safe to convert `balanceDiff` to `uint128` without additional checks, because `balanceDiff <= _maxAmount`
+        return uint128(balanceDiff);
+    }
+
+    /// @dev Process one block commit using previous block StoredBlockInfo,
+    /// @dev returns new block StoredBlockInfo
+    function commitOneBlock(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
     internal
     view
-    returns (BlockHeader memory storedNewBlock)
+    returns (StoredBlockInfo memory storedNewBlock)
     {
         // only commit next block
         require(_newBlock.blockNumber == _previousBlock.blockNumber + 1, "f");
@@ -412,7 +434,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         bytes32 commitment = createBlockCommitment(_previousBlock, _newBlock);
 
         return
-        BlockHeader(
+        StoredBlockInfo(
             _newBlock.blockNumber,
             priorityReqCommitted,
             pendingOnchainOpsHash,
@@ -425,7 +447,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     /// @notice Commit block
     /// @notice 1. Checks onchain operations, timestamp.
     function commitBlocks(
-        BlockHeader memory _lastCommittedBlockData,
+        StoredBlockInfo memory _lastCommittedBlockData,
         CommitBlockInfo[] memory _newBlocksData
     )
     external
@@ -435,13 +457,13 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         governance.requireActiveValidator(msg.sender);
         // Check that we commit blocks after last committed block
         // incorrect previous block data
-        require(storedBlockHeaderHashes[totalBlocksCommitted] == hashBlockHeader(_lastCommittedBlockData), "i");
+        require(storedBlockHashes[totalBlocksCommitted] == hashStoredBlockInfo(_lastCommittedBlockData), "i");
 
         for (uint32 i = 0; i < _newBlocksData.length; ++i) {
             _lastCommittedBlockData = commitOneBlock(_lastCommittedBlockData, _newBlocksData[i]);
 
             totalCommittedPriorityRequests += _lastCommittedBlockData.priorityOperations;
-            storedBlockHeaderHashes[_lastCommittedBlockData.blockNumber] = hashBlockHeader(_lastCommittedBlockData);
+            storedBlockHashes[_lastCommittedBlockData.blockNumber] = hashStoredBlockInfo(_lastCommittedBlockData);
 
             emit BlockCommit(_lastCommittedBlockData.blockNumber);
         }
@@ -452,46 +474,62 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     /// @notice Verify block index and proofs
-    function verifyOneBlock(VerifyBlockInfo memory _block, uint32 _verifiedBlockIdx) internal {
+    function verifyAndExecuteOneBlock(VerifyBlockInfo memory _block, uint32 _verifiedBlockIdx) internal {
         // Ensure block was committed
         require(
-            hashBlockHeader(_block.blockHeader) ==
-            storedBlockHeaderHashes[_block.blockHeader.blockNumber],
+            hashStoredBlockInfo(_block.blockHeader) ==
+            storedBlockHashes[_block.blockHeader.blockNumber],
             "exe10" // executing block should be committed
         );
         // blocks must in order
         require(_block.blockHeader.blockNumber == totalBlocksVerified + _verifiedBlockIdx + 1, "k");
 
         bytes32 pendingOnchainOpsHash = EMPTY_STRING_KECCAK;
-        for (uint32 i = 0; i < _block.pendingOnchainOpsPubdata.length; ++i) {
-            bytes memory pubData = _block.pendingOnchainOpsPubdata[i];
+        for (uint32 i = 0; i < _block.pendingOnchainOpsPubData.length; ++i) {
+            bytes memory pubData = _block.pendingOnchainOpsPubData[i];
 
             TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[0]));
 
             if (txType == TxTypes.TxType.Withdraw) {
-                TxTypes.Withdraw memory _tx = TxTypes.readWithdrawPubdata(pubData);
+                TxTypes.Withdraw memory _tx = TxTypes.readWithdrawPubData(pubData);
                 // Circuit guarantees that partial exits are available only for fungible tokens
                 require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
                 withdrawOrStore(uint16(_tx.assetId), _tx.toAddress, _tx.assetAmount);
             } else if (txType == TxTypes.TxType.FullExit) {
-                TxTypes.FullExit memory _tx = TxTypes.readFullExitPubdata(pubData);
+                TxTypes.FullExit memory _tx = TxTypes.readFullExitPubData(pubData);
                 require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
                 // get layer-1 address by account name hash
                 address creatorAddress = getAddressByAccountNameHash(_tx.accountNameHash);
                 withdrawOrStore(uint16(_tx.assetId), creatorAddress, _tx.assetAmount);
             } else if (txType == TxTypes.TxType.FullExitNft) {
-                // TODO need more operations
-                // TODO check params for NFT address
-                TxTypes.FullExitNft memory _tx = TxTypes.readFullExitNftPubdata(pubData);
+                TxTypes.FullExitNft memory _tx = TxTypes.readFullExitNftPubData(pubData);
+                // get address by account name hash
+                address toAddr = getAddressByAccountNameHash(_tx.accountNameHash);
                 // withdraw nft
                 if (_tx.nftContentHash != bytes32(0)) {
-                    withdrawNFT(_tx.accountNameHash, _tx.nftL1Address, _tx.toAddress, _tx.toAddress, _tx.nftL1TokenId, _tx.nftContentHash);
+                    TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
+                    txType : uint8(TxTypes.TxType.WithdrawNft),
+                    fromAccountIndex : _tx.accountIndex,
+                    creatorAccountIndex : _tx.creatorAccountIndex,
+                    creatorTreasuryRate : _tx.creatorTreasuryRate,
+                    nftIndex : _tx.nftIndex,
+                    nftL1Address : _tx.nftL1Address,
+                    toAddress : toAddr,
+                    gasFeeAccountIndex : 0,
+                    gasFeeAssetId : 0,
+                    gasFeeAssetAmount : 0,
+                    nftContentHash : _tx.nftContentHash,
+                    nftL1TokenId : _tx.nftL1TokenId,
+                    creatorAccountNameHash : _tx.accountNameHash,
+                    collectionId : _tx.collectionId
+                    });
+                    withdrawOrStoreNFT(_withdrawNftTx);
                 }
             }
             else if (txType == TxTypes.TxType.WithdrawNft) {
-                TxTypes.WithdrawNft memory _tx = TxTypes.readWithdrawNftPubdata(pubData);
+                TxTypes.WithdrawNft memory _tx = TxTypes.readWithdrawNftPubData(pubData);
                 // withdraw NFT
-                withdrawNFT(_tx.accountNameHash, _tx.nftL1Address, _tx.toAddress, _tx.toAddress, _tx.nftL1TokenId, _tx.nftContentHash);
+                withdrawOrStoreNFT(_tx);
             } else {
                 // unsupported _tx in block verification
                 revert("l");
@@ -501,39 +539,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         }
         // incorrect onchain txs executed
         require(pendingOnchainOpsHash == _block.blockHeader.pendingOnchainOperationsHash, "m");
-    }
-
-    /// @notice Verify layer-2 blocks proofs
-    /// @param _blocks Verified blocks info
-    /// @param _proofs proofs
-    function verifyBlocks(VerifyBlockInfo[] memory _blocks, uint256[] memory _proofs) external nonReentrant {
-        requireActive();
-        governance.requireActiveValidator(msg.sender);
-
-        uint64 priorityRequestsExecuted = 0;
-        uint32 nBlocks = uint32(_blocks.length);
-        // proof public inputs
-        uint256[] memory inputs = new uint256[](3 * _blocks.length);
-        for (uint16 i = 0; i < _blocks.length; ++i) {
-            verifyOneBlock(_blocks[i], i);
-            priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
-            // verify block proof
-            inputs[3 * i] = uint256(accountRoot);
-            inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.accountRoot);
-            inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment);
-            // update account root
-            accountRoot = _blocks[i].blockHeader.accountRoot;
-            emit BlockVerification(_blocks[i].blockHeader.blockNumber);
-        }
-        bool res = verifier.verifyBatchProofs(_proofs, inputs, _blocks.length);
-        require(res, "inp");
-        firstPriorityRequestId += priorityRequestsExecuted;
-        totalCommittedPriorityRequests -= priorityRequestsExecuted;
-        totalOpenPriorityRequests -= priorityRequestsExecuted;
-
-        totalBlocksVerified += nBlocks;
-        // Can't execute blocks more then committed.
-        require(totalBlocksVerified <= totalBlocksCommitted, "n");
     }
 
     /// @dev 1. Try to send token to _recipients
@@ -554,7 +559,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             // We use `_transferERC20` here to check that `ERC20` token indeed transferred `_amount`
             // and fail if token subtracted from Zecrey balance more then `_amount` that was requested.
             // This can happen if token subtracts fee from sender while transferring `_amount` that was requested to transfer.
-            try this._transferERC20{gas : WITHDRAWAL_GAS_LIMIT}(IERC20(tokenAddr), _recipient, _amount, _amount) {
+            try this.transferERC20{gas : WITHDRAWAL_GAS_LIMIT}(IERC20(tokenAddr), _recipient, _amount, _amount) {
                 sent = true;
             } catch {
                 sent = false;
@@ -564,8 +569,40 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             emit Withdrawal(_assetId, _amount);
         } else {
             increaseBalanceToWithdraw(packedBalanceKey, _amount);
-            emit WithdrawalPending(_assetId, _amount);
         }
+    }
+
+    /// @notice Verify layer-2 blocks proofs
+    /// @param _blocks Verified blocks info
+    /// @param _proofs proofs
+    function verifyAndExecuteBlocks(VerifyBlockInfo[] memory _blocks, uint256[] memory _proofs) external nonReentrant {
+        requireActive();
+        governance.requireActiveValidator(msg.sender);
+
+        uint64 priorityRequestsExecuted = 0;
+        uint32 nBlocks = uint32(_blocks.length);
+        // proof public inputs
+        uint256[] memory inputs = new uint256[](3 * _blocks.length);
+        for (uint16 i = 0; i < _blocks.length; ++i) {
+            priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
+            // verify block proof
+            inputs[3 * i] = uint256(accountRoot);
+            inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.accountRoot);
+            inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment);
+            // update account root
+            accountRoot = _blocks[i].blockHeader.accountRoot;
+            verifyAndExecuteOneBlock(_blocks[i], i);
+            emit BlockVerification(_blocks[i].blockHeader.blockNumber);
+        }
+        bool res = verifier.verifyBatchProofs(_proofs, inputs, _blocks.length);
+        require(res, "inp");
+        firstPriorityRequestId += priorityRequestsExecuted;
+        totalCommittedPriorityRequests -= priorityRequestsExecuted;
+        totalOpenPriorityRequests -= priorityRequestsExecuted;
+
+        totalBlocksVerified += nBlocks;
+        // Can't execute blocks more then committed.
+        require(totalBlocksVerified <= totalBlocksCommitted, "n");
     }
 
     /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
@@ -586,7 +623,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         amount : _amount
         });
         // compact pub data
-        bytes memory pubData = TxTypes.writeDepositPubdataForPriorityQueue(_tx);
+        bytes memory pubData = TxTypes.writeDepositPubDataForPriorityQueue(_tx);
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.Deposit, pubData);
         emit Deposit(_assetId, _accountNameHash, _amount);
@@ -641,6 +678,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     {
         bytes memory pubData = _newBlockData.publicData;
 
+        require(pubData.length % CHUNK_SIZE == 0, "A");
+
         uint64 uncommittedPriorityRequestsOffset = firstPriorityRequestId + totalCommittedPriorityRequests;
         priorityOperationsProcessed = 0;
         processableOperationsHash = EMPTY_STRING_KECCAK;
@@ -654,25 +693,25 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             if (txType == TxTypes.TxType.RegisterZNS) {
                 bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_REGISTERZNS_PUBDATA_BYTES);
 
-                TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubdata(txPubData);
+                TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
                 checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.UpdatePairRate) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_UPDATEPAIR_PUBDATA_BYTES);
-
-                TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubdata(txPubData);
-                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
             } else if (txType == TxTypes.TxType.CreatePair) {
                 bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_CREATEPAIR_PUBDATA_BYTES);
 
-                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubdata(txPubData);
+                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubData(txPubData);
                 checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+                priorityOperationsProcessed++;
+            } else if (txType == TxTypes.TxType.UpdatePairRate) {
+                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_UPDATEPAIR_PUBDATA_BYTES);
+
+                TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubData(txPubData);
+                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
             } else if (txType == TxTypes.TxType.Deposit) {
                 bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_DEPOSIT_PUBDATA_BYTES);
 
-                TxTypes.Deposit memory depositData = TxTypes.readDepositPubdata(txPubData);
+                TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
                 checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
             } else {
@@ -686,7 +725,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                 } else if (txType == TxTypes.TxType.FullExit) {
                     txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_FULLEXIT_PUBDATA_BYTES);
 
-                    TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubdata(txPubData);
+                    TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(txPubData);
 
                     checkPriorityOperation(
                         fullExitData,
@@ -696,7 +735,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                 } else if (txType == TxTypes.TxType.FullExitNft) {
                     txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_FULLEXITNFT_PUBDATA_BYTES);
 
-                    TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubdata(txPubData);
+                    TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubData(txPubData);
 
                     checkPriorityOperation(
                         fullExitNFTData,
@@ -720,8 +759,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.UpdatePairRate, "H");
 
-        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkUpdatePairRateInPriorityQueue(_updatePairRate, hashedPubdata), "I");
+        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkUpdatePairRateInPriorityQueue(_updatePairRate, hashedPubData), "I");
     }
 
     /// @notice Checks that create pair is same as _tx in priority queue
@@ -732,8 +771,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.CreatePair, "H");
 
-        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubdata), "I");
+        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubData), "I");
     }
 
     /// @notice Checks that register zns is same as _tx in priority queue
@@ -744,8 +783,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.RegisterZNS, "H");
 
-        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubdata), "I");
+        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "I");
     }
 
     /// @notice Checks that deposit is same as _tx in priority queue
@@ -756,8 +795,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.Deposit, "H");
 
-        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubdata), "I");
+        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubData), "I");
     }
 
     /// @notice Checks that FullExit is same as _tx in priority queue
@@ -768,8 +807,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // incorrect priority _tx type
         require(priorReqType == TxTypes.TxType.FullExit, "J");
 
-        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubdata), "K");
+        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubData), "K");
     }
 
     /// @notice Checks that FullExitNFT is same as _tx in priority queue
@@ -781,92 +820,89 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         require(priorReqType == TxTypes.TxType.FullExitNft, "J");
 
 
-        bytes20 hashedPubdata = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubdata), "K");
+        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+        require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubData), "K");
     }
 
     /// @notice Register full exit request - pack pubdata, add priority request
     /// @param _accountNameHash account name hash
     /// @param _asset Token address, 0 address for BNB
     function requestFullExit(bytes32 _accountNameHash, address _asset) public nonReentrant {
-        requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
-        // get address by account name hash
-        address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
-        require(msg.sender == creatorAddress, "invalid address");
-
-
-        uint16 assetId;
-        if (_asset == address(0)) {
-            assetId = 0;
-        } else {
-            assetId = governance.validateAssetAddress(_asset);
-        }
-
-
-        // Priority Queue request
-        TxTypes.FullExit memory _tx = TxTypes.FullExit({
-        txType : uint8(TxTypes.TxType.FullExit),
-        accountIndex : 0, // unknown at this point
-        accountNameHash : _accountNameHash,
-        assetId : assetId,
-        assetAmount : 0 // unknown at this point
-        });
-        bytes memory pubData = TxTypes.writeFullExitPubdataForPriorityQueue(_tx);
-        addPriorityRequest(TxTypes.TxType.FullExit, pubData);
-
-        // User must fill storage slot of balancesToWithdraw(msg.sender, tokenId) with nonzero value
-        // In this case operator should just overwrite this slot during confirming withdrawal
-        bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, assetId);
-        pendingBalances[packedBalanceKey].gasReserveValue = FILLED_GAS_RESERVE_VALUE;
+        delegateAdditional();
+        //        requireActive();
+        //        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
+        //        // get address by account name hash
+        //        address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
+        //        require(msg.sender == creatorAddress, "invalid address");
+        //
+        //
+        //        uint16 assetId;
+        //        if (_asset == address(0)) {
+        //            assetId = 0;
+        //        } else {
+        //            assetId = governance.validateAssetAddress(_asset);
+        //        }
+        //
+        //
+        //        // Priority Queue request
+        //        TxTypes.FullExit memory _tx = TxTypes.FullExit({
+        //        txType : uint8(TxTypes.TxType.FullExit),
+        //        accountIndex : 0, // unknown at this point
+        //        accountNameHash : _accountNameHash,
+        //        assetId : assetId,
+        //        assetAmount : 0 // unknown at this point
+        //        });
+        //        bytes memory pubData = TxTypes.writeFullExitPubDataForPriorityQueue(_tx);
+        //        addPriorityRequest(TxTypes.TxType.FullExit, pubData);
+        //
+        //        // User must fill storage slot of balancesToWithdraw(msg.sender, tokenId) with nonzero value
+        //        // In this case operator should just overwrite this slot during confirming withdrawal
+        //        bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, assetId);
+        //        pendingBalances[packedBalanceKey].gasReserveValue = FILLED_GAS_RESERVE_VALUE;
     }
 
     /// @notice Register full exit nft request - pack pubdata, add priority request
     /// @param _accountNameHash account name hash
     /// @param _nftIndex account NFT index in zecrey network
-    // TODO
     function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public nonReentrant {
-        requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "nr");
-        require(_nftIndex < MAX_FUNGIBLE_ASSET_ID, "T");
-        // get address by account name hash
-        address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
-        require(msg.sender == creatorAddress, "ia");
-
-        // Priority Queue request
-        TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
-        txType : uint8(TxTypes.TxType.FullExitNft),
-        accountIndex : 0, // unknown
-        accountNameHash : _accountNameHash,
-        nftIndex : _nftIndex,
-        nftContentHash : bytes32(0x0), // unknown,
-        nftL1Address : address(0x0), // unknown
-        nftL1TokenId : 0, // unknown
-        toAddress : creatorAddress
-        });
-        bytes memory pubData = TxTypes.writeFullExitNftPubdataForPriorityQueue(_tx);
-        addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
+        delegateAdditional();
+        //        requireActive();
+        //        require(znsController.isRegisteredHash(_accountNameHash), "nr");
+        //        require(_nftIndex < MAX_NFT_INDEX, "T");
+        //        // get address by account name hash
+        //        address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
+        //        require(msg.sender == creatorAddress, "ia");
+        //
+        //        // Priority Queue request
+        //        TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
+        //        txType : uint8(TxTypes.TxType.FullExitNft),
+        //        accountIndex : 0, // unknown
+        //        creatorAccountIndex : 0, // unknown
+        //        creatorTreasuryRate : 0,
+        //        nftIndex : _nftIndex,
+        //        collectionId : 0, // unknown
+        //        nftL1Address : address(0x0), // unknown
+        //        accountNameHash : _accountNameHash,
+        //        creatorAccountNameHash : bytes32(0),
+        //        nftContentHash : bytes32(0x0), // unknown,
+        //        nftL1TokenId : 0 // unknown
+        //        });
+        //        bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
+        //        addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
     }
 
 
     /// @dev Creates block commitment from its data
-    // TODO create commitment
     function createBlockCommitment(
-        BlockHeader memory _previousBlock,
+        StoredBlockInfo memory _previousBlock,
         CommitBlockInfo memory _newBlockData
     ) internal view returns (bytes32 commitment) {
-        /*
-        uint32 blockNumber;
-        bytes32 onchainOpsRoot;
-        bytes32 newAccountRoot;
-        uint256 timestamp;
-        bytes32 commitment;
-        bytes onchainOpsPubData;
-        uint16 onchainOpsCount;
-        bytes32[ONCHAINOPS_DEPTH] onchainOpsMerkleProof;
-        */
-        commitment = keccak256(abi.encode(storedBlockHeaderHashes[_previousBlock.blockNumber],
-            _newBlockData.blockNumber, _newBlockData.publicData));
+        commitment = keccak256(abi.encode(storedBlockHashes[_previousBlock.blockNumber],
+            _newBlockData.blockNumber, // block number
+            _newBlockData.timestamp, // time stamp
+            _newBlockData.publicDataOffsets.length, // on chain ops count
+            _newBlockData.publicData) // pub data
+        );
     }
 
     /// @notice Sends ETH
@@ -884,7 +920,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     /// @notice Reverts unverified blocks
-    function revertBlocks(BlockHeader[] memory _blocksToRevert) external {
+    function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
         delegateAdditional();
     }
 
