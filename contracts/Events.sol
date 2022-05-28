@@ -100,6 +100,12 @@ interface Events {
         uint32 treasuryAccountIndex,
         uint16 treasuryRate
     );
+
+    /// @notice Default NFTFactory changed
+    event NewDefaultNFTFactory(address indexed factory);
+
+    /// @notice New NFT Factory
+    event NewNFTFactory(bytes32 indexed _creatorAccountNameHash, uint32 _collectionId, address _factoryAddress);
 }
 
 /// @title Upgrade events

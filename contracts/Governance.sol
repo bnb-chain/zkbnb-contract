@@ -66,7 +66,6 @@ contract Governance is Config {
         }
     }
 
-
     function changeAssetGovernance(AssetGovernance _newAssetGovernance) external {
         requireGovernor(msg.sender);
         if (assetGovernance != _newAssetGovernance) {
@@ -111,7 +110,7 @@ contract Governance is Config {
         }
     }
 
-    /// @notice Check if specified address is is governor
+    /// @notice Check if specified address is governor
     /// @param _address Address to check
     function requireGovernor(address _address) public view {
         require(_address == networkGovernor, "1g");
@@ -142,5 +141,4 @@ contract Governance is Config {
             require(feeTransferOk, "fee transfer failed");
         }
     }
-
 }

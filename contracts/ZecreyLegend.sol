@@ -217,6 +217,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         emit RegisterZNS(_name, node, _owner, _zecreyPubKey);
     }
 
+    function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
+        return znsController.getOwner(accountNameHash);
+    }
+
     /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
     /// @param _accountNameHash The receiver Layer 2 account name
     function depositBNB(bytes32 _accountNameHash) external payable {
@@ -253,9 +257,11 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         registerDeposit(assetId, depositAmount, _accountNameHash);
     }
 
+    // TODO
     /// @notice Deposit NFT to Layer 2, ERC721 is supported
     function depositNft(
         bytes32 _accountNameHash,
+
         address _tokenAddress,
         uint256 _nftTokenId,
         uint16 _creatorTreasuryRate
@@ -264,7 +270,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         require(znsController.isRegisteredHash(_accountNameHash), "nr");
         // Transfer the tokens to this contract
         bool success = Utils.transferFromNFT(msg.sender, address(this), _tokenAddress, _nftTokenId);
-
         require(success, "ntf");
 
         // Priority Queue request
@@ -274,7 +279,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         accountNameHash : _accountNameHash,
         tokenAddress : _tokenAddress,
         nftTokenId : _nftTokenId,
-        creatorTreasuryRate : _creatorTreasuryRate
+        creatorTreasuryRate : 0 // todo
         });
         // compact pub data
         bytes memory pubData = TxTypes.writeDepositNftPubdataForPriorityQueue(_tx);
@@ -285,6 +290,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         emit DepositNft(_accountNameHash, _tokenAddress, _nftTokenId, _creatorTreasuryRate);
     }
 
+    // TODO
     function withdrawNFT(
         bytes32 _creatorAccountNameHash,
         address _nftL1Address,
@@ -292,6 +298,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         address _proxyAddress,
         uint256 _nftL1TokenId,
         bytes32 _nftContentHash
+
     ) internal {
         // get layer-1 address by account name hash
         address _creatorAddress = getAddressByAccountNameHash(_creatorAccountNameHash);
@@ -442,10 +449,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         totalBlocksCommitted += uint32(_newBlocksData.length);
 
         require(totalCommittedPriorityRequests <= totalOpenPriorityRequests, "j");
-    }
-
-    function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
-        return znsController.getOwner(accountNameHash);
     }
 
     /// @notice Verify block index and proofs

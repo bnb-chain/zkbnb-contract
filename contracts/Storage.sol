@@ -14,6 +14,7 @@ import "./TxTypes.sol";
 import "./AdditionalZecreyLegend.sol";
 import "./ZNSController.sol";
 import "./resolvers/PublicResolver.sol";
+import "./NFTFactory.sol";
 
 /// @title zecrey storage contract
 /// @author Zecrey Labs
@@ -132,5 +133,14 @@ contract Storage {
     uint16 public totalTokenPairs;
     mapping(uint16 => mapping(uint16 => bool)) tokenPairs;
     mapping(uint16 => bool) isPairExist;
+
+
+
+    /// @notice NFTFactories registered.
+    /// @dev creator accountNameHash => CollectionId => NFTFactory
+    mapping(bytes32 => mapping(uint32 => NFTFactory)) public nftFactories;
+
+    /// @notice Address which will be used if no factories is specified.
+    NFTFactory public defaultNFTFactory;
 
 }

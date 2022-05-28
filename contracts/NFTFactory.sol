@@ -3,9 +3,7 @@
 pragma solidity ^0.7.6;
 
 
-interface NFTFactory
-{
-
+interface NFTFactory {
     function mintFromZecrey(
         address _creatorAddress,
         address _toAddress,
