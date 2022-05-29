@@ -1,7 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-tracer");
 require('@openzeppelin/hardhat-upgrades');
-// require('hardhat-contract-sizer')
+require('hardhat-contract-sizer')
 require('hardhat-abi-exporter');
 
 /**
@@ -27,6 +27,12 @@ module.exports = {
             },
         },
     },
+    // contractSizer: {
+    //     alphaSort: true,
+    //     disambiguatePaths: false,
+    //     runOnCompile: true,
+    //     strict: true,
+    // },
     abiExporter: {
         path: './data/abi',
         clear: true,

@@ -137,6 +137,16 @@ contract Storage {
 
     mapping(uint40 => TxTypes.WithdrawNft) internal pendingWithdrawnNFTs;
 
+    struct L2NftInfo {
+        uint40 nftIndex;
+        uint32 creatorAccountIndex;
+        uint16 creatorTreasuryRate;
+        bytes32 nftContentHash;
+        uint16 collectionId;
+    }
+
+    mapping(bytes32 => L2NftInfo) internal l2Nfts;
+
     /// @notice NFTFactories registered.
     /// @dev creator accountNameHash => CollectionId => NFTFactory
     mapping(bytes32 => mapping(uint32 => address)) public nftFactories;
