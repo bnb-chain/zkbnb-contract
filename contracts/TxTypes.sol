@@ -255,10 +255,12 @@ library TxTypes {
         uint32 accountIndex;
         uint40 nftIndex;
         address nftL1Address;
+        uint32 creatorAccountIndex;
         uint16 creatorTreasuryRate;
         bytes32 nftContentHash;
         uint256 nftL1TokenId;
         bytes32 accountNameHash;
+        uint16 collectionId;
     }
 
     uint256 internal constant PACKED_DEPOSIT_NFT_PUBDATA_BYTES = 5 * CHUNK_SIZE;

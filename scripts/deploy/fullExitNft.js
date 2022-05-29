@@ -6,10 +6,11 @@ async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
     const zecreyLegend = await getZecreyLegendProxy(addrs.zecreyLegendProxy)
 
-    // Update pair
-    console.log('update pair rate...')
-    const updatePairRateTx = await zecreyLegend.updatePairRate(['0x0000000000000000000000000000000000000000', addrs.LEGToken, 50, 0, 10])
-    await updatePairRateTx.wait()
+    console.log('FullExit NFT...')
+    // full exit
+    const sher = namehash.hash('sher.legend');
+    let fullExitNftTx = await zecreyLegend.requestFullExitNft(sher, '0');
+    await fullExitNftTx.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere

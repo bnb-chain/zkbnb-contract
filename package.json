@@ -28,7 +28,8 @@
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.4",
     "hardhat": "^2.9.3",
-    "hardhat-abi-exporter": "^2.9.0"
+    "hardhat-abi-exporter": "^2.9.0",
+    "hardhat-contract-sizer": "^2.5.1"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.4.2",

@@ -6,10 +6,20 @@ async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
     const zecreyLegend = await getZecreyLegendProxy(addrs.zecreyLegendProxy)
 
-    // Update pair
-    console.log('update pair rate...')
-    const updatePairRateTx = await zecreyLegend.updatePairRate(['0x0000000000000000000000000000000000000000', addrs.LEGToken, 50, 0, 10])
-    await updatePairRateTx.wait()
+    // tokens
+    const ERC721Factory = await ethers.getContractFactory('ZecreyRelatedERC721')
+    const ERC721 = await ERC721Factory.attach(addrs.ERC721)
+
+    // deposit bnb
+    console.log('Approve Nft...')
+    // set allowance
+    let approveTx = await ERC721.approve(zecreyLegend.address, '0');
+    await approveTx.wait();
+    // deposit nft
+    console.log('Deposit Nft...');
+    const sher = namehash.hash('sher.legend');
+    let depositERC721Tx = await zecreyLegend.depositNft(sher, addrs.ERC721, '0');
+    await depositERC721Tx.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere

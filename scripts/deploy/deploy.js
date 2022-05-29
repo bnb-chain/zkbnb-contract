@@ -38,7 +38,7 @@ async function main() {
     // Step 3: initialize deploy factory and finish deployment
     // deploy price oracle
     console.log('Deploy PriceOracle...')
-    const priceOracle = await contractFactories.ZNSPriceOracle.deploy([0,1,2]);
+    const priceOracle = await contractFactories.ZNSPriceOracle.deploy([0, 1, 2]);
     await priceOracle.deployed();
 
     // prepare deploy params
@@ -50,7 +50,10 @@ async function main() {
     const REYToken = await contractFactories.TokenFactory.deploy(totalSupply, 'REY', 'REY')
     await REYToken.deployed()
 
-    const _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
+    // get ERC721
+    const ERC721 = await contractFactories.ERC721Factory.deploy('Zecrey', 'ZEC', '0');
+    await ERC721.deployed();
+    _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
     const _listingToken = LEGToken.address
@@ -104,7 +107,8 @@ async function main() {
         zecreyLegendProxy: event[5],
         upgradeGateKeeper: event[6],
         LEGToken: LEGToken.address,
-        REYToken: REYToken.address
+        REYToken: REYToken.address,
+        ERC721: ERC721.address,
     })
 }
 
@@ -115,6 +119,7 @@ async function getContractFactories() {
 
     return {
         TokenFactory: await ethers.getContractFactory('ZecreyRelatedERC20'),
+        ERC721Factory: await ethers.getContractFactory('ZecreyRelatedERC721'),
         ZNSRegistry: await ethers.getContractFactory('ZNSRegistry'),
         ZNSResolver: await ethers.getContractFactory('PublicResolver'),
         ZNSPriceOracle: await ethers.getContractFactory('StablePriceOracle'),

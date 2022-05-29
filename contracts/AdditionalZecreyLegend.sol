@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./SafeMathUInt128.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./Utils.sol";
 
 import "./Storage.sol";
@@ -21,13 +23,17 @@ import "./UpgradeableMaster.sol";
 
 /// @title Zecrey additional main contract
 /// @author Zecrey
-contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
+contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IERC721Receiver {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
 
     function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
         uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
         pendingBalances[_packedBalanceKey] = PendingBalance(balance.add(_amount), FILLED_GAS_RESERVE_VALUE);
+    }
+
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4){
+        return this.onERC721Received.selector;
     }
 
     /*
@@ -196,6 +202,8 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
     }
 
     function createPair(address _tokenA, address _tokenB) external {
+        // Only governor can create token pair
+        governance.requireGovernor(msg.sender);
         require(_tokenA != _tokenB, 'ia1');
         requireActive();
         (address _token0, address _token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
@@ -341,12 +349,12 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
     /// @notice Register full exit request - pack pubdata, add priority request
     /// @param _accountNameHash account name hash
     /// @param _asset Token address, 0 address for BNB
-    function requestFullExit(bytes32 _accountNameHash, address _asset) public nonReentrant {
+    function requestFullExit(bytes32 _accountNameHash, address _asset) public {
         requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "not registered");
+        require(znsController.isRegisteredHash(_accountNameHash), "nr");
         // get address by account name hash
         address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
-        require(msg.sender == creatorAddress, "invalid address");
+        require(msg.sender == creatorAddress, "ia");
 
 
         uint16 assetId;
@@ -377,7 +385,7 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
     /// @notice Register full exit nft request - pack pubdata, add priority request
     /// @param _accountNameHash account name hash
     /// @param _nftIndex account NFT index in zecrey network
-    function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public nonReentrant {
+    function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public {
         requireActive();
         require(znsController.isRegisteredHash(_accountNameHash), "nr");
         require(_nftIndex < MAX_NFT_INDEX, "T");
@@ -403,4 +411,67 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard {
         addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
     }
 
+    /// @notice Deposit NFT to Layer 2, ERC721 is supported
+    function depositNft(
+        bytes32 _accountNameHash,
+        address _nftL1Address,
+        uint256 _nftL1TokenId
+    ) external {
+        requireActive();
+        require(znsController.isRegisteredHash(_accountNameHash), "nr");
+        // Transfer the tokens to this contract
+        bool success;
+        try IERC721(_nftL1Address).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _nftL1TokenId
+        ){
+            success = true;
+        }catch{
+            success = false;
+        }
+        require(success, "ntf");
+        // check owner
+        require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
+
+        // check if the nft is mint from layer-2
+        bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
+        uint16 collectionId = 0;
+        uint40 nftIndex = 0;
+        uint32 creatorAccountIndex = 0;
+        uint16 creatorTreasuryRate = 0;
+        bytes32 nftContentHash;
+        if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
+            // it means this is a new layer-1 nft
+            nftContentHash = nftKey;
+        } else {
+            // it means this is a nft that comes from layer-2
+            nftContentHash = l2Nfts[nftKey].nftContentHash;
+            collectionId = l2Nfts[nftKey].collectionId;
+            nftIndex = l2Nfts[nftKey].nftIndex;
+            creatorAccountIndex = l2Nfts[nftKey].creatorAccountIndex;
+            creatorTreasuryRate = l2Nfts[nftKey].creatorTreasuryRate;
+        }
+
+        TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
+        txType : uint8(TxTypes.TxType.DepositNft),
+        accountIndex : 0, // unknown at this point
+        nftIndex : nftIndex,
+        nftL1Address : _nftL1Address,
+        creatorAccountIndex : creatorAccountIndex,
+        creatorTreasuryRate : creatorTreasuryRate,
+        nftContentHash : nftContentHash,
+        nftL1TokenId : _nftL1TokenId,
+        accountNameHash : _accountNameHash,
+        collectionId : collectionId
+        });
+
+        // compact pub data
+        bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
+
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
+
+        emit DepositNft(_accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
+    }
 }
