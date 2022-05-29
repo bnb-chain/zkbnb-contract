@@ -195,11 +195,25 @@ describe("Zecrey-Legend contract", function () {
             const registerZNSTx = await zecreyLegendProxy.registerZNS('sher', await addr1.getAddress(), sherPubKey)
             await registerZNSTx.wait()
 
+            // deploy BEP20 token
+            const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+            const token = await TokenFactory.connect(addr1).deploy(10000, '', '')
+            await token.deployed()
+            expect(await token.balanceOf(addr1.address)).to.equal(10000)
+            // set allowance
+            const setAllowanceTx = await token.connect(addr1).approve(zecreyLegendProxy.address, 10000)
+            await setAllowanceTx.wait()
+            expect(await token.allowance(addr1.address, zecreyLegendProxy.address)).to.equal(10000)
+
+            // add asset
+            const addAssetTx = await assetGovernance.connect(owner).addAsset(token.address)
+            await addAssetTx.wait()
+
             // deposit erc721 into contract
             const sherNameHash = namehash.hash('sher.legend');
             const requestFullExitTx = await zecreyLegendProxy.connect(addr1).requestFullExit(
                 sherNameHash,
-                '0x0000000000000000000000000000000000000000',
+                token.address,
             );
             await requestFullExitTx.wait();
         })

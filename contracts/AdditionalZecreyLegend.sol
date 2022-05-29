@@ -202,6 +202,8 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
     }
 
     function createPair(address _tokenA, address _tokenB) external {
+        // Only governor can create token pair
+        governance.requireGovernor(msg.sender);
         require(_tokenA != _tokenB, 'ia1');
         requireActive();
         (address _token0, address _token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);

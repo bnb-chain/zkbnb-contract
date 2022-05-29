@@ -846,14 +846,14 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     /// @notice Register full exit request - pack pubdata, add priority request
     /// @param _accountNameHash account name hash
     /// @param _asset Token address, 0 address for BNB
-    function requestFullExit(bytes32 _accountNameHash, address _asset) public nonReentrant {
+    function requestFullExit(bytes32 _accountNameHash, address _asset) public {
         delegateAdditional();
     }
 
     /// @notice Register full exit nft request - pack pubdata, add priority request
     /// @param _accountNameHash account name hash
     /// @param _nftIndex account NFT index in zecrey network
-    function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public nonReentrant {
+    function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public {
         delegateAdditional();
     }
 
