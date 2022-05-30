@@ -270,12 +270,14 @@ library TxTypes {
         buf = abi.encodePacked(
             _tx.txType,
             uint32(0),
-            uint40(0),
+            _tx.nftIndex,
             _tx.nftL1Address, // token address
+            _tx.creatorAccountIndex,
             _tx.creatorTreasuryRate,
-            bytes32(0),
+            _tx.nftContentHash,
             _tx.nftL1TokenId, // nft token id
-            _tx.accountNameHash // account name hash
+            _tx.accountNameHash,
+            _tx.collectionId// account name hash
         );
     }
 
@@ -291,10 +293,14 @@ library TxTypes {
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // empty data
         offset += 2;
+        // creator account index
+        (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
         // creator treasury rate
         (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
+        // collection id
+        (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
         // empty data
-        offset += 30;
+        offset += 24;
         // nft content hash
         (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
         // nft l1 token id
