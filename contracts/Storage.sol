@@ -103,7 +103,7 @@ contract Storage {
         uint64 priorityOperations;
         bytes32 pendingOnchainOperationsHash;
         uint256 timestamp;
-        bytes32 accountRoot;
+        bytes32 stateRoot;
         bytes32 commitment;
     }
 

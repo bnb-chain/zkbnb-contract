@@ -32,7 +32,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
     struct CommitBlockInfo {
-        bytes32 newAccountRoot;
+        bytes32 newStateRoot;
         bytes publicData;
         uint256 timestamp;
         uint32[] publicDataOffsets;
@@ -464,7 +464,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         ) = collectOnchainOps(_newBlock);
 
         // Create block commitment for verification proof
-        // TODO mock on BNB Chain, using MiMC
         bytes32 commitment = createBlockCommitment(_previousBlock, _newBlock);
 
         return
@@ -473,7 +472,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             priorityReqCommitted,
             pendingOnchainOpsHash,
             _newBlock.timestamp,
-            _newBlock.newAccountRoot,
+            _newBlock.newStateRoot,
             commitment
         );
     }
@@ -621,10 +620,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
             // verify block proof
             inputs[3 * i] = uint256(accountRoot);
-            inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.accountRoot);
+            inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.stateRoot);
             inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment);
             // update account root
-            accountRoot = _blocks[i].blockHeader.accountRoot;
+            accountRoot = _blocks[i].blockHeader.stateRoot;
             verifyAndExecuteOneBlock(_blocks[i], i);
             emit BlockVerification(_blocks[i].blockHeader.blockNumber);
         }
@@ -862,13 +861,21 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     function createBlockCommitment(
         StoredBlockInfo memory _previousBlock,
         CommitBlockInfo memory _newBlockData
-    ) internal view returns (bytes32 commitment) {
-        commitment = keccak256(abi.encode(storedBlockHashes[_previousBlock.blockNumber],
-            _newBlockData.blockNumber, // block number
+    ) internal view returns (bytes32) {
+        address mimcContract = 0x0000000000000000000000000000000000000013;
+        (bool success, bytes memory commitment) = mimcContract.staticcall(abi.encode(_newBlockData.blockNumber, // block number
             _newBlockData.timestamp, // time stamp
-            _newBlockData.publicDataOffsets.length, // on chain ops count
-            _newBlockData.publicData) // pub data
-        );
+            _previousBlock.stateRoot, // old state root
+            _newBlockData.newStateRoot, // new state root
+            _newBlockData.publicData, // pub data
+            _newBlockData.publicDataOffsets.length // on chain ops count
+            ));
+        require(success, "Q");
+        bytes32 converted;
+        assembly {
+            converted := mload(add(commitment, 32))
+        }
+        return converted;
     }
 
     /// @notice Sends ETH

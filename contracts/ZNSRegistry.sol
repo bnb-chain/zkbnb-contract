@@ -86,7 +86,13 @@ contract ZNSRegistry is ZNS {
         address _owner,
         bytes32 _pubKey
     ) public override authorized(_node) returns (bytes32) {
-        bytes32 subnode = keccak256(abi.encodePacked(_node, _label));
+        address mimcContract = 0x0000000000000000000000000000000000000013;
+        (bool success, bytes memory data) = mimcContract.staticcall(abi.encodePacked(_node, _label));
+        require(success, "Q");
+        bytes32 subnode;
+        assembly {
+            subnode := mload(add(data, 32))
+        }
         _setOwner(subnode, _owner);
         _setPubKey(subnode, _pubKey);
         return subnode;
@@ -149,7 +155,13 @@ contract ZNSRegistry is ZNS {
      * @return bool If record exists
      */
     function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
-        bytes32 subnode = keccak256(abi.encodePacked(node, label));
+        address mimcContract = 0x0000000000000000000000000000000000000013;
+        (bool success, bytes memory data) = mimcContract.staticcall(abi.encodePacked(node, label));
+        require(success, "Q");
+        bytes32 subnode;
+        assembly {
+            subnode := mload(add(data, 32))
+        }
         return _exists(subnode);
     }
 
