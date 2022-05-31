@@ -8,8 +8,7 @@ async function main() {
 
     console.log('FullExit NFT...')
     // full exit
-    const sher = namehash.hash('sher.legend');
-    let fullExitNftTx = await zecreyLegend.requestFullExitNft(sher, '0');
+    let fullExitNftTx = await zecreyLegend.requestFullExitNft('sher', '0');
     await fullExitNftTx.wait();
 }
 

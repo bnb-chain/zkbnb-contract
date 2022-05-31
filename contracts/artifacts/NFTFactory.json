@@ -47,7 +47,7 @@
 		},
 		"gasEstimates": null,
 		"methodIdentifiers": {
-			"mintFromZecrey(address,address,address,uint256,uint32,bytes32,bytes)": "54f8b152"
+			"mintFromZecrey(address,address,uint256,bytes32,bytes)": "145ca576"
 		}
 	},
 	"abi": [
@@ -64,19 +64,9 @@
 					"type": "address"
 				},
 				{
-					"internalType": "address",
-					"name": "_factoryAddress",
-					"type": "address"
-				},
-				{
 					"internalType": "uint256",
 					"name": "_nftTokenId",
 					"type": "uint256"
-				},
-				{
-					"internalType": "uint32",
-					"name": "_amount",
-					"type": "uint32"
 				},
 				{
 					"internalType": "bytes32",

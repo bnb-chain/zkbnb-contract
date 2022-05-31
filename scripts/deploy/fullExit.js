@@ -8,8 +8,7 @@ async function main() {
 
     console.log('FullExit...')
     // full exit
-    const sher = namehash.hash('sher.legend');
-    let fullExitTx = await zecreyLegend.requestFullExit(sher, addrs.LEGToken);
+    let fullExitTx = await zecreyLegend.requestFullExit('sher', addrs.LEGToken);
     await fullExitTx.wait();
 }
 
