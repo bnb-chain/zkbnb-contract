@@ -511,4 +511,13 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
         addPriorityRequest(TxTypes.TxType.Deposit, pubData);
         emit Deposit(_assetId, _accountNameHash, _amount);
     }
+
+    event NewZecreyVerifier(address verifier);
+
+    // @dev This function is only for test
+    // TODO delete this function
+    function updateZecreyVerifier(address _newVerifierAddress) external {
+        verifier = ZecreyVerifier(_newVerifierAddress);
+        emit NewZecreyVerifier(_newVerifierAddress);
+    }
 }

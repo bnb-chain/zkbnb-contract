@@ -12,8 +12,8 @@ describe("Zecrey-Legend contract", function () {
     let owner, addr1, addr2, addrs;
     let zecreyProxy, bankProxy, gatekeeper;
 
-    let abi1 = require('../artifacts/contracts/dev-contracts/ZecreyUpgradeTest.sol/ZecreyUpgradeTest.json').abi
-    let abi2 = require('../artifacts/contracts/dev-contracts/UpgradableBank.sol/UpgradableBank.json').abi
+    let abi1 = require('../artifacts/contracts/test-contracts/ZecreyUpgradeTest.sol/ZecreyUpgradeTest.json').abi
+    let abi2 = require('../artifacts/contracts/test-contracts/UpgradableBank.sol/UpgradableBank.json').abi
     let abi3 = require('../artifacts/contracts/UpgradeGatekeeper.sol/UpgradeGatekeeper.json').abi
 
     // `beforeEach` will run before each test, re-deploying the contract every

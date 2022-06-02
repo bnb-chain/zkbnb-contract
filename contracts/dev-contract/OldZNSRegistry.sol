@@ -2,9 +2,9 @@
 
 pragma solidity ^0.7.6;
 
-import "./ZNS.sol";
+import "../ZNS.sol";
 
-contract ZNSRegistry is ZNS {
+contract OldZNSRegistry is ZNS {
 
     // @dev Require the msg.sender is the owner of this node
     modifier authorized(bytes32 node) {
@@ -86,7 +86,7 @@ contract ZNSRegistry is ZNS {
         address _owner,
         bytes32 _pubKey
     ) public override authorized(_node) returns (bytes32) {
-        bytes32 subnode = mimcHash(abi.encodePacked(_node, _label));
+        bytes32 subnode = keccak256Hash(abi.encodePacked(_node, _label));
         _setOwner(subnode, _owner);
         _setPubKey(subnode, _pubKey);
         return subnode;
@@ -149,7 +149,7 @@ contract ZNSRegistry is ZNS {
      * @return bool If record exists
      */
     function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
-        bytes32 subnode = mimcHash(abi.encodePacked(node, label));
+        bytes32 subnode = keccak256Hash(abi.encodePacked(node, label));
         return _exists(subnode);
     }
 
@@ -178,14 +178,8 @@ contract ZNSRegistry is ZNS {
         return records[node].owner != address(0x0);
     }
 
-    function mimcHash(bytes memory input) public view returns (bytes32 result) {
-        address mimcContract = 0x0000000000000000000000000000000000000013;
-
-        (bool success, bytes memory data) = mimcContract.staticcall(input);
-        require(success, "Q");
-        assembly {
-            result := mload(add(data, 32))
-        }
+    function keccak256Hash(bytes memory input) public view returns (bytes32 result) {
+        result = keccak256(input);
     }
 
 }
