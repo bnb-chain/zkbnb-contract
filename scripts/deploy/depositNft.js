@@ -17,8 +17,7 @@ async function main() {
     await approveTx.wait();
     // deposit nft
     console.log('Deposit Nft...');
-    const sher = namehash.hash('sher.legend');
-    let depositERC721Tx = await zecreyLegend.depositNft(sher, addrs.ERC721, '0');
+    let depositERC721Tx = await zecreyLegend.depositNft('sher', addrs.ERC721, '0');
     await depositERC721Tx.wait();
 }
 

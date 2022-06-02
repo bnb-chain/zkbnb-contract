@@ -96,7 +96,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         );
 
         // Get the name hash
-        bytes32 label = keccak256(bytes(_name));
+        bytes32 label = mimcHash(bytes(_name));
         // This subnode should not be registered before
         require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
         // Register subnode
@@ -131,7 +131,11 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         emit Withdraw(_to, _value);
     }
 
-    function isRegisteredHash(bytes32 _nameHash) external view returns (bool){
+    function getSubnodeNameHash(string memory name) external view returns (bytes32) {
+        return mimcHash(abi.encodePacked(baseNode, mimcHash(bytes(name))));
+    }
+
+    function isRegisteredNameHash(bytes32 _nameHash) external view returns (bool){
         return zns.recordExists(_nameHash);
     }
 
@@ -150,4 +154,16 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     function _validPubKey(bytes32 _pubKey) internal view returns (bool) {
         return ZNSPubKeyMapper[_pubKey] == 0x0;
     }
+
+    function mimcHash(bytes memory input) public view returns (bytes32 result) {
+        address mimcContract = 0x0000000000000000000000000000000000000013;
+
+        (bool success, bytes memory data) = mimcContract.staticcall(input);
+        require(success, "Q");
+        assembly {
+            result := mload(add(data, 32))
+        }
+    }
+
+
 }

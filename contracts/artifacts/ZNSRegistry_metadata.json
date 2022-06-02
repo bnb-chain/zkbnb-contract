@@ -40,12 +40,12 @@
 					},
 					{
 						"indexed": false,
-						"internalType": "address",
-						"name": "resolver",
-						"type": "address"
+						"internalType": "bytes32",
+						"name": "pubKey",
+						"type": "bytes32"
 					}
 				],
-				"name": "NewResolver",
+				"name": "NewPubKey",
 				"type": "event"
 			},
 			{
@@ -59,13 +59,32 @@
 					},
 					{
 						"indexed": false,
+						"internalType": "address",
+						"name": "resolver",
+						"type": "address"
+					}
+				],
+				"name": "NewResolver",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "input",
+						"type": "bytes"
+					}
+				],
+				"name": "mimcHash",
+				"outputs": [
+					{
 						"internalType": "bytes32",
-						"name": "zecreyPubKey",
+						"name": "result",
 						"type": "bytes32"
 					}
 				],
-				"name": "NewZecreyPubKey",
-				"type": "event"
+				"stateMutability": "view",
+				"type": "function"
 			},
 			{
 				"inputs": [
@@ -81,6 +100,25 @@
 						"internalType": "address",
 						"name": "",
 						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					}
+				],
+				"name": "pubKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
 					}
 				],
 				"stateMutability": "view",
@@ -135,28 +173,10 @@
 						"internalType": "address",
 						"name": "_owner",
 						"type": "address"
-					}
-				],
-				"name": "setOwner",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "bytes32",
-						"name": "_node",
-						"type": "bytes32"
-					},
-					{
-						"internalType": "address",
-						"name": "_owner",
-						"type": "address"
 					},
 					{
 						"internalType": "bytes32",
-						"name": "_zecreyPubKey",
+						"name": "_pubKey",
 						"type": "bytes32"
 					},
 					{
@@ -207,7 +227,7 @@
 					},
 					{
 						"internalType": "bytes32",
-						"name": "_zecreyPubKey",
+						"name": "_pubKey",
 						"type": "bytes32"
 					}
 				],
@@ -241,7 +261,7 @@
 					},
 					{
 						"internalType": "bytes32",
-						"name": "_zecreyPubKey",
+						"name": "_pubKey",
 						"type": "bytes32"
 					},
 					{
@@ -258,24 +278,6 @@
 						"type": "bytes32"
 					}
 				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "bytes32",
-						"name": "_node",
-						"type": "bytes32"
-					},
-					{
-						"internalType": "bytes32",
-						"name": "_zecreyPubKey",
-						"type": "bytes32"
-					}
-				],
-				"name": "setZecreyPubKey",
-				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -302,25 +304,6 @@
 				],
 				"stateMutability": "view",
 				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "bytes32",
-						"name": "node",
-						"type": "bytes32"
-					}
-				],
-				"name": "zecreyPubKey",
-				"outputs": [
-					{
-						"internalType": "bytes32",
-						"name": "",
-						"type": "bytes32"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
 			}
 		],
 		"devdoc": {
@@ -336,6 +319,15 @@
 					},
 					"returns": {
 						"_0": "address of the owner."
+					}
+				},
+				"pubKey(bytes32)": {
+					"details": "Returns the L2 owner of the specified node, which is a bytes32 L2 public key.",
+					"params": {
+						"node": "The specified node."
+					},
+					"returns": {
+						"_0": "L2 owner of the node."
 					}
 				},
 				"recordExists(bytes32)": {
@@ -356,20 +348,13 @@
 						"_0": "address of the resolver."
 					}
 				},
-				"setOwner(bytes32,address)": {
-					"details": "Set the ownership of a node to a new address. May only be called by the current owner of the node.",
-					"params": {
-						"_node": "The node to transfer ownership of.",
-						"_owner": "The address of the new owner."
-					}
-				},
 				"setRecord(bytes32,address,bytes32,address)": {
 					"details": "Set the record for a node.",
 					"params": {
 						"_node": "The node to update.",
 						"_owner": "The address of the new owner.",
-						"_resolver": "The address of the resolver.",
-						"_zecreyPubKey": "The L2Owner of the node"
+						"_pubKey": "The pub key of the node",
+						"_resolver": "The address of the resolver."
 					}
 				},
 				"setResolver(bytes32,address)": {
@@ -385,43 +370,27 @@
 						"_label": "The hash of the label specifying the subnode.",
 						"_node": "The parent node.",
 						"_owner": "The address of the new owner.",
-						"_zecreyPubKey": "The L2 owner of the subnode"
+						"_pubKey": "The L2 owner of the subnode"
 					}
 				},
 				"setSubnodeRecord(bytes32,bytes32,address,bytes32,address)": {
 					"details": "Set the record for a subnode.",
 					"params": {
-						"_label": "The hash of the subnode name",
+						"_label": "The hash of the subnode",
 						"_node": "The parent node.",
 						"_owner": "The address of the new owner.",
-						"_resolver": "The address of the resolver.",
-						"_zecreyPubKey": "The L2Owner of the subnode"
-					}
-				},
-				"setZecreyPubKey(bytes32,bytes32)": {
-					"details": "Set the L2 owner for the specified node.",
-					"params": {
-						"_node": "The node to update.",
-						"_zecreyPubKey": "The bytes32 public key of the L2 owner."
+						"_pubKey": "The layer-2 public key",
+						"_resolver": "The address of the resolver."
 					}
 				},
 				"subNodeRecordExists(bytes32,bytes32)": {
 					"details": "Returns whether a subnode record has been imported to the registry.",
 					"params": {
-						"label": "The namehash of the subnode",
+						"label": "The nodehash of the subnode",
 						"node": "The specified node"
 					},
 					"returns": {
 						"_0": "bool If record exists"
-					}
-				},
-				"zecreyPubKey(bytes32)": {
-					"details": "Returns the L2 owner of the specified node, which is a bytes32 L2 public key.",
-					"params": {
-						"node": "The specified node."
-					},
-					"returns": {
-						"_0": "L2 owner of the node."
 					}
 				}
 			},
@@ -443,34 +412,26 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": true,
+			"enabled": false,
 			"runs": 200
 		},
 		"remappings": []
 	},
 	"sources": {
 		"contracts/ZNS.sol": {
-			"keccak256": "0x20229f553c6f4e2ff1c1ab2b10b56d3d65304cdc0b928f864a4db931441759d6",
+			"keccak256": "0xff9db946b6e2249161664f14076d2c0b60f264d285732de26c03280b7e656294",
 			"license": "MIT OR Apache-2.0",
 			"urls": [
-				"bzz-raw://bdee2fb7d4749e35db1be63ced699199a47300db22007038f9d3fe3b030df9bc",
-				"dweb:/ipfs/QmTHbNvnAEzgArKc9ohjNZMCHczkY3zRcMAC7VMX5c7PrR"
+				"bzz-raw://0ea80eb6ca7c6819ddd0e45c0fd326c50ea95307af62225d9bb4a3f7f18975fe",
+				"dweb:/ipfs/QmUkT6r9cZk6HFiAag9BuECGEfmwSXoTS4BadmxkeJ3iMz"
 			]
 		},
 		"contracts/ZNSRegistry.sol": {
-			"keccak256": "0xce36b2849c7df23e02c918cea49222af9a0948aa23ba8f7b3cd6a60f6607e7dc",
+			"keccak256": "0xc8cc954d3da87acd2b29628a4a58f2f44ae0a5193519122960e759e91a544f76",
 			"license": "MIT OR Apache-2.0",
 			"urls": [
-				"bzz-raw://e34a32b8eda6a79ced634aaeaab1699db9cc7e447ce7fe6bf2e65329501b96c7",
-				"dweb:/ipfs/QmQazNfFUHkNpDvjCkbwr1qgc5KgwJq5VkMrv3NNgJ2Lpn"
-			]
-		},
-		"hardhat/console.sol": {
-			"keccak256": "0x72b6a1d297cd3b033d7c2e4a7e7864934bb767db6453623f1c3082c6534547f4",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://a8cb8681076e765c214e0d51cac989325f6b98e315eaae06ee0cbd5a9f084763",
-				"dweb:/ipfs/QmNWGHi4zmjxQTYN3NMGnJd49jBT5dE4bxTdWEaDuJrC6N"
+				"bzz-raw://d57b65d9d13ccd1bc5eb8f2d31da578d9e235686924bc3a7c3afd57f73795572",
+				"dweb:/ipfs/QmWt5BCn5jVhFSSdk4jbHJL9A3F9uYTFhjkBkTo2StGjGT"
 			]
 		}
 	},
