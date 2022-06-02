@@ -21,6 +21,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./NFTFactory.sol";
 import "./Config.sol";
 import "./ZNSController.sol";
+import "./Proxy.sol";
 
 /// @title Zecrey main contract
 /// @author Zecrey Team
@@ -882,5 +883,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         }
     }
 
+    // @dev This function is only for test
+    // TODO delete this function
+    function updateZecreyVerifier(address _newVerifierAddress) external {
+        delegateAdditional();
+    }
 
 }
