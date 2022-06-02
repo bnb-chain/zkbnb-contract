@@ -53,7 +53,7 @@ async function main() {
     // get ERC721
     const ERC721 = await contractFactories.ERC721Factory.deploy('Zecrey', 'ZEC', '0');
     await ERC721.deployed();
-    _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
+    _genesisAccountRoot = '0x14e4e8ad4848558d7200530337052e1ad30f5385b3c7187c80ad85f48547b74f';
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
     const _listingToken = LEGToken.address
@@ -90,7 +90,7 @@ async function main() {
 
     // Step 4: register zns base node
     console.log('Register ZNS base node...')
-    const rootNode =      '0x0000000000000000000000000000000000000000000000000000000000000000'
+    const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000'
     const baseNodeLabel = '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'         // mimc('legend');
     const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero);
     await setBaseNodeTx.wait();

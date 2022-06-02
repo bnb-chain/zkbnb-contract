@@ -39,7 +39,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         uint32 blockNumber;
     }
 
-    struct VerifyBlockInfo {
+    struct VerifyAndExecuteBlockInfo {
         StoredBlockInfo blockHeader;
         bytes[] pendingOnchainOpsPubData;
     }
@@ -458,7 +458,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     /// @notice Verify block index and proofs
-    function verifyAndExecuteOneBlock(VerifyBlockInfo memory _block, uint32 _verifiedBlockIdx) internal {
+    function verifyAndExecuteOneBlock(VerifyAndExecuteBlockInfo memory _block, uint32 _verifiedBlockIdx) internal {
         // Ensure block was committed
         require(
             hashStoredBlockInfo(_block.blockHeader) ==
@@ -559,7 +559,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     /// @notice Verify layer-2 blocks proofs
     /// @param _blocks Verified blocks info
     /// @param _proofs proofs
-    function verifyAndExecuteBlocks(VerifyBlockInfo[] memory _blocks, uint256[] memory _proofs) external nonReentrant {
+    function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external nonReentrant {
         requireActive();
         governance.requireActiveValidator(msg.sender);
 
