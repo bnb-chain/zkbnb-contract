@@ -1,7 +1,7 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 const fs = require('fs')
-const {saveDeployedAddresses, getZecreyLegendProxy} = require("./utils");
+const {getKeccak256, saveDeployedAddresses, getZecreyLegendProxy} = require("./utils");
 
 async function main() {
     const [owner] = await ethers.getSigners();
@@ -57,7 +57,7 @@ async function main() {
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
     const _listingToken = LEGToken.address
-    const baseNode = '0x2d07d8e00a7d8f73206bc0f90dbaaa6a58d7551cded0659f10f21f35bbf59a53' // mimc(abi.encoded('', mimc('legend')))
+    const baseNode = namehash.hash('legend')
     // deploy DeployFactory
     console.log('Deploy DeployFactory...')
     const deployFactory = await contractFactories.DeployFactory.deploy(
@@ -91,7 +91,7 @@ async function main() {
     // Step 4: register zns base node
     console.log('Register ZNS base node...')
     const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000'
-    const baseNodeLabel = '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'         // mimc('legend');
+    const baseNodeLabel = getKeccak256('legend')       // keccak256('legend');
     const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero);
     await setBaseNodeTx.wait();
 
@@ -119,14 +119,14 @@ async function getContractFactories() {
     return {
         TokenFactory: await ethers.getContractFactory('ZecreyRelatedERC20'),
         ERC721Factory: await ethers.getContractFactory('ZecreyRelatedERC721'),
-        ZNSRegistry: await ethers.getContractFactory('ZNSRegistry'),
+        ZNSRegistry: await ethers.getContractFactory('OldZNSRegistry'),
         ZNSResolver: await ethers.getContractFactory('PublicResolver'),
         ZNSPriceOracle: await ethers.getContractFactory('StablePriceOracle'),
-        ZNSController: await ethers.getContractFactory('ZNSController'),
+        ZNSController: await ethers.getContractFactory('OldZNSController'),
         Governance: await ethers.getContractFactory('Governance'),
         AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
         Verifier: await ethers.getContractFactory('ZecreyVerifier'),
-        ZecreyLegend: await ethers.getContractFactory('ZecreyLegend', {
+        ZecreyLegend: await ethers.getContractFactory('OldZecreyLegend', {
             libraries: {
                 Utils: utils.address
             }

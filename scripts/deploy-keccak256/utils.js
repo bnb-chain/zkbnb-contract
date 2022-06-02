@@ -20,11 +20,17 @@ exports.getZecreyLegendProxy = async function (addr) {
     await utils.deployed()
 
     // zecrey legend
-    const ZecreyLegend = await ethers.getContractFactory('ZecreyLegend', {
+    const ZecreyLegend = await ethers.getContractFactory('OldZecreyLegend', {
         libraries: {
             Utils: utils.address
         }
     });
 
     return ZecreyLegend.attach(addr);
+}
+
+// Get the keccak256 hash of a specified string name
+// eg: getKeccak256('zecrey') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
+exports.getKeccak256 = function (name) {
+    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name))
 }

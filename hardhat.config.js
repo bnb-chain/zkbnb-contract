@@ -14,7 +14,7 @@ module.exports = {
         // },
         local: {
             url: "http://127.0.0.1:8545",
-            accounts: ['53083ce384b7cb81370800973d79c0412261310ba5c9c0cd35d7c6ec7926d0a0'],
+            accounts: ['ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'],
             timeout: 100000,
         },
         BNBTest: {

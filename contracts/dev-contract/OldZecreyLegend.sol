@@ -6,26 +6,26 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./SafeMathUInt128.sol";
-import "./SafeMathUInt32.sol";
+import "../SafeMathUInt128.sol";
+import "../SafeMathUInt32.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
-import "./Storage.sol";
-import "./Events.sol";
-import "./Utils.sol";
-import "./Bytes.sol";
-import "./TxTypes.sol";
-import "./UpgradeableMaster.sol";
+import "../Events.sol";
+import "../Utils.sol";
+import "../Bytes.sol";
+import "../TxTypes.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./NFTFactory.sol";
-import "./Config.sol";
-import "./ZNSController.sol";
-import "./Proxy.sol";
+import "../NFTFactory.sol";
+import "../Config.sol";
+import "./OldZNSController.sol";
+import "../Proxy.sol";
+import "../UpgradeableMaster.sol";
+import "../Storage.sol";
 
 /// @title Zecrey main contract
 /// @author Zecrey Team
-contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
+contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
@@ -813,7 +813,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         StoredBlockInfo memory _previousBlock,
         CommitBlockInfo memory _newBlockData
     ) internal view returns (bytes32) {
-        bytes32 converted = mimcHash(abi.encode(
+        bytes32 converted = keccak256Hash(abi.encode(
                 _newBlockData.blockNumber, // block number
                 _newBlockData.timestamp, // time stamp
                 _previousBlock.stateRoot, // old state root
@@ -873,14 +873,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         }
     }
 
-    function mimcHash(bytes memory input) public view returns (bytes32 result) {
-        address mimcContract = 0x0000000000000000000000000000000000000013;
-
-        (bool success, bytes memory data) = mimcContract.staticcall(input);
-        require(success, "Q");
-        assembly {
-            result := mload(add(data, 32))
-        }
+    function keccak256Hash(bytes memory input) public view returns (bytes32 result) {
+        result = keccak256(input);
     }
 
     // @dev This function is only for test
