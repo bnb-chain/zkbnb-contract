@@ -160,6 +160,12 @@
       },
       {
         "indexed": false,
+        "internalType": "bytes32",
+        "name": "nftContentHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
         "internalType": "address",
         "name": "tokenAddress",
         "type": "address"
@@ -221,6 +227,44 @@
       }
     ],
     "name": "FullExitCommit",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "factory",
+        "type": "address"
+      }
+    ],
+    "name": "NewDefaultNFTFactory",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "_creatorAccountNameHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "_collectionId",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "_factoryAddress",
+        "type": "address"
+      }
+    ],
+    "name": "NewNFTFactory",
     "type": "event"
   },
   {
@@ -340,14 +384,14 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "bytes32",
-        "name": "accountNameHash",
-        "type": "bytes32"
+        "internalType": "uint32",
+        "name": "accountIndex",
+        "type": "uint32"
       },
       {
         "indexed": false,
         "internalType": "address",
-        "name": "tokenAddress",
+        "name": "nftL1Address",
         "type": "address"
       },
       {
@@ -358,14 +402,8 @@
       },
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "proxyAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
         "internalType": "uint256",
-        "name": "nftTokenId",
+        "name": "nftL1TokenId",
         "type": "uint256"
       }
     ],
@@ -395,20 +433,27 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint16",
-        "name": "assetId",
-        "type": "uint16"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint128",
-        "name": "amount",
-        "type": "uint128"
+        "indexed": true,
+        "internalType": "uint40",
+        "name": "nftIndex",
+        "type": "uint40"
       }
     ],
-    "name": "WithdrawalPending",
+    "name": "WithdrawalNFTPending",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "CHUNK_SIZE",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -457,6 +502,19 @@
         "internalType": "uint32",
         "name": "",
         "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_NFT_INDEX",
+    "outputs": [
+      {
+        "internalType": "uint40",
+        "name": "",
+        "type": "uint40"
       }
     ],
     "stateMutability": "view",
@@ -541,40 +599,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "contract IERC20",
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint128",
-        "name": "_amount",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "_maxAmount",
-        "type": "uint128"
-      }
-    ],
-    "name": "_transferERC20",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "withdrawnAmount",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "accountRoot",
     "outputs": [
@@ -626,7 +650,7 @@
           },
           {
             "internalType": "bytes32",
-            "name": "accountRoot",
+            "name": "stateRoot",
             "type": "bytes32"
           },
           {
@@ -635,7 +659,7 @@
             "type": "bytes32"
           }
         ],
-        "internalType": "struct Storage.BlockHeader",
+        "internalType": "struct Storage.StoredBlockInfo",
         "name": "_lastCommittedBlockData",
         "type": "tuple"
       },
@@ -643,7 +667,7 @@
         "components": [
           {
             "internalType": "bytes32",
-            "name": "newAccountRoot",
+            "name": "newStateRoot",
             "type": "bytes32"
           },
           {
@@ -703,6 +727,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "defaultNFTFactory",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "contract IERC20",
@@ -715,9 +752,9 @@
         "type": "uint104"
       },
       {
-        "internalType": "bytes32",
-        "name": "_accountNameHash",
-        "type": "bytes32"
+        "internalType": "string",
+        "name": "_accountName",
+        "type": "string"
       }
     ],
     "name": "depositBEP20",
@@ -728,9 +765,9 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "_accountNameHash",
-        "type": "bytes32"
+        "internalType": "string",
+        "name": "_accountName",
+        "type": "string"
       }
     ],
     "name": "depositBNB",
@@ -741,24 +778,19 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "_accountNameHash",
-        "type": "bytes32"
+        "internalType": "string",
+        "name": "_accountName",
+        "type": "string"
       },
       {
         "internalType": "address",
-        "name": "_tokenAddress",
+        "name": "_nftL1Address",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_nftTokenId",
+        "name": "_nftL1TokenId",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint16",
-        "name": "_creatorTreasuryRate",
-        "type": "uint16"
       }
     ],
     "name": "depositNft",
@@ -801,6 +833,30 @@
       }
     ],
     "name": "getAddressByAccountNameHash",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_creatorAccountNameHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "_collectionId",
+        "type": "uint32"
+      }
+    ],
+    "name": "getNFTFactory",
     "outputs": [
       {
         "internalType": "address",
@@ -877,6 +933,83 @@
   {
     "inputs": [
       {
+        "internalType": "bytes",
+        "name": "input",
+        "type": "bytes"
+      }
+    ],
+    "name": "mimcHash",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "result",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "name": "nftFactories",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      }
+    ],
+    "name": "onERC721Received",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "_name",
         "type": "string"
@@ -894,15 +1027,15 @@
     ],
     "name": "registerZNS",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "_accountNameHash",
-        "type": "bytes32"
+        "internalType": "string",
+        "name": "_accountName",
+        "type": "string"
       },
       {
         "internalType": "address",
@@ -918,9 +1051,9 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "_accountNameHash",
-        "type": "bytes32"
+        "internalType": "string",
+        "name": "_accountName",
+        "type": "string"
       },
       {
         "internalType": "uint32",
@@ -959,7 +1092,7 @@
           },
           {
             "internalType": "bytes32",
-            "name": "accountRoot",
+            "name": "stateRoot",
             "type": "bytes32"
           },
           {
@@ -968,7 +1101,7 @@
             "type": "bytes32"
           }
         ],
-        "internalType": "struct Storage.BlockHeader[]",
+        "internalType": "struct Storage.StoredBlockInfo[]",
         "name": "_blocksToRevert",
         "type": "tuple[]"
       }
@@ -986,7 +1119,7 @@
         "type": "uint32"
       }
     ],
-    "name": "storedBlockHeaderHashes",
+    "name": "storedBlockHashes",
     "outputs": [
       {
         "internalType": "bytes32",
@@ -1052,24 +1185,70 @@
   {
     "inputs": [
       {
-        "internalType": "uint16",
-        "name": "_pairIndex",
-        "type": "uint16"
+        "internalType": "contract IERC20",
+        "name": "_token",
+        "type": "address"
       },
       {
-        "internalType": "uint16",
-        "name": "_feeRate",
-        "type": "uint16"
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
       },
       {
-        "internalType": "uint32",
-        "name": "_treasuryAccountIndex",
-        "type": "uint32"
+        "internalType": "uint128",
+        "name": "_amount",
+        "type": "uint128"
       },
       {
-        "internalType": "uint16",
-        "name": "_treasuryRate",
-        "type": "uint16"
+        "internalType": "uint128",
+        "name": "_maxAmount",
+        "type": "uint128"
+      }
+    ],
+    "name": "transferERC20",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "withdrawnAmount",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "tokenA",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "tokenB",
+            "type": "address"
+          },
+          {
+            "internalType": "uint16",
+            "name": "feeRate",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint32",
+            "name": "treasuryAccountIndex",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint16",
+            "name": "treasuryRate",
+            "type": "uint16"
+          }
+        ],
+        "internalType": "struct ZecreyLegend.PairInfo",
+        "name": "_pairInfo",
+        "type": "tuple"
       }
     ],
     "name": "updatePairRate",
@@ -1146,7 +1325,7 @@
               },
               {
                 "internalType": "bytes32",
-                "name": "accountRoot",
+                "name": "stateRoot",
                 "type": "bytes32"
               },
               {
@@ -1155,17 +1334,17 @@
                 "type": "bytes32"
               }
             ],
-            "internalType": "struct Storage.BlockHeader",
+            "internalType": "struct Storage.StoredBlockInfo",
             "name": "blockHeader",
             "type": "tuple"
           },
           {
             "internalType": "bytes[]",
-            "name": "pendingOnchainOpsPubdata",
+            "name": "pendingOnchainOpsPubData",
             "type": "bytes[]"
           }
         ],
-        "internalType": "struct ZecreyLegend.VerifyBlockInfo[]",
+        "internalType": "struct ZecreyLegend.VerifyAndExecuteBlockInfo[]",
         "name": "_blocks",
         "type": "tuple[]"
       },
@@ -1175,7 +1354,7 @@
         "type": "uint256[]"
       }
     ],
-    "name": "verifyBlocks",
+    "name": "verifyAndExecuteBlocks",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1199,6 +1378,19 @@
       }
     ],
     "name": "withdrawPendingBalance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint40",
+        "name": "_nftIndex",
+        "type": "uint40"
+      }
+    ],
+    "name": "withdrawPendingNFTBalance",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
