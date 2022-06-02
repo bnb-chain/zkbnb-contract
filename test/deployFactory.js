@@ -1,6 +1,7 @@
 const {expect} = require("chai");
 const {ethers} = require("hardhat");
 const namehash = require("eth-ens-namehash");
+const {mimc} = require("mimcjs");
 
 describe("Zecrey-Legend contract", function () {
 
@@ -94,9 +95,9 @@ describe("Zecrey-Legend contract", function () {
         zecreyLegendProxy = ZecreyLegend.attach(event[5])
 
         // Step 4: register zns base node
-        const rootNode = namehash.hash('');
-        const baseNameHash = getKeccak256('legend');
-        const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNameHash, znsControllerProxy.address, ethers.constants.HashZero);
+        const rootNode =      '0x0000000000000000000000000000000000000000000000000000000000000000'
+        const baseNodeLabel = '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'         // mimc('legend');
+        const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero);
         await setBaseNodeTx.wait();
         expect(await znsRegistry.owner(baseNode)).to.equal(await znsControllerProxy.address);
     });

@@ -56,7 +56,7 @@ contract ZNSRegistry is ZNS {
     /**
      * @dev Set the record for a subnode.
      * @param _node The parent node.
-     * @param _label The hash of the subnode name
+     * @param _label The hash of the subnode
      * @param _owner The address of the new owner.
      * @param _resolver The address of the resolver.
      * @param _pubKey The layer-2 public key
@@ -86,13 +86,7 @@ contract ZNSRegistry is ZNS {
         address _owner,
         bytes32 _pubKey
     ) public override authorized(_node) returns (bytes32) {
-        address mimcContract = 0x0000000000000000000000000000000000000013;
-        (bool success, bytes memory data) = mimcContract.staticcall(abi.encodePacked(_node, _label));
-        require(success, "Q");
-        bytes32 subnode;
-        assembly {
-            subnode := mload(add(data, 32))
-        }
+        bytes32 subnode = mimcHash(abi.encodePacked(_node, _label));
         _setOwner(subnode, _owner);
         _setPubKey(subnode, _pubKey);
         return subnode;
@@ -151,17 +145,11 @@ contract ZNSRegistry is ZNS {
     /**
      * @dev Returns whether a subnode record has been imported to the registry.
      * @param node The specified node
-     * @param label The namehash of the subnode
+     * @param label The nodehash of the subnode
      * @return bool If record exists
      */
     function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
-        address mimcContract = 0x0000000000000000000000000000000000000013;
-        (bool success, bytes memory data) = mimcContract.staticcall(abi.encodePacked(node, label));
-        require(success, "Q");
-        bytes32 subnode;
-        assembly {
-            subnode := mload(add(data, 32))
-        }
+        bytes32 subnode = mimcHash(abi.encodePacked(node, label));
         return _exists(subnode);
     }
 
@@ -189,4 +177,15 @@ contract ZNSRegistry is ZNS {
     function _exists(bytes32 node) internal view returns (bool) {
         return records[node].owner != address(0x0);
     }
+
+    function mimcHash(bytes memory input) public view returns (bytes32 result) {
+        address mimcContract = 0x0000000000000000000000000000000000000013;
+
+        (bool success, bytes memory data) = mimcContract.staticcall(input);
+        require(success, "Q");
+        assembly {
+            result := mload(add(data, 32))
+        }
+    }
+
 }

@@ -208,26 +208,24 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
-    /// @param _accountNameHash The receiver Layer 2 account name
-    function depositBNB(bytes32 _accountNameHash) external payable {
-        require(msg.value != 0, "ia");
-        requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "nr");
-        registerDeposit(0, SafeCast.toUint128(msg.value), _accountNameHash);
+    /// @param _accountName the receiver account name
+    function depositBNB(string calldata _accountName) external payable {
+        delegateAdditional();
     }
 
     /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
     /// @param _token Token address
     /// @param _amount Token amount
-    /// @param _accountNameHash Receiver Layer 2 account name hash
+    /// @param _accountName Receiver Layer 2 account name
     function depositBEP20(
         IERC20 _token,
         uint104 _amount,
-        bytes32 _accountNameHash
+        string calldata _accountName
     ) external nonReentrant {
         require(_amount != 0, "ia");
         requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "nr");
+        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
         // Get asset id by its address
         uint16 assetId = governance.validateAssetAddress(address(_token));
         require(!governance.pausedAssets(assetId), "b");
@@ -241,63 +239,16 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
         require(depositAmount > 0, "D");
 
-        registerDeposit(assetId, depositAmount, _accountNameHash);
+        registerDeposit(assetId, depositAmount, accountNameHash);
     }
 
     /// @notice Deposit NFT to Layer 2, ERC721 is supported
     function depositNft(
-        bytes32 _accountNameHash,
+        string calldata _accountName,
         address _nftL1Address,
         uint256 _nftL1TokenId
     ) external nonReentrant {
         delegateAdditional();
-        //        requireActive();
-        //        require(znsController.isRegisteredHash(_accountNameHash), "nr");
-        //        // Transfer the tokens to this contract
-        //        bool success = Utils.transferFromNFT(msg.sender, address(this), _nftL1Address, _nftL1TokenId);
-        //        require(success, "ntf");
-        //        // check owner
-        //        require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
-        //
-        //        // check if the nft is mint from layer-2
-        //        bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-        //        uint16 collectionId = 0;
-        //        uint40 nftIndex = 0;
-        //        uint32 creatorAccountIndex = 0;
-        //        uint16 creatorTreasuryRate = 0;
-        //        bytes32 nftContentHash;
-        //        if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
-        //            // it means this is a new layer-1 nft
-        //            nftContentHash = nftKey;
-        //        } else {
-        //            // it means this is a nft that comes from layer-2
-        //            nftContentHash = l2Nfts[nftKey].nftContentHash;
-        //            collectionId = l2Nfts[nftKey].collectionId;
-        //            nftIndex = l2Nfts[nftKey].nftIndex;
-        //            creatorAccountIndex = l2Nfts[nftKey].creatorAccountIndex;
-        //            creatorTreasuryRate = l2Nfts[nftKey].creatorTreasuryRate;
-        //        }
-        //
-        //        TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-        //        txType : uint8(TxTypes.TxType.DepositNft),
-        //        accountIndex : 0, // unknown at this point
-        //        nftIndex : nftIndex,
-        //        nftL1Address : _nftL1Address,
-        //        creatorAccountIndex : creatorAccountIndex,
-        //        creatorTreasuryRate : creatorTreasuryRate,
-        //        nftContentHash : nftContentHash,
-        //        nftL1TokenId : _nftL1TokenId,
-        //        accountNameHash : _accountNameHash,
-        //        collectionId : collectionId
-        //        });
-        //
-        //        // compact pub data
-        //        bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
-        //
-        //        // add into priority request queue
-        //        addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
-        //
-        //        emit DepositNft(_accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
     }
 
     function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
@@ -843,38 +794,32 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     }
 
     /// @notice Register full exit request - pack pubdata, add priority request
-    /// @param _accountNameHash account name hash
+    /// @param _accountName account name
     /// @param _asset Token address, 0 address for BNB
-    function requestFullExit(bytes32 _accountNameHash, address _asset) public {
+    function requestFullExit(string calldata _accountName, address _asset) public {
         delegateAdditional();
     }
 
     /// @notice Register full exit nft request - pack pubdata, add priority request
-    /// @param _accountNameHash account name hash
+    /// @param _accountName account name
     /// @param _nftIndex account NFT index in zecrey network
-    function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public {
+    function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
         delegateAdditional();
     }
-
 
     /// @dev Creates block commitment from its data
     function createBlockCommitment(
         StoredBlockInfo memory _previousBlock,
         CommitBlockInfo memory _newBlockData
     ) internal view returns (bytes32) {
-        address mimcContract = 0x0000000000000000000000000000000000000013;
-        (bool success, bytes memory commitment) = mimcContract.staticcall(abi.encode(_newBlockData.blockNumber, // block number
-            _newBlockData.timestamp, // time stamp
-            _previousBlock.stateRoot, // old state root
-            _newBlockData.newStateRoot, // new state root
-            _newBlockData.publicData, // pub data
-            _newBlockData.publicDataOffsets.length // on chain ops count
+        bytes32 converted = mimcHash(abi.encode(
+                _newBlockData.blockNumber, // block number
+                _newBlockData.timestamp, // time stamp
+                _previousBlock.stateRoot, // old state root
+                _newBlockData.newStateRoot, // new state root
+                _newBlockData.publicData, // pub data
+                _newBlockData.publicDataOffsets.length // on chain ops count
             ));
-        require(success, "Q");
-        bytes32 converted;
-        assembly {
-            converted := mload(add(commitment, 32))
-        }
         return converted;
     }
 
@@ -926,5 +871,16 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             }
         }
     }
+
+    function mimcHash(bytes memory input) public view returns (bytes32 result) {
+        address mimcContract = 0x0000000000000000000000000000000000000013;
+
+        (bool success, bytes memory data) = mimcContract.staticcall(input);
+        require(success, "Q");
+        assembly {
+            result := mload(add(data, 32))
+        }
+    }
+
 
 }

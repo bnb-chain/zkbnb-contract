@@ -18,19 +18,9 @@
 						"type": "address"
 					},
 					{
-						"internalType": "address",
-						"name": "_factoryAddress",
-						"type": "address"
-					},
-					{
 						"internalType": "uint256",
 						"name": "_nftTokenId",
 						"type": "uint256"
-					},
-					{
-						"internalType": "uint32",
-						"name": "_amount",
-						"type": "uint32"
 					},
 					{
 						"internalType": "bytes32",
@@ -70,18 +60,18 @@
 			"bytecodeHash": "ipfs"
 		},
 		"optimizer": {
-			"enabled": true,
+			"enabled": false,
 			"runs": 200
 		},
 		"remappings": []
 	},
 	"sources": {
 		"contracts/NFTFactory.sol": {
-			"keccak256": "0x2b89dc0efebdc883876f9603c770e1489786b220abc8290574ea5d626e714750",
+			"keccak256": "0x0f3b1c84603230bf86c823213d43baa89e40050f638e3053bb73e597ddcba145",
 			"license": "UNLICENSED",
 			"urls": [
-				"bzz-raw://97895fe8ccf1c9c9d9fd2c77b2a3c59318de8c949203a406558043a8cc04f6f7",
-				"dweb:/ipfs/QmV1asxkdGBXfN7v4L8LTkZSjtVciscm4NeyRTjoRbMbBd"
+				"bzz-raw://6cb39ad984330da1630d01d0d103ab07c2a63cb35c1c132cd324a0f6a4f02a99",
+				"dweb:/ipfs/QmRTVNXXS5U3amWDnrrfQzxUn6rqZooFdfnei4GDBk8332"
 			]
 		}
 	},

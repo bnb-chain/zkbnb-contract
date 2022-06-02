@@ -302,21 +302,23 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
     }
 
     /// @notice Register NFTFactory to this contract
-    /// @param _creatorAccountNameHash accountNameHash of the creator
+    /// @param _creatorAccountName accountName of the creator
     /// @param _collectionId collection Id of the NFT related to this creator
     /// @param _factory NFT Factory
     function registerNFTFactory(
-        bytes32 _creatorAccountNameHash,
+        string calldata _creatorAccountName,
         uint32 _collectionId,
         NFTFactory _factory
     ) external {
-        require(address(nftFactories[_creatorAccountNameHash][_collectionId]) == address(0), "Q");
+        bytes32 creatorAccountNameHash = znsController.getSubnodeNameHash(_creatorAccountName);
+        require(znsController.isRegisteredNameHash(creatorAccountNameHash), "nr");
+        require(address(nftFactories[creatorAccountNameHash][_collectionId]) == address(0), "Q");
         // Check check accountNameHash belongs to msg.sender
-        address creatorAddress = getAddressByAccountNameHash(_creatorAccountNameHash);
+        address creatorAddress = getAddressByAccountNameHash(creatorAccountNameHash);
         require(creatorAddress == msg.sender, 'ns');
 
-        nftFactories[_creatorAccountNameHash][_collectionId] = address(_factory);
-        emit NewNFTFactory(_creatorAccountNameHash, _collectionId, address(_factory));
+        nftFactories[creatorAccountNameHash][_collectionId] = address(_factory);
+        emit NewNFTFactory(creatorAccountNameHash, _collectionId, address(_factory));
     }
 
     /// @notice Saves priority request in storage
@@ -347,15 +349,15 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
     }
 
     /// @notice Register full exit request - pack pubdata, add priority request
-    /// @param _accountNameHash account name hash
+    /// @param _accountName account name
     /// @param _asset Token address, 0 address for BNB
-    function requestFullExit(bytes32 _accountNameHash, address _asset) public {
+    function requestFullExit(string calldata _accountName, address _asset) public {
         requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "nr");
+        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
         // get address by account name hash
-        address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
+        address creatorAddress = getAddressByAccountNameHash(accountNameHash);
         require(msg.sender == creatorAddress, "ia");
-
 
         uint16 assetId;
         if (_asset == address(0)) {
@@ -364,12 +366,11 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
             assetId = governance.validateAssetAddress(_asset);
         }
 
-
         // Priority Queue request
         TxTypes.FullExit memory _tx = TxTypes.FullExit({
         txType : uint8(TxTypes.TxType.FullExit),
         accountIndex : 0, // unknown at this point
-        accountNameHash : _accountNameHash,
+        accountNameHash : accountNameHash,
         assetId : assetId,
         assetAmount : 0 // unknown at this point
         });
@@ -383,14 +384,15 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
     }
 
     /// @notice Register full exit nft request - pack pubdata, add priority request
-    /// @param _accountNameHash account name hash
+    /// @param _accountName account name
     /// @param _nftIndex account NFT index in zecrey network
-    function requestFullExitNft(bytes32 _accountNameHash, uint32 _nftIndex) public {
+    function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
         requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "nr");
+        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
         require(_nftIndex < MAX_NFT_INDEX, "T");
         // get address by account name hash
-        address creatorAddress = getAddressByAccountNameHash(_accountNameHash);
+        address creatorAddress = getAddressByAccountNameHash(accountNameHash);
         require(msg.sender == creatorAddress, "ia");
 
         // Priority Queue request
@@ -402,7 +404,7 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
         nftIndex : _nftIndex,
         collectionId : 0, // unknown
         nftL1Address : address(0x0), // unknown
-        accountNameHash : _accountNameHash,
+        accountNameHash : accountNameHash,
         creatorAccountNameHash : bytes32(0),
         nftContentHash : bytes32(0x0), // unknown,
         nftL1TokenId : 0 // unknown
@@ -413,12 +415,13 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
 
     /// @notice Deposit NFT to Layer 2, ERC721 is supported
     function depositNft(
-        bytes32 _accountNameHash,
+        string calldata _accountName,
         address _nftL1Address,
         uint256 _nftL1TokenId
     ) external {
         requireActive();
-        require(znsController.isRegisteredHash(_accountNameHash), "nr");
+        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
         // Transfer the tokens to this contract
         bool success;
         try IERC721(_nftL1Address).safeTransferFrom(
@@ -462,7 +465,7 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
         creatorTreasuryRate : creatorTreasuryRate,
         nftContentHash : nftContentHash,
         nftL1TokenId : _nftL1TokenId,
-        accountNameHash : _accountNameHash,
+        accountNameHash : accountNameHash,
         collectionId : collectionId
         });
 
@@ -472,6 +475,40 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
 
-        emit DepositNft(_accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
+        emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
+    }
+
+    /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
+    /// @param _accountName the receiver account name
+    function depositBNB(string calldata _accountName) external payable {
+        require(msg.value != 0, "ia");
+        requireActive();
+        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+        registerDeposit(0, SafeCast.toUint128(msg.value), accountNameHash);
+    }
+
+    /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
+    /// @param _assetId Asset by id
+    /// @param _amount Asset amount
+    /// @param _accountNameHash Receiver Account Name
+    function registerDeposit(
+        uint16 _assetId,
+        uint128 _amount,
+        bytes32 _accountNameHash
+    ) internal {
+        // Priority Queue request
+        TxTypes.Deposit memory _tx = TxTypes.Deposit({
+        txType : uint8(TxTypes.TxType.Deposit),
+        accountIndex : 0, // unknown at the moment
+        accountNameHash : _accountNameHash,
+        assetId : _assetId,
+        amount : _amount
+        });
+        // compact pub data
+        bytes memory pubData = TxTypes.writeDepositPubDataForPriorityQueue(_tx);
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.Deposit, pubData);
+        emit Deposit(_assetId, _accountNameHash, _amount);
     }
 }
