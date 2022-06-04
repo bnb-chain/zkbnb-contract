@@ -183,9 +183,9 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         delegateAdditional();
     }
 
-    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKey) external payable nonReentrant {
+    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKeyX, bytes32 _zecreyPubKeyY) external payable nonReentrant {
         // Register ZNS
-        bytes32 node = znsController.registerZNS{value : msg.value}(_name, _owner, _zecreyPubKey, address(znsResolver));
+        bytes32 node = znsController.registerZNS{value : msg.value}(_name, _owner, _zecreyPubKeyY, address(znsResolver));
 
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
@@ -193,7 +193,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         accountIndex : uint32(0),
         accountName : Utils.stringToBytes32(_name),
         accountNameHash : node,
-        pubKey : _zecreyPubKey
+        pubKeyX : _zecreyPubKeyX,
+        pubKeyY : _zecreyPubKeyY
         });
         // compact pub data
         bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
@@ -201,7 +202,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
 
-        emit RegisterZNS(_name, node, _owner, _zecreyPubKey);
+        emit RegisterZNS(_name, node, _owner, _zecreyPubKeyX, _zecreyPubKeyY);
     }
 
     function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
@@ -248,7 +249,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         string calldata _accountName,
         address _nftL1Address,
         uint256 _nftL1TokenId
-    ) external nonReentrant {
+    ) external {
         delegateAdditional();
     }
 
@@ -436,7 +437,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         CommitBlockInfo[] memory _newBlocksData
     )
     external
-    nonReentrant
     {
         requireActive();
         governance.requireActiveValidator(msg.sender);
@@ -560,7 +560,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     /// @notice Verify layer-2 blocks proofs
     /// @param _blocks Verified blocks info
     /// @param _proofs proofs
-    function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external nonReentrant {
+    function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external {
         requireActive();
         governance.requireActiveValidator(msg.sender);
 
@@ -661,25 +661,25 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
 
             if (txType == TxTypes.TxType.RegisterZNS) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_REGISTERZNS_PUBDATA_BYTES);
+                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
                 TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
                 checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
             } else if (txType == TxTypes.TxType.CreatePair) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_CREATEPAIR_PUBDATA_BYTES);
+                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
                 TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubData(txPubData);
                 checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
             } else if (txType == TxTypes.TxType.UpdatePairRate) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_UPDATEPAIR_PUBDATA_BYTES);
+                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
                 TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubData(txPubData);
                 checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
             } else if (txType == TxTypes.TxType.Deposit) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_DEPOSIT_PUBDATA_BYTES);
+                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
                 TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
                 checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
@@ -689,11 +689,11 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                 bytes memory txPubData;
 
                 if (txType == TxTypes.TxType.Withdraw) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_WITHDRAW_PUBDATA_BYTES);
+                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
                 } else if (txType == TxTypes.TxType.WithdrawNft) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_WITHDRAWNFT_PUBDATA_BYTES);
+                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
                 } else if (txType == TxTypes.TxType.FullExit) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_FULLEXIT_PUBDATA_BYTES);
+                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
                     TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(txPubData);
 
@@ -703,7 +703,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                     );
                     priorityOperationsProcessed++;
                 } else if (txType == TxTypes.TxType.FullExitNft) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_FULLEXITNFT_PUBDATA_BYTES);
+                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
                     TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubData(txPubData);
 

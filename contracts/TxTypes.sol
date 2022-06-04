@@ -37,40 +37,40 @@ library TxTypes {
     uint8 internal constant CHUNK_SIZE = 32;
     // operation type bytes
     uint8 internal constant TX_TYPE_BYTES = 1;
-    // nft type
-    uint8 internal constant NFT_TYPE_BYTES = 1;
-    // token pair id bytes, max 2**16
-    uint8 internal constant TOKEN_PAIR_ID_BYTES = 2;
-    // asset id bytes, max 2**16
-    uint8 internal constant ASSET_ID_BYTES = 2;
-    // pub key bytes
-    uint8 internal constant PUBKEY_BYTES = 32;
-    // state amount bytes
-    uint8 internal constant STATE_AMOUNT_BYTES = 16;
-    // account name bytes
-    uint8 internal constant ACCOUNT_NAME_BYTES = 32;
-    // account name hash bytes
-    uint8 internal constant ACCOUNT_NAME_HASH_BYTES = 32;
-    // packed amount bytes
-    uint8 internal constant PACKED_AMOUNT_BYTES = 5;
-    // packed fee bytes
-    uint8 internal constant PACKED_FEE_AMOUNT_BYTES = 2;
-    // account index bytes, max 2**32
-    uint8 internal constant ACCOUNT_INDEX_BYTES = 4;
-    // nft amount bytes
-    uint8 internal constant NFT_AMOUNT_BYTES = 4;
-    // address bytes
-    uint8 internal constant ADDRESS_BYTES = 20;
-    // nft asset id
-    uint8 internal constant NFT_INDEX_BYTES = 5;
-    // nft token id bytes
-    uint8 internal constant NFT_TOKEN_ID_BYTES = 32;
-    // nft content hash bytes
-    uint8 internal constant NFT_CONTENT_HASH_BYTES = 32;
-    // creator treasury rate
-    uint8 internal constant CREATOR_TREASURY_RATE_BYTES = 2;
-    // fee rate bytes
-    uint8 internal constant RATE_BYTES = 2;
+    //    // nft type
+    //    uint8 internal constant NFT_TYPE_BYTES = 1;
+    //    // token pair id bytes, max 2**16
+    //    uint8 internal constant TOKEN_PAIR_ID_BYTES = 2;
+    //    // asset id bytes, max 2**16
+    //    uint8 internal constant ASSET_ID_BYTES = 2;
+    //    // pub key bytes
+    //    uint8 internal constant PUBKEY_BYTES = 32;
+    //    // state amount bytes
+    //    uint8 internal constant STATE_AMOUNT_BYTES = 16;
+    //    // account name bytes
+    //    uint8 internal constant ACCOUNT_NAME_BYTES = 32;
+    //    // account name hash bytes
+    //    uint8 internal constant ACCOUNT_NAME_HASH_BYTES = 32;
+    //    // packed amount bytes
+    //    uint8 internal constant PACKED_AMOUNT_BYTES = 5;
+    //    // packed fee bytes
+    //    uint8 internal constant PACKED_FEE_AMOUNT_BYTES = 2;
+    //    // account index bytes, max 2**32
+    //    uint8 internal constant ACCOUNT_INDEX_BYTES = 4;
+    //    // nft amount bytes
+    //    uint8 internal constant NFT_AMOUNT_BYTES = 4;
+    //    // address bytes
+    //    uint8 internal constant ADDRESS_BYTES = 20;
+    //    // nft asset id
+    //    uint8 internal constant NFT_INDEX_BYTES = 5;
+    //    // nft token id bytes
+    //    uint8 internal constant NFT_TOKEN_ID_BYTES = 32;
+    //    // nft content hash bytes
+    //    uint8 internal constant NFT_CONTENT_HASH_BYTES = 32;
+    //    // creator treasury rate
+    //    uint8 internal constant CREATOR_TREASURY_RATE_BYTES = 2;
+    //    // fee rate bytes
+    //    uint8 internal constant RATE_BYTES = 2;
 
     uint256 internal constant PACKED_TX_PUBDATA_BYTES = 6 * CHUNK_SIZE;
 
@@ -79,19 +79,21 @@ library TxTypes {
         uint32 accountIndex;
         bytes32 accountName;
         bytes32 accountNameHash;
-        bytes32 pubKey;
+        bytes32 pubKeyX;
+        bytes32 pubKeyY;
     }
 
-    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = 1 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = 1 * CHUNK_SIZE;
 
     /// Serialize register zns pubdata
     function writeRegisterZNSPubDataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
-            _tx.txType,
+            uint8(TxType.RegisterZNS),
             uint32(0),
             _tx.accountName,
             _tx.accountNameHash, // account name hash
-            _tx.pubKey
+            _tx.pubKeyX,
+            _tx.pubKeyY
         );
     }
 
@@ -108,9 +110,10 @@ library TxTypes {
         // account name hash
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
         // public key
-        (offset, parsed.pubKey) = Bytes.readBytes32(_data, offset);
+        (offset, parsed.pubKeyX) = Bytes.readBytes32(_data, offset);
+        (offset, parsed.pubKeyY) = Bytes.readBytes32(_data, offset);
 
-        offset += 64;
+        offset += 32;
 
         require(offset == PACKED_TX_PUBDATA_BYTES, "N");
         return parsed;
@@ -131,11 +134,11 @@ library TxTypes {
         uint16 treasuryRate;
     }
 
-    uint256 internal constant PACKED_CREATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_CREATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
 
     function writeCreatePairPubDataForPriorityQueue(CreatePair memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
-            _tx.txType,
+            uint8(TxType.CreatePair),
             _tx.pairIndex,
             _tx.assetAId,
             _tx.assetBId,
@@ -149,7 +152,6 @@ library TxTypes {
     function readCreatePairPubData(bytes memory _data) internal pure returns (CreatePair memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
-
         (offset, parsed.pairIndex) = Bytes.readUInt16(_data, offset);
         (offset, parsed.assetAId) = Bytes.readUInt16(_data, offset);
         (offset, parsed.assetBId) = Bytes.readUInt16(_data, offset);
@@ -175,11 +177,11 @@ library TxTypes {
         uint16 treasuryRate;
     }
 
-    uint256 internal constant PACKED_UPDATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_UPDATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
 
     function writeUpdatePairRatePubDataForPriorityQueue(UpdatePairRate memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
-            _tx.txType,
+            uint8(TxType.UpdatePairRate),
             _tx.pairIndex,
             _tx.feeRate,
             _tx.treasuryAccountIndex,
@@ -191,7 +193,6 @@ library TxTypes {
     function readUpdatePairRatePubData(bytes memory _data) internal pure returns (UpdatePairRate memory parsed) {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
-
         (offset, parsed.pairIndex) = Bytes.readUInt16(_data, offset);
         (offset, parsed.feeRate) = Bytes.readUInt16(_data, offset);
         (offset, parsed.treasuryAccountIndex) = Bytes.readUInt32(_data, offset);
@@ -217,12 +218,12 @@ library TxTypes {
         uint128 amount;
     }
 
-    uint256 internal constant PACKED_DEPOSIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_DEPOSIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
     /// Serialize deposit pubdata
     function writeDepositPubDataForPriorityQueue(Deposit memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
-            _tx.txType,
+            uint8(TxType.Deposit),
             uint32(0),
             _tx.accountNameHash, // account name hash
             _tx.assetId, // asset id
@@ -269,12 +270,12 @@ library TxTypes {
         uint16 collectionId;
     }
 
-    uint256 internal constant PACKED_DEPOSIT_NFT_PUBDATA_BYTES = 5 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_DEPOSIT_NFT_PUBDATA_BYTES = 5 * CHUNK_SIZE;
 
     /// Serialize deposit pubdata
     function writeDepositNftPubDataForPriorityQueue(DepositNft memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
-            _tx.txType,
+            uint8(TxType.DepositNft),
             uint32(0),
             _tx.nftIndex,
             _tx.nftL1Address, // token address
@@ -298,15 +299,13 @@ library TxTypes {
         // nft l1 address
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // empty data
-        offset += 2;
+        offset += 26;
         // creator account index
         (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
         // creator treasury rate
         (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
         // collection id
         (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
-        // empty data
-        offset += 24;
         // nft content hash
         (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
         // nft l1 token id
@@ -337,7 +336,7 @@ library TxTypes {
         uint16 gasFeeAssetAmount;
     }
 
-    uint256 internal constant PACKED_WITHDRAW_PUBDATA_BYTES = 2 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_WITHDRAW_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
     /// Deserialize withdraw pubdata
     function readWithdrawPubData(bytes memory _data) internal pure returns (Withdraw memory parsed) {
@@ -350,7 +349,7 @@ library TxTypes {
         // asset id
         (offset, parsed.assetId) = Bytes.readUInt16(_data, offset);
         // empty data
-        offset += 5;
+        offset += 13;
         // amount
         (offset, parsed.assetAmount) = Bytes.readUInt128(_data, offset);
         // gas fee account index
@@ -359,8 +358,7 @@ library TxTypes {
         (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
         // gas fee asset amount
         (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
-//        offset += 8;
-        offset += 136;
+        offset += 128;
 
         require(offset == PACKED_TX_PUBDATA_BYTES, "N");
         return parsed;
@@ -384,7 +382,7 @@ library TxTypes {
         uint32 collectionId;
     }
 
-    uint256 internal constant PACKED_WITHDRAWNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_WITHDRAWNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
 
     /// Deserialize withdraw pubdata
     function readWithdrawNftPubData(bytes memory _data) internal pure returns (WithdrawNft memory parsed) {
@@ -399,11 +397,11 @@ library TxTypes {
         // collection id
         (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
         // empty data
-        offset += 14;
+        offset += 26;
         // nft l1 address
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // empty data
-        offset += 12;
+        offset += 4;
         // nft l1 address
         (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
         // gas fee account index
@@ -412,8 +410,6 @@ library TxTypes {
         (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
         // gas fee asset amount
         (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
-        // empty data
-        offset += 4;
         // nft content hash
         (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
         // nft token id
@@ -434,12 +430,12 @@ library TxTypes {
         bytes32 accountNameHash;
     }
 
-    uint256 internal constant PACKED_FULLEXIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_FULLEXIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
     /// Serialize full exit pubdata
     function writeFullExitPubDataForPriorityQueue(FullExit memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
-            _tx.txType,
+            uint8(TxType.FullExit),
             uint32(0),
             _tx.assetId, // asset id
             uint128(0), // asset amount
@@ -488,12 +484,12 @@ library TxTypes {
         uint256 nftL1TokenId;
     }
 
-    uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
+    //    uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
 
     /// Serialize full exit nft pubdata
     function writeFullExitNftPubDataForPriorityQueue(FullExitNft memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
-            _tx.txType,
+            uint8(TxType.FullExitNft),
             uint32(0),
             uint32(0),
             uint16(0),
@@ -522,11 +518,9 @@ library TxTypes {
         // collection id
         (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
         // empty data
-        offset += 16;
+        offset += 28;
         // nft l1 address
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
-        // empty data
-        offset += 12;
         // account name hash
         (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
         // creator account name hash
