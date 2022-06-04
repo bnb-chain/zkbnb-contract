@@ -62,7 +62,7 @@ async function main() {
     console.log('Deploy DeployFactory...')
     const deployFactory = await contractFactories.DeployFactory.deploy(
         governance.address, verifier.address, zecreyLegend.address, znsController.address, znsResolver.address,
-        _genesisAccountRoot, verifier.address, governor, _listingToken, _listingFee, _listingCap,
+        _genesisAccountRoot, governor, governor, _listingToken, _listingFee, _listingCap,
         znsRegistry.address, priceOracle.address, baseNode
     );
     await deployFactory.deployed();

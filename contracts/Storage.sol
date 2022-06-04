@@ -124,7 +124,7 @@ contract Storage {
     /// @notice Checks that current state not is exodus mode
     function requireActive() internal view {
         require(!desertMode, "L");
-        // exodus mode activated
+        // desert mode activated
     }
 
     /// @notice All token pairs in Zecrey Network

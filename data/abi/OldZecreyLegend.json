@@ -691,7 +691,7 @@
             "type": "uint32"
           }
         ],
-        "internalType": "struct ZecreyLegend.CommitBlockInfo[]",
+        "internalType": "struct OldZecreyLegend.CommitBlockInfo[]",
         "name": "_newBlocksData",
         "type": "tuple[]"
       }
@@ -938,7 +938,7 @@
         "type": "bytes"
       }
     ],
-    "name": "mimcHash",
+    "name": "keccak256Hash",
     "outputs": [
       {
         "internalType": "bytes32",
@@ -1246,12 +1246,25 @@
             "type": "uint16"
           }
         ],
-        "internalType": "struct ZecreyLegend.PairInfo",
+        "internalType": "struct OldZecreyLegend.PairInfo",
         "name": "_pairInfo",
         "type": "tuple"
       }
     ],
     "name": "updatePairRate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newVerifierAddress",
+        "type": "address"
+      }
+    ],
+    "name": "updateZecreyVerifier",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1344,7 +1357,7 @@
             "type": "bytes[]"
           }
         ],
-        "internalType": "struct ZecreyLegend.VerifyAndExecuteBlockInfo[]",
+        "internalType": "struct OldZecreyLegend.VerifyAndExecuteBlockInfo[]",
         "name": "_blocks",
         "type": "tuple[]"
       },

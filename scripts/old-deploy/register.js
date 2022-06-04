@@ -15,25 +15,33 @@ async function main() {
     });
     const zecreyLegend = await ZecreyLegend.attach(zecreyLegendAddr)
     // seed = d892d866c5d0569e39e23c7bd46d63373d95197483e1a9af491e7098913a39ac
-    var registerZnsTx = await zecreyLegend.registerZNS(
+    let registerZnsTx = await zecreyLegend.registerZNS(
         'treasury',
-        '0x49D35436e9B460275Bd927CAFCcEaEc8223cb84c',
-        '0x0648bf303726d039c22588f9c6b63558a3ea07d845f35ce833909ba8611db9ab')
+        '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
+        '0x199dbf795e1c6a289f74e6928b7e49b31d28fda5583f7b17569ec99dcc5df791',
+        '0x00408f9da4b0baf49c27d3fa57f06622f3925cf537e09ede108c4e22eb052841',
+    )
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS(
         'gas',
-        '0xcf539790352c4036496e66Aabc5EE1fE8c91016C',
-        '0x7b12ba6af32bba6e55fb4f49c224eb73f379c5cffabfd68d8df4f58b0c0b5d18')
+        '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
+        '0x0f946ae172f0c48c291587fc0b766d3009a69f634bb91af5d802e714459b1c55',
+        '0x279867cdef2bc4427c6e876f354d20811c7e086d73d8b91b31d558f27e12aa53',
+    )
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS(
         'sher',
-        '0xDA00601380Bc7aE4fe67dA2EB78f9161570c9EB4',
-        '0x63c4c6aff36c8ef69f6fb8e217930722c5d8819c3a30db783c54f8d94a2b2b2d')
+        '0x677d65A350c9FB84b14bDDF591043eb8243960D1',
+        '0x1a2d662dc013bf75926e7ac1ef6210dba5e518a5e9bde689297a3bd8d4f1236e',
+        '0x0665046d9e54413cfdb609ad4a85ec3ee64f0b7d39cb2adc9659482c4f06707f',
+    )
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS(
         'gavin',
-        '0xd5Aa3B56a2E2139DB315CdFE3b34149c8ed09171',
-        '0x3eea11654758743beaf11610b88e739ba6c126f0bd39880c279ee633eb615b8c')
+        '0xf162Be50463c1EbFbf1A2eF944885945A768fbC1',
+        '0x1739c8dc2bcad851a36984e065884d51bfa4192c7c2e6a25f1510636dc4753af',
+        '0x0949178ab85aa42e26da313f2eeb7aec5d721d55706f50965482f418b6cce9c9',
+    )
     await registerZnsTx.wait()
 
     const hashVal = namehash.hash('gavin.legend');
