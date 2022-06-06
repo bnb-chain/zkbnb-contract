@@ -480,6 +480,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                 // Circuit guarantees that partial exits are available only for fungible tokens
                 require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
                 withdrawOrStore(uint16(_tx.assetId), _tx.toAddress, _tx.assetAmount);
+            } else if (txType == TxTypes.TxType.WithdrawNft) {
+                TxTypes.WithdrawNft memory _tx = TxTypes.readWithdrawNftPubData(pubData);
+                // withdraw NFT
+                withdrawOrStoreNFT(_tx);
             } else if (txType == TxTypes.TxType.FullExit) {
                 TxTypes.FullExit memory _tx = TxTypes.readFullExitPubData(pubData);
                 require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
@@ -510,11 +514,6 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
                     });
                     withdrawOrStoreNFT(_withdrawNftTx);
                 }
-            }
-            else if (txType == TxTypes.TxType.WithdrawNft) {
-                TxTypes.WithdrawNft memory _tx = TxTypes.readWithdrawNftPubData(pubData);
-                // withdraw NFT
-                withdrawOrStoreNFT(_tx);
             } else {
                 // unsupported _tx in block verification
                 revert("l");
@@ -648,7 +647,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     {
         bytes memory pubData = _newBlockData.publicData;
 
-        require(pubData.length % CHUNK_SIZE == 0, "A");
+        require(pubData.length % TX_SIZE == 0, "A");
 
         uint64 uncommittedPriorityRequestsOffset = firstPriorityRequestId + totalCommittedPriorityRequests;
         priorityOperationsProcessed = 0;

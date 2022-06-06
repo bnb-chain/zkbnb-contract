@@ -8,29 +8,29 @@ async function main() {
     let registerZnsTx = await zecreyLegend.registerZNS(
         'treasury',
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
-        '0x199dbf795e1c6a289f74e6928b7e49b31d28fda5583f7b17569ec99dcc5df791',
-        '0x00408f9da4b0baf49c27d3fa57f06622f3925cf537e09ede108c4e22eb052841',
+        '0x2005db7af2bdcfae1fa8d28833ae2f1995e9a8e0825377cff121db64b0db21b7',
+        '0x18a96ca582a72b16f464330c89ab73277cb96e42df105ebf5c9ac5330d47b8fc',
     )
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS(
         'gas',
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
-        '0x0f946ae172f0c48c291587fc0b766d3009a69f634bb91af5d802e714459b1c55',
-        '0x279867cdef2bc4427c6e876f354d20811c7e086d73d8b91b31d558f27e12aa53',
+        '0x2c24415b75651673b0d7bbf145ac8d7cb744ba6926963d1d014836336df1317a',
+        '0x134f4726b89983a8e7babbf6973e7ee16311e24328edf987bb0fbe7a494ec91e',
     )
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS(
         'sher',
         '0x677d65A350c9FB84b14bDDF591043eb8243960D1',
-        '0x1a2d662dc013bf75926e7ac1ef6210dba5e518a5e9bde689297a3bd8d4f1236e',
-        '0x0665046d9e54413cfdb609ad4a85ec3ee64f0b7d39cb2adc9659482c4f06707f',
+        '0x235fdbbbf5ef1665f3422211702126433c909487c456e594ef3a56910810396a',
+        '0x05dde55c8adfb6689ead7f5610726afd5fd6ea35a3516dc68e57546146f7b6b0',
     )
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS(
         'gavin',
         '0xf162Be50463c1EbFbf1A2eF944885945A768fbC1',
-        '0x1739c8dc2bcad851a36984e065884d51bfa4192c7c2e6a25f1510636dc4753af',
-        '0x0949178ab85aa42e26da313f2eeb7aec5d721d55706f50965482f418b6cce9c9',
+        '0x0649fef47f6cf3dfb767cf5599eea11677bb6495956ec4cf75707d3aca7c06ed',
+        '0x0e07b60bf3a2bf5e1a355793498de43e4d8dac50b892528f9664a03ceacc0005',
     )
     await registerZnsTx.wait()
 

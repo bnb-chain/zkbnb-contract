@@ -18,10 +18,10 @@ contract Config {
     /// @dev NFT withdrawals gas limit, used only for complete withdrawals
     uint256 internal constant WITHDRAWAL_NFT_GAS_LIMIT = 300000;
     /// @dev Max amount of tokens registered in the network (excluding ETH, which is hardcoded as tokenId = 0)
-    uint16 public constant MAX_AMOUNT_OF_REGISTERED_ASSETS = 2 ** 16 - 1;
+    uint16 public constant MAX_AMOUNT_OF_REGISTERED_ASSETS = 2 ** 16 - 2;
 
     /// @dev Max account id that could be registered in the network
-    uint32 public constant MAX_ACCOUNT_INDEX = 2 ** 32 - 1;
+    uint32 public constant MAX_ACCOUNT_INDEX = 2 ** 32 - 2;
 
     /// @dev Max deposit of ERC20 token that is possible to deposit
     uint128 public constant MAX_DEPOSIT_AMOUNT = 2 ** 104 - 1;
@@ -42,10 +42,10 @@ contract Config {
     uint32 public constant SPECIAL_ACCOUNT_ID = 0;
     address public constant SPECIAL_ACCOUNT_ADDRESS = address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF);
 
-    uint32 public constant MAX_FUNGIBLE_ASSET_ID = (2 ** 32) - 1;
+    uint32 public constant MAX_FUNGIBLE_ASSET_ID = (2 ** 32) - 2;
 
-    uint256 public constant CHUNK_SIZE = 6 * 32;
+    uint256 public constant TX_SIZE = 6 * 32;
 
-    uint40 public constant MAX_NFT_INDEX = (2 ** 40) - 1;
+    uint40 public constant MAX_NFT_INDEX = (2 ** 40) - 2;
 
 }
