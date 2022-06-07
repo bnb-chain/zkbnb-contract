@@ -12,7 +12,7 @@ import "./SafeMathUInt32.sol";
 contract Governance is Config {
 
     /// @notice Token added to Franklin net
-    event NewAsset(address indexed assetAddress, uint16 indexed assetId);
+    event NewAsset(address assetAddress, uint16 assetId);
 
     /// @notice Governor changed
     event NewGovernor(address newGovernor);
@@ -20,9 +20,9 @@ contract Governance is Config {
     /// @notice Token Governance changed
     event NewAssetGovernance(AssetGovernance newAssetGovernance);
 
-    event ValidatorStatusUpdate(address indexed validatorAddress, bool isActive);
+    event ValidatorStatusUpdate(address validatorAddress, bool isActive);
 
-    event AssetPausedUpdate(address indexed token, bool paused);
+    event AssetPausedUpdate(address token, bool paused);
 
     /// @notice Address which will exercise governance over the network i.e. add tokens, change validator set, conduct upgrades
     address public networkGovernor;
