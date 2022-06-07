@@ -14,7 +14,7 @@ module.exports = {
         // },
         local: {
             url: "http://127.0.0.1:8545",
-            accounts: ['53083ce384b7cb81370800973d79c0412261310ba5c9c0cd35d7c6ec7926d0a0'],
+            accounts: ['08e504b8a5fd5bbc41e953f6e9cbe3371661c0010767c09315ace07e5a1e938e'],
             timeout: 100000,
         },
         BNBTest: {
@@ -49,7 +49,7 @@ module.exports = {
         path: './data/abi',
         clear: true,
         flat: true,
-        only: [':OldZecreyLegend$'],
+        only: [':Governance$'],
         spacing: 2
     }
 };
