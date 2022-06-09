@@ -12,4 +12,12 @@ interface NFTFactory {
         bytes memory _extraData
     )
     external;
+
+    event MintNFTFromZecrey(
+        address indexed _creatorAddress,
+        address indexed _toAddress,
+        uint256 _nftTokenId,
+        bytes32 _nftContentHash,
+        bytes _extraData
+    );
 }
