@@ -3,7 +3,7 @@ require("hardhat-tracer");
 require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer')
 require('hardhat-abi-exporter');
-require('hardhat-watcher');
+// require('hardhat-watcher');
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -53,11 +53,11 @@ module.exports = {
         only: [':Governance$'],
         spacing: 2
     },
-    watcher: {
-        compilation: {
-            tasks: ["compile"],
-            files: ["./contracts/ZecreyNFTFactory.sol"],
-            verbose: true,
-        }
-    },
+    // watcher: {
+    //     compilation: {
+    //         tasks: ["compile"],
+    //         files: ["./contracts/ZecreyNFTFactory.sol"],
+    //         verbose: true,
+    //     }
+    // },
 };

@@ -59,7 +59,6 @@ async function main() {
     const _listingToken = LEGToken.address
     const baseNode = '0x2d07d8e00a7d8f73206bc0f90dbaaa6a58d7551cded0659f10f21f35bbf59a53' // mimc(abi.encoded('', mimc('legend')))
     // deploy DeployFactory
-    console.log('Deploy DeployFactory...')
     const deployFactory = await contractFactories.DeployFactory.deploy(
         governance.address, verifier.address, zecreyLegend.address, znsController.address, znsResolver.address,
         _genesisAccountRoot, verifier.address, governor, _listingToken, _listingFee, _listingCap,
@@ -79,6 +78,22 @@ async function main() {
     // console.log(event)
     const znsControllerProxy = contractFactories.ZNSController.attach(event[3])
     const assetGovernance = contractFactories.AssetGovernance.attach(event[1])
+
+    // deploy default nft factory
+    console.log('Deploy DefaultNftFactory...')
+    const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy(
+        'Zecrey',
+        'ZEC',
+        'ipfs://',
+        event[5],
+    )
+    await DefaultNftFactory.deployed()
+
+    console.log('Set default nft factory...')
+    const proxyZecreyLegend = contractFactories.ZecreyLegend.attach(event[5])
+    const setDefaultNftFactoryTx = await proxyZecreyLegend.setDefaultNFTFactory(DefaultNftFactory.address)
+    await setDefaultNftFactoryTx.wait()
+
 
     // Add tokens into assetGovernance
     // add asset
@@ -108,6 +123,7 @@ async function main() {
         LEGToken: LEGToken.address,
         REYToken: REYToken.address,
         ERC721: ERC721.address,
+        DefaultNFTFactory: DefaultNftFactory.address,
     })
 }
 
@@ -131,7 +147,8 @@ async function getContractFactories() {
                 Utils: utils.address
             }
         }),
-        DeployFactory: await ethers.getContractFactory('DeployFactory')
+        DeployFactory: await ethers.getContractFactory('DeployFactory'),
+        DefaultNftFactory: await ethers.getContractFactory('ZecreyNFTFactory'),
     }
 }
 

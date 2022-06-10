@@ -14,14 +14,18 @@ contract ZecreyNFTFactory is ERC721, NFTFactory {
     // tokenId => creator
     mapping(uint256 => address) private _nftCreators;
 
+    string public _base;
+
     address private _zecreyAddress;
 
     constructor(
         string memory name,
         string memory symbol,
+        string memory base,
         address zecreyAddress
     ) ERC721(name, symbol) {
         _zecreyAddress = zecreyAddress;
+        _base = base;
     }
 
 
@@ -32,7 +36,8 @@ contract ZecreyNFTFactory is ERC721, NFTFactory {
         bytes32 _nftContentHash,
         bytes memory _extraData
     ) external override {
-        require(_msgSender() == _zecreyAddress, "only zecreyAddress"); // Minting allowed only from zecrey
+        require(_msgSender() == _zecreyAddress, "only zecreyAddress");
+        // Minting allowed only from zecrey
         _safeMint(_toAddress, _nftTokenId);
         _contentHashes[_nftTokenId] = _nftContentHash;
         _nftCreators[_nftTokenId] = _creatorAddress;
@@ -63,7 +68,11 @@ contract ZecreyNFTFactory is ERC721, NFTFactory {
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "tokenId not exist");
         // TODO
-        string memory base = "ipfs://";
-        return string(abi.encodePacked(base, _contentHashes[tokenId]));
+        //        string memory base = "ipfs://";
+        return string(abi.encodePacked(_base, _contentHashes[tokenId]));
+    }
+
+    function updateBaseUri(string memory base) external {
+        _base = base;
     }
 }
