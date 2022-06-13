@@ -145,7 +145,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         address _additionalZecreyLegend,
         address _znsController,
         address _znsResolver,
-        bytes32 _genesisAccountRoot
+        bytes32 _genesisStateRoot
         ) = abi.decode(initializationParameters, (address, address, address, address, address, bytes32));
 
         verifier = ZecreyVerifier(_verifierAddress);
@@ -159,9 +159,10 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             0,
             EMPTY_STRING_KECCAK,
             0,
-            _genesisAccountRoot,
+                _genesisStateRoot,
             bytes32(0)
         );
+        stateRoot = _genesisStateRoot;
         storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
         approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
         emit NoticePeriodChange(approvedUpgradeNoticePeriod);
@@ -570,11 +571,11 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         for (uint16 i = 0; i < _blocks.length; ++i) {
             priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
             // verify block proof
-            inputs[3 * i] = uint256(accountRoot);
+            inputs[3 * i] = uint256(stateRoot);
             inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.stateRoot);
             inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment);
             // update account root
-            accountRoot = _blocks[i].blockHeader.stateRoot;
+            stateRoot = _blocks[i].blockHeader.stateRoot;
             verifyAndExecuteOneBlock(_blocks[i], i);
             emit BlockVerification(_blocks[i].blockHeader.blockNumber);
         }

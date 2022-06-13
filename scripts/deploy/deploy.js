@@ -53,7 +53,7 @@ async function main() {
     // get ERC721
     const ERC721 = await contractFactories.ERC721Factory.deploy('Zecrey', 'ZEC', '0');
     await ERC721.deployed();
-    _genesisAccountRoot = '0x14e4e8ad4848558d7200530337052e1ad30f5385b3c7187c80ad85f48547b74f';
+    _genesisStateRoot = '0x14e4e8ad4848558d7200530337052e1ad30f5385b3c7187c80ad85f48547b74f';
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
     const _listingToken = LEGToken.address
@@ -61,7 +61,7 @@ async function main() {
     // deploy DeployFactory
     const deployFactory = await contractFactories.DeployFactory.deploy(
         governance.address, verifier.address, zecreyLegend.address, znsController.address, znsResolver.address,
-        _genesisAccountRoot, verifier.address, governor, _listingToken, _listingFee, _listingCap,
+        _genesisStateRoot, verifier.address, governor, _listingToken, _listingFee, _listingCap,
         znsRegistry.address, priceOracle.address, baseNode
     );
     await deployFactory.deployed();

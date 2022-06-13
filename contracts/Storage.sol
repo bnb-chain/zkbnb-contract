@@ -41,7 +41,7 @@ contract Storage {
     uint256 internal numberOfApprovalsFromSecurityCouncil;
 
     // account root
-    bytes32 public accountRoot;
+    bytes32 public stateRoot;
 
     /// @notice Priority Operation container
     /// @member hashedPubData Hashed priority operation public data
