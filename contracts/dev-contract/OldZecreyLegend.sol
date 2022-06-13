@@ -813,13 +813,13 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         StoredBlockInfo memory _previousBlock,
         CommitBlockInfo memory _newBlockData
     ) internal view returns (bytes32) {
-        bytes32 converted = keccak256Hash(abi.encode(
-                _newBlockData.blockNumber, // block number
-                _newBlockData.timestamp, // time stamp
+        bytes32 converted = mimcHash(abi.encodePacked(
+                uint256(_newBlockData.blockNumber), // block number
+                uint256(_newBlockData.timestamp), // time stamp
                 _previousBlock.stateRoot, // old state root
                 _newBlockData.newStateRoot, // new state root
                 _newBlockData.publicData, // pub data
-                _newBlockData.publicDataOffsets.length // on chain ops count
+                uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
             ));
         return converted;
     }
