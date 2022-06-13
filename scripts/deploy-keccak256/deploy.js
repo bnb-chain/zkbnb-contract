@@ -80,6 +80,21 @@ async function main() {
     const znsControllerProxy = contractFactories.ZNSController.attach(event[3])
     const assetGovernance = contractFactories.AssetGovernance.attach(event[1])
 
+    // deploy default nft factory
+    console.log('Deploy DefaultNftFactory...')
+    const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy(
+        'Zecrey',
+        'ZEC',
+        'ipfs://',
+        event[5],
+    )
+    await DefaultNftFactory.deployed()
+
+    console.log('Set default nft factory...')
+    const proxyZecreyLegend = contractFactories.ZecreyLegend.attach(event[5])
+    const setDefaultNftFactoryTx = await proxyZecreyLegend.setDefaultNFTFactory(DefaultNftFactory.address)
+    await setDefaultNftFactoryTx.wait()
+
     // Add tokens into assetGovernance
     // add asset
     console.log('Add tokens into assetGovernance asset list...')
@@ -131,7 +146,8 @@ async function getContractFactories() {
                 Utils: utils.address
             }
         }),
-        DeployFactory: await ethers.getContractFactory('DeployFactory')
+        DeployFactory: await ethers.getContractFactory('DeployFactory'),
+        DefaultNftFactory: await ethers.getContractFactory('ZecreyNFTFactory'),
     }
 }
 

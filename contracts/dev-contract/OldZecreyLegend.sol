@@ -145,7 +145,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         address _additionalZecreyLegend,
         address _znsController,
         address _znsResolver,
-        bytes32 _genesisAccountRoot
+        bytes32 _genesisStateRoot
         ) = abi.decode(initializationParameters, (address, address, address, address, address, bytes32));
 
         verifier = ZecreyVerifier(_verifierAddress);
@@ -159,9 +159,10 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
             0,
             EMPTY_STRING_KECCAK,
             0,
-            _genesisAccountRoot,
+            _genesisStateRoot,
             bytes32(0)
         );
+        stateRoot = _genesisStateRoot;
         storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
         approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
         emit NoticePeriodChange(approvedUpgradeNoticePeriod);
@@ -557,6 +558,8 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         }
     }
 
+    event DebugInfo(uint256 a, uint256 b, uint256 c);
+
     /// @notice Verify layer-2 blocks proofs
     /// @param _blocks Verified blocks info
     /// @param _proofs proofs
@@ -571,11 +574,12 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         for (uint16 i = 0; i < _blocks.length; ++i) {
             priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
             // verify block proof
-            inputs[3 * i] = uint256(accountRoot);
+            inputs[3 * i] = uint256(stateRoot);
             inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.stateRoot);
             inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment);
+            emit DebugInfo(uint256(stateRoot), uint256(_blocks[i].blockHeader.stateRoot), uint256(_blocks[i].blockHeader.commitment));
             // update account root
-            accountRoot = _blocks[i].blockHeader.stateRoot;
+            stateRoot = _blocks[i].blockHeader.stateRoot;
             verifyAndExecuteOneBlock(_blocks[i], i);
             emit BlockVerification(_blocks[i].blockHeader.blockNumber);
         }
@@ -813,15 +817,19 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         StoredBlockInfo memory _previousBlock,
         CommitBlockInfo memory _newBlockData
     ) internal view returns (bytes32) {
-        bytes32 converted = keccak256Hash(abi.encode(
-                _newBlockData.blockNumber, // block number
-                _newBlockData.timestamp, // time stamp
+        bytes32 converted = keccak256(abi.encodePacked(
+                uint256(_newBlockData.blockNumber), // block number
+                uint256(_newBlockData.timestamp), // time stamp
                 _previousBlock.stateRoot, // old state root
                 _newBlockData.newStateRoot, // new state root
                 _newBlockData.publicData, // pub data
-                _newBlockData.publicDataOffsets.length // on chain ops count
+                uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
             ));
         return converted;
+    }
+
+    function setDefaultNFTFactory(NFTFactory _factory) external {
+        delegateAdditional();
     }
 
     /// @notice Sends ETH
