@@ -159,7 +159,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             0,
             EMPTY_STRING_KECCAK,
             0,
-                _genesisStateRoot,
+            _genesisStateRoot,
             bytes32(0)
         );
         stateRoot = _genesisStateRoot;
