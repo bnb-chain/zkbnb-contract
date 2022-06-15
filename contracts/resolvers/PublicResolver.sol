@@ -49,7 +49,7 @@ ReentrancyGuardUpgradeable
         zns = ZNS(_zns);
     }
 
-    function zecreyPubKey(bytes32 node) override external view returns (bytes32 pubKey) {
+    function zecreyPubKey(bytes32 node) override external view returns (bytes32 pubKeyX, bytes32 pubKeyY) {
         return zns.pubKey(node);
     }
 

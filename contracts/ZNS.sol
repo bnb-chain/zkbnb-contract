@@ -9,7 +9,7 @@ interface ZNS {
     event NewOwner(bytes32 indexed node, address owner);
 
     // Logged when the L2 owner of a node transfers ownership to a new L2 account.
-    event NewPubKey(bytes32 indexed node, bytes32 pubKey);
+    event NewPubKey(bytes32 indexed node, bytes32 pubKeyX, bytes32 pubKeyY);
 
     // Logged when the resolver for a node changes.
     event NewResolver(bytes32 indexed node, address resolver);
@@ -17,7 +17,8 @@ interface ZNS {
     function setRecord(
         bytes32 _node,
         address _owner,
-        bytes32 _pubKey,
+        bytes32 _pubKeyX,
+        bytes32 _pubKeyY,
         address _resolver
     ) external;
 
@@ -25,15 +26,21 @@ interface ZNS {
         bytes32 _node,
         bytes32 _label,
         address _owner,
-        bytes32 _pubKey,
+        bytes32 _pubKeyX,
+        bytes32 _pubKeyY,
         address _resolver
     ) external returns (bytes32);
+
+    function setSubnodeAccountIndex(
+        bytes32 _node
+    ) external returns (uint32);
 
     function setSubnodeOwner(
         bytes32 _node,
         bytes32 _label,
         address _owner,
-        bytes32 _pubKey
+        bytes32 _pubKeyX,
+        bytes32 _pubKeyY
     ) external returns (bytes32);
 
     function setResolver(bytes32 _node, address _resolver) external;
@@ -42,7 +49,7 @@ interface ZNS {
 
     function owner(bytes32 node) external view returns (address);
 
-    function pubKey(bytes32 node) external view returns (bytes32);
+    function pubKey(bytes32 node) external view returns (bytes32, bytes32);
 
     function recordExists(bytes32 node) external view returns (bool);
 
