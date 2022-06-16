@@ -390,8 +390,10 @@ library TxTypes {
         uint256 offset = TX_TYPE_BYTES;
         // account index
         (offset, parsed.fromAccountIndex) = Bytes.readUInt32(_data, offset);
-        // account name hash
-        (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
+        // creator account index
+        (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
+        // creator treasury rate
+        (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
         // nft index
         (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
         // collection id
