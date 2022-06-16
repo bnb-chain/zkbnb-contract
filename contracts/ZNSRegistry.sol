@@ -20,13 +20,16 @@ contract ZNSRegistry is ZNS {
         // 3. Set the resolver and related information of this node
         address owner;
         address resolver;
-        bytes32 pubKey;
+        uint32 accountIndex;
+        bytes32 pubKeyX;
+        bytes32 pubKeyY;
         // These fields may be remained for future use.
         // string slot1;
         // string slot2;
     }
 
     mapping(bytes32 => Record) records; // nameHash of node => Record
+    uint32 count = 0;
 
     /**
      * @dev Constructs a new registry.
@@ -40,16 +43,18 @@ contract ZNSRegistry is ZNS {
      * @param _node The node to update.
      * @param _owner The address of the new owner.
      * @param _resolver The address of the resolver.
-     * @param _pubKey The pub key of the node
+     * @param _pubKeyX The pub key of the node
+     * @param _pubKeyY The pub key of the node
      */
     function setRecord(
         bytes32 _node,
         address _owner,
-        bytes32 _pubKey,
+        bytes32 _pubKeyX,
+        bytes32 _pubKeyY,
         address _resolver
     ) external override {
         _setOwner(_node, _owner);
-        _setPubKey(_node, _pubKey);
+        _setPubKey(_node, _pubKeyX, _pubKeyY);
         _setResolver(_node, _resolver);
     }
 
@@ -59,18 +64,28 @@ contract ZNSRegistry is ZNS {
      * @param _label The hash of the subnode
      * @param _owner The address of the new owner.
      * @param _resolver The address of the resolver.
-     * @param _pubKey The layer-2 public key
+     * @param _pubKeyX The layer-2 public key
+     * @param _pubKeyY The layer-2 public key
      */
     function setSubnodeRecord(
         bytes32 _node,
         bytes32 _label,
         address _owner,
-        bytes32 _pubKey,
+        bytes32 _pubKeyX,
+        bytes32 _pubKeyY,
         address _resolver
     ) external override returns (bytes32){
-        bytes32 subnode = setSubnodeOwner(_node, _label, _owner, _pubKey);
+        bytes32 subnode = setSubnodeOwner(_node, _label, _owner, _pubKeyX, _pubKeyY);
         _setResolver(subnode, _resolver);
         return subnode;
+    }
+
+    function setSubnodeAccountIndex(
+        bytes32 _node
+    ) external override returns (uint32){
+        records[_node].accountIndex = count;
+        count++;
+        return records[_node].accountIndex;
     }
 
     /**
@@ -78,17 +93,19 @@ contract ZNSRegistry is ZNS {
      * @param _node The parent node.
      * @param _label The hash of the label specifying the subnode.
      * @param _owner The address of the new owner.
-     * @param _pubKey The L2 owner of the subnode
+     * @param _pubKeyX The L2 owner of the subnode
+     * @param _pubKeyY The L2 owner of the subnode
      */
     function setSubnodeOwner(
         bytes32 _node,
         bytes32 _label,
         address _owner,
-        bytes32 _pubKey
+        bytes32 _pubKeyX,
+        bytes32 _pubKeyY
     ) public override authorized(_node) returns (bytes32) {
         bytes32 subnode = mimcHash(abi.encodePacked(_node, _label));
         _setOwner(subnode, _owner);
-        _setPubKey(subnode, _pubKey);
+        _setPubKey(subnode, _pubKeyX, _pubKeyY);
         return subnode;
     }
 
@@ -129,8 +146,8 @@ contract ZNSRegistry is ZNS {
      * @param node The specified node.
      * @return L2 owner of the node.
      */
-    function pubKey(bytes32 node) public view override returns (bytes32) {
-        return records[node].pubKey;
+    function pubKey(bytes32 node) public view override returns (bytes32, bytes32) {
+        return (records[node].pubKeyX, records[node].pubKeyY);
     }
 
     /**
@@ -167,10 +184,11 @@ contract ZNSRegistry is ZNS {
         }
     }
 
-    function _setPubKey(bytes32 _node, bytes32 _pubKey) internal {
-        if (_pubKey != records[_node].pubKey) {
-            records[_node].pubKey = _pubKey;
-            emit NewPubKey(_node, _pubKey);
+    function _setPubKey(bytes32 _node, bytes32 _pubKeyX, bytes32 _pubKeyY) internal {
+        if (_pubKeyX != records[_node].pubKeyX && _pubKeyY != records[_node].pubKeyY) {
+            records[_node].pubKeyX = _pubKeyX;
+            records[_node].pubKeyY = _pubKeyY;
+            emit NewPubKey(_node, _pubKeyX, _pubKeyY);
         }
     }
 

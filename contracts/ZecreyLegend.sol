@@ -159,7 +159,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             0,
             EMPTY_STRING_KECCAK,
             0,
-                _genesisStateRoot,
+            _genesisStateRoot,
             bytes32(0)
         );
         stateRoot = _genesisStateRoot;
@@ -186,12 +186,12 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
 
     function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKeyX, bytes32 _zecreyPubKeyY) external payable nonReentrant {
         // Register ZNS
-        bytes32 node = znsController.registerZNS{value : msg.value}(_name, _owner, _zecreyPubKeyY, address(znsResolver));
+        (bytes32 node,uint32 accountIndex) = znsController.registerZNS{value : msg.value}(_name, _owner, _zecreyPubKeyX, _zecreyPubKeyY, address(znsResolver));
 
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),
-        accountIndex : uint32(0),
+        accountIndex : accountIndex,
         accountName : Utils.stringToBytes32(_name),
         accountNameHash : node,
         pubKeyX : _zecreyPubKeyX,
@@ -203,7 +203,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
 
-        emit RegisterZNS(_name, node, _owner, _zecreyPubKeyX, _zecreyPubKeyY);
+        emit RegisterZNS(_name, node, _owner, _zecreyPubKeyX, _zecreyPubKeyY, accountIndex);
     }
 
     function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){

@@ -80,13 +80,14 @@ contract OldZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuard
      * @dev Register a new node under base node if it not exists.
      * @param _name The plaintext of the name to register
      * @param _owner The address to receive this name
-     * @param _pubKey The pub key of the owner
+     * @param _pubKeyX The pub key x of the owner
+     * @param _pubKeyY The pub key y of the owner
      */
-    function registerZNS(string calldata _name, address _owner, bytes32 _pubKey, address _resolver) external override onlyController payable returns (bytes32 subnode){
+    function registerZNS(string calldata _name, address _owner, bytes32 _pubKeyX, bytes32 _pubKeyY, address _resolver) external override onlyController payable returns (bytes32 subnode, uint32 accountIndex){
         // Check if this name is valid
         require(_valid(_name), "invalid name");
         // This L2 owner should not own any name before
-        require(_validPubKey(_pubKey), "pub key existed");
+        require(_validPubKey(_pubKeyY), "pub key existed");
         // Calculate price using PriceOracle
         uint256 price = prices.price(_name);
         // Check enough value
@@ -100,12 +101,13 @@ contract OldZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuard
         // This subnode should not be registered before
         require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
         // Register subnode
-        subnode = zns.setSubnodeRecord(baseNode, label, _owner, _pubKey, _resolver);
+        subnode = zns.setSubnodeRecord(baseNode, label, _owner, _pubKeyX, _pubKeyY, _resolver);
+        accountIndex = zns.setSubnodeAccountIndex(subnode);
 
         // Update L2 owner mapper
-        ZNSPubKeyMapper[_pubKey] = subnode;
+        ZNSPubKeyMapper[_pubKeyY] = subnode;
 
-        emit ZNSRegistered(_name, subnode, _owner, _pubKey, price);
+        emit ZNSRegistered(_name, subnode, _owner, _pubKeyX, _pubKeyY, price);
 
         // Refund remained value to the owner of this name
         if (msg.value > price) {
@@ -114,7 +116,7 @@ contract OldZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuard
             );
         }
 
-        return subnode;
+        return (subnode, accountIndex);
     }
 
     /**

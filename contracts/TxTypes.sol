@@ -89,7 +89,7 @@ library TxTypes {
     function writeRegisterZNSPubDataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             uint8(TxType.RegisterZNS),
-            uint32(0),
+            _tx.accountIndex,
             _tx.accountName,
             _tx.accountNameHash, // account name hash
             _tx.pubKeyX,

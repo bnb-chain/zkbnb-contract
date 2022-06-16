@@ -40,7 +40,8 @@ interface Events {
         bytes32 nameHash,
         address owner,
         bytes32 zecreyPubKeyX,
-        bytes32 zecreyPubKeyY
+        bytes32 zecreyPubKeyY,
+        uint32 accountIndex
     );
 
     /// @notice Deposit committed event.

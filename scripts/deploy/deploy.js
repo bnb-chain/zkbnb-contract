@@ -61,7 +61,7 @@ async function main() {
     // deploy DeployFactory
     const deployFactory = await contractFactories.DeployFactory.deploy(
         governance.address, verifier.address, zecreyLegend.address, znsController.address, znsResolver.address,
-        _genesisStateRoot, verifier.address, governor, _listingToken, _listingFee, _listingCap,
+        _genesisStateRoot, governor, governor, _listingToken, _listingFee, _listingCap,
         znsRegistry.address, priceOracle.address, baseNode
     );
     await deployFactory.deployed();
@@ -107,7 +107,7 @@ async function main() {
     console.log('Register ZNS base node...')
     const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000'
     const baseNodeLabel = '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'         // mimc('legend');
-    const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero);
+    const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero, ethers.constants.HashZero);
     await setBaseNodeTx.wait();
 
     // Save addresses into JSON
