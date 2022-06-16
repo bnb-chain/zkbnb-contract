@@ -107,7 +107,7 @@ async function main() {
     console.log('Register ZNS base node...')
     const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000'
     const baseNodeLabel = getKeccak256('legend')       // keccak256('legend');
-    const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero);
+    const setBaseNodeTx = await znsRegistry.connect(owner).setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero, ethers.constants.HashZero);
     await setBaseNodeTx.wait();
 
     // Save addresses into JSON
