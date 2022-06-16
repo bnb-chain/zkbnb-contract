@@ -50,7 +50,7 @@ module.exports = {
         path: './data/abi',
         clear: true,
         flat: true,
-        only: [':Governance$'],
+        only: [':OldZecreyLegend'],
         spacing: 2
     },
     // watcher: {

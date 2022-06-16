@@ -155,4 +155,15 @@ library Utils {
         return bytes20(uint160(uint256(keccak256(_bytes))));
     }
 
+    function bytesToUint256Arr(bytes memory _pubData) internal pure returns (uint256[] memory pubData){
+        uint256 bytesCount = _pubData.length / 32;
+        pubData = new uint[](bytesCount);
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        for (uint32 i = 0; i < bytesCount; ++i) {
+            bytes32 result = Bytes.bytesToBytes32(Bytes.slice(_pubData, i * 32, 32), 0);
+            pubData[i] = uint256(result) % q;
+        }
+        return pubData;
+    }
+
 }

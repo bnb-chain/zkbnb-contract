@@ -518,7 +518,7 @@ library TxTypes {
         // collection id
         (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
         // empty data
-        offset += 28;
+        offset += 26;
         // nft l1 address
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // account name hash

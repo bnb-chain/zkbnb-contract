@@ -225,10 +225,10 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         uint104 _amount,
         string calldata _accountName
     ) external {
-        require(_amount != 0, "ia");
+        require(_amount != 0, "I");
         requireActive();
         bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+        require(znsController.isRegisteredNameHash(accountNameHash), "N");
         // Get asset id by its address
         uint16 assetId = governance.validateAssetAddress(address(_token));
         require(!governance.pausedAssets(assetId), "b");
@@ -240,7 +240,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         uint256 balanceAfter = _token.balanceOf(address(this));
         uint128 depositAmount = SafeCast.toUint128(balanceAfter.sub(balanceBefore));
         require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
-        require(depositAmount > 0, "D");
+        //        require(depositAmount > 0, "D");
 
         registerDeposit(assetId, depositAmount, accountNameHash);
     }
@@ -251,7 +251,63 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         address _nftL1Address,
         uint256 _nftL1TokenId
     ) external {
-        delegateAdditional();
+        requireActive();
+        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+        // Transfer the tokens to this contract
+        bool success;
+        try IERC721(_nftL1Address).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _nftL1TokenId
+        ){
+            success = true;
+        }catch{
+            success = false;
+        }
+        require(success, "ntf");
+        // check owner
+        require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
+
+        // check if the nft is mint from layer-2
+        bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
+        uint16 collectionId = 0;
+        uint40 nftIndex = 0;
+        uint32 creatorAccountIndex = 0;
+        uint16 creatorTreasuryRate = 0;
+        bytes32 nftContentHash;
+        if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
+            // it means this is a new layer-1 nft
+            nftContentHash = nftKey;
+        } else {
+            // it means this is a nft that comes from layer-2
+            nftContentHash = l2Nfts[nftKey].nftContentHash;
+            collectionId = l2Nfts[nftKey].collectionId;
+            nftIndex = l2Nfts[nftKey].nftIndex;
+            creatorAccountIndex = l2Nfts[nftKey].creatorAccountIndex;
+            creatorTreasuryRate = l2Nfts[nftKey].creatorTreasuryRate;
+        }
+
+        TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
+        txType : uint8(TxTypes.TxType.DepositNft),
+        accountIndex : 0, // unknown at this point
+        nftIndex : nftIndex,
+        nftL1Address : _nftL1Address,
+        creatorAccountIndex : creatorAccountIndex,
+        creatorTreasuryRate : creatorTreasuryRate,
+        nftContentHash : nftContentHash,
+        nftL1TokenId : _nftL1TokenId,
+        accountNameHash : accountNameHash,
+        collectionId : collectionId
+        });
+
+        // compact pub data
+        bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
+
+        // add into priority request queue
+        addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
+
+        emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
     }
 
     function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
@@ -301,7 +357,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
     function getNFTFactory(bytes32 _creatorAccountNameHash, uint32 _collectionId) public view returns (address) {
         address _factoryAddr = nftFactories[_creatorAccountNameHash][_collectionId];
         if (_factoryAddr == address(0)) {
-            require(address(defaultNFTFactory) != address(0), "fs");
+            require(address(defaultNFTFactory) != address(0), "F");
             // NFTFactory does not set
             return defaultNFTFactory;
         } else {
@@ -386,7 +442,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         _token.transfer(_to, _amount);
         uint256 balanceAfter = _token.balanceOf(address(this));
         uint256 balanceDiff = balanceBefore.sub(balanceAfter);
-        require(balanceDiff > 0, "c1");
+        //        require(balanceDiff > 0, "C");
         // transfer is considered successful only if the balance of the contract decreased after transfer
         require(balanceDiff <= _maxAmount, "7");
         // rollup balance difference (before and after transfer) is bigger than `_maxAmount`
@@ -397,39 +453,39 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
 
     /// @dev Process one block commit using previous block StoredBlockInfo,
     /// @dev returns new block StoredBlockInfo
-    function commitOneBlock(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
-    internal
-    view
-    returns (StoredBlockInfo memory storedNewBlock)
-    {
-        // only commit next block
-        require(_newBlock.blockNumber == _previousBlock.blockNumber + 1, "f");
-
-        // Check timestamp of the new block
-        {
-            // Block should be after previous block
-            require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
-        }
-
-        // Check onchain operations
-        (
-        bytes32 pendingOnchainOpsHash,
-        uint64 priorityReqCommitted
-        ) = collectOnchainOps(_newBlock);
-
-        // Create block commitment for verification proof
-        bytes32 commitment = createBlockCommitment(_previousBlock, _newBlock);
-
-        return
-        StoredBlockInfo(
-            _newBlock.blockNumber,
-            priorityReqCommitted,
-            pendingOnchainOpsHash,
-            _newBlock.timestamp,
-            _newBlock.newStateRoot,
-            commitment
-        );
-    }
+//    function commitOneBlock(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
+//    internal
+//    view
+//    returns (StoredBlockInfo memory storedNewBlock)
+//    {
+//        // only commit next block
+//        require(_newBlock.blockNumber == _previousBlock.blockNumber + 1, "f");
+//
+//        // Check timestamp of the new block
+//        // Block should be after previous block
+//        {
+//            require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
+//        }
+//
+//        // Check onchain operations
+//        (
+//        bytes32 pendingOnchainOpsHash,
+//        uint64 priorityReqCommitted
+//        ) = collectOnchainOps(_newBlock);
+//
+//        // Create block commitment for verification proof
+//        bytes32 commitment = createBlockCommitment(_previousBlock, _newBlock);
+//
+//        return
+//        StoredBlockInfo(
+//            _newBlock.blockNumber,
+//            priorityReqCommitted,
+//            pendingOnchainOpsHash,
+//            _newBlock.timestamp,
+//            _newBlock.newStateRoot,
+//            commitment
+//        );
+//    }
 
     /// @notice Commit block
     /// @notice 1. Checks onchain operations, timestamp.
@@ -439,24 +495,25 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
     )
     external
     {
-        requireActive();
-        governance.requireActiveValidator(msg.sender);
-        // Check that we commit blocks after last committed block
-        // incorrect previous block data
-        require(storedBlockHashes[totalBlocksCommitted] == hashStoredBlockInfo(_lastCommittedBlockData), "i");
-
-        for (uint32 i = 0; i < _newBlocksData.length; ++i) {
-            _lastCommittedBlockData = commitOneBlock(_lastCommittedBlockData, _newBlocksData[i]);
-
-            totalCommittedPriorityRequests += _lastCommittedBlockData.priorityOperations;
-            storedBlockHashes[_lastCommittedBlockData.blockNumber] = hashStoredBlockInfo(_lastCommittedBlockData);
-
-            emit BlockCommit(_lastCommittedBlockData.blockNumber);
-        }
-
-        totalBlocksCommitted += uint32(_newBlocksData.length);
-
-        require(totalCommittedPriorityRequests <= totalOpenPriorityRequests, "j");
+//        requireActive();
+//        governance.requireActiveValidator(msg.sender);
+//        // Check that we commit blocks after last committed block
+//        // incorrect previous block data
+//        require(storedBlockHashes[totalBlocksCommitted] == hashStoredBlockInfo(_lastCommittedBlockData), "i");
+//
+//        for (uint32 i = 0; i < _newBlocksData.length; ++i) {
+//            _lastCommittedBlockData = commitOneBlock(_lastCommittedBlockData, _newBlocksData[i]);
+//
+//            totalCommittedPriorityRequests += _lastCommittedBlockData.priorityOperations;
+//            storedBlockHashes[_lastCommittedBlockData.blockNumber] = hashStoredBlockInfo(_lastCommittedBlockData);
+//
+//            emit BlockCommit(_lastCommittedBlockData.blockNumber);
+//        }
+//
+//        totalBlocksCommitted += uint32(_newBlocksData.length);
+//
+//        require(totalCommittedPriorityRequests <= totalOpenPriorityRequests, "j");
+        delegateAdditional();
     }
 
     /// @notice Verify block index and proofs
@@ -465,7 +522,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         require(
             hashStoredBlockInfo(_block.blockHeader) ==
             storedBlockHashes[_block.blockHeader.blockNumber],
-            "exe10" // executing block should be committed
+            "A" // executing block should be committed
         );
         // blocks must in order
         require(_block.blockHeader.blockNumber == totalBlocksVerified + _verifiedBlockIdx + 1, "k");
@@ -479,11 +536,11 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
             if (txType == TxTypes.TxType.Withdraw) {
                 TxTypes.Withdraw memory _tx = TxTypes.readWithdrawPubData(pubData);
                 // Circuit guarantees that partial exits are available only for fungible tokens
-                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
+                //                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "A");
                 withdrawOrStore(uint16(_tx.assetId), _tx.toAddress, _tx.assetAmount);
             } else if (txType == TxTypes.TxType.FullExit) {
                 TxTypes.FullExit memory _tx = TxTypes.readFullExitPubData(pubData);
-                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "mf1");
+                //                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "B");
                 // get layer-1 address by account name hash
                 address creatorAddress = getAddressByAccountNameHash(_tx.accountNameHash);
                 withdrawOrStore(uint16(_tx.assetId), creatorAddress, _tx.assetAmount);
@@ -511,8 +568,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
                     });
                     withdrawOrStoreNFT(_withdrawNftTx);
                 }
-            }
-            else if (txType == TxTypes.TxType.WithdrawNft) {
+            } else if (txType == TxTypes.TxType.WithdrawNft) {
                 TxTypes.WithdrawNft memory _tx = TxTypes.readWithdrawNftPubData(pubData);
                 // withdraw NFT
                 withdrawOrStoreNFT(_tx);
@@ -558,8 +614,6 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         }
     }
 
-    event DebugInfo(uint256 a, uint256 b, uint256 c);
-
     /// @notice Verify layer-2 blocks proofs
     /// @param _blocks Verified blocks info
     /// @param _proofs proofs
@@ -577,14 +631,13 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
             inputs[3 * i] = uint256(stateRoot);
             inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.stateRoot);
             inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment);
-            emit DebugInfo(uint256(stateRoot), uint256(_blocks[i].blockHeader.stateRoot), uint256(_blocks[i].blockHeader.commitment));
             // update account root
             stateRoot = _blocks[i].blockHeader.stateRoot;
             verifyAndExecuteOneBlock(_blocks[i], i);
             emit BlockVerification(_blocks[i].blockHeader.blockNumber);
         }
         bool res = verifier.verifyBatchProofs(_proofs, inputs, _blocks.length);
-        require(res, "inp");
+        require(res, "I");
         firstPriorityRequestId += priorityRequestsExecuted;
         totalCommittedPriorityRequests -= priorityRequestsExecuted;
         totalOpenPriorityRequests -= priorityRequestsExecuted;
@@ -641,162 +694,178 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         totalOpenPriorityRequests++;
     }
 
-    /// @notice Collect onchain ops and ensure it was not executed before
-    function collectOnchainOps(CommitBlockInfo memory _newBlockData)
-    internal
-    view
-    returns (
-        bytes32 processableOperationsHash,
-        uint64 priorityOperationsProcessed
-    )
-    {
-        bytes memory pubData = _newBlockData.publicData;
+//    /// @notice Collect onchain ops and ensure it was not executed before
+//    function collectOnchainOps(CommitBlockInfo memory _newBlockData)
+//    internal
+//    view
+//    returns (
+//        bytes32 processableOperationsHash,
+//        uint64 priorityOperationsProcessed
+//    )
+//    {
+//        bytes memory pubData = _newBlockData.publicData;
+//
+//        require(pubData.length % TX_SIZE == 0, "A");
+//
+//        uint64 uncommittedPriorityRequestsOffset = firstPriorityRequestId + totalCommittedPriorityRequests;
+//        priorityOperationsProcessed = 0;
+//        processableOperationsHash = EMPTY_STRING_KECCAK;
+//
+//        for (uint16 i = 0; i < _newBlockData.publicDataOffsets.length; ++i) {
+//            uint32 pubdataOffset = _newBlockData.publicDataOffsets[i];
+//            require(pubdataOffset < pubData.length, "B");
+//
+//            TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
+//
+//            if (txType == TxTypes.TxType.RegisterZNS) {
+//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//
+//                TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
+//                checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+//                priorityOperationsProcessed++;
+//            } else if (txType == TxTypes.TxType.CreatePair) {
+//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//
+//                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubData(txPubData);
+//                checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+//                priorityOperationsProcessed++;
+//            } else if (txType == TxTypes.TxType.UpdatePairRate) {
+//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//
+//                TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubData(txPubData);
+//                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+//                priorityOperationsProcessed++;
+//            } else if (txType == TxTypes.TxType.Deposit) {
+//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//                TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
+//                checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+//                priorityOperationsProcessed++;
+//            } else if (txType == TxTypes.TxType.DepositNft) {
+//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//
+//                TxTypes.DepositNft memory depositNftData = TxTypes.readDepositNftPubData(txPubData);
+//                checkPriorityOperation(depositNftData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+//                priorityOperationsProcessed++;
+//            } else {
+//
+//                bytes memory txPubData;
+//
+//                if (txType == TxTypes.TxType.Withdraw) {
+//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//                } else if (txType == TxTypes.TxType.WithdrawNft) {
+//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//                } else if (txType == TxTypes.TxType.FullExit) {
+//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//
+//                    TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(txPubData);
+//
+//                    checkPriorityOperation(
+//                        fullExitData,
+//                        uncommittedPriorityRequestsOffset + priorityOperationsProcessed
+//                    );
+//                    priorityOperationsProcessed++;
+//                } else if (txType == TxTypes.TxType.FullExitNft) {
+//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+//
+//                    TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubData(txPubData);
+//
+//                    checkPriorityOperation(
+//                        fullExitNFTData,
+//                        uncommittedPriorityRequestsOffset + priorityOperationsProcessed
+//                    );
+//                    priorityOperationsProcessed++;
+//                } else {
+//                    // unsupported _tx
+//                    revert("F");
+//                }
+//                processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
+//            }
+//        }
+//    }
 
-        require(pubData.length % TX_SIZE == 0, "A");
-
-        uint64 uncommittedPriorityRequestsOffset = firstPriorityRequestId + totalCommittedPriorityRequests;
-        priorityOperationsProcessed = 0;
-        processableOperationsHash = EMPTY_STRING_KECCAK;
-
-        for (uint16 i = 0; i < _newBlockData.publicDataOffsets.length; ++i) {
-            uint32 pubdataOffset = _newBlockData.publicDataOffsets[i];
-            require(pubdataOffset < pubData.length, "A1");
-
-            TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
-
-            if (txType == TxTypes.TxType.RegisterZNS) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
-                checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.CreatePair) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubData(txPubData);
-                checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.UpdatePairRate) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubData(txPubData);
-                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.Deposit) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
-                checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
-            } else {
-
-                bytes memory txPubData;
-
-                if (txType == TxTypes.TxType.Withdraw) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-                } else if (txType == TxTypes.TxType.WithdrawNft) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-                } else if (txType == TxTypes.TxType.FullExit) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                    TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(txPubData);
-
-                    checkPriorityOperation(
-                        fullExitData,
-                        uncommittedPriorityRequestsOffset + priorityOperationsProcessed
-                    );
-                    priorityOperationsProcessed++;
-                } else if (txType == TxTypes.TxType.FullExitNft) {
-                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                    TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubData(txPubData);
-
-                    checkPriorityOperation(
-                        fullExitNFTData,
-                        uncommittedPriorityRequestsOffset + priorityOperationsProcessed
-                    );
-                    priorityOperationsProcessed++;
-                } else {
-                    // unsupported _tx
-                    revert("F");
-                }
-                processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
-            }
-        }
-    }
-
-    /// @notice Checks that update pair is same as _tx in priority queue
-    /// @param _updatePairRate update pair
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.UpdatePairRate memory _updatePairRate, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.UpdatePairRate, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkUpdatePairRateInPriorityQueue(_updatePairRate, hashedPubData), "I");
-    }
-
-    /// @notice Checks that create pair is same as _tx in priority queue
-    /// @param _createPair create pair
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.CreatePair memory _createPair, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.CreatePair, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubData), "I");
-    }
-
-    /// @notice Checks that register zns is same as _tx in priority queue
-    /// @param _registerZNS register zns
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.RegisterZNS memory _registerZNS, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.RegisterZNS, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "I");
-    }
-
-    /// @notice Checks that deposit is same as _tx in priority queue
-    /// @param _deposit Deposit data
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.Deposit memory _deposit, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.Deposit, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubData), "I");
-    }
-
-    /// @notice Checks that FullExit is same as _tx in priority queue
-    /// @param _fullExit FullExit data
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.FullExit memory _fullExit, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.FullExit, "J");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubData), "K");
-    }
-
-    /// @notice Checks that FullExitNFT is same as _tx in priority queue
-    /// @param _fullExitNft FullExit nft data
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.FullExitNft memory _fullExitNft, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.FullExitNft, "J");
-
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubData), "K");
-    }
+//    /// @notice Checks that update pair is same as _tx in priority queue
+//    /// @param _updatePairRate update pair
+//    /// @param _priorityRequestId _tx's id in priority queue
+//    function checkPriorityOperation(TxTypes.UpdatePairRate memory _updatePairRate, uint64 _priorityRequestId) internal view {
+//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+//        // incorrect priority _tx type
+//        require(priorReqType == TxTypes.TxType.UpdatePairRate, "H");
+//
+//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+//        require(TxTypes.checkUpdatePairRateInPriorityQueue(_updatePairRate, hashedPubData), "I");
+//    }
+//
+//    /// @notice Checks that create pair is same as _tx in priority queue
+//    /// @param _createPair create pair
+//    /// @param _priorityRequestId _tx's id in priority queue
+//    function checkPriorityOperation(TxTypes.CreatePair memory _createPair, uint64 _priorityRequestId) internal view {
+//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+//        // incorrect priority _tx type
+//        require(priorReqType == TxTypes.TxType.CreatePair, "H");
+//
+//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+//        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubData), "I");
+//    }
+//
+//    /// @notice Checks that register zns is same as _tx in priority queue
+//    /// @param _registerZNS register zns
+//    /// @param _priorityRequestId _tx's id in priority queue
+//    function checkPriorityOperation(TxTypes.RegisterZNS memory _registerZNS, uint64 _priorityRequestId) internal view {
+//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+//        // incorrect priority _tx type
+//        require(priorReqType == TxTypes.TxType.RegisterZNS, "H");
+//
+//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+//        require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "I");
+//    }
+//
+//    /// @notice Checks that deposit is same as _tx in priority queue
+//    /// @param _deposit Deposit data
+//    /// @param _priorityRequestId _tx's id in priority queue
+//    function checkPriorityOperation(TxTypes.Deposit memory _deposit, uint64 _priorityRequestId) internal view {
+//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+//        // incorrect priority _tx type
+//        require(priorReqType == TxTypes.TxType.Deposit, "H");
+//
+//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+//        require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubData), "I");
+//    }
+//
+//    /// @notice Checks that deposit is same as _tx in priority queue
+//    /// @param _deposit Deposit data
+//    /// @param _priorityRequestId _tx's id in priority queue
+//    function checkPriorityOperation(TxTypes.DepositNft memory _deposit, uint64 _priorityRequestId) internal view {
+//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+//        // incorrect priority _tx type
+//        require(priorReqType == TxTypes.TxType.DepositNft, "H");
+//
+//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+//        require(TxTypes.checkDepositNftInPriorityQueue(_deposit, hashedPubData), "I");
+//    }
+//
+//    /// @notice Checks that FullExit is same as _tx in priority queue
+//    /// @param _fullExit FullExit data
+//    /// @param _priorityRequestId _tx's id in priority queue
+//    function checkPriorityOperation(TxTypes.FullExit memory _fullExit, uint64 _priorityRequestId) internal view {
+//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+//        // incorrect priority _tx type
+//        require(priorReqType == TxTypes.TxType.FullExit, "J");
+//
+//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+//        require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubData), "K");
+//    }
+//
+//    /// @notice Checks that FullExitNFT is same as _tx in priority queue
+//    /// @param _fullExitNft FullExit nft data
+//    /// @param _priorityRequestId _tx's id in priority queue
+//    function checkPriorityOperation(TxTypes.FullExitNft memory _fullExitNft, uint64 _priorityRequestId) internal view {
+//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+//        // incorrect priority _tx type
+//        require(priorReqType == TxTypes.TxType.FullExitNft, "J");
+//
+//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+//        require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubData), "K");
+//    }
 
     /// @notice Register full exit request - pack pubdata, add priority request
     /// @param _accountName account name
@@ -813,27 +882,21 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
     }
 
     /// @dev Creates block commitment from its data
-    function createBlockCommitment(
-        StoredBlockInfo memory _previousBlock,
-        CommitBlockInfo memory _newBlockData
-    ) internal view returns (bytes32) {
-        uint256 bytesCount = _newBlockData.publicData.length / 32;
-        uint256[] memory pubData = new uint[](bytesCount);
-        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-        for (uint32 i = 0; i < bytesCount; ++i) {
-            bytes32 result = Bytes.bytesToBytes32(Bytes.slice(_newBlockData.publicData, i * 32, 32), 0);
-            pubData[i] = uint256(result) % q;
-        }
-        bytes32 converted = keccak256(abi.encodePacked(
-                uint256(_newBlockData.blockNumber), // block number
-                uint256(_newBlockData.timestamp), // time stamp
-                _previousBlock.stateRoot, // old state root
-                _newBlockData.newStateRoot, // new state root
-                pubData, // pub data
-                uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
-            ));
-        return converted;
-    }
+//    function createBlockCommitment(
+//        StoredBlockInfo memory _previousBlock,
+//        CommitBlockInfo memory _newBlockData
+//    ) internal view returns (bytes32) {
+//        uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
+//        bytes32 converted = keccak256(abi.encodePacked(
+//                uint256(_newBlockData.blockNumber), // block number
+//                uint256(_newBlockData.timestamp), // time stamp
+//                _previousBlock.stateRoot, // old state root
+//                _newBlockData.newStateRoot, // new state root
+//                pubData, // pub data
+//                uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
+//            ));
+//        return converted;
+//    }
 
     function setDefaultNFTFactory(NFTFactory _factory) external {
         delegateAdditional();
@@ -887,15 +950,4 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
             }
         }
     }
-
-    function keccak256Hash(bytes memory input) public view returns (bytes32 result) {
-        result = keccak256(input);
-    }
-
-    // @dev This function is only for test
-    // TODO delete this funcFtion
-    function updateZecreyVerifier(address _newVerifierAddress) external {
-        delegateAdditional();
-    }
-
 }
