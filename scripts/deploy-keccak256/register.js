@@ -21,6 +21,7 @@ async function main() {
     await registerZnsTx.wait()
     registerZnsTx = await zecreyLegend.registerZNS(
         'sher',
+        // '0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449',
         '0x7dD2Ac589eFCC8888474d95Cb4b084CCa2d8aA57',
         '0x235fdbbbf5ef1665f3422211702126433c909487c456e594ef3a56910810396a',
         '0x05dde55c8adfb6689ead7f5610726afd5fd6ea35a3516dc68e57546146f7b6b0',

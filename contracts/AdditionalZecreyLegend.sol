@@ -478,16 +478,6 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
     //        emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
     //    }
 
-    /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
-    /// @param _accountName the receiver account name
-    function depositBNB(string calldata _accountName) external payable {
-        require(msg.value != 0, "ia");
-        requireActive();
-        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-        registerDeposit(0, SafeCast.toUint128(msg.value), accountNameHash);
-    }
-
     /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
     /// @param _assetId Asset by id
     /// @param _amount Asset amount

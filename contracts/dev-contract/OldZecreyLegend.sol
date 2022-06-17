@@ -213,7 +213,11 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
     /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
     /// @param _accountName the receiver account name
     function depositBNB(string calldata _accountName) external payable {
-        delegateAdditional();
+        require(msg.value != 0, "ia");
+        requireActive();
+        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+        registerDeposit(0, SafeCast.toUint128(msg.value), accountNameHash);
     }
 
     /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
