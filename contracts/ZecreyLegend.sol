@@ -887,10 +887,4 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         }
     }
 
-    // @dev This function is only for test
-    // TODO delete this funcFtion
-    function updateZecreyVerifier(address _newVerifierAddress) external {
-        delegateAdditional();
-    }
-
 }
