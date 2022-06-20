@@ -315,7 +315,10 @@ contract ZecreyVerifier {
         uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         // Performs a sum of gammaABC[0] + sum[ gammaABC[i+1]^proof_inputs[i] ]
         for (uint i = 0; i < proof_inputs.length; i++) {
-            require(proof_inputs[i] < q, "INVALID_INPUT");
+
+            // @dev only for qa test
+            //  require(proof_inputs[i] < q, "INVALID_INPUT");
+
             mul_input[0] = vk_gammaABC[m++];
             mul_input[1] = vk_gammaABC[m++];
             mul_input[2] = proof_inputs[i];

@@ -29,6 +29,13 @@ module.exports = {
             accounts: ['107f9d2a50ce2d8337e0c5220574e9fcf2bf60002da5acf07718f4d531ea3faa'],
             timeout: 100000,
             gas: 6000000
+        },
+        testnet: {
+            url: "https://data-seed-prebsc-2-s1.binance.org:8545",
+            chainId: 97,
+            accounts: ['740033b136ec1888b17e68b50c60c78ba7e1f61c8249497801a7f0fb796abb6b'],
+            timeout: 100000,
+            gas: 6000000
         }
     },
     solidity: {
