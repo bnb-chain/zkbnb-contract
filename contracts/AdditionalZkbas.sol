@@ -21,9 +21,9 @@ import "./TxTypes.sol";
 
 import "./UpgradeableMaster.sol";
 
-/// @title Zecrey additional main contract
-/// @author Zecrey
-contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IERC721Receiver {
+/// @title Zkbas additional main contract
+/// @author Zkbas
+contract AdditionalZkbas is Storage, Config, Events, ReentrancyGuard, IERC721Receiver {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
 
@@ -385,7 +385,7 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
 
     /// @notice Register full exit nft request - pack pubdata, add priority request
     /// @param _accountName account name
-    /// @param _nftIndex account NFT index in zecrey network
+    /// @param _nftIndex account NFT index in zkbas network
     function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
         requireActive();
         bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
@@ -512,12 +512,12 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
         emit Deposit(_assetId, _accountNameHash, _amount);
     }
 
-    event NewZecreyVerifier(address verifier);
+    event NewZkbasVerifier(address verifier);
 
     // @dev This function is only for test
     // TODO delete this function
-    function updateZecreyVerifier(address _newVerifierAddress) external {
-        verifier = ZecreyVerifier(_newVerifierAddress);
-        emit NewZecreyVerifier(_newVerifierAddress);
+    function updateZkbasVerifier(address _newVerifierAddress) external {
+        verifier = ZkbasVerifier(_newVerifierAddress);
+        emit NewZkbasVerifier(_newVerifierAddress);
     }
 }

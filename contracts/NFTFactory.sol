@@ -4,7 +4,7 @@ pragma solidity ^0.7.6;
 
 
 interface NFTFactory {
-    function mintFromZecrey(
+    function mintFromZkbas(
         address _creatorAddress,
         address _toAddress,
         uint256 _nftTokenId,
@@ -13,7 +13,7 @@ interface NFTFactory {
     )
     external;
 
-    event MintNFTFromZecrey(
+    event MintNFTFromZkbas(
         address indexed _creatorAddress,
         address indexed _toAddress,
         uint256 _nftTokenId,

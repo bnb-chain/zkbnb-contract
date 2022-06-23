@@ -1,14 +1,14 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
-const {getDeployedAddresses, getZecreyLegendProxy} = require("./utils");
+const {getDeployedAddresses, getZkbasProxy} = require("./utils");
 
 async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
-    const zecreyLegend = await getZecreyLegendProxy(addrs.zecreyLegendProxy)
+    const zkbas = await getZkbasProxy(addrs.zkbasProxy)
 
     console.log('FullExit...')
     // full exit
-    let fullExitTx = await zecreyLegend.requestFullExit('sher', addrs.LEGToken);
+    let fullExitTx = await zkbas.requestFullExit('sher', addrs.LEGToken);
     await fullExitTx.wait();
 }
 

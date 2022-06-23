@@ -2,10 +2,10 @@
 pragma solidity ^0.7.6;
 
 import "../ResolverBase.sol";
-import "./IZecreyPubKeyResolver.sol";
+import "./IZkbasPubKeyResolver.sol";
 import "../../ZNS.sol";
 
-abstract contract ZecreyPubKeyResolver is IZecreyPubKeyResolver, ResolverBase {
+abstract contract ZkbasPubKeyResolver is IZkbasPubKeyResolver, ResolverBase {
 
     /**
      * Returns the public key in L2 associated with an ZNS node.
@@ -13,9 +13,9 @@ abstract contract ZecreyPubKeyResolver is IZecreyPubKeyResolver, ResolverBase {
      * @return pubKeyX The public key in L2 owns this node
      * @return pubKeyY The public key in L2 owns this node
      */
-    function zecreyPubKey(bytes32 node) virtual override external view returns (bytes32 pubKeyX, bytes32 pubKeyY);
+    function zkbasPubKey(bytes32 node) virtual override external view returns (bytes32 pubKeyX, bytes32 pubKeyY);
 
     function supportsInterface(bytes4 interfaceID) virtual override public pure returns (bool) {
-        return interfaceID == type(IZecreyPubKeyResolver).interfaceId || super.supportsInterface(interfaceID);
+        return interfaceID == type(IZkbasPubKeyResolver).interfaceId || super.supportsInterface(interfaceID);
     }
 }

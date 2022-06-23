@@ -3,7 +3,7 @@
 pragma solidity ^0.7.6;
 
 /// @title Interface of the upgradeable master contract (defines notice period duration and allows finish upgrade during preparation of it)
-/// @author Zecrey Team
+/// @author Zkbas Team
 interface UpgradeableMaster {
     /// @notice Notice period before activation preparation status of upgrade mode
     function getNoticePeriod() external returns (uint256);

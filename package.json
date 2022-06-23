@@ -1,5 +1,5 @@
 {
-  "name": "zecrey-legend-contract",
+  "name": "zkbas-contract",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,17 +8,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Zecrey-Labs/zecrey-legend-contract.git"
+    "url": "git+https://github.com/bnb-chain/zkbas-contract.git"
   },
   "keywords": [
-    "zecrey"
+    "zkbas"
   ],
-  "author": "Zecrey Team",
+  "author": "zkbas Team",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Zecrey-Labs/zecrey-legend-contract/issues"
+    "url": "https://github.com/bnb-chain/zkbas-contract/issues"
   },
-  "homepage": "https://github.com/Zecrey-Labs/zecrey-legend-contract#readme",
+  "homepage": "https://github.com/bnb-chain/zkbas-contract#readme",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
