@@ -22,19 +22,19 @@ module.exports = {
             url: "http://tf-dex-preview-validator-nlb-6fd109ac8b9d390a.elb.ap-northeast-1.amazonaws.com:8545",
             accounts: ['107f9d2a50ce2d8337e0c5220574e9fcf2bf60002da5acf07718f4d531ea3faa'],
             timeout: 100000,
-            gas: 6000000
+            gas: 15000000
         },
         BSCTestnet: {
-            url: "https://data-seed-prebsc-2-s1.binance.org:8545",
+            url: "https://data-seed-prebsc-2-s2.binance.org:8545",
             accounts: ['acbaa269bd7573ff12361be4b97201aef019776ea13384681d4e5ba6a88367d9'],
             timeout: 300000,
-            gas: 10000000
+            gas: 15000000
         },
         avalanche_fuji: {
             url: "https://api.avax-test.network/ext/bc/C/rpc",
             accounts: ['acbaa269bd7573ff12361be4b97201aef019776ea13384681d4e5ba6a88367d9'],
             timeout: 100000,
-            gas: 10000000,
+            gas: 15000000,
         },
         polygon_mumbai: {
             url: "https://polygon-mumbai.g.alchemy.com/v2/O2mVU_nX6p-nnrTFKqASBQi74hsxCsro",

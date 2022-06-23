@@ -629,12 +629,13 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         uint32 nBlocks = uint32(_blocks.length);
         // proof public inputs
         uint256[] memory inputs = new uint256[](3 * _blocks.length);
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         for (uint16 i = 0; i < _blocks.length; ++i) {
             priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
             // verify block proof
             inputs[3 * i] = uint256(stateRoot);
             inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.stateRoot);
-            inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment);
+            inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment) % q;
             // update account root
             stateRoot = _blocks[i].blockHeader.stateRoot;
             verifyAndExecuteOneBlock(_blocks[i], i);
