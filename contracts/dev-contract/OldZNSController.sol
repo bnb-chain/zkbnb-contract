@@ -10,7 +10,7 @@ import "../ZNS.sol";
 import "../utils/Names.sol";
 
 /**
- * ZNSController is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
+ * ZNSController is a registrar allocating subdomain names to users in Zkbas in a FIFS way.
  */
 contract OldZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 

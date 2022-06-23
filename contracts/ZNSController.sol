@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "./IPriceOracle.sol";
 
 /**
- * ZNSController is a registrar allocating subdomain names to users in Zecrey-Legend in a FIFS way.
+ * ZNSController is a registrar allocating subdomain names to users in Zkbas in a FIFS way.
  */
 contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 

@@ -1,10 +1,10 @@
-# zecrey-legend-contract
+# zkbas-contract
 
-Contracts for Zecrey-Legend.
+Contracts for zkbas.
 
-## Zecrey Name Service
+## Zkbas Name Service
 
-Zecrey Name Service(ZNS) is a name service between L1 and L2. Users should register name in L1 
+Zkbas Name Service(ZNS) is a name service between L1 and L2. Users should register name in L1 
 and set his L2 account address(Bytes32 public key) with this name. So that this user can use this name
 both in L1 and L2.
 
@@ -28,7 +28,7 @@ Contracts of ZNS are consists of three parts: ZNSRegistry, ZNSRegistrarControlle
 
 A ZNSRegistry contains records of name node. It will be owned as a member variable by ZNSRegistrarController.
 
-All ZNS lookups start by querying the registry. The registry contains records of Zecrey Legend short name, recording the
+All ZNS lookups start by querying the registry. The registry contains records of Zkbas short name, recording the
 owner, L2 owner and resolver of each name, and allows the owner of a domain to make changes to these data.
 
 #### ZNS.sol
@@ -72,7 +72,7 @@ All short names are maintained by this contract and each name is mapped to a Rec
 
 #### ZNSRegistrarController.sol
 
-It provides external functions for users to register (and transfer) Zecrey Legend names.
+It provides external functions for users to register (and transfer) Zkbas names.
 
 It also maintains a mapper from L2Account to node's name hash, which can be used to assure
 each L2 account can only own one name.

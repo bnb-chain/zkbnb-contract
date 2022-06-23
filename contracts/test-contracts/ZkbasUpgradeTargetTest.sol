@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.7.6;
 
-import "../UpgradeableMaster.sol";
-import "./StorageTest.sol";
 import "../Config.sol";
-import "../SafeMathUInt128.sol";
+import "./StorageTest.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "../SafeMathUInt128.sol";
+import "../UpgradeableMaster.sol";
 
-contract ZecreyUpgradeTest is UpgradeableMaster, StorageTest, Config {
+
+/// @dev Test target contract to upgrade to
+contract zkbasUpgradeTargetTest is UpgradeableMaster, Config, StorageTest {
+
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
 
@@ -17,7 +20,7 @@ contract ZecreyUpgradeTest is UpgradeableMaster, StorageTest, Config {
     }
 
     function setBalance(uint32 lambda) external {
-        balance += lambda;
+        balance += (lambda * 5);
     }
 
     function setBankBalance(uint32 lambda) external {
@@ -76,7 +79,9 @@ contract ZecreyUpgradeTest is UpgradeableMaster, StorageTest, Config {
         numberOfApprovalsFromSecurityCouncil = 0;
     }
 
-
-    function upgrade(bytes calldata upgradeParameters) external {}
-
+    function upgrade(bytes calldata upgradeParameters) external {
+        balance += 12;
+    }
 }
+
+

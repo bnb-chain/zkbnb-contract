@@ -2,7 +2,7 @@ const {expect} = require("chai");
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-describe("Zecrey-Legend contract", function () {
+describe("Zkbas contract", function () {
     describe('RegisterZNS', function () {
         it("register", async function () {
             // deploy zns
@@ -70,7 +70,7 @@ describe("Zecrey-Legend contract", function () {
             address _treasury
              */
 
-            const TokenFactory = await ethers.getContractFactory('ZecreyRelatedERC20')
+            const TokenFactory = await ethers.getContractFactory('ZkbasRelatedERC20')
             const token = await TokenFactory.deploy(10000, '', '')
             await token.deployed()
 
@@ -90,57 +90,57 @@ describe("Zecrey-Legend contract", function () {
             await changeAssetGovernanceTx.wait()
 
             // deploy verifier
-            const Verifier = await ethers.getContractFactory('ZecreyVerifier')
+            const Verifier = await ethers.getContractFactory('ZkbasVerifier')
             const verifier = await Verifier.deploy()
             await verifier.deployed()
             // deploy utils
             const Utils = await ethers.getContractFactory("Utils")
             const utils = await Utils.deploy()
             await utils.deployed()
-            // deploy zecrey legend
-            console.log('start deploy zecrey legend.....')
-            const ZecreyLegend = await ethers.getContractFactory('ZecreyLegend', {
+            // deploy zkbas
+            console.log('start deploy zkbas.....')
+            const Zkbas = await ethers.getContractFactory('Zkbas', {
                 libraries: {
                     Utils: utils.address
                 }
             })
-            const zecreyLegend = await ZecreyLegend.deploy()
-            await zecreyLegend.deployed()
+            const zkbas = await Zkbas.deploy()
+            await zkbas.deployed()
 
             // add controller for zns fifs registrar
-            const addControllerTx = await znsController.addController(zecreyLegend.address);
+            const addControllerTx = await znsController.addController(zkbas.address);
             await addControllerTx.wait();
 
-            const isController = await znsController.controllers(zecreyLegend.address)
+            const isController = await znsController.controllers(zkbas.address)
             console.log(isController)
 
-            // deploy additional zecrey legend
-            const AdditionalZecreyLegend = await ethers.getContractFactory('AdditionalZecreyLegend')
-            const additionalZecreyLegend = await AdditionalZecreyLegend.deploy()
-            await additionalZecreyLegend.deployed()
+            // deploy additional zkbas
+            const AdditionalZkbas = await ethers.getContractFactory('AdditionalZkbas')
+            const additionalZkbas = await AdditionalZkbas.deploy()
+            await additionalZkbas.deployed()
 
             const _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a'
-            const zecreyInitParams = ethers.utils.defaultAbiCoder.encode(
+            const zkbasInitParams = ethers.utils.defaultAbiCoder.encode(
                 ['address', 'address', 'address', 'address', 'address', 'bytes32'],
                 [
                     governance.address,
                     verifier.address,
-                    additionalZecreyLegend.address,
+                    additionalZkbas.address,
                     znsController.address,
                     publicResolver.address,
                     _genesisAccountRoot,
                 ],
             )
-            const zecreyInitTx = await zecreyLegend.initialize(zecreyInitParams)
-            await zecreyInitTx.wait()
+            const zkbasInitTx = await zkbas.initialize(zkbasInitParams)
+            await zkbasInitTx.wait()
 
-            const registerZNSTx = await zecreyLegend.registerZNS('sher',
+            const registerZNSTx = await zkbas.registerZNS('sher',
                 '0xDA00601380Bc7aE4fe67dA2EB78f9161570c9EB4',
                 '0x6788fdbc635cf86e266853a628b2743643df5c1db1a4f9afbb13bca103322e9a')
             await registerZNSTx.wait()
 
             const hashVal = namehash.hash('sher.legend');
-            const addr = await zecreyLegend.getAddressByAccountNameHash(hashVal)
+            const addr = await zkbas.getAddressByAccountNameHash(hashVal)
             console.log('addr:', addr)
         });
     });

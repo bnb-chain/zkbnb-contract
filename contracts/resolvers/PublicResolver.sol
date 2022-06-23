@@ -8,7 +8,7 @@ import "./profile/AddrResolver.sol";
 import "./profile/PubKeyResolver.sol";
 import "./profile/NameResolver.sol";
 import "../ZNS.sol";
-import "./profile/ZecreyPubKeyResolver.sol";
+import "./profile/ZkbasPubKeyResolver.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /**
@@ -20,7 +20,7 @@ ABIResolver,
 AddrResolver,
 NameResolver,
 PubKeyResolver,
-ZecreyPubKeyResolver,
+ZkbasPubKeyResolver,
 ReentrancyGuardUpgradeable
 {
     ZNS zns;
@@ -49,7 +49,7 @@ ReentrancyGuardUpgradeable
         zns = ZNS(_zns);
     }
 
-    function zecreyPubKey(bytes32 node) override external view returns (bytes32 pubKeyX, bytes32 pubKeyY) {
+    function zkbasPubKey(bytes32 node) override external view returns (bytes32 pubKeyX, bytes32 pubKeyY) {
         return zns.pubKey(node);
     }
 
@@ -91,7 +91,7 @@ ReentrancyGuardUpgradeable
     AddrResolver,
     NameResolver,
     PubKeyResolver,
-    ZecreyPubKeyResolver
+    ZkbasPubKeyResolver
     )
     returns (bool)
     {

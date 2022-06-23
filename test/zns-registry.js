@@ -2,9 +2,9 @@ const {expect} = require("chai");
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-describe("Zecrey-Legend Registry Contract", function () {
+describe("Zkbas Registry Contract", function () {
 
-    let ZecreyLegend, zecreyLegend;
+    let Zkbas, zkbas;
     let ZNS, zns;
     let Utils, utils;
     let owner, addr1, addr2, addrs;
@@ -14,7 +14,7 @@ describe("Zecrey-Legend Registry Contract", function () {
     beforeEach(async function () {
         [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
 
-        // deploy zecrey
+        // deploy zkbas
         ZNS = await ethers.getContractFactory("ZNSRegistry");
         zns = await ZNS.deploy()
         await zns.deployed()
@@ -24,13 +24,13 @@ describe("Zecrey-Legend Registry Contract", function () {
         utils = await Utils.deploy()
         await utils.deployed()
 
-        ZecreyLegend = await ethers.getContractFactory('ZecreyLegend', {
+        Zkbas = await ethers.getContractFactory('Zkbas', {
             libraries: {
                 Utils: utils.address
             }
         })
-        zecreyLegend = await ZecreyLegend.deploy();
-        await zecreyLegend.deployed();
+        zkbas = await Zkbas.deploy();
+        await zkbas.deployed();
     });
 
     // describe('ZNS Registry', function () {
@@ -43,34 +43,34 @@ describe("Zecrey-Legend Registry Contract", function () {
     //         const baseNameHash = getKeccak256('legend');
     //         const baseNode = namehash.hash('legend');
     //         // The owner of ZNS should be registrar
-    //         const setRootTx = await zns.setSubnodeOwner(rootNode, baseNameHash, zecreyLegend.address, rootL2Acoount);
+    //         const setRootTx = await zns.setSubnodeOwner(rootNode, baseNameHash, zkbas.address, rootL2Acoount);
     //         await setRootTx.wait();
-    //         expect(await zns.owner(baseNode)).to.equal(await zecreyLegend.address);
+    //         expect(await zns.owner(baseNode)).to.equal(await zkbas.address);
     //
     //         // register
-    //         const addr1L2Account = ethers.utils.formatBytes32String('zecrey.legend');
-    //         const registerTx = await zecreyLegend.connect(owner).register('zecrey', await addr1.getAddress(), addr1L2Account)
+    //         const addr1L2Account = ethers.utils.formatBytes32String('zkbas.legend');
+    //         const registerTx = await zkbas.connect(owner).register('zkbas', await addr1.getAddress(), addr1L2Account)
     //         await registerTx.wait()
-    //         expect(await zns.owner(namehash.hash('zecrey.legend'))).to.equal(await addr1.getAddress());
+    //         expect(await zns.owner(namehash.hash('zkbas.legend'))).to.equal(await addr1.getAddress());
     //
     //         // register illegal name
-    //         const addr2L2Account = ethers.utils.formatBytes32String('zecrey2.legend');
+    //         const addr2L2Account = ethers.utils.formatBytes32String('zkbas2.legend');
     //         await expect(
-    //             zecreyLegend.connect(owner).register('id', await addr2.getAddress(), addr2L2Account)
+    //             zkbas.connect(owner).register('id', await addr2.getAddress(), addr2L2Account)
     //         ).to.be.revertedWith("invalid name");
     //         await expect(
-    //             zecreyLegend.connect(owner).register('id-a', await addr2.getAddress(), addr2L2Account)
+    //             zkbas.connect(owner).register('id-a', await addr2.getAddress(), addr2L2Account)
     //         ).to.be.revertedWith("invalid name");
     //
     //         // duplicated L2 owner
     //         await expect(
-    //             zecreyLegend.connect(owner).register('foo', await addr1.getAddress(), addr1L2Account)
+    //             zkbas.connect(owner).register('foo', await addr1.getAddress(), addr1L2Account)
     //         ).to.be.revertedWith('L2 owner existed');
     //     });
     // });
 
     // get the keccak256 hash of a specified string name
-    // eg: getKeccak256('zecrey') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
+    // eg: getKeccak256('zkbas') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
     const getKeccak256 = (name) => {
         return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name))
     }
@@ -86,7 +86,7 @@ describe("Zecrey-Legend Registry Contract", function () {
     //         return '0x' + '0'.repeat(64)
     //     }
     //
-    //     // split the name into 2 parts, if it contains '.', eg 'a.zecrey.legend' is split into 'a' and 'zecrey.legend'
+    //     // split the name into 2 parts, if it contains '.', eg 'a.zkbas.legend' is split into 'a' and 'zkbas.legend'
     //     // or we add '' into the second place, eg 'legend' is split into 'legend' and ''
     //     const parts = name.split('.', 2);
     //     if(parts.length === 1) {

@@ -2,8 +2,8 @@
 
 pragma solidity ^0.7.6;
 
-/// @title Zecrey configuration constants
-/// @author Zecrey Team
+/// @title Zkbas configuration constants
+/// @author Zkbas Team
 contract Config {
 
     /// @dev Configurable notice period

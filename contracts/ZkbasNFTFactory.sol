@@ -5,7 +5,7 @@ pragma solidity ^0.7.6;
 import "./NFTFactory.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract ZecreyNFTFactory is ERC721, NFTFactory {
+contract ZkbasNFTFactory is ERC721, NFTFactory {
 
 
     // Optional mapping from token ID to token content hash
@@ -16,32 +16,32 @@ contract ZecreyNFTFactory is ERC721, NFTFactory {
 
     string public _base;
 
-    address private _zecreyAddress;
+    address private _zkbasAddress;
 
     constructor(
         string memory name,
         string memory symbol,
         string memory base,
-        address zecreyAddress
+        address zkbasAddress
     ) ERC721(name, symbol) {
-        _zecreyAddress = zecreyAddress;
+        _zkbasAddress = zkbasAddress;
         _base = base;
     }
 
 
-    function mintFromZecrey(
+    function mintFromZkbas(
         address _creatorAddress,
         address _toAddress,
         uint256 _nftTokenId,
         bytes32 _nftContentHash,
         bytes memory _extraData
     ) external override {
-        require(_msgSender() == _zecreyAddress, "only zecreyAddress");
-        // Minting allowed only from zecrey
+        require(_msgSender() == _zkbasAddress, "only zkbasAddress");
+        // Minting allowed only from zkbas
         _safeMint(_toAddress, _nftTokenId);
         _contentHashes[_nftTokenId] = _nftContentHash;
         _nftCreators[_nftTokenId] = _creatorAddress;
-        emit MintNFTFromZecrey(_creatorAddress, _toAddress, _nftTokenId, _nftContentHash, _extraData);
+        emit MintNFTFromZkbas(_creatorAddress, _toAddress, _nftTokenId, _nftContentHash, _extraData);
     }
 
     function _beforeTokenTransfer(

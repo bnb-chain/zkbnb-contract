@@ -1,14 +1,14 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
-const {getDeployedAddresses, getZecreyLegendProxy} = require("./utils");
+const {getDeployedAddresses, getZkbasProxy} = require("./utils");
 
 async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
-    const zecreyLegend = await getZecreyLegendProxy(addrs.zecreyLegendProxy)
+    const zkbas = await getZkbasProxy(addrs.zkbasProxy)
 
-    console.log('Prepare new ZecreyVerifier')
+    console.log('Prepare new ZkbasVerifier')
     // new verifier
-    const NewVerifier = await ethers.getContractFactory('ZecreyVerifier')
+    const NewVerifier = await ethers.getContractFactory('ZkbasVerifier')
     console.log('Deploy New Verifier...')
     const newVerifier = await NewVerifier.deploy()
     await newVerifier.deployed()
@@ -19,7 +19,7 @@ async function main() {
 
     // update verifier
     console.log('Update Verifier...')
-    let updateVerifierTx = await zecreyLegend.updateZecreyVerifier(newVerifierProxy.address)
+    let updateVerifierTx = await zkbas.updateZkbasVerifier(newVerifierProxy.address)
     await updateVerifierTx.wait()
 }
 

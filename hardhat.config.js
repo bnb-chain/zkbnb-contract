@@ -15,7 +15,7 @@ module.exports = {
         // },
         local: {
             url: "http://127.0.0.1:8545",
-            accounts: ['08e504b8a5fd5bbc41e953f6e9cbe3371661c0010767c09315ace07e5a1e938e'],
+            accounts: ['906d5dc5a8ec5050a21987278d42af90852724df53a576e66057990ee48ac269'],
             timeout: 100000,
         },
         BNBTest: {
@@ -62,13 +62,13 @@ module.exports = {
         path: './data/abi',
         clear: true,
         flat: true,
-        only: [':StablePriceOracle'],
+        only: [':Governance$', ':Zkbas', ':StablePriceOracle'],
         spacing: 2
     },
     // watcher: {
     //     compilation: {
     //         tasks: ["compile"],
-    //         files: ["./contracts/ZecreyNFTFactory.sol"],
+    //         files: ["./contracts/ZkbasNFTFactory.sol"],
     //         verbose: true,
     //     }
     // },

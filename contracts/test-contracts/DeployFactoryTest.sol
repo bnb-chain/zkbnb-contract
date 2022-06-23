@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.7.6;
 
-import "./ZecreyUpgradeTest.sol";
+import "./ZkbasUpgradeTest.sol";
 import "../Proxy.sol";
 import "../UpgradeGatekeeper.sol";
 
 contract DeployFactoryTest {
 
     constructor(
-        ZecreyUpgradeTest _zecreyTarget,
+        ZkbasUpgradeTest _zkbasTarget,
         UpgradableBank _bank
     ) {
-        deployProxyContracts(_zecreyTarget, _bank);
+        deployProxyContracts(_zkbasTarget, _bank);
         selfdestruct(msg.sender);
     }
 
-    event Addresses(address zecrey, address bank, address gatekeeper);
+    event Addresses(address zkbas, address bank, address gatekeeper);
 
     function deployProxyContracts(
-        ZecreyUpgradeTest _zecreyTest,
+        ZkbasUpgradeTest _zkbasTest,
         UpgradableBank _bank
     ) internal {
         Proxy bank = new Proxy(address(_bank), abi.encode());
-        Proxy zecrey = new Proxy(address(_zecreyTest), abi.encode(address(bank)));
+        Proxy zkbas = new Proxy(address(_zkbasTest), abi.encode(address(bank)));
 
-        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zecrey);
+        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zkbas);
 
-        zecrey.transferMastership(address(upgradeGatekeeper));
-        upgradeGatekeeper.addUpgradeable(address(zecrey));
+        zkbas.transferMastership(address(upgradeGatekeeper));
+        upgradeGatekeeper.addUpgradeable(address(zkbas));
 
         bank.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(bank));
@@ -35,7 +35,7 @@ contract DeployFactoryTest {
         // New master is a governor
         upgradeGatekeeper.transferMastership(msg.sender);
 
-        emit Addresses(address(zecrey), address(bank), address(upgradeGatekeeper));
+        emit Addresses(address(zkbas), address(bank), address(upgradeGatekeeper));
     }
 
 }

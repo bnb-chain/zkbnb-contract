@@ -9,15 +9,15 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./Config.sol";
 import "./Governance.sol";
-import "./ZecreyVerifier.sol";
+import "./ZkbasVerifier.sol";
 import "./TxTypes.sol";
-import "./AdditionalZecreyLegend.sol";
+import "./AdditionalZkbas.sol";
 import "./ZNSController.sol";
 import "./resolvers/PublicResolver.sol";
 import "./NFTFactory.sol";
 
-/// @title zecrey storage contract
-/// @author Zecrey Labs
+/// @title zkbas storage contract
+/// @author Zkbas Labs
 contract Storage {
 
     /// @dev Flag indicates that upgrade preparation status is active
@@ -59,7 +59,7 @@ contract Storage {
     mapping(uint64 => PriorityTx) internal priorityRequests;
 
     /// @dev Verifier contract. Used to verify block proof and exit proof
-    ZecreyVerifier internal verifier;
+    ZkbasVerifier internal verifier;
 
     /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
     Governance internal governance;
@@ -76,7 +76,7 @@ contract Storage {
     /// @dev Root-chain balances (per owner and token id, see packAddressAndAssetId) to withdraw
     mapping(bytes22 => PendingBalance) internal pendingBalances;
 
-    AdditionalZecreyLegend internal additionalZecreyLegend;
+    AdditionalZkbas internal additionalZkbas;
 
     /// @notice Total number of committed blocks i.e. blocks[totalBlocksCommitted] points at the latest committed block
     uint32 public totalBlocksCommitted;
@@ -128,7 +128,7 @@ contract Storage {
         // desert mode activated
     }
 
-    /// @notice All token pairs in Zecrey Network
+    /// @notice All token pairs in Zkbas Network
 
     /// @notice Total number of tokens pairs registered in the network (start from 1)
     uint16 public totalTokenPairs;

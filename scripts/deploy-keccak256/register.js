@@ -1,10 +1,10 @@
-const {getDeployedAddresses, getZecreyLegendProxy} = require("./utils")
+const {getDeployedAddresses, getZkbasProxy} = require("./utils")
 const {ethers} = require("hardhat");
 
 async function main() {
     const [owner] = await ethers.getSigners();
     const addrs = getDeployedAddresses('info/addresses.json')
-    const zecreyLegend = await getZecreyLegendProxy(addrs.zecreyLegendProxy)
+    const zkbas = await getZkbasProxy(addrs.zkbasProxy)
     const Price = await ethers.getContractFactory('StablePriceOracle')
     const price = await Price.attach(addrs.znsPriceOracle)
     const treasuryName = 'treasury'
@@ -18,7 +18,7 @@ async function main() {
 
 
     console.log('Register ZNS for treasury, gas, sher and gavin...')
-    let registerZnsTx = await zecreyLegend.registerZNS(
+    let registerZnsTx = await zkbas.registerZNS(
         treasuryName,
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
         '0x2005db7af2bdcfae1fa8d28833ae2f1995e9a8e0825377cff121db64b0db21b7',
@@ -28,7 +28,7 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
-    registerZnsTx = await zecreyLegend.registerZNS(
+    registerZnsTx = await zkbas.registerZNS(
         gasName,
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
         '0x2c24415b75651673b0d7bbf145ac8d7cb744ba6926963d1d014836336df1317a',
@@ -38,7 +38,7 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
-    registerZnsTx = await zecreyLegend.registerZNS(
+    registerZnsTx = await zkbas.registerZNS(
         sherName,
         // '0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449', // BSC
         // '0x7dD2Ac589eFCC8888474d95Cb4b084CCa2d8aA57', // Local
@@ -51,7 +51,7 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
-    registerZnsTx = await zecreyLegend.registerZNS(
+    registerZnsTx = await zkbas.registerZNS(
         gavinName,
         '0xf162Be50463c1EbFbf1A2eF944885945A768fbC1',
         '0x0649fef47f6cf3dfb767cf5599eea11677bb6495956ec4cf75707d3aca7c06ed',

@@ -18,7 +18,7 @@ describe("name hash", function () {
     });
 
     // get the keccak256 hash of a specified string name
-    // eg: getKeccak256('zecrey') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
+    // eg: getKeccak256('zkbas') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
     const getKeccak256 = (name) => {
         return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name))
     }
@@ -34,7 +34,7 @@ describe("name hash", function () {
     //         return '0x' + '0'.repeat(64)
     //     }
     //
-    //     // split the name into 2 parts, if it contains '.', eg 'a.zecrey.legend' is split into 'a' and 'zecrey.legend'
+    //     // split the name into 2 parts, if it contains '.', eg 'a.zkbas.legend' is split into 'a' and 'zkbas.legend'
     //     // or we add '' into the second place, eg 'legend' is split into 'legend' and ''
     //     const parts = name.split('.', 2);
     //     if(parts.length === 1) {

@@ -2,7 +2,7 @@
 pragma solidity ^0.7.6;
 
 /// @title Interface of the upgradeable contract
-/// @author Zecrey Team
+/// @author Zkbas Team
 interface Upgradeable {
     /// @notice Upgrades target of upgradeable contract
     /// @param newTarget New target

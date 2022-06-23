@@ -7,10 +7,10 @@ pragma experimental ABIEncoderV2;
 import "./Bytes.sol";
 import "./Utils.sol";
 
-/// @title zecrey op tools
+/// @title zkbas op tools
 library TxTypes {
 
-    /// @notice zecrey circuit op type
+    /// @notice zkbas circuit op type
     enum TxType {
         EmptyTx,
         RegisterZNS,

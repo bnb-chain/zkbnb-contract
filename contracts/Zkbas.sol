@@ -23,9 +23,9 @@ import "./Config.sol";
 import "./ZNSController.sol";
 import "./Proxy.sol";
 
-/// @title Zecrey main contract
-/// @author Zecrey Team
-contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
+/// @title Zkbas main contract
+/// @author Zkbas Team
+contract Zkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
@@ -132,7 +132,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         }
     }
 
-    /// @notice Zecrey contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
+    /// @notice Zkbas contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
     /// @param initializationParameters Encoded representation of initialization parameters:
     /// @dev _governanceAddress The address of Governance contract
     /// @dev _verifierAddress The address of Verifier contract
@@ -143,15 +143,15 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         (
         address _governanceAddress,
         address _verifierAddress,
-        address _additionalZecreyLegend,
+        address _additionalZkbas,
         address _znsController,
         address _znsResolver,
         bytes32 _genesisStateRoot
         ) = abi.decode(initializationParameters, (address, address, address, address, address, bytes32));
 
-        verifier = ZecreyVerifier(_verifierAddress);
+        verifier = ZkbasVerifier(_verifierAddress);
         governance = Governance(_governanceAddress);
-        additionalZecreyLegend = AdditionalZecreyLegend(_additionalZecreyLegend);
+        additionalZkbas = AdditionalZkbas(_additionalZkbas);
         znsController = ZNSController(_znsController);
         znsResolver = PublicResolver(_znsResolver);
 
@@ -186,9 +186,9 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         delegateAdditional();
     }
 
-    function registerZNS(string calldata _name, address _owner, bytes32 _zecreyPubKeyX, bytes32 _zecreyPubKeyY) external payable nonReentrant {
+    function registerZNS(string calldata _name, address _owner, bytes32 _zkbasPubKeyX, bytes32 _zkbasPubKeyY) external payable nonReentrant {
         // Register ZNS
-        (bytes32 node,uint32 accountIndex) = znsController.registerZNS{value : msg.value}(_name, _owner, _zecreyPubKeyX, _zecreyPubKeyY, address(znsResolver));
+        (bytes32 node,uint32 accountIndex) = znsController.registerZNS{value : msg.value}(_name, _owner, _zkbasPubKeyX, _zkbasPubKeyY, address(znsResolver));
 
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
@@ -196,8 +196,8 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         accountIndex : accountIndex,
         accountName : Utils.stringToBytes32(_name),
         accountNameHash : node,
-        pubKeyX : _zecreyPubKeyX,
-        pubKeyY : _zecreyPubKeyY
+        pubKeyX : _zkbasPubKeyX,
+        pubKeyY : _zkbasPubKeyY
         });
         // compact pub data
         bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
@@ -205,7 +205,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
 
-        emit RegisterZNS(_name, node, _owner, _zecreyPubKeyX, _zecreyPubKeyY, accountIndex);
+        emit RegisterZNS(_name, node, _owner, _zkbasPubKeyX, _zkbasPubKeyY, accountIndex);
     }
 
     function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
@@ -283,7 +283,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
             nftContentHash : l2Nfts[nftKey].nftContentHash,
             collectionId : l2Nfts[nftKey].collectionId
             });
-            try NFTFactory(_factoryAddress).mintFromZecrey(
+            try NFTFactory(_factoryAddress).mintFromZkbas(
                 _creatorAddress,
                 op.toAddress,
                 op.nftIndex,
@@ -336,11 +336,11 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         return pendingBalances[packAddressAndAssetId(_address, assetId)].balanceToWithdraw;
     }
 
-    /// @notice  Withdraws tokens from Zecrey contract to the owner
+    /// @notice  Withdraws tokens from Zkbas contract to the owner
     /// @param _owner Address of the tokens owner
     /// @param _token Address of tokens, zero address is used for Native Asset
     /// @param _amount Amount to withdraw to request.
-    ///         NOTE: We will call ERC20.transfer(.., _amount), but if according to internal logic of ERC20 token Zecrey contract
+    ///         NOTE: We will call ERC20.transfer(.., _amount), but if according to internal logic of ERC20 token Zkbas contract
     ///         balance will be decreased by value more then _amount we will try to subtract this value from user pending balance
     function withdrawPendingBalance(
         address payable _owner,
@@ -545,7 +545,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         } else {
             address tokenAddr = governance.assetAddresses(_assetId);
             // We use `_transferERC20` here to check that `ERC20` token indeed transferred `_amount`
-            // and fail if token subtracted from Zecrey balance more then `_amount` that was requested.
+            // and fail if token subtracted from Zkbas balance more then `_amount` that was requested.
             // This can happen if token subtracts fee from sender while transferring `_amount` that was requested to transfer.
             try this.transferERC20{gas : WITHDRAWAL_GAS_LIMIT}(IERC20(tokenAddr), _recipient, _amount, _amount) {
                 sent = true;
@@ -846,7 +846,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
 
     /// @notice Register full exit nft request - pack pubdata, add priority request
     /// @param _accountName account name
-    /// @param _nftIndex account NFT index in zecrey network
+    /// @param _nftIndex account NFT index in zkbas network
     function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
         delegateAdditional();
     }
@@ -894,7 +894,7 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
     /// @notice Should be only use to delegate the external calls as it passes the calldata
     /// @notice All functions delegated to additional contract should NOT be nonReentrant
     function delegateAdditional() internal {
-        address _target = address(additionalZecreyLegend);
+        address _target = address(additionalZkbas);
         assembly {
         // The pointer to the free memory slot
             let ptr := mload(0x40)
@@ -928,6 +928,12 @@ contract ZecreyLegend is UpgradeableMaster, Events, Storage, Config, ReentrancyG
         assembly {
             result := mload(add(data, 32))
         }
+    }
+
+    // @dev This function is only for test
+    // TODO delete this funcFtion
+    function updateZkbasVerifier(address _newVerifierAddress) external {
+        delegateAdditional();
     }
 
 }

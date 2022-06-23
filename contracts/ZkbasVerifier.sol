@@ -2,7 +2,7 @@
 
 pragma solidity ^0.7.6;
 
-contract ZecreyVerifier {
+contract ZkbasVerifier {
 
     function initialize(bytes calldata) external {}
 
@@ -160,8 +160,6 @@ contract ZecreyVerifier {
         finalVksAlphaX[1] = finalVKalpha[1];
     }
 
-
-
     function verifyingKey(uint16 block_size) internal pure returns (uint256[14] memory vk) {
         if (block_size == 10) {
             vk[0] = 3691972513144226104133741987539029785070181917204353823969426101497682919141;
@@ -227,7 +225,6 @@ contract ZecreyVerifier {
             revert("u");
         }
     }
-
 
 
     function getProofEntropy(
@@ -356,7 +353,8 @@ contract ZecreyVerifier {
         uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         // Performs a sum of gammaABC[0] + sum[ gammaABC[i+1]^proof_inputs[i] ]
         for (uint i = 0; i < proof_inputs.length; i++) {
-            // require(proof_inputs[i] < q, "INVALID_INPUT");
+            // @dev only for qa test
+            //  require(proof_inputs[i] < q, "INVALID_INPUT");
             mul_input[0] = vk_gammaABC[m++];
             mul_input[1] = vk_gammaABC[m++];
             mul_input[2] = proof_inputs[i];
@@ -399,5 +397,4 @@ contract ZecreyVerifier {
         require(success);
         return out[0] == 1;
     }
-
 }

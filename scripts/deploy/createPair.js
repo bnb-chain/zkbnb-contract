@@ -1,18 +1,18 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
-const {getDeployedAddresses, getZecreyLegendProxy} = require("./utils");
+const {getDeployedAddresses, getZkbasProxy} = require("./utils");
 
 async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
-    const zecreyLegend = await getZecreyLegendProxy(addrs.zecreyLegendProxy)
+    const zkbas = await getZkbasProxy(addrs.zkbasProxy)
 
     // create pairs
     console.log('createPair...')
-    let createPairTx = await zecreyLegend.createPair('0x0000000000000000000000000000000000000000', addrs.REYToken)
+    let createPairTx = await zkbas.createPair('0x0000000000000000000000000000000000000000', addrs.REYToken)
     await createPairTx.wait()
-    createPairTx = await zecreyLegend.createPair('0x0000000000000000000000000000000000000000', addrs.LEGToken)
+    createPairTx = await zkbas.createPair('0x0000000000000000000000000000000000000000', addrs.LEGToken)
     await createPairTx.wait()
-    createPairTx = await zecreyLegend.createPair(addrs.REYToken, addrs.LEGToken)
+    createPairTx = await zkbas.createPair(addrs.REYToken, addrs.LEGToken)
     await createPairTx.wait()
 }
 
