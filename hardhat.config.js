@@ -25,7 +25,7 @@ module.exports = {
             gas: 15000000
         },
         BSCTestnet: {
-            url: "https://data-seed-prebsc-2-s2.binance.org:8545",
+            url: "https://data-seed-prebsc-1-s1.binance.org:8545",
             accounts: ['acbaa269bd7573ff12361be4b97201aef019776ea13384681d4e5ba6a88367d9'],
             timeout: 300000,
             gas: 15000000
