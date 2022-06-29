@@ -43,10 +43,7 @@ contract StablePriceOracle is IPriceOracle, OwnableUpgradeable {
             basePrice = price3Letter;
         }
 
-        return BNBToWei(basePrice);
+        return basePrice;
     }
 
-    function BNBToWei(uint256 amount) internal view returns (uint256) {
-        return amount * 1e18;
-    }
 }
