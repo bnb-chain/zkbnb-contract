@@ -277,7 +277,7 @@ library TxTypes {
         buf = abi.encodePacked(
             uint8(TxType.DepositNft),
             uint32(0),
-            _tx.nftIndex,
+            uint40(0),
             _tx.nftL1Address, // token address
             _tx.creatorAccountIndex,
             _tx.creatorTreasuryRate,
@@ -495,7 +495,7 @@ library TxTypes {
             uint32(0),
             uint32(0),
             uint16(0),
-            _tx.nftIndex,
+            uint40(0),
             uint16(0), // collection id
             address(0x0), // nft l1 address
             _tx.accountNameHash, // account name hash
