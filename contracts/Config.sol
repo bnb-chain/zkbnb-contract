@@ -7,7 +7,10 @@ pragma solidity ^0.7.6;
 contract Config {
 
     /// @dev Configurable notice period
-    uint256 public constant UPGRADE_NOTICE_PERIOD = 4 weeks;
+    // TODO 1 minutes only for test, should modified to 4 weeks after
+//    uint256 public constant UPGRADE_NOTICE_PERIOD = 4 weeks;
+    uint256 public constant UPGRADE_NOTICE_PERIOD = 1 minutes;
+
     /// @dev Shortest notice period
     uint256 public constant SHORTEST_UPGRADE_NOTICE_PERIOD = 0;
 
