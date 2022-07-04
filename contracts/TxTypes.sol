@@ -495,7 +495,7 @@ library TxTypes {
             uint32(0),
             uint32(0),
             uint16(0),
-            uint40(0),
+            _tx.nftIndex,
             uint16(0), // collection id
             address(0x0), // nft l1 address
             _tx.accountNameHash, // account name hash
