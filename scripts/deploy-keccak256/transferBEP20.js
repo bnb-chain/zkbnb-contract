@@ -5,11 +5,11 @@ async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
     const [owner] = await ethers.getSigners();
     const Token = await ethers.getContractFactory('ZecreyRelatedERC20')
-    const LegToken = await Token.attach('0x1A9FEAc5793E4b34C679262aE5719957c4f4a76C')
-    const ReyToken = await Token.attach('0xddfE4eD28c9CD5c7C0FCb756F02e786284213CAE')
+    const LegToken = await Token.attach(addrs.LEGToken)
+    const ReyToken = await Token.attach(addrs.REYToken)
 
     console.log('Transfer LEG')
-    const recipient = '0x805e286d05388911ccdb10e3c7b9713415607c72'
+    const recipient = '0x736B2D2A88e576F9204e93B256BAAb48d0c35b3D'
     let transferTx = await LegToken.transfer(recipient, ethers.utils.parseEther('1000'))
     await transferTx.wait()
     console.log('Transfer REY')
