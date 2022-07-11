@@ -38,6 +38,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         uint256 timestamp;
         uint32[] publicDataOffsets;
         uint32 blockNumber;
+        uint16 blockSize;
     }
 
     struct VerifyAndExecuteBlockInfo {
@@ -155,6 +156,7 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         znsResolver = PublicResolver(_znsResolver);
 
         StoredBlockInfo memory zeroStoredBlockInfo = StoredBlockInfo(
+            0,
             0,
             0,
             EMPTY_STRING_KECCAK,
@@ -628,21 +630,60 @@ contract OldZecreyLegend is UpgradeableMaster, Events, Storage, Config, Reentran
         uint64 priorityRequestsExecuted = 0;
         uint32 nBlocks = uint32(_blocks.length);
         // proof public inputs
-        uint256[] memory inputs = new uint256[](3 * _blocks.length);
-        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         for (uint16 i = 0; i < _blocks.length; ++i) {
             priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
-            // verify block proof
-            inputs[3 * i] = uint256(stateRoot);
-            inputs[3 * i + 1] = uint256(_blocks[i].blockHeader.stateRoot);
-            inputs[3 * i + 2] = uint256(_blocks[i].blockHeader.commitment) % q;
             // update account root
-            stateRoot = _blocks[i].blockHeader.stateRoot;
             verifyAndExecuteOneBlock(_blocks[i], i);
             emit BlockVerification(_blocks[i].blockHeader.blockNumber);
         }
-        bool res = verifier.verifyBatchProofs(_proofs, inputs, _blocks.length);
-        require(res, "I");
+        uint numBlocksVerified = 0;
+        bool[] memory blockVerified = new bool[](nBlocks);
+        uint[] memory batch = new uint[](nBlocks);
+        uint firstBlockSize = 0;
+        while (numBlocksVerified < nBlocks) {
+            // Find all blocks of the same type
+            uint batchLength = 0;
+            for (uint i = 0; i < nBlocks; i++) {
+                if (blockVerified[i] == false) {
+                    if (batchLength == 0) {
+                        firstBlockSize = _blocks[i].blockHeader.blockSize;
+                        batch[batchLength++] = i;
+                    } else {
+                        if (_blocks[i].blockHeader.blockSize == firstBlockSize) {
+                            batch[batchLength++] = i;
+                        }
+                    }
+                }
+            }
+            // Prepare the data for batch verification
+            uint[] memory publicInputs = new uint[](3 * batchLength);
+            uint[] memory proofs = new uint[](batchLength * 8);
+            uint16 block_size = 0;
+            uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+            for (uint i = 0; i < batchLength; i++) {
+                uint blockIdx = batch[i];
+                blockVerified[blockIdx] = true;
+                // verify block proof
+                VerifyAndExecuteBlockInfo memory _block = _blocks[blockIdx];
+                if (blockIdx == 0) {
+                    publicInputs[3 * i] = uint256(stateRoot);
+                } else {
+                    publicInputs[3 * i] = uint256(_blocks[blockIdx-1].blockHeader.stateRoot);
+                }
+                publicInputs[3 * i + 1] = uint256(_block.blockHeader.stateRoot);
+                publicInputs[3 * i + 2] = uint256(_block.blockHeader.commitment) % q;
+                for (uint j = 0; j < 8; j++) {
+                    proofs[8 * i + j] = _proofs[8 * blockIdx + j];
+                }
+                block_size = _block.blockHeader.blockSize;
+            }
+            bool res = verifier.verifyBatchProofs(proofs, publicInputs, batchLength, block_size);
+            require(res, "inp");
+            numBlocksVerified += batchLength;
+        }
+
+        // update account root
+        stateRoot = _blocks[nBlocks - 1].blockHeader.stateRoot;
         firstPriorityRequestId += priorityRequestsExecuted;
         totalCommittedPriorityRequests -= priorityRequestsExecuted;
         totalOpenPriorityRequests -= priorityRequestsExecuted;

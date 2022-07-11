@@ -512,6 +512,7 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
         uint256 timestamp;
         uint32[] publicDataOffsets;
         uint32 blockNumber;
+        uint16 blockSize;
     }
 
     function commitBlocks(
@@ -567,6 +568,7 @@ contract AdditionalZecreyLegend is Storage, Config, Events, ReentrancyGuard, IER
 
         return
         StoredBlockInfo(
+            _newBlock.blockSize,
             _newBlock.blockNumber,
             priorityReqCommitted,
             pendingOnchainOpsHash,
