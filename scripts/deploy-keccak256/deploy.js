@@ -38,7 +38,11 @@ async function main() {
     // Step 3: initialize deploy factory and finish deployment
     // deploy price oracle
     console.log('Deploy PriceOracle...')
-    const priceOracle = await contractFactories.ZNSPriceOracle.deploy([0, 1, 2]);
+    const priceOracle = await contractFactories.ZNSPriceOracle.deploy([
+        ethers.utils.parseEther('0.05'),
+        ethers.utils.parseEther('0.03'),
+        ethers.utils.parseEther('0.01'),
+    ]);
     await priceOracle.deployed();
 
     // prepare deploy params
@@ -123,6 +127,7 @@ async function main() {
         LEGToken: LEGToken.address,
         REYToken: REYToken.address,
         ERC721: ERC721.address,
+        znsPriceOracle: priceOracle.address,
     })
 }
 
