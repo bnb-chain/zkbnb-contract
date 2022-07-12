@@ -99,6 +99,7 @@ contract Storage {
     }
 
     struct StoredBlockInfo {
+        uint16 blockSize;
         uint32 blockNumber;
         uint64 priorityOperations;
         bytes32 pendingOnchainOperationsHash;
