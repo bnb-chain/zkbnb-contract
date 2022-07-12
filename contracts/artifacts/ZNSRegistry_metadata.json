@@ -1,0 +1,439 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					}
+				],
+				"name": "NewOwner",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "pubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "NewPubKey",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "resolver",
+						"type": "address"
+					}
+				],
+				"name": "NewResolver",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "input",
+						"type": "bytes"
+					}
+				],
+				"name": "mimcHash",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "result",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					}
+				],
+				"name": "owner",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					}
+				],
+				"name": "pubKey",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					}
+				],
+				"name": "recordExists",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					}
+				],
+				"name": "resolver",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "_node",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_pubKey",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "_resolver",
+						"type": "address"
+					}
+				],
+				"name": "setRecord",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "_node",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "_resolver",
+						"type": "address"
+					}
+				],
+				"name": "setResolver",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "_node",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_label",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_pubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "setSubnodeOwner",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "_node",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_label",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "_pubKey",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "address",
+						"name": "_resolver",
+						"type": "address"
+					}
+				],
+				"name": "setSubnodeRecord",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "label",
+						"type": "bytes32"
+					}
+				],
+				"name": "subNodeRecordExists",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"constructor": {
+					"details": "Constructs a new registry."
+				},
+				"owner(bytes32)": {
+					"details": "Returns the address that owns the specified node.",
+					"params": {
+						"node": "The specified node."
+					},
+					"returns": {
+						"_0": "address of the owner."
+					}
+				},
+				"pubKey(bytes32)": {
+					"details": "Returns the L2 owner of the specified node, which is a bytes32 L2 public key.",
+					"params": {
+						"node": "The specified node."
+					},
+					"returns": {
+						"_0": "L2 owner of the node."
+					}
+				},
+				"recordExists(bytes32)": {
+					"details": "Returns whether a record has been imported to the registry.",
+					"params": {
+						"node": "The specified node"
+					},
+					"returns": {
+						"_0": "bool If record exists"
+					}
+				},
+				"resolver(bytes32)": {
+					"details": "Returns the address of the resolver for the specified node.",
+					"params": {
+						"node": "The specified node."
+					},
+					"returns": {
+						"_0": "address of the resolver."
+					}
+				},
+				"setRecord(bytes32,address,bytes32,address)": {
+					"details": "Set the record for a node.",
+					"params": {
+						"_node": "The node to update.",
+						"_owner": "The address of the new owner.",
+						"_pubKey": "The pub key of the node",
+						"_resolver": "The address of the resolver."
+					}
+				},
+				"setResolver(bytes32,address)": {
+					"details": "Set the resolver address for the specified node.",
+					"params": {
+						"_node": "The node to update.",
+						"_resolver": "The address of the resolver."
+					}
+				},
+				"setSubnodeOwner(bytes32,bytes32,address,bytes32)": {
+					"details": "Set the ownership of a subnode keccak256(node, label) to a new address. May only be called by the owner of the parent node.",
+					"params": {
+						"_label": "The hash of the label specifying the subnode.",
+						"_node": "The parent node.",
+						"_owner": "The address of the new owner.",
+						"_pubKey": "The L2 owner of the subnode"
+					}
+				},
+				"setSubnodeRecord(bytes32,bytes32,address,bytes32,address)": {
+					"details": "Set the record for a subnode.",
+					"params": {
+						"_label": "The hash of the subnode",
+						"_node": "The parent node.",
+						"_owner": "The address of the new owner.",
+						"_pubKey": "The layer-2 public key",
+						"_resolver": "The address of the resolver."
+					}
+				},
+				"subNodeRecordExists(bytes32,bytes32)": {
+					"details": "Returns whether a subnode record has been imported to the registry.",
+					"params": {
+						"label": "The nodehash of the subnode",
+						"node": "The specified node"
+					},
+					"returns": {
+						"_0": "bool If record exists"
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ZNSRegistry.sol": "ZNSRegistry"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/ZNS.sol": {
+			"keccak256": "0xff9db946b6e2249161664f14076d2c0b60f264d285732de26c03280b7e656294",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://0ea80eb6ca7c6819ddd0e45c0fd326c50ea95307af62225d9bb4a3f7f18975fe",
+				"dweb:/ipfs/QmUkT6r9cZk6HFiAag9BuECGEfmwSXoTS4BadmxkeJ3iMz"
+			]
+		},
+		"contracts/ZNSRegistry.sol": {
+			"keccak256": "0xc8cc954d3da87acd2b29628a4a58f2f44ae0a5193519122960e759e91a544f76",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://d57b65d9d13ccd1bc5eb8f2d31da578d9e235686924bc3a7c3afd57f73795572",
+				"dweb:/ipfs/QmWt5BCn5jVhFSSdk4jbHJL9A3F9uYTFhjkBkTo2StGjGT"
+			]
+		}
+	},
+	"version": 1
+}

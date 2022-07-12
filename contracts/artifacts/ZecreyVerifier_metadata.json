@@ -1,0 +1,143 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [],
+				"name": "ScalarField",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "pure",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes",
+						"name": "upgradeParameters",
+						"type": "bytes"
+					}
+				],
+				"name": "upgrade",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "in_proof",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "proof_inputs",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "num_proofs",
+						"type": "uint256"
+					}
+				],
+				"name": "verifyBatchProofs",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "success",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256[]",
+						"name": "in_proof",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "proof_inputs",
+						"type": "uint256[]"
+					}
+				],
+				"name": "verifyProof",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"upgrade(bytes)": {
+					"params": {
+						"upgradeParameters": "Encoded representation of upgrade parameters"
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"upgrade(bytes)": {
+					"notice": "Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function."
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ZecreyVerifier.sol": "ZecreyVerifier"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/Pairing.sol": {
+			"keccak256": "0x71ddce87ef82ca4526ffc275be599cfd1b36fb6c3e59b6723ef9194749c68c70",
+			"license": "AML",
+			"urls": [
+				"bzz-raw://bb8847a18af5ead3e55cc1dcf14b18f86597a93973803b42ebe660aba4106c7b",
+				"dweb:/ipfs/QmWoyUMfjxx3TTL8bJzDDaRtW5JScfZVyAZktH8qZwQokv"
+			]
+		},
+		"contracts/ZecreyVerifier.sol": {
+			"keccak256": "0xcbe23df26461aafb609d53430428aba27ac8c4e2b12d8d1460704c152f6c2238",
+			"license": "AML",
+			"urls": [
+				"bzz-raw://830bb77626c6d5121c625dc0246c1393b1618199f36fb85370d06966b12ded8c",
+				"dweb:/ipfs/QmY2gveYbMmiGktr2gWaWVoVaHA9wNmkVfzja6FaffESC5"
+			]
+		}
+	},
+	"version": 1
+}

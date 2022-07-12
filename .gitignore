@@ -102,3 +102,15 @@ dist
 
 # TernJS port file
 .tern-port
+
+*.idea
+/contracts/artifacts/
+/contracts/artifacts/
+
+
+#Hardhat files
+cache
+artifacts
+artifacts-bak
+coverage.json
+

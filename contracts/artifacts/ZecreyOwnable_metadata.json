@@ -1,0 +1,117 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "masterAddress",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [],
+				"name": "getMaster",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "master",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_newMaster",
+						"type": "address"
+					}
+				],
+				"name": "transferMastership",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"author": "Zecrey Team",
+			"kind": "dev",
+			"methods": {
+				"constructor": {
+					"details": "Sets msg sender address as masters address",
+					"params": {
+						"masterAddress": "Master address"
+					}
+				},
+				"getMaster()": {
+					"returns": {
+						"master": "Master's address"
+					}
+				},
+				"transferMastership(address)": {
+					"params": {
+						"_newMaster": "New masters address"
+					}
+				}
+			},
+			"stateVariables": {
+				"MASTER_POSITION": {
+					"details": "Storage position of the masters address (keccak256('eip1967.proxy.admin') - 1)"
+				}
+			},
+			"title": "Ownable Contract",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"constructor": {
+					"notice": "Contract constructor"
+				},
+				"getMaster()": {
+					"notice": "Returns contract masters address"
+				},
+				"transferMastership(address)": {
+					"notice": "Transfer mastership of the contract to new master"
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ZecreyOwnable.sol": "ZecreyOwnable"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/ZecreyOwnable.sol": {
+			"keccak256": "0x703c60bab65902206df37776baea0d4b8c38c960dafc921e007026605a34925e",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://eac5dc267f53c652667e70d38a4df1b263dc0bb99690b87238df79a3ed3714d9",
+				"dweb:/ipfs/QmXMpns4q2yhr7ywQEK29G2RqTLxLzMT5bBEyFw5z6m88Q"
+			]
+		}
+	},
+	"version": 1
+}

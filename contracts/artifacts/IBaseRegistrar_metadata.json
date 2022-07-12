@@ -1,0 +1,178 @@
+{
+	"compiler": {
+		"version": "0.7.6+commit.7338295f"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "controller",
+						"type": "address"
+					}
+				],
+				"name": "ControllerAdded",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "controller",
+						"type": "address"
+					}
+				],
+				"name": "ControllerRemoved",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "node",
+						"type": "bytes32"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "bytes32",
+						"name": "L2Owner",
+						"type": "bytes32"
+					}
+				],
+				"name": "ZNSRegistered",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "controller",
+						"type": "address"
+					}
+				],
+				"name": "addController",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_name",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes32",
+						"name": "zecreyPubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "registerZNS",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "controller",
+						"type": "address"
+					}
+				],
+				"name": "removeController",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "resolver",
+						"type": "address"
+					}
+				],
+				"name": "setThisResolver",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "zecreyPubKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "setZecreyPubKey",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/IBaseRegistrar.sol": "IBaseRegistrar"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/IBaseRegistrar.sol": {
+			"keccak256": "0x0b9cc2c012c58eab5422ed9c1fe9e58d8b15b13d013f836bd5d2af6a9fc11f27",
+			"license": "MIT OR Apache-2.0",
+			"urls": [
+				"bzz-raw://56cbc0b53528b24aa8ae3e5916bb6f8b247c8f27b46e085dd561bce7c7022dc3",
+				"dweb:/ipfs/QmQ6x181Yetu66Lm7bgU5twczS2HuNdBYrtSQNQLuY2DC5"
+			]
+		}
+	},
+	"version": 1
+}
