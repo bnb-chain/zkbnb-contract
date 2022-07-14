@@ -62,7 +62,7 @@ module.exports = {
         path: './data/abi',
         clear: true,
         flat: true,
-        only: [':OldZecreyLegend'],
+        only: [':StablePriceOracle'],
         spacing: 2
     },
     // watcher: {
