@@ -13,7 +13,7 @@ async function main() {
     const znsRegistry = await contractFactories.ZNSRegistry.deploy();
     await znsRegistry.deployed();
 
-    // Step 2: deploy proxied contract
+    // Step 2: deploy proxy contract
     // governance
     console.log('Deploy Governance...')
     const governance = await contractFactories.Governance.deploy();

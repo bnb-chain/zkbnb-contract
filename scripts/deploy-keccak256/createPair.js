@@ -8,9 +8,10 @@ async function main() {
 
     // create pairs
     console.log('createPair...')
-    let createPairTx = await zecreyLegend.createPair('0x0000000000000000000000000000000000000000', addrs.REYToken)
+    const zeroAddr = '0x0000000000000000000000000000000000000000'
+    let createPairTx = await zecreyLegend.createPair(zeroAddr, addrs.REYToken)
     await createPairTx.wait()
-    createPairTx = await zecreyLegend.createPair('0x0000000000000000000000000000000000000000', addrs.LEGToken)
+    createPairTx = await zecreyLegend.createPair(zeroAddr, addrs.LEGToken)
     await createPairTx.wait()
     createPairTx = await zecreyLegend.createPair(addrs.REYToken, addrs.LEGToken)
     await createPairTx.wait()

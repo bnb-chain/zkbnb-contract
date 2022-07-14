@@ -9,7 +9,7 @@ async function main() {
     const ReyToken = await Token.attach(addrs.REYToken)
 
     console.log('Transfer LEG')
-    const recipient = '0x736B2D2A88e576F9204e93B256BAAb48d0c35b3D'
+    const recipient = '0x09E45d6FcF322c4D93E6aFE7076601FF10BA942E'
     let transferTx = await LegToken.transfer(recipient, ethers.utils.parseEther('1000'))
     await transferTx.wait()
     console.log('Transfer REY')
