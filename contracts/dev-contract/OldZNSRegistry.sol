@@ -103,7 +103,9 @@ contract OldZNSRegistry is ZNS {
         bytes32 _pubKeyX,
         bytes32 _pubKeyY
     ) public override authorized(_node) returns (bytes32) {
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         bytes32 subnode = keccak256Hash(abi.encodePacked(_node, _label));
+        subnode = bytes32(uint256(subnode) % q);
         _setOwner(subnode, _owner);
         _setPubKey(subnode, _pubKeyX, _pubKeyY);
         return subnode;

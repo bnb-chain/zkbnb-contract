@@ -48,7 +48,8 @@ contract OldZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuard
         (address _znsAddr, address _prices, bytes32 _node) = abi.decode(initializationParameters, (address, address, bytes32));
         zns = ZNS(_znsAddr);
         prices = IPriceOracle(_prices);
-        baseNode = _node;
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        baseNode = bytes32(uint256(_node)%q);
 
         // initialize ownership
         controllers[msg.sender] = true;
@@ -134,7 +135,10 @@ contract OldZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuard
     }
 
     function getSubnodeNameHash(string memory name) external view returns (bytes32) {
-        return keccak256Hash(abi.encodePacked(baseNode, keccak256Hash(bytes(name))));
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        bytes32 subnode = keccak256Hash(abi.encodePacked(baseNode, keccak256Hash(bytes(name))));
+        subnode = bytes32(uint256(subnode) % q);
+        return subnode;
     }
 
     function isRegisteredNameHash(bytes32 _nameHash) external view returns (bool){
