@@ -141,6 +141,15 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         return zns.recordExists(_nameHash);
     }
 
+    function isRegisteredZNSName(string memory _name) external view returns (bool) {
+        bytes32 subnode = this.getSubnodeNameHash(_name);
+        return this.isRegisteredNameHash(subnode);
+    }
+
+    function getZNSNamePrice(string calldata name) external view returns (uint256) {
+        return prices.price(name);
+    }
+
     function _valid(string memory _name) internal pure returns (bool) {
         return _validCharset(_name) && _validLength(_name);
     }

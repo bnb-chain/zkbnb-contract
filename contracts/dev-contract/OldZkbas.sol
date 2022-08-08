@@ -208,6 +208,14 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         emit RegisterZNS(_name, node, _owner, _zkbasPubKeyX, _zkbasPubKeyY, accountIndex);
     }
 
+    function isRegisteredZNSName(string memory _name) external view returns (bool) {
+        return znsController.isRegisteredZNSName(_name);
+    }
+
+    function getZNSNamePrice(string calldata name) external view returns (uint256) {
+        return znsController.getZNSNamePrice(name);
+    }
+
     function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address){
         return znsController.getOwner(accountNameHash);
     }

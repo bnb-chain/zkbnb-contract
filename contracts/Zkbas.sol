@@ -212,6 +212,14 @@ contract Zkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         return znsController.getOwner(accountNameHash);
     }
 
+    function isRegisteredZNSName(string memory name) external view returns (bool) {
+        return znsController.isRegisteredZNSName(name);
+    }
+
+    function getZNSNamePrice(string calldata name) external view returns (uint256) {
+        return znsController.getZNSNamePrice(name);
+    }
+
     /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
     /// @param _accountName the receiver account name
     function depositBNB(string calldata _accountName) external payable {
