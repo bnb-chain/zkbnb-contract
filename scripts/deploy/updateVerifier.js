@@ -6,9 +6,9 @@ async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
     const zkbas = await getZkbasProxy(addrs.zkbasProxy)
 
-    console.log('Prepare new ZkbasVerifier')
+    console.log('Prepare new ZkbasPlonkVerifier')
     // new verifier
-    const NewVerifier = await ethers.getContractFactory('ZkbasVerifier')
+    const NewVerifier = await ethers.getContractFactory('ZkbasPlonkVerifier')
     console.log('Deploy New Verifier...')
     const newVerifier = await NewVerifier.deploy()
     await newVerifier.deployed()

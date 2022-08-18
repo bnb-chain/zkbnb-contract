@@ -149,7 +149,7 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         bytes32 _genesisStateRoot
         ) = abi.decode(initializationParameters, (address, address, address, address, address, bytes32));
 
-        verifier = ZkbasVerifier(_verifierAddress);
+        verifier = ZkbasPlonkVerifier(_verifierAddress);
         governance = Governance(_governanceAddress);
         additionalZkbas = AdditionalZkbas(_additionalZkbas);
         znsController = ZNSController(_znsController);
@@ -665,7 +665,7 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
             }
             // Prepare the data for batch verification
             uint[] memory publicInputs = new uint[](3 * batchLength);
-            uint[] memory proofs = new uint[](batchLength * 8);
+            uint[] memory proofs = new uint[](batchLength * 26);
             uint16 block_size = 0;
             uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
             for (uint i = 0; i < batchLength; i++) {
@@ -680,8 +680,8 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
                 }
                 publicInputs[3 * i + 1] = uint256(_block.blockHeader.stateRoot);
                 publicInputs[3 * i + 2] = uint256(_block.blockHeader.commitment) % q;
-                for (uint j = 0; j < 8; j++) {
-                    proofs[8 * i + j] = _proofs[8 * blockIdx + j];
+                for (uint j = 0; j < 26; j++) {
+                    proofs[26 * i + j] = _proofs[26 * blockIdx + j];
                 }
                 block_size = _block.blockHeader.blockSize;
             }

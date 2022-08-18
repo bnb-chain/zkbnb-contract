@@ -90,7 +90,7 @@ describe("Zkbas contract", function () {
             await changeAssetGovernanceTx.wait()
 
             // deploy verifier
-            const Verifier = await ethers.getContractFactory('ZkbasVerifier')
+            const Verifier = await ethers.getContractFactory('ZkbasPlonkVerifier')
             const verifier = await Verifier.deploy()
             await verifier.deployed()
             // deploy utils

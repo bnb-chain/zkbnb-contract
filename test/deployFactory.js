@@ -40,7 +40,7 @@ describe("Zkbas contract", function () {
         // assetGovernance = await AssetGovernance.deploy()
         // await assetGovernance.deployed()
         // verifier
-        Verifier = await ethers.getContractFactory('ZkbasVerifier')
+        Verifier = await ethers.getContractFactory('ZkbasPlonkVerifier')
         verifier = await Verifier.deploy()
         await verifier.deployed()
         // zkbas with utils

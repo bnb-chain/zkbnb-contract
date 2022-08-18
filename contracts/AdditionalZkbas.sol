@@ -543,7 +543,7 @@ contract AdditionalZkbas is Storage, Config, Events, ReentrancyGuard, IERC721Rec
     // @dev This function is only for test
     // TODO delete this function
     function updateZkbasVerifier(address _newVerifierAddress) external {
-        verifier = ZkbasVerifier(_newVerifierAddress);
+        verifier = ZkbasPlonkVerifier(_newVerifierAddress);
         emit NewZkbasVerifier(_newVerifierAddress);
     }
 

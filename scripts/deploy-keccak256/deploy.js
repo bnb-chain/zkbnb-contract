@@ -145,7 +145,7 @@ async function getContractFactories() {
         ZNSController: await ethers.getContractFactory('OldZNSController'),
         Governance: await ethers.getContractFactory('Governance'),
         AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
-        Verifier: await ethers.getContractFactory('ZkbasVerifier'),
+        Verifier: await ethers.getContractFactory('ZkbasPlonkVerifier'),
         Zkbas: await ethers.getContractFactory('OldZkbas', {
             libraries: {
                 Utils: utils.address

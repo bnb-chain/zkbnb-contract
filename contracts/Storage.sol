@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./Config.sol";
 import "./Governance.sol";
-import "./ZkbasVerifier.sol";
+import "./ZkbasPlonkVerifier.sol";
 import "./TxTypes.sol";
 import "./AdditionalZkbas.sol";
 import "./ZNSController.sol";
@@ -59,7 +59,7 @@ contract Storage {
     mapping(uint64 => PriorityTx) internal priorityRequests;
 
     /// @dev Verifier contract. Used to verify block proof and exit proof
-    ZkbasVerifier internal verifier;
+    ZkbasPlonkVerifier internal verifier;
 
     /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
     Governance internal governance;

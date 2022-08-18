@@ -7,7 +7,7 @@ import "./AssetGovernance.sol";
 import "./Proxy.sol";
 import "./UpgradeGatekeeper.sol";
 import "./Zkbas.sol";
-import "./ZkbasVerifier.sol";
+import "./ZkbasPlonkVerifier.sol";
 import "./Config.sol";
 import "./ZNSController.sol";
 
@@ -36,7 +36,7 @@ contract DeployFactory {
     ///      giving us simplicity and atomicity of our deployment.
     constructor(
         Governance _governanceTarget,
-        ZkbasVerifier _verifierTarget,
+        ZkbasPlonkVerifier _verifierTarget,
         Zkbas _zkbasTarget,
         ZNSController _znsControllerTarget,
         PublicResolver _znsResolverTarget,
@@ -81,7 +81,7 @@ contract DeployFactory {
 
     function deployProxyContracts(
         Governance _governanceTarget,
-        ZkbasVerifier _verifierTarget,
+        ZkbasPlonkVerifier _verifierTarget,
         Zkbas _zkbasTarget,
         ZNSController _znsControllerTarget,
         PublicResolver _znsResolverTarget,

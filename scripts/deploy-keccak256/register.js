@@ -16,7 +16,7 @@ async function main() {
 
     console.log('Register ZNS for treasury, gas, sher and gavin...')
     let registerZnsTx = await zkbas.registerZNS(
-        treasuryName,
+        "abc0",
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
         '0x2005db7af2bdcfae1fa8d28833ae2f1995e9a8e0825377cff121db64b0db21b7',
         '0x18a96ca582a72b16f464330c89ab73277cb96e42df105ebf5c9ac5330d47b8fc',
@@ -25,6 +25,7 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
+    /*
     registerZnsTx = await zkbas.registerZNS(
         gasName,
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
@@ -58,6 +59,8 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
+
+     */
 }
 
 // We recommend this pattern to be able to use async/await everywhere
