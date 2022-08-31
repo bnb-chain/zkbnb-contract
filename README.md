@@ -12,7 +12,21 @@ Zkbas contract is the core entry of the whole system.
     )
     external
 ```
-Validators commit blocks from L2 to L1 and the blocks will be stored on chain for later validation.
+Validators commit blocks from L2 to L1 and the blocks will be stored on L1 for later validation.
+Commit one block includes the following steps:
+- check blockNumber, timestamp
+- check if onchain operations from the committed block are same as the transactions in priority queue. 
+All onchain operations below:  
+    - `RegisterZNS`: register ZNS name 
+    - `CreatePair`: create token pair for token swap on L2
+    - `UpdatePairRate`: update fee rate of the token pair 
+    - `Deposit`: deposit token from L1 to L2
+    - `Withdraw`: withdraw token from L2 to L1
+    - `WithdrawNft`: withdraw NFT from L2 to L1
+    - `FullExit`: request exit BNB from L2 to L1
+    - `FullExitNft`: request exit BNB from L2 to L1
+- create block commitment for verification proof
+- store block data
 
 ```
     struct CommitBlockInfo {
@@ -24,27 +38,33 @@ Validators commit blocks from L2 to L1 and the blocks will be stored on chain fo
         uint16 blockSize;
     }
 ```
-A CommitBlock contains block information, transaction data and the state root after the transaction data has been executed.
+A `CommitBlock` contains block information, transaction data and the state root after the transaction data has been executed.
 Block information contains `timestamp`, `blockNumber` and `blockSize`. 
-L2 transaction data is packed in `PublicData`
-
+L2 transaction data is packed in `CommitBlockInfo.publicData`
 
 ```
     function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external;
+    
+    function verifyAndExecuteOneBlock(VerifyAndExecuteBlockInfo memory _block, uint32 _verifiedBlockIdx) internal;
 ```
 
 Verify and execute stored blocks from `commitBlocks`.
+`verifyAndExecuteOneBlock` includes the following steps:
+- check if the input block was committed from `commitBlocks` and the input blocks are in correct order
+- check if the pending onchain operations are correct
 
 ```
     function registerZNS(string calldata _name, address _owner, bytes32 _zkbasPubKeyX, bytes32 _zkbasPubKeyY) external payable;
 ```
-Register a ZNS name on Zkbas.
+Add request that registering a ZNS name into priority queue.
 
 
 ```
     function depositBNB(string calldata _accountName) external payable;
 ```
-Deposit BNB from L1 to L2 for the `_accountName`
+Deposit native asset to L2, `_accountName` will receive the BNB. This function including the following steps:
+- transfer BNB from user into `Zkbas` contract
+- add `Deposit` request into priority queue
 
 
 ```
@@ -54,7 +74,55 @@ Deposit BNB from L1 to L2 for the `_accountName`
         string calldata _accountName
     ) external;
 ```
-Deposit BEP-20 Token from L1 to L2 for the `_accountName`
+Deposit BEP20 token to L2, `_accountName` will receive the token. This function including the following steps:
+- transfer BEP20 token from user into `Zkbas` contract
+- check if the token is allowed to deposit to L2
+- add `Deposit` request into priority queue
+
+
+```
+    function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address);
+
+    function isRegisteredZNSName(string memory name) external view returns (bool);
+
+    function getZNSNamePrice(string calldata name) external view returns (uint256);
+    
+    function getNFTFactory(bytes32 _creatorAccountNameHash, uint32 _collectionId) public view returns (address);
+    
+    function getPendingBalance(address _address, address _assetAddr) public view returns (uint128);
+```
+`Zkbas` provides some interfaces to query L1 and L2 status.
+- `getAddressByAccountNameHash`: 
+- `isRegisteredZNSName`: check if the provided ZNS name is registered
+- `getZNSNamePrice`: get the price of the provided ZNS name
+- `getNFTFactory`: get a registered NFTFactory according to the creator accountNameHash and the collectionId
+- `getPendingBalance`: get pending balance that the user can withdraw
+
+
+## AdditionalZkbas
+
+Due to a ceiling on the size of `Zkbas` contract, `AdditionalZkbas` will store more logic which could not be stored on `Zkbas`.
+
+
+```
+    function createPair(address _tokenA, address _tokenB) external;
+```
+
+Create token pair for token swap on L2. This function including the following steps:
+- check if the pair of provided tokens already exists and the provided tokens are allowed to create pair on L2
+- If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made
+- record new token pair on L1
+- add `CreatePair` request into priority queue
+
+
+```
+    function updatePairRate(PairInfo memory _pairInfo) external;
+```
+
+Update the fee rate of provided pair on L2. This function including the following steps:
+- check if the pair exists and tokens are allowed to update fee rate
+- update token pair fee rate on L1
+- add `UpdatePairRate` request into priority queue
 
 
 ## Zkbas Name Service
@@ -143,13 +211,40 @@ connected with this node.
 A external contract should implement the Resolver.sol and the owner of nodes can set this contract 
 as the resolver for his nodes. Then others can resolve this name for detailed information by calling this external contract.
 
-
-## AdditionalZkbas
-
-Due to a ceiling on the size of `Zkbas` contract, `AdditionalZkbas` will store more logic which could not be stored on `Zkbas`. 
+## AssetGovernance
+`AssetGovernance` contract is used to allow anyone to add new ERC20 tokens to Zkbas given sufficient payment.
 
 ```
-    function createPair(address _tokenA, address _tokenB) external;
+    function addAsset(address _assetAddress) external;
 ```
-Create token pair for token swap on L2.
+This function allows anyone adds new ERC20 token to Zkbas network.
+If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
+before calling this function make sure to approve `listingFeeToken` transfer for this contract.
+
+## ZkbasVerifier
+`ZkbasVerifier` contract help `Zkbas` to verify the committed blocks and proofs.
+
+```
+    function verifyBatchProofs(
+        uint256[] memory in_proof, // proof itself, length is 8 * num_proofs
+        uint256[] memory proof_inputs, // public inputs, length is num_inputs * num_proofs
+        uint256 num_proofs,
+        uint16 block_size
+    )
+    public
+    view
+    returns (bool success);
+    
+    function verifyProof(
+        uint256[] memory in_proof,
+        uint256[] memory proof_inputs,
+        uint16 block_size
+    )
+    public
+    view
+    returns (bool);
+```
+
+This function allows verifying batch proofs for batch blocks.
+
 
