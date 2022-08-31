@@ -10,7 +10,13 @@ Zkbas contract is the core entry of the whole system.
         StoredBlockInfo memory _lastCommittedBlockData,
         CommitBlockInfo[] memory _newBlocksData
     )
-    external
+    external;
+    
+    
+    function commitOneBlock(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
+    internal
+    view
+    returns (StoredBlockInfo memory storedNewBlock);
 ```
 Validators commit blocks from L2 to L1 and the blocks will be stored on L1 for later validation.
 Commit one block includes the following steps:
