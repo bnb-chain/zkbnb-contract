@@ -2,13 +2,68 @@
 
 Contracts for zkbas.
 
-## zkbas Name Service
+## Zkbas
+Zkbas contract is the core entry of the whole system.
 
-Zkbas Name Service(ZNS) is a name service between L1 and L2. Users should register name in L1 
+```
+    function commitBlocks(
+        StoredBlockInfo memory _lastCommittedBlockData,
+        CommitBlockInfo[] memory _newBlocksData
+    )
+    external
+```
+Validators commit blocks from L2 to L1 and the blocks will be stored on chain for later validation.
+
+```
+    struct CommitBlockInfo {
+        bytes32 newStateRoot;
+        bytes publicData;
+        uint256 timestamp;
+        uint32[] publicDataOffsets;
+        uint32 blockNumber;
+        uint16 blockSize;
+    }
+```
+A CommitBlock contains block information, transaction data and the state root after the transaction data has been executed.
+Block information contains `timestamp`, `blockNumber` and `blockSize`.
+L2 transaction data is packed in `PublicData`
+
+
+```
+    function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external;
+```
+
+Verify and execute stored blocks from `commitBlocks`.
+
+```
+    function registerZNS(string calldata _name, address _owner, bytes32 _zkbasPubKeyX, bytes32 _zkbasPubKeyY) external payable;
+```
+Register a ZNS name on Zkbas.
+
+
+```
+    function depositBNB(string calldata _accountName) external payable;
+```
+Deposit BNB from L1 to L2 for the `_accountName`
+
+
+```
+    function depositBEP20(
+        IERC20 _token,
+        uint104 _amount,
+        string calldata _accountName
+    ) external;
+```
+Deposit BEP-20 Token from L1 to L2 for the `_accountName`
+
+
+## Zkbas Name Service
+
+Zkbas Name Service(ZNS) is a name service between L1 and L2. Users should register name in L1
 and set his L2 account address(Bytes32 public key) with this name. So that this user can use this name
 both in L1 and L2.
 
-Names are stored as node in contracts. Each node is mapped by a byte32 name hash. 
+Names are stored as node in contracts. Each node is mapped by a byte32 name hash.
 The name hash can be calculated as below(a Javascript implementation is in ./test/zns-registry.js):
 
 ```python
@@ -82,8 +137,19 @@ It defines external methods:
 
 ### ZNSResolver
 
-A resolver is used to resolve detailed information of a name in L1, like a text, public key 
+A resolver is used to resolve detailed information of a name in L1, like a text, public key
 connected with this node.
 
-A external contract should implement the Resolver.sol and the owner of nodes can set this contract 
+A external contract should implement the Resolver.sol and the owner of nodes can set this contract
 as the resolver for his nodes. Then others can resolve this name for detailed information by calling this external contract.
+
+
+## AdditionalZkbas
+
+Due to a ceiling on the size of `Zkbas` contract, `AdditionalZkbas` will store more logic which could not be stored on `Zkbas`.
+
+```
+    function createPair(address _tokenA, address _tokenB) external;
+```
+Create token pair for token swap on L2.
+
