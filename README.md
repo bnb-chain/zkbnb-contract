@@ -260,6 +260,16 @@ Upgradeable contracts:
 - `PublicResolver`
 - `Zkbas`
 
+There are several phases to the upgrade process:
+
+1. `startUpgrade`: start upgrade process, stored the new target implementations on `nextTargets` and noticed the community 
+   - `UpgradeStatus.Idle` => `UpgradeStatus.NoticePeriod`
+
+2. `startPreparation`:  activates preparation status to be ready for upgrade
+   - `UpgradeStatus.NoticePeriod` => `UpgradeStatus.Preparation`
+   
+3. `finishUpgrade`:  finishes the upgrade
+   - `UpgradeStatus.Preparation` => `UpgradeStatus.Idle`
 
 ### DeployFactory
 ```
@@ -275,8 +285,7 @@ Upgradeable contracts:
 This function deploy proxies for upgradeable contracts in `Zkbas`.
 
 ### UpgradeGatekeeper
-`UpgradeGatekeeper` is the admin contract of proxies who will be the only one allowed to manage and upgrade these upgradeable contracts.
-
+`UpgradeGatekeeper` is the admin contract who will be the only one allowed to manage and upgrade these upgradeable contracts.
 
 ```
     Upgradeable[] public managedContracts;
@@ -310,6 +319,20 @@ This function starts upgrade for the contracts corresponding to `newTargets` (ac
     function cancelUpgrade() external;
 ```
 This function cancels upgrade process only at the period of `UpgradeStatus.NoticePeriod` and `UpgradeStatus.Preparation`.
+
+
+
+```
+    function startPreparation() external;
+```
+This function activates preparation status only at the period of `UpgradeStatus.NoticePeriod`.
+
+
+
+```
+    function finishUpgrade() external;
+```
+This function finishes upgrades only at the period of `UpgradeStatus.Preparation`, setting new target implementations stored before to proxies.  
 
 
 ### Proxy
