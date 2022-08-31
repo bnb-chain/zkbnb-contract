@@ -153,12 +153,3 @@ Due to a ceiling on the size of `Zkbas` contract, `AdditionalZkbas` will store m
 ```
 Create token pair for token swap on L2.
 
-
-```
-    function registerNFTFactory(
-        string calldata _creatorAccountName,
-        uint32 _collectionId,
-        NFTFactory _factory
-    ) external;
-```
-Register NFTFactory to this contract
