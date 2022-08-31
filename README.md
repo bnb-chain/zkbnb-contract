@@ -20,19 +20,20 @@ Zkbas contract is the core entry of the whole system.
 ```
 Validators commit blocks from L2 to L1 and the blocks will be stored on L1 for later validation.
 Commit one block includes the following steps:
-- check blockNumber, timestamp
-- check if onchain operations from the committed block are same as the transactions in priority queue. 
+
+1. check `blockNumber`, `timestamp`
+2. check if onchain operations from the committed block are same as the transactions in `priority queue`. 
 All onchain operations below:  
     - `RegisterZNS`: register ZNS name 
     - `CreatePair`: create token pair for token swap on L2
     - `UpdatePairRate`: update fee rate of the token pair 
-    - `Deposit`: deposit token from L1 to L2
-    - `Withdraw`: withdraw token from L2 to L1
-    - `WithdrawNft`: withdraw NFT from L2 to L1
-    - `FullExit`: request exit BNB from L2 to L1
-    - `FullExitNft`: request exit BNB from L2 to L1
-- create block commitment for verification proof
-- store block data
+    - `Deposit`: deposit tokens from L1 to L2
+    - `Withdraw`: withdraw tokens from L2 to L1, sending request to L2
+    - `WithdrawNft`: withdraw NFT from L2 to L1, sending request to L2
+    - `FullExit`: request exit BNB from L2 to L1, sending request to L1
+    - `FullExitNft`: request exit BNB from L2 to L1, sending request to L1
+3. create block commitment for verification proof
+4. store block data on chain
 
 ```
     struct CommitBlockInfo {
@@ -44,9 +45,9 @@ All onchain operations below:
         uint16 blockSize;
     }
 ```
-A `CommitBlock` contains block information, transaction data and the state root after the transaction data has been executed.
+`CommitBlock` contains block information, transaction data and the state root after the transactions has been executed.
 Block information contains `timestamp`, `blockNumber` and `blockSize`. 
-L2 transaction data is packed in `CommitBlockInfo.publicData`
+L2 transactions are packed in `CommitBlockInfo.publicData`
 
 ```
     function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external;
@@ -54,23 +55,23 @@ L2 transaction data is packed in `CommitBlockInfo.publicData`
     function verifyAndExecuteOneBlock(VerifyAndExecuteBlockInfo memory _block, uint32 _verifiedBlockIdx) internal;
 ```
 
-Verify and execute stored blocks from `commitBlocks`.
-`verifyAndExecuteOneBlock` includes the following steps:
-- check if the input block was committed from `commitBlocks` and the input blocks are in correct order
+`verifyAndExecuteOneBlock` verifies and executes stored blocks from `commitBlocks`,
+ including the following steps:
+- check if the provided block was committed from `commitBlocks` before and in correct order
 - check if the pending onchain operations are correct
 
 ```
     function registerZNS(string calldata _name, address _owner, bytes32 _zkbasPubKeyX, bytes32 _zkbasPubKeyY) external payable;
 ```
-Add request that registering a ZNS name into priority queue.
+Add request that registering a ZNS name into `priority queue`.
 
 
 ```
     function depositBNB(string calldata _accountName) external payable;
 ```
-Deposit native asset to L2, `_accountName` will receive the BNB. This function including the following steps:
+Deposit native asset to L2, `_accountName` will receive the BNB on L2. This function including the following steps:
 - transfer BNB from user into `Zkbas` contract
-- add `Deposit` request into priority queue
+- add `Deposit` request into `priority queue`
 
 
 ```
@@ -83,7 +84,7 @@ Deposit native asset to L2, `_accountName` will receive the BNB. This function i
 Deposit BEP20 token to L2, `_accountName` will receive the token. This function including the following steps:
 - transfer BEP20 token from user into `Zkbas` contract
 - check if the token is allowed to deposit to L2
-- add `Deposit` request into priority queue
+- add `Deposit` request into `priority queue`
 
 
 ```
@@ -107,7 +108,7 @@ Deposit BEP20 token to L2, `_accountName` will receive the token. This function 
 
 ## AdditionalZkbas
 
-Due to a ceiling on the size of `Zkbas` contract, `AdditionalZkbas` will store more logic which could not be stored on `Zkbas`.
+Due to a ceiling on the code size of `Zkbas` contract, `AdditionalZkbas` will store more logic code which could not be stored on `Zkbas`.
 
 
 ```
@@ -115,10 +116,11 @@ Due to a ceiling on the size of `Zkbas` contract, `AdditionalZkbas` will store m
 ```
 
 Create token pair for token swap on L2. This function including the following steps:
+
 - check if the pair of provided tokens already exists and the provided tokens are allowed to create pair on L2
 - If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made
-- record new token pair on L1
-- add `CreatePair` request into priority queue
+- record new token pair on chain
+- add `CreatePair` request into `priority queue`
 
 
 ```
@@ -128,7 +130,7 @@ Create token pair for token swap on L2. This function including the following st
 Update the fee rate of provided pair on L2. This function including the following steps:
 - check if the pair exists and tokens are allowed to update fee rate
 - update token pair fee rate on L1
-- add `UpdatePairRate` request into priority queue
+- add `UpdatePairRate` request into `priority queue`
 
 
 ## Zkbas Name Service
