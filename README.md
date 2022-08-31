@@ -248,3 +248,98 @@ before calling this function make sure to approve `listingFeeToken` transfer for
 This function allows verifying batch proofs for batch blocks.
 
 
+## Upgradeable
+Contracts deployed using `DeployFactory` can be upgraded to modify their code, while preserving their address, state, and balance. 
+This allows you to iteratively add new features to your contracts, or fix any bugs after.
+`DeployFactory` deploy a proxy to the implementation contract, which is the contract that you actually interact with.
+
+Upgradeable contracts:
+- `Governance`
+- `ZkbasVerifier`
+- `ZNSController`
+- `PublicResolver`
+- `Zkbas`
+
+
+### DeployFactory
+```
+    function deployProxyContracts(
+        Governance _governanceTarget,
+        ZkbasVerifier _verifierTarget,
+        Zkbas _zkbasTarget,
+        ZNSController _znsControllerTarget,
+        PublicResolver _znsResolverTarget,
+        AdditionalParams memory _additionalParams
+    ) internal;
+```
+This function deploy proxies for upgradeable contracts in `Zkbas`.
+
+### UpgradeGatekeeper
+`UpgradeGatekeeper` is the admin contract of proxies who will be the only one allowed to manage and upgrade these upgradeable contracts.
+
+
+```
+    Upgradeable[] public managedContracts;
+
+    enum UpgradeStatus {
+        Idle,
+        NoticePeriod,
+        Preparation
+    }
+    
+    UpgradeStatus public upgradeStatus;
+```
+`managedContracts` stores upgradeable contracts managed by `UpgradeGatekeeper`.
+`upgradeStatus` stores the status of all upgrades.
+All upgradeable contracts can only remain in the same state if already started upgrade.
+
+
+```
+    function addUpgradeable(address addr) external;
+```
+This function adds a new upgradeable contract to the list of contracts managed by the `UpgradeGatekeeper`.
+
+
+```
+    function startUpgrade(address[] calldata newTargets) external;
+```
+This function starts upgrade for the contracts corresponding to `newTargets` (activates notice period)
+
+
+```
+    function cancelUpgrade() external;
+```
+This function cancels upgrade process only at the period of `UpgradeStatus.NoticePeriod` and `UpgradeStatus.Preparation`.
+
+
+### Proxy
+```
+interface Upgradeable {
+    /// @notice Upgrades target of upgradeable contract
+    /// @param newTarget New target
+    /// @param newTargetInitializationParameters New target initialization parameters
+    function upgradeTarget(address newTarget, bytes calldata newTargetInitializationParameters) external;
+}
+
+interface UpgradeableMaster {
+    /// @notice Notice period before activation preparation status of upgrade mode
+    function getNoticePeriod() external returns (uint256);
+
+    /// @notice Notifies contract that notice period started
+    function upgradeNoticePeriodStarted() external;
+
+    /// @notice Notifies contract that upgrade preparation status is activated
+    function upgradePreparationStarted() external;
+
+    /// @notice Notifies contract that upgrade canceled
+    function upgradeCanceled() external;
+
+    /// @notice Notifies contract that upgrade finishes
+    function upgradeFinishes() external;
+
+    /// @notice Checks that contract is ready for upgrade
+    /// @return bool flag indicating that contract is ready for upgrade
+    function isReadyForUpgrade() external returns (bool);
+}
+```
+All proxies of upgradeable contracts should implement `Upgradeable` and `UpgradeableMaster` interface for management of `UpgradeGatekeeper`.
