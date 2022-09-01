@@ -1,6 +1,7 @@
 # Design of ZkBAS Contract 
 
 ## ZkBAS Key Contracts
+### ZkBAS
 
 ```
     function commitBlocks(

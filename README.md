@@ -36,7 +36,7 @@ npx hardhat test
 ## Design
 
 ### ZkBAS Key Contracts
-- [Zkbas](./CONTRACTS_DESIGN.md#ZkBAS Key Contracts) 
+- [Zkbas](./CONTRACTS_DESIGN.md#ZkBAS) 
 - [AdditionalZkBAS](./CONTRACTS_DESIGN.md#AdditionalZkBAS) 
 - [AssetGovernance](./CONTRACTS_DESIGN.md#AssetGovernance) 
 - [ZkBASVerifier](./CONTRACTS_DESIGN.md#ZkBASVerifier) 
