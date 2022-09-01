@@ -9,14 +9,15 @@ BSC-based apps with higher throughput and much lower or even zero transaction fe
 `zkbas-contract` deployed on L1 chain is the bridge connecting L1 and L2 by which all assets are held. 
 Assets could be transferred from between L1 and L2 through it.
 
-## Zkbas
 ![Framework](./docs/assets/Frame_work.png)
 
-`Zkbas` contract is the core entry of the whole system.
+`zkbas-contract` is the core entry of the whole system.
 
-Each `Rollup L2 Block` including a batch of `Priority operation` is generated off-chain and committed to `Zkbas` contract for later verification.  
-A state transition zero-knowledge proof (`ZkSnark Proof`) corresponding to the committed block is generated from `Witness Data` off-chain and verified by `Zkbas` contract on-chain.
+Each `Rollup L2 Block` including a batch of `Priority operation` is generated off-chain and committed to `zkbas-contract` for later verification.  
+A state transition zero-knowledge proof (`ZkSnark Proof`) corresponding to the committed block is generated from `Witness Data` off-chain and verified by `zkbas-contract` on-chain.
 
+
+## Zkbas
 
 ```
     function commitBlocks(
