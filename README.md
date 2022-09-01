@@ -16,6 +16,16 @@ Assets could be transferred from between L1 and L2 through it.
 Each `Rollup L2 Block` including a batch of `Priority operation` is generated off-chain and committed to `zkbas-contract` for later verification.  
 A state transition zero-knowledge proof (`ZkSnark Proof`) corresponding to the committed block is generated from `Witness Data` off-chain and verified by `zkbas-contract` on-chain.
 
+## Getting Started
+### build && test
+```
+yarn install 
+npx hardhat compile
+npx hardhat test
+```
+
+### The deployed contracts on testnet and mainnet
+coming soon
 
 ## ZkBAS Main Contracts
 ### Zkbas
