@@ -17,7 +17,7 @@ Each `Rollup L2 Block` including a batch of `Priority operation` is generated of
 A state transition zero-knowledge proof (`ZkSnark Proof`) corresponding to the committed block is generated from `Witness Data` off-chain and verified by `zkbas-contract` on-chain.
 
 
-## Zkbas Main Contracts
+## ZkBAS Main Contracts
 ### Zkbas
 
 ```
@@ -383,3 +383,7 @@ interface UpgradeableMaster {
 ```
 All proxies of upgradeable contracts should implement `Upgradeable` and `UpgradeableMaster` interface for management of `UpgradeGatekeeper`.
 
+
+## License
+
+`zkbas-contract` is released under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
