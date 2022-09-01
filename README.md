@@ -46,18 +46,19 @@ Validators commit blocks from L2 to L1 and the blocks will be stored on L1 for l
 Commit one block includes the following steps:
 
 1. check `blockNumber`, `timestamp`
-2. check if onchain operations from the committed block are same as the transactions in `priority queue`. 
+2. check if priority operations from the committed block are same as the transactions in `priority queue`. 
 All onchain operations as below:  
     - `RegisterZNS`: register ZNS name 
     - `CreatePair`: create token pair for token swap on L2
     - `UpdatePairRate`: update fee rate of the token pair 
     - `Deposit`: deposit tokens from L1 to L2
+    - `DepositNft`: deposit NFT from L1 to L2
     - `Withdraw`: withdraw tokens from L2 to L1, sending request to L2
     - `WithdrawNft`: withdraw NFT from L2 to L1, sending request to L2
-    - `FullExit`: request exit BNB from L2 to L1, sending request to L1
-    - `FullExitNft`: request exit BNB from L2 to L1, sending request to L1
+    - `FullExit`: request exit tokens from L2 to L1, sending request to L1
+    - `FullExitNft`: request exit NFT from L2 to L1, sending request to L1
 3. create block commitment for verification proof
-4. store block data on chain
+4. store block hash on chain
 
 ```
     struct CommitBlockInfo {
@@ -83,6 +84,7 @@ L2 transactions are packed in `CommitBlockInfo.publicData`
  including the following steps:
 - check if the provided block was committed from `commitBlocks` before and in correct order
 - check if the pending onchain operations are correct
+- execute onchain operations if needed.(`Withdraw`, `WithdrawNft`, `FullExit`, `FullExitNft`) 
 
 ```
     function registerZNS(string calldata _name, address _owner, bytes32 _ZkBASPubKeyX, bytes32 _ZkBASPubKeyY) external payable;
