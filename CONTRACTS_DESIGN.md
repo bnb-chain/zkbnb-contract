@@ -2,7 +2,7 @@
 
 ## ZkBAS Key Contracts
 ### ZkBAS
-
+#### commitBlocks
 ```
     function commitBlocks(
         StoredBlockInfo memory _lastCommittedBlockData,
@@ -42,6 +42,9 @@ All onchain operations as below:
 Block information contains `timestamp`, `blockNumber` and `blockSize`. 
 L2 transactions are packed in `CommitBlockInfo.publicData`
 
+
+#### verifyAndExecuteBlocks
+
 ```
     function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external;
     
@@ -54,12 +57,13 @@ L2 transactions are packed in `CommitBlockInfo.publicData`
 - check if the pending onchain operations are correct
 - execute onchain operations if needed.(`Withdraw`, `WithdrawNft`, `FullExit`, `FullExitNft`) 
 
+#### registerZNS
 ```
     function registerZNS(string calldata _name, address _owner, bytes32 _ZkBASPubKeyX, bytes32 _ZkBASPubKeyY) external payable;
 ```
 Add request that registering a ZNS name into `priority queue`.
 
-
+#### depositBNB
 ```
     function depositBNB(string calldata _accountName) external payable;
 ```
@@ -67,7 +71,7 @@ Deposit native asset to L2, `_accountName` will receive the BNB on L2. This func
 - transfer BNB from user into `ZkBAS` contract
 - add `Deposit` request into `priority queue`
 
-
+#### depositBEP20
 ```
     function depositBEP20(
         IERC20 _token,
@@ -80,7 +84,7 @@ Deposit BEP20 token to L2, `_accountName` will receive the token. This function 
 - check if the token is allowed to deposit to L2
 - add `Deposit` request into `priority queue`
 
-
+#### view functions
 ```
     function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address);
 
@@ -104,7 +108,7 @@ Deposit BEP20 token to L2, `_accountName` will receive the token. This function 
 
 Due to a ceiling on the code size of `ZkBAS` contract, `AdditionalZkBAS` will store more logic code which could not be stored on `ZkBAS`.
 
-
+#### createPair
 ```
     function createPair(address _tokenA, address _tokenB) external;
 ```
@@ -116,7 +120,7 @@ Create token pair for token swap on L2. This function including the following st
 - record new token pair on chain
 - add `CreatePair` request into `priority queue`
 
-
+#### updatePairRate
 ```
     function updatePairRate(PairInfo memory _pairInfo) external;
 ```
@@ -129,6 +133,7 @@ Update the fee rate of provided pair on L2. This function including the followin
 ### AssetGovernance
 `AssetGovernance` contract is used to allow anyone to add new ERC20 tokens to ZkBAS given sufficient payment.
 
+#### addAsset
 ```
     function addAsset(address _assetAddress) external;
 ```
@@ -139,6 +144,7 @@ before calling this function make sure to approve `listingFeeToken` transfer for
 ### ZkBASVerifier
 `ZkBASVerifier` contract help `ZkBAS` to verify the committed blocks and proofs.
 
+#### verifyBatchProofs
 ```
     function verifyBatchProofs(
         uint256[] memory in_proof, // proof itself, length is 8 * num_proofs
@@ -171,6 +177,7 @@ both in L1 and L2.
 Names are stored as node in contracts. Each node is mapped by a byte32 name hash. 
 The name hash can be calculated as below(a Javascript implementation is in ./test/zns-registry.js):
 
+#### namehash
 ```python
 def namehash(name):
   if name == '':
@@ -211,6 +218,7 @@ Implementation of ZNS.sol.
 
 It defines a struct Record contains: owner, L2Owner(public key) and resolver of a name.
 
+#### Record
 ```go
 struct Record {
     // The owner of a record may:
@@ -245,7 +253,7 @@ It defines external methods:
 A resolver is used to resolve detailed information of a name in L1, like a text, public key 
 connected with this node.
 
-A external contract should implement the Resolver.sol and the owner of nodes can set this contract 
+An external contract should implement the `Resolver.sol` and the owner of nodes can set this contract 
 as the resolver for his nodes. Then others can resolve this name for detailed information by calling this external contract.
 
 
@@ -288,6 +296,7 @@ This function deploy proxies for upgradeable contracts in `ZkBAS`.
 ### UpgradeGatekeeper
 `UpgradeGatekeeper` is the admin contract who will be the only one allowed to manage and upgrade these upgradeable contracts.
 
+#### managedContracts
 ```
     Upgradeable[] public managedContracts;
 
@@ -303,33 +312,33 @@ This function deploy proxies for upgradeable contracts in `ZkBAS`.
 `upgradeStatus` stores the status of all upgrades.
 All upgradeable contracts can only remain in the same state if already started upgrade.
 
-
+#### addUpgradeable
 ```
     function addUpgradeable(address addr) external;
 ```
 This function adds a new upgradeable contract to the list of contracts managed by the `UpgradeGatekeeper`.
 
-
+#### startUpgrade
 ```
     function startUpgrade(address[] calldata newTargets) external;
 ```
 This function starts upgrade for the contracts corresponding to `newTargets` (activates notice period)
 
-
+#### cancelUpgrade
 ```
     function cancelUpgrade() external;
 ```
 This function cancels upgrade process only at the period of `UpgradeStatus.NoticePeriod` and `UpgradeStatus.Preparation`.
 
 
-
+#### startPreparation
 ```
     function startPreparation() external;
 ```
 This function activates preparation status only at the period of `UpgradeStatus.NoticePeriod`.
 
 
-
+#### finishUpgrade
 ```
     function finishUpgrade() external;
 ```
