@@ -17,7 +17,8 @@ Each `Rollup L2 Block` including a batch of `Priority operation` is generated of
 A state transition zero-knowledge proof (`ZkSnark Proof`) corresponding to the committed block is generated from `Witness Data` off-chain and verified by `zkbas-contract` on-chain.
 
 
-## Zkbas
+## Zkbas Main Contracts
+### Zkbas
 
 ```
     function commitBlocks(
@@ -31,7 +32,7 @@ Commit one block includes the following steps:
 
 1. check `blockNumber`, `timestamp`
 2. check if onchain operations from the committed block are same as the transactions in `priority queue`. 
-All onchain operations below:  
+All onchain operations as below:  
     - `RegisterZNS`: register ZNS name 
     - `CreatePair`: create token pair for token swap on L2
     - `UpdatePairRate`: update fee rate of the token pair 
@@ -114,7 +115,7 @@ Deposit BEP20 token to L2, `_accountName` will receive the token. This function 
 - `getPendingBalance`: get pending balance that the user can withdraw
 
 
-## AdditionalZkbas
+### AdditionalZkbas
 
 Due to a ceiling on the code size of `Zkbas` contract, `AdditionalZkbas` will store more logic code which could not be stored on `Zkbas`.
 
@@ -140,6 +141,41 @@ Update the fee rate of provided pair on L2. This function including the followin
 - update token pair fee rate on L1
 - add `UpdatePairRate` request into `priority queue`
 
+### AssetGovernance
+`AssetGovernance` contract is used to allow anyone to add new ERC20 tokens to Zkbas given sufficient payment.
+
+```
+    function addAsset(address _assetAddress) external;
+```
+This function allows anyone adds new ERC20 token to Zkbas network.
+If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
+before calling this function make sure to approve `listingFeeToken` transfer for this contract.
+
+### ZkbasVerifier
+`ZkbasVerifier` contract help `Zkbas` to verify the committed blocks and proofs.
+
+```
+    function verifyBatchProofs(
+        uint256[] memory in_proof, // proof itself, length is 8 * num_proofs
+        uint256[] memory proof_inputs, // public inputs, length is num_inputs * num_proofs
+        uint256 num_proofs,
+        uint16 block_size
+    )
+    public
+    view
+    returns (bool success);
+    
+    function verifyProof(
+        uint256[] memory in_proof,
+        uint256[] memory proof_inputs,
+        uint16 block_size
+    )
+    public
+    view
+    returns (bool);
+```
+
+This function allows verifying batch proofs for batch blocks.
 
 ## Zkbas Name Service
 
@@ -227,46 +263,10 @@ connected with this node.
 A external contract should implement the Resolver.sol and the owner of nodes can set this contract 
 as the resolver for his nodes. Then others can resolve this name for detailed information by calling this external contract.
 
-## AssetGovernance
-`AssetGovernance` contract is used to allow anyone to add new ERC20 tokens to Zkbas given sufficient payment.
 
-```
-    function addAsset(address _assetAddress) external;
-```
-This function allows anyone adds new ERC20 token to Zkbas network.
-If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
-before calling this function make sure to approve `listingFeeToken` transfer for this contract.
-
-## ZkbasVerifier
-`ZkbasVerifier` contract help `Zkbas` to verify the committed blocks and proofs.
-
-```
-    function verifyBatchProofs(
-        uint256[] memory in_proof, // proof itself, length is 8 * num_proofs
-        uint256[] memory proof_inputs, // public inputs, length is num_inputs * num_proofs
-        uint256 num_proofs,
-        uint16 block_size
-    )
-    public
-    view
-    returns (bool success);
-    
-    function verifyProof(
-        uint256[] memory in_proof,
-        uint256[] memory proof_inputs,
-        uint16 block_size
-    )
-    public
-    view
-    returns (bool);
-```
-
-This function allows verifying batch proofs for batch blocks.
-
-
-## Upgradeable
-Contracts deployed using `DeployFactory` can be upgraded to modify their code, while preserving their address, state, and balance. 
-This allows you to iteratively add new features to your contracts, or fix any bugs after.
+## Upgradeable Design
+Contracts deployed using `DeployFactory` can be upgraded to modify their code, while preserving their address, state, and balance.
+This allows you to iteratively add new features to your contracts, or fix any bugs after deployed.
 `DeployFactory` deploy a proxy to the implementation contract, which is the contract that you actually interact with.
 
 Upgradeable contracts:
@@ -278,14 +278,14 @@ Upgradeable contracts:
 
 There are several phases to the upgrade process:
 
-1. `startUpgrade`: start upgrade process, stored the new target implementations on `nextTargets` and noticed the community 
-   - `UpgradeStatus.Idle` => `UpgradeStatus.NoticePeriod`
+1. `startUpgrade`: start upgrade process, stored the new target implementations on `nextTargets` and noticed the community
+    - `UpgradeStatus.Idle` => `UpgradeStatus.NoticePeriod`
 
 2. `startPreparation`:  activates preparation status to be ready for upgrade
-   - `UpgradeStatus.NoticePeriod` => `UpgradeStatus.Preparation`
-   
+    - `UpgradeStatus.NoticePeriod` => `UpgradeStatus.Preparation`
+
 3. `finishUpgrade`:  finishes the upgrade
-   - `UpgradeStatus.Preparation` => `UpgradeStatus.Idle`
+    - `UpgradeStatus.Preparation` => `UpgradeStatus.Idle`
 
 ### DeployFactory
 ```
@@ -348,7 +348,7 @@ This function activates preparation status only at the period of `UpgradeStatus.
 ```
     function finishUpgrade() external;
 ```
-This function finishes upgrades only at the period of `UpgradeStatus.Preparation`, setting new target implementations stored before to proxies.  
+This function finishes upgrades only at the period of `UpgradeStatus.Preparation`, setting new target implementations stored before to proxies.
 
 
 ### Proxy
@@ -382,3 +382,4 @@ interface UpgradeableMaster {
 }
 ```
 All proxies of upgradeable contracts should implement `Upgradeable` and `UpgradeableMaster` interface for management of `UpgradeGatekeeper`.
+
