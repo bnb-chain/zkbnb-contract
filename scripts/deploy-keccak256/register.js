@@ -5,17 +5,14 @@ async function main() {
     const [owner] = await ethers.getSigners();
     const addrs = getDeployedAddresses('info/addresses.json')
     const zkbas = await getZkbasProxy(addrs.zkbasProxy)
-    const Price = await ethers.getContractFactory('StablePriceOracle')
-    const price = await Price.attach(addrs.znsPriceOracle)
     const treasuryName = 'treasury'
     const gasName = 'gas'
     const sherName = 'sher'
     const gavinName = 'gavin'
-    const treasuryRegisterFee = await price.price(treasuryName)
-    const gasRegisterFee = await price.price(gasName)
-    const sherRegisterFee = await price.price(sherName)
-    const gavinRegisterFee = await price.price(gavinName)
-
+    const treasuryRegisterFee = await zkbas.getZNSNamePrice(treasuryName)
+    const gasRegisterFee = await zkbas.getZNSNamePrice(gasName)
+    const sherRegisterFee = await zkbas.getZNSNamePrice(sherName)
+    const gavinRegisterFee = await zkbas.getZNSNamePrice(gavinName)
 
     console.log('Register ZNS for treasury, gas, sher and gavin...')
     let registerZnsTx = await zkbas.registerZNS(

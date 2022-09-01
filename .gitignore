@@ -114,3 +114,6 @@ artifacts
 artifacts-bak
 coverage.json
 
+
+.DS_Store
+

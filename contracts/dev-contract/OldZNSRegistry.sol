@@ -168,7 +168,9 @@ contract OldZNSRegistry is ZNS {
      * @return bool If record exists
      */
     function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         bytes32 subnode = keccak256Hash(abi.encodePacked(node, label));
+        subnode = bytes32(uint256(subnode) % q);
         return _exists(subnode);
     }
 

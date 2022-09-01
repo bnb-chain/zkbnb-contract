@@ -32,7 +32,7 @@ contract Config {
     uint256 internal constant PRIORITY_EXPIRATION_PERIOD = 7 days;
 
     /// @dev Expected average period of block creation
-    uint256 internal constant BLOCK_PERIOD = 15 seconds;
+    uint256 internal constant BLOCK_PERIOD = 3 seconds;
 
     /// @dev Expiration delta for priority request to be satisfied (in seconds)
     /// @dev NOTE: Priority expiration should be > (EXPECT_VERIFICATION_IN * BLOCK_PERIOD)
