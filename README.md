@@ -1,9 +1,22 @@
 # zkbas-contract
+![banner](./docs/assets/banner.png)
 
-Contracts for zkbas.
+Contracts for ZkRollup BNB Application Side Chain.
+
+The ZkRollup BNB Application Side Chain(ZkBAS) is an infrastructure for developers that helps them to build large scale
+BSC-based apps with higher throughput and much lower or even zero transaction fees.
+
+`zkbas-contract` deployed on L1 chain is the bridge connecting L1 and L2 by which all assets are held. 
+Assets could be transferred from between L1 and L2 through it.
 
 ## Zkbas
-Zkbas contract is the core entry of the whole system.
+![Framework](./docs/assets/Frame_work.png)
+
+`Zkbas` contract is the core entry of the whole system.
+
+Each `Rollup L2 Block` including a batch of `Priority operation` is generated off-chain and committed to `Zkbas` contract for later verification.  
+A state transition zero-knowledge proof (`ZkSnark Proof`) corresponding to the committed block is generated from `Witness Data` off-chain and verified by `Zkbas` contract on-chain.
+
 
 ```
     function commitBlocks(
@@ -11,12 +24,6 @@ Zkbas contract is the core entry of the whole system.
         CommitBlockInfo[] memory _newBlocksData
     )
     external;
-    
-    
-    function commitOneBlock(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
-    internal
-    view
-    returns (StoredBlockInfo memory storedNewBlock);
 ```
 Validators commit blocks from L2 to L1 and the blocks will be stored on L1 for later validation.
 Commit one block includes the following steps:
