@@ -1,18 +1,18 @@
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
-const {getDeployedAddresses, getZkbasProxy} = require("./utils");
+const {getDeployedAddresses, getZkBNBProxy} = require("./utils");
 
 async function main() {
     const addrs = getDeployedAddresses('info/addresses.json')
-    const zkbas = await getZkbasProxy(addrs.zkbasProxy)
+    const zkbnb = await getZkBNBProxy(addrs.zkbnbProxy)
 
     // create pairs
     console.log('createPair...')
-    let createPairTx = await zkbas.createPair('0x0000000000000000000000000000000000000000', addrs.REYToken)
+    let createPairTx = await zkbnb.createPair('0x0000000000000000000000000000000000000000', addrs.REYToken)
     await createPairTx.wait()
-    createPairTx = await zkbas.createPair('0x0000000000000000000000000000000000000000', addrs.LEGToken)
+    createPairTx = await zkbnb.createPair('0x0000000000000000000000000000000000000000', addrs.LEGToken)
     await createPairTx.wait()
-    createPairTx = await zkbas.createPair(addrs.REYToken, addrs.LEGToken)
+    createPairTx = await zkbnb.createPair(addrs.REYToken, addrs.LEGToken)
     await createPairTx.wait()
 }
 

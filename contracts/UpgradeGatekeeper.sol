@@ -5,14 +5,14 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Events.sol";
-import "./ZkbasOwnable.sol";
+import "./ZkBNBOwnable.sol";
 import "./Upgradeable.sol";
 import "./UpgradeableMaster.sol";
 
 /// @title Upgrade Gatekeeper Contract
 /// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
-/// @author Zkbas Team
-contract UpgradeGatekeeper is UpgradeEvents, ZkbasOwnable {
+/// @author ZkBNB Team
+contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
     using SafeMath for uint256;
 
     /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
@@ -44,7 +44,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkbasOwnable {
     /// @notice Contract constructor
     /// @param _mainContract Contract which defines notice period duration and allows finish upgrade during preparation of it
     /// @dev Calls Ownable contract constructor
-    constructor(UpgradeableMaster _mainContract) ZkbasOwnable(msg.sender) {
+    constructor(UpgradeableMaster _mainContract) ZkBNBOwnable(msg.sender) {
         mainContract = _mainContract;
         versionId = 0;
     }
