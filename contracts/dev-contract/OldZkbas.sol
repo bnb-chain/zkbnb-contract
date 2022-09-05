@@ -285,9 +285,9 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
 
         // check if the nft is mint from layer-2
         bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-        uint16 collectionId = 0;
-        uint40 nftIndex = 0;
-        uint32 creatorAccountIndex = 0;
+        uint16 collectionId = 2**16-1;
+        uint40 nftIndex = 2**40-1;
+        uint32 creatorAccountIndex = 2**32-1;
         uint16 creatorTreasuryRate = 0;
         bytes32 nftContentHash;
         if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
@@ -303,16 +303,16 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         }
 
         TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-        txType : uint8(TxTypes.TxType.DepositNft),
-        accountIndex : 0, // unknown at this point
-        nftIndex : nftIndex,
-        nftL1Address : _nftL1Address,
-        creatorAccountIndex : creatorAccountIndex,
-        creatorTreasuryRate : creatorTreasuryRate,
-        nftContentHash : nftContentHash,
-        nftL1TokenId : _nftL1TokenId,
-        accountNameHash : accountNameHash,
-        collectionId : collectionId
+            txType : uint8(TxTypes.TxType.DepositNft),
+            accountIndex : 0, // unknown at this point
+            nftIndex : nftIndex,
+            nftL1Address : _nftL1Address,
+            creatorAccountIndex : creatorAccountIndex,
+            creatorTreasuryRate : creatorTreasuryRate,
+            nftContentHash : nftContentHash,
+            nftL1TokenId : _nftL1TokenId,
+            accountNameHash : accountNameHash,
+            collectionId : collectionId
         });
 
         // compact pub data
@@ -325,6 +325,8 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
     }
 
     function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
+        require(op.nftIndex != 2**40-1, "invalid nft index");
+
         // get layer-1 address by account name hash
         bytes memory _emptyExtraData;
         if (op.nftL1Address != address(0x00)) {
@@ -338,6 +340,17 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
             }catch{
                 storePendingNFT(op);
             }
+
+            bytes32 nftKey = keccak256(abi.encode(op.nftL1Address, op.nftL1TokenId));
+            if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
+                l2Nfts[nftKey] = L2NftInfo({
+                    nftIndex : op.nftIndex,
+                    creatorAccountIndex : op.creatorAccountIndex,
+                    creatorTreasuryRate : op.creatorTreasuryRate,
+                    nftContentHash : op.nftContentHash,
+                    collectionId : op.collectionId
+                });
+            }
         } else {
             address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
             // get nft factory
@@ -345,11 +358,11 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
             // store into l2 nfts
             bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
             l2Nfts[nftKey] = L2NftInfo({
-            nftIndex : l2Nfts[nftKey].nftIndex,
-            creatorAccountIndex : l2Nfts[nftKey].creatorAccountIndex,
-            creatorTreasuryRate : l2Nfts[nftKey].creatorTreasuryRate,
-            nftContentHash : l2Nfts[nftKey].nftContentHash,
-            collectionId : l2Nfts[nftKey].collectionId
+                nftIndex : op.nftIndex,
+                creatorAccountIndex : op.creatorAccountIndex,
+                creatorTreasuryRate : op.creatorTreasuryRate,
+                nftContentHash : op.nftContentHash,
+                collectionId : op.collectionId
             });
             try NFTFactory(_factoryAddress).mintFromZkbas(
                 _creatorAddress,
