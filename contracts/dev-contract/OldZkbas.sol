@@ -285,9 +285,9 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
 
         // check if the nft is mint from layer-2
         bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-        uint16 collectionId = 0;
-        uint40 nftIndex = 0;
-        uint32 creatorAccountIndex = 0;
+        uint16 collectionId = 2**16-1;
+        uint40 nftIndex = 2**40-1;
+        uint32 creatorAccountIndex = 2**32-1;
         uint16 creatorTreasuryRate = 0;
         bytes32 nftContentHash;
         uint8 isNewNft = 1;
