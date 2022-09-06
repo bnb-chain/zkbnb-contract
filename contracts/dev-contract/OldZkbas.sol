@@ -290,11 +290,14 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         uint32 creatorAccountIndex = 2**32-1;
         uint16 creatorTreasuryRate = 0;
         bytes32 nftContentHash;
+        uint8 isNewNft = 1;
         if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
             // it means this is a new layer-1 nft
             nftContentHash = nftKey;
         } else {
             // it means this is a nft that comes from layer-2
+            isNewNft = 0;
+
             nftContentHash = l2Nfts[nftKey].nftContentHash;
             collectionId = l2Nfts[nftKey].collectionId;
             nftIndex = l2Nfts[nftKey].nftIndex;
@@ -304,6 +307,7 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
 
         TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
             txType : uint8(TxTypes.TxType.DepositNft),
+            isNewNft: isNewNft,
             accountIndex : 0, // unknown at this point
             nftIndex : nftIndex,
             nftL1Address : _nftL1Address,
@@ -751,9 +755,9 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         bytes20 hashedPubData = Utils.hashBytesToBytes20(_pubData);
 
         priorityRequests[nextPriorityRequestId] = PriorityTx({
-        hashedPubData : hashedPubData,
-        expirationBlock : expirationBlock,
-        txType : _txType
+            hashedPubData : hashedPubData,
+            expirationBlock : expirationBlock,
+            txType : _txType
         });
 
         emit NewPriorityRequest(msg.sender, nextPriorityRequestId, _txType, _pubData, uint256(expirationBlock));
