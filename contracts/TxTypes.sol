@@ -276,8 +276,8 @@ library TxTypes {
     function writeDepositNftPubDataForPriorityQueue(DepositNft memory _tx) internal pure returns (bytes memory buf) {
         buf = abi.encodePacked(
             uint8(TxType.DepositNft),
-            uint32(0),
-            uint40(0),
+            uint32(_tx.accountIndex),
+            uint40(_tx.nftIndex),
             _tx.nftL1Address, // token address
             _tx.creatorAccountIndex,
             _tx.creatorTreasuryRate,
