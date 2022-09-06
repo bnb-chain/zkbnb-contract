@@ -279,8 +279,8 @@ library TxTypes {
             buf = abi.encodePacked(
                 uint8(TxType.DepositNft),
                 _tx.isNewNft,
-                0,
-                0,
+                uint32(0),
+                uint40(0),
                 _tx.nftL1Address, // token address
                 _tx.creatorAccountIndex,
                 _tx.creatorTreasuryRate,
@@ -293,7 +293,7 @@ library TxTypes {
             buf = abi.encodePacked(
                 uint8(TxType.DepositNft),
                 _tx.isNewNft,
-                0,
+                uint32(0),
                 uint40(_tx.nftIndex),
                 _tx.nftL1Address, // token address
                 _tx.creatorAccountIndex,
