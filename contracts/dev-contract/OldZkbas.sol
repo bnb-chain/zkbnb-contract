@@ -325,7 +325,7 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
     }
 
     function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
-        require(op.nftIndex != 2**40-1, "invalid nft index");
+        require(op.nftIndex < 2**40-1, "invalid nft index");
 
         // get layer-1 address by account name hash
         bytes memory _emptyExtraData;
