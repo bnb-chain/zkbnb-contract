@@ -348,7 +348,7 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
                     creatorAccountIndex : op.creatorAccountIndex,
                     creatorTreasuryRate : op.creatorTreasuryRate,
                     nftContentHash : op.nftContentHash,
-                    collectionId : op.collectionId
+                    collectionId : uint16(op.collectionId)
                 });
             }
         } else {
@@ -362,7 +362,7 @@ contract OldZkbas is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
                 creatorAccountIndex : op.creatorAccountIndex,
                 creatorTreasuryRate : op.creatorTreasuryRate,
                 nftContentHash : op.nftContentHash,
-                collectionId : op.collectionId
+                collectionId : uint16(op.collectionId)
             });
             try NFTFactory(_factoryAddress).mintFromZkbas(
                 _creatorAddress,
