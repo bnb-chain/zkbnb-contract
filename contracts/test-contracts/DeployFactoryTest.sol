@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.7.6;
 
-import "./ZkbasUpgradeTest.sol";
+import "./ZkBNBUpgradeTest.sol";
 import "../Proxy.sol";
 import "../UpgradeGatekeeper.sol";
 
 contract DeployFactoryTest {
 
     constructor(
-        ZkbasUpgradeTest _zkbasTarget,
+        ZkBNBUpgradeTest _zkbnbTarget,
         UpgradableBank _bank
     ) {
-        deployProxyContracts(_zkbasTarget, _bank);
+        deployProxyContracts(_zkbnbTarget, _bank);
         selfdestruct(msg.sender);
     }
 
-    event Addresses(address zkbas, address bank, address gatekeeper);
+    event Addresses(address zkbnb, address bank, address gatekeeper);
 
     function deployProxyContracts(
-        ZkbasUpgradeTest _zkbasTest,
+        ZkBNBUpgradeTest _zkbnbTest,
         UpgradableBank _bank
     ) internal {
         Proxy bank = new Proxy(address(_bank), abi.encode());
-        Proxy zkbas = new Proxy(address(_zkbasTest), abi.encode(address(bank)));
+        Proxy zkbnb = new Proxy(address(_zkbnbTest), abi.encode(address(bank)));
 
-        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zkbas);
+        UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(zkbnb);
 
-        zkbas.transferMastership(address(upgradeGatekeeper));
-        upgradeGatekeeper.addUpgradeable(address(zkbas));
+        zkbnb.transferMastership(address(upgradeGatekeeper));
+        upgradeGatekeeper.addUpgradeable(address(zkbnb));
 
         bank.transferMastership(address(upgradeGatekeeper));
         upgradeGatekeeper.addUpgradeable(address(bank));
@@ -35,7 +35,7 @@ contract DeployFactoryTest {
         // New master is a governor
         upgradeGatekeeper.transferMastership(msg.sender);
 
-        emit Addresses(address(zkbas), address(bank), address(upgradeGatekeeper));
+        emit Addresses(address(zkbnb), address(bank), address(upgradeGatekeeper));
     }
 
 }

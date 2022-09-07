@@ -2,9 +2,9 @@ const {expect} = require("chai");
 const {ethers} = require("hardhat");
 const namehash = require('eth-ens-namehash')
 
-describe("Zkbas Registry Contract", function () {
+describe("ZkBNB Registry Contract", function () {
 
-    let Zkbas, zkbas;
+    let ZkBNB, zkbnb;
     let ZNS, zns;
     let Utils, utils;
     let owner, addr1, addr2, addrs;
@@ -14,7 +14,7 @@ describe("Zkbas Registry Contract", function () {
     beforeEach(async function () {
         [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
 
-        // deploy zkbas
+        // deploy zkbnb
         ZNS = await ethers.getContractFactory("ZNSRegistry");
         zns = await ZNS.deploy()
         await zns.deployed()
@@ -24,53 +24,53 @@ describe("Zkbas Registry Contract", function () {
         utils = await Utils.deploy()
         await utils.deployed()
 
-        Zkbas = await ethers.getContractFactory('Zkbas', {
+        ZkBNB = await ethers.getContractFactory('ZkBNB', {
             libraries: {
                 Utils: utils.address
             }
         })
-        zkbas = await Zkbas.deploy();
-        await zkbas.deployed();
+        zkbnb = await ZkBNB.deploy();
+        await zkbnb.deployed();
     });
 
     // describe('ZNS Registry', function () {
     //     it("register", async function () {
     //         // register root node
-    //         const rootL2Acoount = ethers.utils.formatBytes32String('legend');
+    //         const rootL2Account = ethers.utils.formatBytes32String('legend');
     //         const rootNode = namehash.hash('');
     //         expect(await zns.owner(rootNode)).to.equal(await owner.getAddress());
     //
     //         const baseNameHash = getKeccak256('legend');
     //         const baseNode = namehash.hash('legend');
     //         // The owner of ZNS should be registrar
-    //         const setRootTx = await zns.setSubnodeOwner(rootNode, baseNameHash, zkbas.address, rootL2Acoount);
+    //         const setRootTx = await zns.setSubnodeOwner(rootNode, baseNameHash, zkbnb.address, rootL2Acoount);
     //         await setRootTx.wait();
-    //         expect(await zns.owner(baseNode)).to.equal(await zkbas.address);
+    //         expect(await zns.owner(baseNode)).to.equal(await zkbnb.address);
     //
     //         // register
-    //         const addr1L2Account = ethers.utils.formatBytes32String('zkbas.legend');
-    //         const registerTx = await zkbas.connect(owner).register('zkbas', await addr1.getAddress(), addr1L2Account)
+    //         const addr1L2Account = ethers.utils.formatBytes32String('zkbnb.legend');
+    //         const registerTx = await zkbnb.connect(owner).register('zkbnb', await addr1.getAddress(), addr1L2Account)
     //         await registerTx.wait()
-    //         expect(await zns.owner(namehash.hash('zkbas.legend'))).to.equal(await addr1.getAddress());
+    //         expect(await zns.owner(namehash.hash('zkbnb.legend'))).to.equal(await addr1.getAddress());
     //
     //         // register illegal name
-    //         const addr2L2Account = ethers.utils.formatBytes32String('zkbas2.legend');
+    //         const addr2L2Account = ethers.utils.formatBytes32String('zkbnb2.legend');
     //         await expect(
-    //             zkbas.connect(owner).register('id', await addr2.getAddress(), addr2L2Account)
+    //             zkbnb.connect(owner).register('id', await addr2.getAddress(), addr2L2Account)
     //         ).to.be.revertedWith("invalid name");
     //         await expect(
-    //             zkbas.connect(owner).register('id-a', await addr2.getAddress(), addr2L2Account)
+    //             zkbnb.connect(owner).register('id-a', await addr2.getAddress(), addr2L2Account)
     //         ).to.be.revertedWith("invalid name");
     //
     //         // duplicated L2 owner
     //         await expect(
-    //             zkbas.connect(owner).register('foo', await addr1.getAddress(), addr1L2Account)
+    //             zkbnb.connect(owner).register('foo', await addr1.getAddress(), addr1L2Account)
     //         ).to.be.revertedWith('L2 owner existed');
     //     });
     // });
 
     // get the keccak256 hash of a specified string name
-    // eg: getKeccak256('zkbas') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
+    // eg: getKeccak256('zkbnb') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
     const getKeccak256 = (name) => {
         return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name))
     }
@@ -86,7 +86,7 @@ describe("Zkbas Registry Contract", function () {
     //         return '0x' + '0'.repeat(64)
     //     }
     //
-    //     // split the name into 2 parts, if it contains '.', eg 'a.zkbas.legend' is split into 'a' and 'zkbas.legend'
+    //     // split the name into 2 parts, if it contains '.', eg 'a.zkbnb.legend' is split into 'a' and 'zkbnb.legend'
     //     // or we add '' into the second place, eg 'legend' is split into 'legend' and ''
     //     const parts = name.split('.', 2);
     //     if(parts.length === 1) {

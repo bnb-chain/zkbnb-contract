@@ -13,18 +13,18 @@ exports.saveDeployedAddresses = function (path, addrs) {
     fs.writeFileSync(path, data);
 }
 
-exports.getZkbasProxy = async function (addr) {
+exports.getZkBNBProxy = async function (addr) {
     // Get utils contract
     const Utils = await ethers.getContractFactory("Utils")
     const utils = await Utils.deploy()
     await utils.deployed()
 
-    // zkbas
-    const Zkbas = await ethers.getContractFactory('Zkbas', {
+    // zkbnb
+    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
         libraries: {
             Utils: utils.address
         }
     });
 
-    return Zkbas.attach(addr);
+    return ZkBNB.attach(addr);
 }

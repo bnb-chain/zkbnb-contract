@@ -1,21 +1,21 @@
-const {getDeployedAddresses, getZkbasProxy} = require("./utils")
+const {getDeployedAddresses, getZkBNBProxy} = require("./utils")
 const {ethers} = require("hardhat");
 
 async function main() {
     const [owner] = await ethers.getSigners();
     const addrs = getDeployedAddresses('info/addresses.json')
-    const zkbas = await getZkbasProxy(addrs.zkbasProxy)
+    const zkbnb = await getZkBNBProxy(addrs.zkbnbProxy)
     const treasuryName = 'treasury'
     const gasName = 'gas'
     const sherName = 'sher'
     const gavinName = 'gavin'
-    const treasuryRegisterFee = await zkbas.getZNSNamePrice(treasuryName)
-    const gasRegisterFee = await zkbas.getZNSNamePrice(gasName)
-    const sherRegisterFee = await zkbas.getZNSNamePrice(sherName)
-    const gavinRegisterFee = await zkbas.getZNSNamePrice(gavinName)
+    const treasuryRegisterFee = await zkbnb.getZNSNamePrice(treasuryName)
+    const gasRegisterFee = await zkbnb.getZNSNamePrice(gasName)
+    const sherRegisterFee = await zkbnb.getZNSNamePrice(sherName)
+    const gavinRegisterFee = await zkbnb.getZNSNamePrice(gavinName)
 
     console.log('Register ZNS for treasury, gas, sher and gavin...')
-    let registerZnsTx = await zkbas.registerZNS(
+    let registerZnsTx = await zkbnb.registerZNS(
         treasuryName,
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
         '0x2005db7af2bdcfae1fa8d28833ae2f1995e9a8e0825377cff121db64b0db21b7',
@@ -25,7 +25,7 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
-    registerZnsTx = await zkbas.registerZNS(
+    registerZnsTx = await zkbnb.registerZNS(
         gasName,
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
         '0x2c24415b75651673b0d7bbf145ac8d7cb744ba6926963d1d014836336df1317a',
@@ -35,7 +35,7 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
-    registerZnsTx = await zkbas.registerZNS(
+    registerZnsTx = await zkbnb.registerZNS(
         sherName,
         // '0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449', // BSC
         // '0x7dD2Ac589eFCC8888474d95Cb4b084CCa2d8aA57', // Local
@@ -48,7 +48,7 @@ async function main() {
         }
     )
     await registerZnsTx.wait()
-    registerZnsTx = await zkbas.registerZNS(
+    registerZnsTx = await zkbnb.registerZNS(
         gavinName,
         '0xf162Be50463c1EbFbf1A2eF944885945A768fbC1',
         '0x0649fef47f6cf3dfb767cf5599eea11677bb6495956ec4cf75707d3aca7c06ed',
