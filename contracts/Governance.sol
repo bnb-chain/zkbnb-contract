@@ -8,7 +8,7 @@ import "./AssetGovernance.sol";
 import "./SafeMathUInt32.sol";
 
 /// @title Governance Contract
-/// @author Zkbas Team
+/// @author ZkBNB Team
 contract Governance is Config {
 
     /// @notice Token added to Franklin net

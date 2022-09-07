@@ -1,7 +1,7 @@
-# Design of ZkBAS Contract 
+# Design of ZkBNB Contract 
 
-## ZkBAS Key Contracts
-### ZkBAS
+## ZkBNB Key Contracts
+### ZkBNB
 #### commitBlocks
 ```
     function commitBlocks(
@@ -59,7 +59,7 @@ L2 transactions are packed in `CommitBlockInfo.publicData`
 
 #### registerZNS
 ```
-    function registerZNS(string calldata _name, address _owner, bytes32 _ZkBASPubKeyX, bytes32 _ZkBASPubKeyY) external payable;
+    function registerZNS(string calldata _name, address _owner, bytes32 _ZkBNBPubKeyX, bytes32 _ZkBNBPubKeyY) external payable;
 ```
 Add request that registering a ZNS name into `priority queue`.
 
@@ -68,7 +68,7 @@ Add request that registering a ZNS name into `priority queue`.
     function depositBNB(string calldata _accountName) external payable;
 ```
 Deposit native asset to L2, `_accountName` will receive the BNB on L2. This function including the following steps:
-- transfer BNB from user into `ZkBAS` contract
+- transfer BNB from user into `ZkBNB` contract
 - add `Deposit` request into `priority queue`
 
 #### depositBEP20
@@ -80,7 +80,7 @@ Deposit native asset to L2, `_accountName` will receive the BNB on L2. This func
     ) external;
 ```
 Deposit BEP20 token to L2, `_accountName` will receive the token. This function including the following steps:
-- transfer BEP20 token from user into `ZkBAS` contract
+- transfer BEP20 token from user into `ZkBNB` contract
 - check if the token is allowed to deposit to L2
 - add `Deposit` request into `priority queue`
 
@@ -96,7 +96,7 @@ Deposit BEP20 token to L2, `_accountName` will receive the token. This function 
     
     function getPendingBalance(address _address, address _assetAddr) public view returns (uint128);
 ```
-`ZkBAS` provides some interfaces to query L1 and L2 status.
+`ZkBNB` provides some interfaces to query L1 and L2 status.
 - `getAddressByAccountNameHash`: 
 - `isRegisteredZNSName`: check if the provided ZNS name is registered
 - `getZNSNamePrice`: get the price of the provided ZNS name
@@ -104,9 +104,9 @@ Deposit BEP20 token to L2, `_accountName` will receive the token. This function 
 - `getPendingBalance`: get pending balance that the user can withdraw
 
 
-### AdditionalZkBAS
+### AdditionalZkBNB
 
-Due to a ceiling on the code size of `ZkBAS` contract, `AdditionalZkBAS` will store more logic code which could not be stored on `ZkBAS`.
+Due to a ceiling on the code size of `ZkBNB` contract, `AdditionalZkBNB` will store more logic code which could not be stored on `ZkBNB`.
 
 #### createPair
 ```
@@ -131,18 +131,18 @@ Update the fee rate of provided pair on L2. This function including the followin
 - add `UpdatePairRate` request into `priority queue`
 
 ### AssetGovernance
-`AssetGovernance` contract is used to allow anyone to add new ERC20 tokens to ZkBAS given sufficient payment.
+`AssetGovernance` contract is used to allow anyone to add new ERC20 tokens to ZkBNB given sufficient payment.
 
 #### addAsset
 ```
     function addAsset(address _assetAddress) external;
 ```
-This function allows anyone adds new ERC20 token to ZkBAS network.
+This function allows anyone adds new ERC20 token to ZkBNB network.
 If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
 before calling this function make sure to approve `listingFeeToken` transfer for this contract.
 
-### ZkBASVerifier
-`ZkBASVerifier` contract help `ZkBAS` to verify the committed blocks and proofs.
+### ZkBNBVerifier
+`ZkBNBVerifier` contract help `ZkBNB` to verify the committed blocks and proofs.
 
 #### verifyBatchProofs
 ```
@@ -168,9 +168,9 @@ before calling this function make sure to approve `listingFeeToken` transfer for
 
 This function allows verifying batch proofs for batch blocks.
 
-## ZkBAS Name Service
+## ZkBNB Name Service
 
-ZkBAS Name Service(ZNS) is a name service between L1 and L2. Users should register name in L1 
+ZkBNB Name Service(ZNS) is a name service between L1 and L2. Users should register name in L1 
 and set his L2 account address(Bytes32 public key) with this name. So that this user can use this name
 both in L1 and L2.
 
@@ -195,7 +195,7 @@ Contracts of ZNS are consists of three parts: ZNSRegistry, ZNSRegistrarControlle
 
 A ZNSRegistry contains records of name node. It will be owned as a member variable by ZNSRegistrarController.
 
-All ZNS lookups start by querying the registry. The registry contains records of ZkBAS short name, recording the
+All ZNS lookups start by querying the registry. The registry contains records of ZkBNB short name, recording the
 owner, L2 owner and resolver of each name, and allows the owner of a domain to make changes to these data.
 
 #### ZNS.sol
@@ -240,7 +240,7 @@ All short names are maintained by this contract and each name is mapped to a Rec
 
 #### ZNSRegistrarController.sol
 
-It provides external functions for users to register (and transfer) ZkBAS names.
+It provides external functions for users to register (and transfer) ZkBNB names.
 
 It also maintains a mapper from L2Account to node's name hash, which can be used to assure
 each L2 account can only own one name.
@@ -264,10 +264,10 @@ This allows you to iteratively add new features to your contracts, or fix any bu
 
 Upgradeable contracts:
 - `Governance`
-- `ZkBASVerifier`
+- `ZkBNBVerifier`
 - `ZNSController`
 - `PublicResolver`
-- `ZkBAS`
+- `ZkBNB`
 
 There are several phases to the upgrade process:
 
@@ -284,14 +284,14 @@ There are several phases to the upgrade process:
 ```
     function deployProxyContracts(
         Governance _governanceTarget,
-        ZkBASVerifier _verifierTarget,
-        ZkBAS _ZkBASTarget,
+        ZkBNBVerifier _verifierTarget,
+        ZkBNB _ZkBNBTarget,
         ZNSController _znsControllerTarget,
         PublicResolver _znsResolverTarget,
         AdditionalParams memory _additionalParams
     ) internal;
 ```
-This function deploy proxies for upgradeable contracts in `ZkBAS`.
+This function deploy proxies for upgradeable contracts in `ZkBNB`.
 
 ### UpgradeGatekeeper
 `UpgradeGatekeeper` is the admin contract who will be the only one allowed to manage and upgrade these upgradeable contracts.

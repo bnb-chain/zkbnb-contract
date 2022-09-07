@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Utils.sol";
 
 /// @title Asset Governance Contract
-/// @author Zkbas Team
-/// @notice Contract is used to allow anyone to add new ERC20 tokens to Zkbas given sufficient payment
+/// @author ZkBNB Team
+/// @notice Contract is used to allow anyone to add new ERC20 tokens to ZkBNB given sufficient payment
 contract AssetGovernance is ReentrancyGuard {
     /// @notice Token lister added or removed (see `tokenLister`)
     event TokenListerUpdate(address indexed tokenLister, bool isActive);
@@ -35,10 +35,10 @@ contract AssetGovernance is ReentrancyGuard {
     /// @notice The fee rate was updated
     event FeeRateUpdate(uint16 _newFeeRate);
 
-    /// @notice Zkbas governance contract
+    /// @notice ZkBNB governance contract
     Governance public governance;
 
-    /// @notice Token used to collect listing fee for addition of new token to Zkbas network
+    /// @notice Token used to collect listing fee for addition of new token to ZkBNB network
     IERC20 public listingFeeToken;
 
     /// @notice Token listing fee
@@ -91,7 +91,7 @@ contract AssetGovernance is ReentrancyGuard {
     // solhint-disable-next-line no-empty-blocks
     function upgrade(bytes calldata upgradeParameters) external {}
 
-    /// @notice Adds new ERC20 token to Zkbas network.
+    /// @notice Adds new ERC20 token to ZkBNB network.
     /// @notice If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
     /// @notice NOTE: before calling this function make sure to approve `listingFeeToken` transfer for this contract.
     function addAsset(address _assetAddress) external {
@@ -106,10 +106,10 @@ contract AssetGovernance is ReentrancyGuard {
         governance.addAsset(_assetAddress);
     }
 
-    /// Governance functions (this contract is governed by Zkbas governor)
+    /// Governance functions (this contract is governed by ZkBNB governor)
 
     /// @notice Set new listing token and fee
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setListingFeeAsset(IERC20 _newListingFeeAsset, uint256 _newListingFee) external {
         governance.requireGovernor(msg.sender);
         listingFeeToken = _newListingFeeAsset;
@@ -119,7 +119,7 @@ contract AssetGovernance is ReentrancyGuard {
     }
 
     /// @notice Set new listing fee
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setListingFee(uint256 _newListingFee) external {
         governance.requireGovernor(msg.sender);
         listingFee = _newListingFee;
@@ -128,7 +128,7 @@ contract AssetGovernance is ReentrancyGuard {
     }
 
     /// @notice Enable or disable token lister. If enabled new tokens can be added by that address without payment
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setLister(address _listerAddress, bool _active) external {
         governance.requireGovernor(msg.sender);
         if (tokenLister[_listerAddress] != _active) {
@@ -138,7 +138,7 @@ contract AssetGovernance is ReentrancyGuard {
     }
 
     /// @notice Change maximum amount of tokens that can be listed using this method
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setListingCap(uint16 _newListingCap) external {
         governance.requireGovernor(msg.sender);
         listingCap = _newListingCap;
@@ -147,7 +147,7 @@ contract AssetGovernance is ReentrancyGuard {
     }
 
     /// @notice Change address that collects payments for listing tokens.
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setTreasury(address _newTreasury) external {
         governance.requireGovernor(msg.sender);
         treasury = _newTreasury;
@@ -156,7 +156,7 @@ contract AssetGovernance is ReentrancyGuard {
     }
 
     /// @notice Change account index that collects payments for listing tokens.
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setTreasuryAccountIndex(uint32 _newTreasuryAccountIndex) external {
         governance.requireGovernor(msg.sender);
         treasuryAccountIndex = _newTreasuryAccountIndex;
@@ -165,7 +165,7 @@ contract AssetGovernance is ReentrancyGuard {
     }
 
     /// @notice Change treasury fee rate
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setTreasuryRate(uint16 _newTreasuryRate) external {
         governance.requireGovernor(msg.sender);
         treasuryRate = _newTreasuryRate;
@@ -174,7 +174,7 @@ contract AssetGovernance is ReentrancyGuard {
     }
 
     /// @notice Change fee rate
-    /// @notice Can be called only by Zkbas governor
+    /// @notice Can be called only by ZkBNB governor
     function setFeeRate(uint16 _newFeeRate) external {
         governance.requireGovernor(msg.sender);
         feeRate = _newFeeRate;
