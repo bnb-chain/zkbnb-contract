@@ -335,7 +335,7 @@ contract OldZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         bytes memory _emptyExtraData;
         if (op.nftL1Address != address(0x00)) {
             /// This is a NFT from layer 1, withdraw id directly
-            try IERC721(op.nftL1Address).safeTransferFrom(
+            try IERC721(op.nftL1Address).safeTransferFrom{gas : WITHDRAWAL_NFT_GAS_LIMIT}(
                 address(this),
                 op.toAddress,
                 op.nftL1TokenId
