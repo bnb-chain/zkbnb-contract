@@ -20,7 +20,7 @@ exports.getZkBNBProxy = async function (addr) {
     await utils.deployed()
 
     // zkbnb
-    const ZkBNB = await ethers.getContractFactory('OldZkBNB', {
+    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
         libraries: {
             Utils: utils.address
         }

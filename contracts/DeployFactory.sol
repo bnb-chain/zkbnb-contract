@@ -95,7 +95,8 @@ contract DeployFactory {
             _additionalParams.listingToken,
             _additionalParams.listingFee,
             _additionalParams.listingCap,
-            _additionalParams.governor
+            _additionalParams.governor,
+            0
         );
         verifier = new Proxy(address(_verifierTarget), abi.encode());
         znsController = new Proxy(address(_znsControllerTarget), abi.encode(_additionalParams.zns, _additionalParams.priceOracle, _additionalParams.baseNode));

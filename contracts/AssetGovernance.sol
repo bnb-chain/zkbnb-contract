@@ -26,6 +26,9 @@ contract AssetGovernance is ReentrancyGuard {
     /// @notice The treasury (the account which will receive the fee) was updated
     event TreasuryUpdate(address newTreasury);
 
+    /// @notice The treasury account index was updated
+    event TreasuryAccountIndexUpdate(uint32 _newTreasuryAccountIndex);
+
     /// @notice ZkBNB governance contract
     Governance public governance;
 
@@ -44,12 +47,16 @@ contract AssetGovernance is ReentrancyGuard {
     /// @notice Address that collects listing payments
     address public treasury;
 
+    /// @notice AccountIndex that collects listing payments
+    uint32 public treasuryAccountIndex;
+
     constructor (
         address _governance,
         address _listingFeeToken,
         uint256 _listingFee,
         uint16 _listingCap,
-        address _treasury
+        address _treasury,
+        uint32 _treasuryAccountIndex
     ) {
 
         governance = Governance(_governance);
@@ -57,6 +64,7 @@ contract AssetGovernance is ReentrancyGuard {
         listingFee = _listingFee;
         listingCap = _listingCap;
         treasury = _treasury;
+        treasuryAccountIndex = _treasuryAccountIndex;
         // We add treasury as the first token lister
         tokenLister[treasury] = true;
         emit TokenListerUpdate(treasury, true);
@@ -129,5 +137,14 @@ contract AssetGovernance is ReentrancyGuard {
         treasury = _newTreasury;
 
         emit TreasuryUpdate(_newTreasury);
+    }
+
+    /// @notice Change account index that collects payments for listing tokens.
+    /// @notice Can be called only by ZkBNB governor
+    function setTreasuryAccountIndex(uint32 _newTreasuryAccountIndex) external {
+        governance.requireGovernor(msg.sender);
+        treasuryAccountIndex = _newTreasuryAccountIndex;
+
+        emit TreasuryAccountIndexUpdate(_newTreasuryAccountIndex);
     }
 }
