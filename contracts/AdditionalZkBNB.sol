@@ -45,7 +45,6 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
             AccountNameHash bytes32
             PublicKey
             AssetRoot
-            LiquidityRoot
         Asset
            AssetId
            Balance
@@ -201,94 +200,6 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
         emit BlocksRevert(totalBlocksVerified, blocksCommitted);
     }
 
-    function createPair(address _tokenA, address _tokenB) external {
-        // Only governor can create token pair
-        governance.requireGovernor(msg.sender);
-        require(_tokenA != _tokenB, 'ia1');
-        requireActive();
-        (address _token0, address _token1) = _tokenA < _tokenB ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
-        // Get asset id by its address
-        uint16 assetAId = 0;
-        uint16 assetBId;
-        if (_token0 != address(0)) {
-            assetAId = governance.validateAssetAddress(_token0);
-        }
-        require(!governance.pausedAssets(assetAId), "ia2");
-        assetBId = governance.validateAssetAddress(_token1);
-        require(!governance.pausedAssets(assetBId), "ia3");
-        (assetAId, assetBId) = assetAId < assetBId ? (assetAId, assetBId) : (assetBId, assetAId);
-
-        // Check asset exist
-        require(!isTokenPairExist[assetAId][assetBId], 'ip');
-
-        // Create token pair
-        governance.validateAssetTokenLister(msg.sender);
-        // new token pair index
-        isTokenPairExist[assetAId][assetBId] = true;
-        tokenPairs[assetAId][assetBId] = totalTokenPairs;
-
-        // Priority Queue request
-        TxTypes.CreatePair memory _tx = TxTypes.CreatePair({
-        txType : uint8(TxTypes.TxType.CreatePair),
-        pairIndex : totalTokenPairs,
-        assetAId : assetAId,
-        assetBId : assetBId,
-        feeRate : governance.assetGovernance().feeRate(),
-        treasuryAccountIndex : governance.assetGovernance().treasuryAccountIndex(),
-        treasuryRate : governance.assetGovernance().treasuryRate()
-        });
-        // compact pub data
-        bytes memory pubData = TxTypes.writeCreatePairPubDataForPriorityQueue(_tx);
-        // add into priority request queue
-        addPriorityRequest(TxTypes.TxType.CreatePair, pubData);
-        totalTokenPairs++;
-
-        emit CreateTokenPair(_tx.pairIndex, assetAId, assetBId, _tx.feeRate, _tx.treasuryAccountIndex, _tx.treasuryRate);
-    }
-
-    struct PairInfo {
-        address tokenA;
-        address tokenB;
-        uint16 feeRate;
-        uint32 treasuryAccountIndex;
-        uint16 treasuryRate;
-    }
-
-    function updatePairRate(PairInfo memory _pairInfo) external {
-        // Only governor can update token pair
-        governance.requireGovernor(msg.sender);
-        requireActive();
-        (address _token0, address _token1) = _pairInfo.tokenA < _pairInfo.tokenB ? (_pairInfo.tokenA, _pairInfo.tokenB) : (_pairInfo.tokenB, _pairInfo.tokenA);
-        // Get asset id by its address
-        uint16 assetAId = 0;
-        uint16 assetBId;
-        if (_token0 != address(0)) {
-            assetAId = governance.validateAssetAddress(_token0);
-        }
-        require(!governance.pausedAssets(assetAId), "ia2");
-        assetBId = governance.validateAssetAddress(_token1);
-        require(!governance.pausedAssets(assetBId), "ia3");
-        (assetAId, assetBId) = assetAId < assetBId ? (assetAId, assetBId) : (assetBId, assetAId);
-        require(isTokenPairExist[assetAId][assetBId], 'pne');
-
-        uint16 _pairIndex = tokenPairs[assetAId][assetBId];
-
-        // Priority Queue request
-        TxTypes.UpdatePairRate memory _tx = TxTypes.UpdatePairRate({
-        txType : uint8(TxTypes.TxType.UpdatePairRate),
-        pairIndex : _pairIndex,
-        feeRate : _pairInfo.feeRate,
-        treasuryAccountIndex : _pairInfo.treasuryAccountIndex,
-        treasuryRate : _pairInfo.treasuryRate
-        });
-        // compact pub data
-        bytes memory pubData = TxTypes.writeUpdatePairRatePubDataForPriorityQueue(_tx);
-        // add into priority request queue
-        addPriorityRequest(TxTypes.TxType.UpdatePairRate, pubData);
-
-        emit UpdateTokenPair(_pairIndex, _pairInfo.feeRate, _pairInfo.treasuryAccountIndex, _pairInfo.treasuryRate);
-    }
-
     /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
     /// @param _factory Address of NFT factory
     function setDefaultNFTFactory(NFTFactory _factory) external {
@@ -412,71 +323,6 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
         bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
         addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
     }
-
-    /// @notice Deposit NFT to Layer 2, ERC721 is supported
-    //    function depositNft(
-    //        string calldata _accountName,
-    //        address _nftL1Address,
-    //        uint256 _nftL1TokenId
-    //    ) external {
-    //        requireActive();
-    //        bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    //        require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    //        // Transfer the tokens to this contract
-    //        bool success;
-    //        try IERC721(_nftL1Address).safeTransferFrom(
-    //            msg.sender,
-    //            address(this),
-    //            _nftL1TokenId
-    //        ){
-    //            success = true;
-    //        }catch{
-    //            success = false;
-    //        }
-    //        require(success, "ntf");
-    //        // check owner
-    //        require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
-    //
-    //        // check if the nft is mint from layer-2
-    //        bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-    //        uint16 collectionId = 0;
-    //        uint40 nftIndex = 0;
-    //        uint32 creatorAccountIndex = 0;
-    //        uint16 creatorTreasuryRate = 0;
-    //        bytes32 nftContentHash;
-    //        if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
-    //            // it means this is a new layer-1 nft
-    //            nftContentHash = nftKey;
-    //        } else {
-    //            // it means this is a nft that comes from layer-2
-    //            nftContentHash = l2Nfts[nftKey].nftContentHash;
-    //            collectionId = l2Nfts[nftKey].collectionId;
-    //            nftIndex = l2Nfts[nftKey].nftIndex;
-    //            creatorAccountIndex = l2Nfts[nftKey].creatorAccountIndex;
-    //            creatorTreasuryRate = l2Nfts[nftKey].creatorTreasuryRate;
-    //        }
-    //
-    //        TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-    //        txType : uint8(TxTypes.TxType.DepositNft),
-    //        accountIndex : 0, // unknown at this point
-    //        nftIndex : nftIndex,
-    //        nftL1Address : _nftL1Address,
-    //        creatorAccountIndex : creatorAccountIndex,
-    //        creatorTreasuryRate : creatorTreasuryRate,
-    //        nftContentHash : nftContentHash,
-    //        nftL1TokenId : _nftL1TokenId,
-    //        accountNameHash : accountNameHash,
-    //        collectionId : collectionId
-    //        });
-    //
-    //        // compact pub data
-    //        bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
-    //
-    //        // add into priority request queue
-    //        addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
-    //
-    //        emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
-    //    }
 
     /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
     /// @param _assetId Asset by id
@@ -629,18 +475,6 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
                 TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
                 checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.CreatePair) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubData(txPubData);
-                checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.UpdatePairRate) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubData(txPubData);
-                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
             } else if (txType == TxTypes.TxType.Deposit) {
                 bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
                 TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
@@ -687,30 +521,6 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
                 processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
             }
         }
-    }
-
-    /// @notice Checks that update pair is same as _tx in priority queue
-    /// @param _updatePairRate update pair
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.UpdatePairRate memory _updatePairRate, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.UpdatePairRate, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkUpdatePairRateInPriorityQueue(_updatePairRate, hashedPubData), "I");
-    }
-
-    /// @notice Checks that create pair is same as _tx in priority queue
-    /// @param _createPair create pair
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.CreatePair memory _createPair, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.CreatePair, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubData), "I");
     }
 
     /// @notice Checks that register zns is same as _tx in priority queue

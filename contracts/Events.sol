@@ -85,24 +85,6 @@ interface Events {
     /// @notice Event emitted when user NFT is withdrawn from the zkSync state but not from contract
     event WithdrawalNFTPending(uint40 indexed nftIndex);
 
-    /// @notice Token pair created event.
-    event CreateTokenPair (
-        uint16 pairIndex,
-        uint16 asset0Id,
-        uint16 asset1Id,
-        uint16 feeRate,
-        uint32 treasuryAccountIndex,
-        uint16 treasuryRate
-    );
-
-    /// @notice Update token pair event.
-    event UpdateTokenPair (
-        uint16 pairIndex,
-        uint16 feeRate,
-        uint32 treasuryAccountIndex,
-        uint16 treasuryRate
-    );
-
     /// @notice Default NFTFactory changed
     event NewDefaultNFTFactory(address indexed factory);
 

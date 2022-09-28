@@ -170,22 +170,6 @@ contract OldZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         emit NoticePeriodChange(approvedUpgradeNoticePeriod);
     }
 
-    function createPair(address _tokenA, address _tokenB) external {
-        delegateAdditional();
-    }
-
-    struct PairInfo {
-        address tokenA;
-        address tokenB;
-        uint16 feeRate;
-        uint32 treasuryAccountIndex;
-        uint16 treasuryRate;
-    }
-
-    function updatePairRate(PairInfo memory _pairInfo) external {
-        delegateAdditional();
-    }
-
     function registerZNS(string calldata _name, address _owner, bytes32 _zkbnbPubKeyX, bytes32 _zkbnbPubKeyY) external payable nonReentrant {
         // Register ZNS
         (bytes32 node,uint32 accountIndex) = znsController.registerZNS{value : msg.value}(_name, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, address(znsResolver));
@@ -482,42 +466,6 @@ contract OldZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         return uint128(balanceDiff);
     }
 
-    /// @dev Process one block commit using previous block StoredBlockInfo,
-    /// @dev returns new block StoredBlockInfo
-//    function commitOneBlock(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
-//    internal
-//    view
-//    returns (StoredBlockInfo memory storedNewBlock)
-//    {
-//        // only commit next block
-//        require(_newBlock.blockNumber == _previousBlock.blockNumber + 1, "f");
-//
-//        // Check timestamp of the new block
-//        // Block should be after previous block
-//        {
-//            require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
-//        }
-//
-//        // Check onchain operations
-//        (
-//        bytes32 pendingOnchainOpsHash,
-//        uint64 priorityReqCommitted
-//        ) = collectOnchainOps(_newBlock);
-//
-//        // Create block commitment for verification proof
-//        bytes32 commitment = createBlockCommitment(_previousBlock, _newBlock);
-//
-//        return
-//        StoredBlockInfo(
-//            _newBlock.blockNumber,
-//            priorityReqCommitted,
-//            pendingOnchainOpsHash,
-//            _newBlock.timestamp,
-//            _newBlock.newStateRoot,
-//            commitment
-//        );
-//    }
-
     /// @notice Commit block
     /// @notice 1. Checks onchain operations, timestamp.
     function commitBlocks(
@@ -526,24 +474,6 @@ contract OldZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
     )
     external
     {
-//        requireActive();
-//        governance.requireActiveValidator(msg.sender);
-//        // Check that we commit blocks after last committed block
-//        // incorrect previous block data
-//        require(storedBlockHashes[totalBlocksCommitted] == hashStoredBlockInfo(_lastCommittedBlockData), "i");
-//
-//        for (uint32 i = 0; i < _newBlocksData.length; ++i) {
-//            _lastCommittedBlockData = commitOneBlock(_lastCommittedBlockData, _newBlocksData[i]);
-//
-//            totalCommittedPriorityRequests += _lastCommittedBlockData.priorityOperations;
-//            storedBlockHashes[_lastCommittedBlockData.blockNumber] = hashStoredBlockInfo(_lastCommittedBlockData);
-//
-//            emit BlockCommit(_lastCommittedBlockData.blockNumber);
-//        }
-//
-//        totalBlocksCommitted += uint32(_newBlocksData.length);
-//
-//        require(totalCommittedPriorityRequests <= totalOpenPriorityRequests, "j");
         delegateAdditional();
     }
 
@@ -765,179 +695,6 @@ contract OldZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
         totalOpenPriorityRequests++;
     }
 
-//    /// @notice Collect onchain ops and ensure it was not executed before
-//    function collectOnchainOps(CommitBlockInfo memory _newBlockData)
-//    internal
-//    view
-//    returns (
-//        bytes32 processableOperationsHash,
-//        uint64 priorityOperationsProcessed
-//    )
-//    {
-//        bytes memory pubData = _newBlockData.publicData;
-//
-//        require(pubData.length % TX_SIZE == 0, "A");
-//
-//        uint64 uncommittedPriorityRequestsOffset = firstPriorityRequestId + totalCommittedPriorityRequests;
-//        priorityOperationsProcessed = 0;
-//        processableOperationsHash = EMPTY_STRING_KECCAK;
-//
-//        for (uint16 i = 0; i < _newBlockData.publicDataOffsets.length; ++i) {
-//            uint32 pubdataOffset = _newBlockData.publicDataOffsets[i];
-//            require(pubdataOffset < pubData.length, "B");
-//
-//            TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
-//
-//            if (txType == TxTypes.TxType.RegisterZNS) {
-//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//
-//                TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
-//                checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-//                priorityOperationsProcessed++;
-//            } else if (txType == TxTypes.TxType.CreatePair) {
-//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//
-//                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubData(txPubData);
-//                checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-//                priorityOperationsProcessed++;
-//            } else if (txType == TxTypes.TxType.UpdatePairRate) {
-//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//
-//                TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubData(txPubData);
-//                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-//                priorityOperationsProcessed++;
-//            } else if (txType == TxTypes.TxType.Deposit) {
-//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//                TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
-//                checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-//                priorityOperationsProcessed++;
-//            } else if (txType == TxTypes.TxType.DepositNft) {
-//                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//
-//                TxTypes.DepositNft memory depositNftData = TxTypes.readDepositNftPubData(txPubData);
-//                checkPriorityOperation(depositNftData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-//                priorityOperationsProcessed++;
-//            } else {
-//
-//                bytes memory txPubData;
-//
-//                if (txType == TxTypes.TxType.Withdraw) {
-//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//                } else if (txType == TxTypes.TxType.WithdrawNft) {
-//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//                } else if (txType == TxTypes.TxType.FullExit) {
-//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//
-//                    TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(txPubData);
-//
-//                    checkPriorityOperation(
-//                        fullExitData,
-//                        uncommittedPriorityRequestsOffset + priorityOperationsProcessed
-//                    );
-//                    priorityOperationsProcessed++;
-//                } else if (txType == TxTypes.TxType.FullExitNft) {
-//                    txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-//
-//                    TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubData(txPubData);
-//
-//                    checkPriorityOperation(
-//                        fullExitNFTData,
-//                        uncommittedPriorityRequestsOffset + priorityOperationsProcessed
-//                    );
-//                    priorityOperationsProcessed++;
-//                } else {
-//                    // unsupported _tx
-//                    revert("F");
-//                }
-//                processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
-//            }
-//        }
-//    }
-
-//    /// @notice Checks that update pair is same as _tx in priority queue
-//    /// @param _updatePairRate update pair
-//    /// @param _priorityRequestId _tx's id in priority queue
-//    function checkPriorityOperation(TxTypes.UpdatePairRate memory _updatePairRate, uint64 _priorityRequestId) internal view {
-//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-//        // incorrect priority _tx type
-//        require(priorReqType == TxTypes.TxType.UpdatePairRate, "H");
-//
-//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-//        require(TxTypes.checkUpdatePairRateInPriorityQueue(_updatePairRate, hashedPubData), "I");
-//    }
-//
-//    /// @notice Checks that create pair is same as _tx in priority queue
-//    /// @param _createPair create pair
-//    /// @param _priorityRequestId _tx's id in priority queue
-//    function checkPriorityOperation(TxTypes.CreatePair memory _createPair, uint64 _priorityRequestId) internal view {
-//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-//        // incorrect priority _tx type
-//        require(priorReqType == TxTypes.TxType.CreatePair, "H");
-//
-//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-//        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubData), "I");
-//    }
-//
-//    /// @notice Checks that register zns is same as _tx in priority queue
-//    /// @param _registerZNS register zns
-//    /// @param _priorityRequestId _tx's id in priority queue
-//    function checkPriorityOperation(TxTypes.RegisterZNS memory _registerZNS, uint64 _priorityRequestId) internal view {
-//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-//        // incorrect priority _tx type
-//        require(priorReqType == TxTypes.TxType.RegisterZNS, "H");
-//
-//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-//        require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "I");
-//    }
-//
-//    /// @notice Checks that deposit is same as _tx in priority queue
-//    /// @param _deposit Deposit data
-//    /// @param _priorityRequestId _tx's id in priority queue
-//    function checkPriorityOperation(TxTypes.Deposit memory _deposit, uint64 _priorityRequestId) internal view {
-//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-//        // incorrect priority _tx type
-//        require(priorReqType == TxTypes.TxType.Deposit, "H");
-//
-//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-//        require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubData), "I");
-//    }
-//
-//    /// @notice Checks that deposit is same as _tx in priority queue
-//    /// @param _deposit Deposit data
-//    /// @param _priorityRequestId _tx's id in priority queue
-//    function checkPriorityOperation(TxTypes.DepositNft memory _deposit, uint64 _priorityRequestId) internal view {
-//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-//        // incorrect priority _tx type
-//        require(priorReqType == TxTypes.TxType.DepositNft, "H");
-//
-//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-//        require(TxTypes.checkDepositNftInPriorityQueue(_deposit, hashedPubData), "I");
-//    }
-//
-//    /// @notice Checks that FullExit is same as _tx in priority queue
-//    /// @param _fullExit FullExit data
-//    /// @param _priorityRequestId _tx's id in priority queue
-//    function checkPriorityOperation(TxTypes.FullExit memory _fullExit, uint64 _priorityRequestId) internal view {
-//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-//        // incorrect priority _tx type
-//        require(priorReqType == TxTypes.TxType.FullExit, "J");
-//
-//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-//        require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubData), "K");
-//    }
-//
-//    /// @notice Checks that FullExitNFT is same as _tx in priority queue
-//    /// @param _fullExitNft FullExit nft data
-//    /// @param _priorityRequestId _tx's id in priority queue
-//    function checkPriorityOperation(TxTypes.FullExitNft memory _fullExitNft, uint64 _priorityRequestId) internal view {
-//        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-//        // incorrect priority _tx type
-//        require(priorReqType == TxTypes.TxType.FullExitNft, "J");
-//
-//        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-//        require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubData), "K");
-//    }
-
     /// @notice Register full exit request - pack pubdata, add priority request
     /// @param _accountName account name
     /// @param _asset Token address, 0 address for BNB
@@ -951,23 +708,6 @@ contract OldZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuard
     function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
         delegateAdditional();
     }
-
-    /// @dev Creates block commitment from its data
-//    function createBlockCommitment(
-//        StoredBlockInfo memory _previousBlock,
-//        CommitBlockInfo memory _newBlockData
-//    ) internal view returns (bytes32) {
-//        uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
-//        bytes32 converted = keccak256(abi.encodePacked(
-//                uint256(_newBlockData.blockNumber), // block number
-//                uint256(_newBlockData.timestamp), // time stamp
-//                _previousBlock.stateRoot, // old state root
-//                _newBlockData.newStateRoot, // new state root
-//                pubData, // pub data
-//                uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
-//            ));
-//        return converted;
-//    }
 
     function setDefaultNFTFactory(NFTFactory _factory) external {
         delegateAdditional();

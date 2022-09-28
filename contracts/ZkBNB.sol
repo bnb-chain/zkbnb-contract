@@ -170,22 +170,6 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         emit NoticePeriodChange(approvedUpgradeNoticePeriod);
     }
 
-    function createPair(address _tokenA, address _tokenB) external {
-        delegateAdditional();
-    }
-
-    struct PairInfo {
-        address tokenA;
-        address tokenB;
-        uint16 feeRate;
-        uint32 treasuryAccountIndex;
-        uint16 treasuryRate;
-    }
-
-    function updatePairRate(PairInfo memory _pairInfo) external {
-        delegateAdditional();
-    }
-
     function registerZNS(string calldata _name, address _owner, bytes32 _zkbnbPubKeyX, bytes32 _zkbnbPubKeyY) external payable nonReentrant {
         // Register ZNS
         (bytes32 node,uint32 accountIndex) = znsController.registerZNS{value : msg.value}(_name, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, address(znsResolver));
@@ -717,18 +701,6 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                 TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
                 checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
                 priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.CreatePair) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.CreatePair memory createPairData = TxTypes.readCreatePairPubData(txPubData);
-                checkPriorityOperation(createPairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
-            } else if (txType == TxTypes.TxType.UpdatePairRate) {
-                bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-
-                TxTypes.UpdatePairRate memory updatePairData = TxTypes.readUpdatePairRatePubData(txPubData);
-                checkPriorityOperation(updatePairData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-                priorityOperationsProcessed++;
             } else if (txType == TxTypes.TxType.Deposit) {
                 bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
@@ -770,30 +742,6 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                 processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
             }
         }
-    }
-
-    /// @notice Checks that update pair is same as _tx in priority queue
-    /// @param _updatePairRate update pair
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.UpdatePairRate memory _updatePairRate, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.UpdatePairRate, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkUpdatePairRateInPriorityQueue(_updatePairRate, hashedPubData), "I");
-    }
-
-    /// @notice Checks that create pair is same as _tx in priority queue
-    /// @param _createPair create pair
-    /// @param _priorityRequestId _tx's id in priority queue
-    function checkPriorityOperation(TxTypes.CreatePair memory _createPair, uint64 _priorityRequestId) internal view {
-        TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-        // incorrect priority _tx type
-        require(priorReqType == TxTypes.TxType.CreatePair, "H");
-
-        bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-        require(TxTypes.checkCreatePairInPriorityQueue(_createPair, hashedPubData), "I");
     }
 
     /// @notice Checks that register zns is same as _tx in priority queue

@@ -17,8 +17,6 @@ Commit one block includes the following steps:
 2. check if priority operations from the committed block are same as the transactions in `priority queue`. 
 All onchain operations as below:  
     - `RegisterZNS`: register ZNS name 
-    - `CreatePair`: create token pair for token swap on L2
-    - `UpdatePairRate`: update fee rate of the token pair 
     - `Deposit`: deposit tokens from L1 to L2
     - `DepositNft`: deposit NFT from L1 to L2
     - `Withdraw`: withdraw tokens from L2 to L1, sending request to L2
@@ -107,28 +105,6 @@ Deposit BEP20 token to L2, `_accountName` will receive the token. This function 
 ### AdditionalZkBNB
 
 Due to a ceiling on the code size of `ZkBNB` contract, `AdditionalZkBNB` will store more logic code which could not be stored on `ZkBNB`.
-
-#### createPair
-```
-    function createPair(address _tokenA, address _tokenB) external;
-```
-
-Create token pair for token swap on L2. This function including the following steps:
-
-- check if the pair of provided tokens already exists and the provided tokens are allowed to create pair on L2
-- If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made
-- record new token pair on chain
-- add `CreatePair` request into `priority queue`
-
-#### updatePairRate
-```
-    function updatePairRate(PairInfo memory _pairInfo) external;
-```
-
-Update the fee rate of provided pair on L2. This function including the following steps:
-- check if the pair exists and tokens are allowed to update fee rate
-- update token pair fee rate on L1
-- add `UpdatePairRate` request into `priority queue`
 
 ### AssetGovernance
 `AssetGovernance` contract is used to allow anyone to add new ERC20 tokens to ZkBNB given sufficient payment.

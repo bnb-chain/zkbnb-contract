@@ -127,18 +127,4 @@ contract Governance is Config {
         require(!pausedAssets[assetId], "2i");
         return assetId;
     }
-
-    function validateAssetTokenLister(address _address) external {
-        // If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
-        if (!assetGovernance.tokenLister(_address)) {
-            // Collect fees
-            bool feeTransferOk = Utils.transferFromERC20(
-                assetGovernance.listingFeeToken(),
-                _address,
-                assetGovernance.treasury(),
-                assetGovernance.listingFee()
-            );
-            require(feeTransferOk, "fee transfer failed");
-        }
-    }
 }

@@ -26,15 +26,6 @@ contract AssetGovernance is ReentrancyGuard {
     /// @notice The treasury (the account which will receive the fee) was updated
     event TreasuryUpdate(address newTreasury);
 
-    /// @notice The treasury account index was updated
-    event TreasuryAccountIndexUpdate(uint32 _newTreasuryAccountIndex);
-
-    /// @notice The treasury fee rate was updated
-    event TreasuryRateUpdate(uint16 _newTreasuryRate);
-
-    /// @notice The fee rate was updated
-    event FeeRateUpdate(uint16 _newFeeRate);
-
     /// @notice ZkBNB governance contract
     Governance public governance;
 
@@ -53,24 +44,12 @@ contract AssetGovernance is ReentrancyGuard {
     /// @notice Address that collects listing payments
     address public treasury;
 
-    /// @notice AccountIndex that collects listing payments
-    uint32 public treasuryAccountIndex;
-
-    /// @notice Fee rate when exchange token pair
-    uint16 public feeRate;
-
-    /// @notice Treasury fee rate when exchange token pair
-    uint16 public treasuryRate;
-
     constructor (
         address _governance,
         address _listingFeeToken,
         uint256 _listingFee,
         uint16 _listingCap,
-        address _treasury,
-        uint16 _feeRate,
-        uint32 _treasuryAccountIndex,
-        uint16 _treasuryRate
+        address _treasury
     ) {
 
         governance = Governance(_governance);
@@ -78,9 +57,6 @@ contract AssetGovernance is ReentrancyGuard {
         listingFee = _listingFee;
         listingCap = _listingCap;
         treasury = _treasury;
-        treasuryAccountIndex = _treasuryAccountIndex;
-        feeRate = _feeRate;
-        treasuryRate = _treasuryRate;
         // We add treasury as the first token lister
         tokenLister[treasury] = true;
         emit TokenListerUpdate(treasury, true);
@@ -153,32 +129,5 @@ contract AssetGovernance is ReentrancyGuard {
         treasury = _newTreasury;
 
         emit TreasuryUpdate(_newTreasury);
-    }
-
-    /// @notice Change account index that collects payments for listing tokens.
-    /// @notice Can be called only by ZkBNB governor
-    function setTreasuryAccountIndex(uint32 _newTreasuryAccountIndex) external {
-        governance.requireGovernor(msg.sender);
-        treasuryAccountIndex = _newTreasuryAccountIndex;
-
-        emit TreasuryAccountIndexUpdate(_newTreasuryAccountIndex);
-    }
-
-    /// @notice Change treasury fee rate
-    /// @notice Can be called only by ZkBNB governor
-    function setTreasuryRate(uint16 _newTreasuryRate) external {
-        governance.requireGovernor(msg.sender);
-        treasuryRate = _newTreasuryRate;
-
-        emit TreasuryRateUpdate(_newTreasuryRate);
-    }
-
-    /// @notice Change fee rate
-    /// @notice Can be called only by ZkBNB governor
-    function setFeeRate(uint16 _newFeeRate) external {
-        governance.requireGovernor(msg.sender);
-        feeRate = _newFeeRate;
-
-        emit FeeRateUpdate(_newFeeRate);
     }
 }

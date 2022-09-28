@@ -128,14 +128,6 @@ contract Storage {
         // desert mode activated
     }
 
-    /// @notice All token pairs in ZkBNB Network
-
-    /// @notice Total number of tokens pairs registered in the network (start from 1)
-    uint16 public totalTokenPairs;
-    mapping(uint16 => mapping(uint16 => bool)) isTokenPairExist;
-    mapping(uint16 => mapping(uint16 => uint16)) tokenPairs;
-
-
     mapping(uint40 => TxTypes.WithdrawNft) internal pendingWithdrawnNFTs;
 
     struct L2NftInfo {
