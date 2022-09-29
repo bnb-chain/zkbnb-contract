@@ -14,14 +14,9 @@ library TxTypes {
     enum TxType {
         EmptyTx,
         RegisterZNS,
-        CreatePair,
-        UpdatePairRate,
         Deposit,
         DepositNft,
         Transfer,
-        Swap,
-        AddLiquidity,
-        RemoveLiquidity,
         Withdraw,
         CreateCollection,
         MintNft,
@@ -37,40 +32,6 @@ library TxTypes {
     uint8 internal constant CHUNK_SIZE = 32;
     // operation type bytes
     uint8 internal constant TX_TYPE_BYTES = 1;
-    //    // nft type
-    //    uint8 internal constant NFT_TYPE_BYTES = 1;
-    //    // token pair id bytes, max 2**16
-    //    uint8 internal constant TOKEN_PAIR_ID_BYTES = 2;
-    //    // asset id bytes, max 2**16
-    //    uint8 internal constant ASSET_ID_BYTES = 2;
-    //    // pub key bytes
-    //    uint8 internal constant PUBKEY_BYTES = 32;
-    //    // state amount bytes
-    //    uint8 internal constant STATE_AMOUNT_BYTES = 16;
-    //    // account name bytes
-    //    uint8 internal constant ACCOUNT_NAME_BYTES = 32;
-    //    // account name hash bytes
-    //    uint8 internal constant ACCOUNT_NAME_HASH_BYTES = 32;
-    //    // packed amount bytes
-    //    uint8 internal constant PACKED_AMOUNT_BYTES = 5;
-    //    // packed fee bytes
-    //    uint8 internal constant PACKED_FEE_AMOUNT_BYTES = 2;
-    //    // account index bytes, max 2**32
-    //    uint8 internal constant ACCOUNT_INDEX_BYTES = 4;
-    //    // nft amount bytes
-    //    uint8 internal constant NFT_AMOUNT_BYTES = 4;
-    //    // address bytes
-    //    uint8 internal constant ADDRESS_BYTES = 20;
-    //    // nft asset id
-    //    uint8 internal constant NFT_INDEX_BYTES = 5;
-    //    // nft token id bytes
-    //    uint8 internal constant NFT_TOKEN_ID_BYTES = 32;
-    //    // nft content hash bytes
-    //    uint8 internal constant NFT_CONTENT_HASH_BYTES = 32;
-    //    // creator treasury rate
-    //    uint8 internal constant CREATOR_TREASURY_RATE_BYTES = 2;
-    //    // fee rate bytes
-    //    uint8 internal constant RATE_BYTES = 2;
 
     uint256 internal constant PACKED_TX_PUBDATA_BYTES = 6 * CHUNK_SIZE;
 
@@ -82,8 +43,6 @@ library TxTypes {
         bytes32 pubKeyX;
         bytes32 pubKeyY;
     }
-
-    //    uint256 internal constant PACKED_REGISTERZNS_PUBDATA_BYTES = 1 * CHUNK_SIZE;
 
     /// Serialize register zns pubdata
     function writeRegisterZNSPubDataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
@@ -122,91 +81,6 @@ library TxTypes {
     /// @notice Write register zns pubdata for priority queue check.
     function checkRegisterZNSInPriorityQueue(RegisterZNS memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
         return Utils.hashBytesToBytes20(writeRegisterZNSPubDataForPriorityQueue(_tx)) == hashedPubData;
-    }
-
-    struct CreatePair {
-        uint8 txType;
-        uint16 pairIndex;
-        uint16 assetAId;
-        uint16 assetBId;
-        uint16 feeRate;
-        uint32 treasuryAccountIndex;
-        uint16 treasuryRate;
-    }
-
-    //    uint256 internal constant PACKED_CREATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
-
-    function writeCreatePairPubDataForPriorityQueue(CreatePair memory _tx) internal pure returns (bytes memory buf) {
-        buf = abi.encodePacked(
-            uint8(TxType.CreatePair),
-            _tx.pairIndex,
-            _tx.assetAId,
-            _tx.assetBId,
-            _tx.feeRate,
-            _tx.treasuryAccountIndex,
-            _tx.treasuryRate
-        );
-    }
-
-    /// Deserialize create pair pubdata
-    function readCreatePairPubData(bytes memory _data) internal pure returns (CreatePair memory parsed) {
-        // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
-        uint256 offset = TX_TYPE_BYTES;
-        (offset, parsed.pairIndex) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.assetAId) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.assetBId) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.feeRate) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.treasuryAccountIndex) = Bytes.readUInt32(_data, offset);
-        (offset, parsed.treasuryRate) = Bytes.readUInt16(_data, offset);
-        offset += 177;
-
-        require(offset == PACKED_TX_PUBDATA_BYTES, "N");
-        return parsed;
-    }
-
-    /// @notice Write create pair pubdata for priority queue check.
-    function checkCreatePairInPriorityQueue(CreatePair memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeCreatePairPubDataForPriorityQueue(_tx)) == hashedPubData;
-    }
-
-    struct UpdatePairRate {
-        uint8 txType;
-        uint16 pairIndex;
-        uint16 feeRate;
-        uint32 treasuryAccountIndex;
-        uint16 treasuryRate;
-    }
-
-    //    uint256 internal constant PACKED_UPDATEPAIR_PUBDATA_BYTES = 1 * CHUNK_SIZE;
-
-    function writeUpdatePairRatePubDataForPriorityQueue(UpdatePairRate memory _tx) internal pure returns (bytes memory buf) {
-        buf = abi.encodePacked(
-            uint8(TxType.UpdatePairRate),
-            _tx.pairIndex,
-            _tx.feeRate,
-            _tx.treasuryAccountIndex,
-            _tx.treasuryRate
-        );
-    }
-
-    /// Deserialize update pair pubdata
-    function readUpdatePairRatePubData(bytes memory _data) internal pure returns (UpdatePairRate memory parsed) {
-        // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
-        uint256 offset = TX_TYPE_BYTES;
-        (offset, parsed.pairIndex) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.feeRate) = Bytes.readUInt16(_data, offset);
-        (offset, parsed.treasuryAccountIndex) = Bytes.readUInt32(_data, offset);
-        (offset, parsed.treasuryRate) = Bytes.readUInt16(_data, offset);
-
-        offset += 181;
-
-        require(offset == PACKED_TX_PUBDATA_BYTES, "N");
-        return parsed;
-    }
-
-    /// @notice Write update pair pubdata for priority queue check.
-    function checkUpdatePairRateInPriorityQueue(UpdatePairRate memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
-        return Utils.hashBytesToBytes20(writeUpdatePairRatePubDataForPriorityQueue(_tx)) == hashedPubData;
     }
 
     // Deposit pubdata

@@ -233,49 +233,6 @@ describe("ZkBNB contract", function () {
             );
             await requestFullExitTx.wait();
         })
-
-
-        it("test create and update Token Pair", async function () {
-            // deploy BEP20 token
-            const TokenFactory = await ethers.getContractFactory('ZkBNBRelatedERC20')
-            const token0 = await TokenFactory.connect(addr1).deploy(10000, '', '')
-            await token0.deployed()
-            expect(await token0.balanceOf(addr1.address)).to.equal(10000)
-            const token1 = await TokenFactory.connect(addr1).deploy(10000, '', '')
-            await token1.deployed()
-            expect(await token1.balanceOf(addr1.address)).to.equal(10000)
-            // check 1i
-            await expect(
-                zkbnbProxy.connect(owner).createPair(token0.address, token1.address)
-            ).to.be.revertedWith('1i')
-
-            // add asset
-            const addAssetTx0 = await assetGovernance.connect(owner).addAsset(token0.address)
-            await addAssetTx0.wait()
-            const addAssetTx1 = await assetGovernance.connect(owner).addAsset(token1.address)
-            await addAssetTx1.wait()
-            // check fee limit
-            // await expect(
-            //     zkbnbProxy.connect(addr1).createPair(token0.address, token1.address)
-            // ).to.be.revertedWith('fee transfer failed')
-            // create pair
-            const createTokenPairTx0 = await zkbnbProxy.connect(owner).createPair(token0.address, token1.address)
-            await createTokenPairTx0.wait()
-            // await expect(
-            //     await zkbnbProxy.totalTokenPairs()
-            // ).to.equal(1)
-            // check token pair exists
-            await expect(
-                zkbnbProxy.connect(owner).createPair(token1.address, token0.address)
-            ).to.be.revertedWith('ip')
-
-            await expect(
-                zkbnbProxy.connect(owner).updatePairRate(['0x0000000000000000000000000000000000000000', token0.address, 30, 0, 5])
-            ).to.be.revertedWith('pne')
-            // update
-            const updateTokenPairTx0 = await zkbnbProxy.connect(owner).updatePairRate([token0.address, token1.address, 30, 0, 5])
-            await updateTokenPairTx0.wait()
-        })
     });
 
     // get the keccak256 hash of a specified string name

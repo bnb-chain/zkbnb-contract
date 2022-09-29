@@ -2,12 +2,12 @@
 
 pragma solidity ^0.7.6;
 
-import "./ZNS.sol";
-import "./IBaseRegistrar.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "./utils/Names.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "./IBaseRegistrar.sol";
 import "./IPriceOracle.sol";
+import "./ZNS.sol";
+import "./utils/Names.sol";
 
 /**
  * ZNSController is a registrar allocating subdomain names to users in ZkBNB in a FIFS way.
@@ -48,7 +48,8 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         (address _znsAddr, address _prices, bytes32 _node) = abi.decode(initializationParameters, (address, address, bytes32));
         zns = ZNS(_znsAddr);
         prices = IPriceOracle(_prices);
-        baseNode = _node;
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        baseNode = bytes32(uint256(_node)%q);
 
         // initialize ownership
         controllers[msg.sender] = true;
@@ -80,8 +81,8 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
      * @dev Register a new node under base node if it not exists.
      * @param _name The plaintext of the name to register
      * @param _owner The address to receive this name
-     * @param _pubKeyX The pub key of the owner
-     * @param _pubKeyY The pub key of the owner
+     * @param _pubKeyX The pub key x of the owner
+     * @param _pubKeyY The pub key y of the owner
      */
     function registerZNS(string calldata _name, address _owner, bytes32 _pubKeyX, bytes32 _pubKeyY, address _resolver) external override onlyController payable returns (bytes32 subnode, uint32 accountIndex){
         // Check if this name is valid
@@ -97,7 +98,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         );
 
         // Get the name hash
-        bytes32 label = mimcHash(bytes(_name));
+        bytes32 label = keccak256Hash(bytes(_name));
         // This subnode should not be registered before
         require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
         // Register subnode
@@ -134,7 +135,10 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     }
 
     function getSubnodeNameHash(string memory name) external view returns (bytes32) {
-        return mimcHash(abi.encodePacked(baseNode, mimcHash(bytes(name))));
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        bytes32 subnode = keccak256Hash(abi.encodePacked(baseNode, keccak256Hash(bytes(name))));
+        subnode = bytes32(uint256(subnode) % q);
+        return subnode;
     }
 
     function isRegisteredNameHash(bytes32 _nameHash) external view returns (bool){
@@ -162,19 +166,11 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
         return _name.strlen() >= 3 && _name.strlen() <= 32;
     }
 
-    function _validPubKey(bytes32 _pubKeyY) internal view returns (bool) {
-        return ZNSPubKeyMapper[_pubKeyY] == 0x0;
+    function _validPubKey(bytes32 _pubKey) internal view returns (bool) {
+        return ZNSPubKeyMapper[_pubKey] == 0x0;
     }
 
-    function mimcHash(bytes memory input) public view returns (bytes32 result) {
-        address mimcContract = 0x0000000000000000000000000000000000000013;
-
-        (bool success, bytes memory data) = mimcContract.staticcall(input);
-        require(success, "Q");
-        assembly {
-            result := mload(add(data, 32))
-        }
+    function keccak256Hash(bytes memory input) public view returns (bytes32 result) {
+        result = keccak256(input);
     }
-
-
 }

@@ -20,9 +20,9 @@ contract ZNSRegistry is ZNS {
         // 3. Set the resolver and related information of this node
         address owner;
         address resolver;
-        uint32 accountIndex;
         bytes32 pubKeyX;
         bytes32 pubKeyY;
+        uint32 accountIndex;
         // These fields may be remained for future use.
         // string slot1;
         // string slot2;
@@ -58,6 +58,14 @@ contract ZNSRegistry is ZNS {
         _setResolver(_node, _resolver);
     }
 
+    function setSubnodeAccountIndex(
+        bytes32 _node
+    ) external override returns (uint32){
+        records[_node].accountIndex = count;
+        count++;
+        return records[_node].accountIndex;
+    }
+
     /**
      * @dev Set the record for a subnode.
      * @param _node The parent node.
@@ -80,14 +88,6 @@ contract ZNSRegistry is ZNS {
         return subnode;
     }
 
-    function setSubnodeAccountIndex(
-        bytes32 _node
-    ) external override returns (uint32){
-        records[_node].accountIndex = count;
-        count++;
-        return records[_node].accountIndex;
-    }
-
     /**
      * @dev Set the ownership of a subnode hash(node, label) to a new address. May only be called by the owner of the parent node.
      * @param _node The parent node.
@@ -103,7 +103,9 @@ contract ZNSRegistry is ZNS {
         bytes32 _pubKeyX,
         bytes32 _pubKeyY
     ) public override authorized(_node) returns (bytes32) {
-        bytes32 subnode = mimcHash(abi.encodePacked(_node, _label));
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        bytes32 subnode = keccak256Hash(abi.encodePacked(_node, _label));
+        subnode = bytes32(uint256(subnode) % q);
         _setOwner(subnode, _owner);
         _setPubKey(subnode, _pubKeyX, _pubKeyY);
         return subnode;
@@ -166,7 +168,9 @@ contract ZNSRegistry is ZNS {
      * @return bool If record exists
      */
     function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
-        bytes32 subnode = mimcHash(abi.encodePacked(node, label));
+        uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+        bytes32 subnode = keccak256Hash(abi.encodePacked(node, label));
+        subnode = bytes32(uint256(subnode) % q);
         return _exists(subnode);
     }
 
@@ -196,14 +200,7 @@ contract ZNSRegistry is ZNS {
         return records[node].owner != address(0x0);
     }
 
-    function mimcHash(bytes memory input) public view returns (bytes32 result) {
-        address mimcContract = 0x0000000000000000000000000000000000000013;
-
-        (bool success, bytes memory data) = mimcContract.staticcall(input);
-        require(success, "Q");
-        assembly {
-            result := mload(add(data, 32))
-        }
+    function keccak256Hash(bytes memory input) public view returns (bytes32 result) {
+        result = keccak256(input);
     }
-
 }

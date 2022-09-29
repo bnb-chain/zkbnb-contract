@@ -57,7 +57,7 @@ async function main() {
     // get ERC721
     const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZEC', '0');
     await ERC721.deployed();
-    _genesisAccountRoot = '0x14e4e8ad4848558d7200530337052e1ad30f5385b3c7187c80ad85f48547b74f';
+    _genesisAccountRoot = '0x0183a70fce0e15afa57ec979de5e429ea547132f49d22631f16f2a2f41b08c1d';
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
     const _listingToken = LEGToken.address
@@ -139,14 +139,14 @@ async function getContractFactories() {
     return {
         TokenFactory: await ethers.getContractFactory('ZkBNBRelatedERC20'),
         ERC721Factory: await ethers.getContractFactory('ZkBNBRelatedERC721'),
-        ZNSRegistry: await ethers.getContractFactory('OldZNSRegistry'),
+        ZNSRegistry: await ethers.getContractFactory('ZNSRegistry'),
         ZNSResolver: await ethers.getContractFactory('PublicResolver'),
         ZNSPriceOracle: await ethers.getContractFactory('StablePriceOracle'),
-        ZNSController: await ethers.getContractFactory('OldZNSController'),
+        ZNSController: await ethers.getContractFactory('ZNSController'),
         Governance: await ethers.getContractFactory('Governance'),
         AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
         Verifier: await ethers.getContractFactory('ZkBNBVerifier'),
-        ZkBNB: await ethers.getContractFactory('OldZkBNB', {
+        ZkBNB: await ethers.getContractFactory('ZkBNB', {
             libraries: {
                 Utils: utils.address
             }
