@@ -238,7 +238,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         uint256 balanceAfter = _token.balanceOf(address(this));
         uint128 depositAmount = SafeCast.toUint128(balanceAfter.sub(balanceBefore));
         require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
-        //        require(depositAmount > 0, "D");
+        require(depositAmount > 0, "D");
 
         registerDeposit(assetId, depositAmount, accountNameHash);
     }
@@ -313,7 +313,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
     }
 
     function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
-        require(op.nftIndex < 2**40-1, "invalid nft index");
+        require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
 
         // get layer-1 address by account name hash
         bytes memory _emptyExtraData;
