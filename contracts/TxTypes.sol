@@ -133,7 +133,6 @@ library TxTypes {
 
     struct DepositNft {
         uint8 txType;
-        uint8 isNewNft;
         uint32 accountIndex;
         uint40 nftIndex;
         address nftL1Address;
@@ -149,35 +148,18 @@ library TxTypes {
 
     /// Serialize deposit pubdata
     function writeDepositNftPubDataForPriorityQueue(DepositNft memory _tx) internal pure returns (bytes memory buf) {
-        if (_tx.isNewNft == 1) {
-            buf = abi.encodePacked(
-                uint8(TxType.DepositNft),
-                _tx.isNewNft,
-                uint32(0),
-                uint40(0),
-                _tx.nftL1Address, // token address
-                _tx.creatorAccountIndex,
-                _tx.creatorTreasuryRate,
-                _tx.nftContentHash,
-                _tx.nftL1TokenId, // nft token id
-                _tx.accountNameHash,
-                _tx.collectionId// account name hash
-            );
-        } else {
-            buf = abi.encodePacked(
-                uint8(TxType.DepositNft),
-                _tx.isNewNft,
-                uint32(0),
-                uint40(_tx.nftIndex),
-                _tx.nftL1Address, // token address
-                _tx.creatorAccountIndex,
-                _tx.creatorTreasuryRate,
-                _tx.nftContentHash,
-                _tx.nftL1TokenId, // nft token id
-                _tx.accountNameHash,
-                _tx.collectionId// account name hash
-            );
-        }
+        buf = abi.encodePacked(
+            uint8(TxType.DepositNft),
+            uint32(0),
+            uint40(_tx.nftIndex),
+            _tx.nftL1Address, // token address
+            _tx.creatorAccountIndex,
+            _tx.creatorTreasuryRate,
+            _tx.nftContentHash,
+            _tx.nftL1TokenId, // nft token id
+            _tx.accountNameHash,
+            _tx.collectionId// account name hash
+        );
     }
 
     /// Deserialize deposit pubdata
@@ -185,15 +167,13 @@ library TxTypes {
         // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
         uint256 offset = TX_TYPE_BYTES;
         // account index
-        (offset, parsed.isNewNft) = Bytes.readUInt8(_data, offset);
-        // account index
         (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
         // nft index
         (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
         // nft l1 address
         (offset, parsed.nftL1Address) = Bytes.readAddress(_data, offset);
         // empty data
-        offset += 25;
+        offset += 26;
         // creator account index
         (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
         // creator treasury rate
