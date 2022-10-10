@@ -607,7 +607,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                 blockVerified[blockIdx] = true;
                 // verify block proof
                 VerifyAndExecuteBlockInfo memory _block = _blocks[blockIdx];
-                publicInputs[3 * i] = uint256(_block.blockHeader.commitment) % q;
+                publicInputs[i] = uint256(_block.blockHeader.commitment) % q;
                 for (uint j = 0; j < 8; j++) {
                     proofs[8 * i + j] = _proofs[8 * blockIdx + j];
                 }
