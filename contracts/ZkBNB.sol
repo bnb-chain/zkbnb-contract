@@ -598,7 +598,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                 }
             }
             // Prepare the data for batch verification
-            uint[] memory publicInputs = new uint[](3 * batchLength);
+            uint[] memory publicInputs = new uint[](batchLength);
             uint[] memory proofs = new uint[](batchLength * 8);
             uint16 block_size = 0;
             uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
@@ -607,13 +607,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                 blockVerified[blockIdx] = true;
                 // verify block proof
                 VerifyAndExecuteBlockInfo memory _block = _blocks[blockIdx];
-                if (blockIdx == 0) {
-                    publicInputs[3 * i] = uint256(stateRoot);
-                } else {
-                    publicInputs[3 * i] = uint256(_blocks[blockIdx-1].blockHeader.stateRoot);
-                }
-                publicInputs[3 * i + 1] = uint256(_block.blockHeader.stateRoot);
-                publicInputs[3 * i + 2] = uint256(_block.blockHeader.commitment) % q;
+                publicInputs[3 * i] = uint256(_block.blockHeader.commitment) % q;
                 for (uint j = 0; j < 8; j++) {
                     proofs[8 * i + j] = _proofs[8 * blockIdx + j];
                 }
