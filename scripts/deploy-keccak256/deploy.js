@@ -53,6 +53,8 @@ async function main() {
     await LEGToken.deployed()
     const REYToken = await contractFactories.TokenFactory.deploy(totalSupply, 'REY', 'REY')
     await REYToken.deployed()
+    const BUSDToken = await contractFactories.TokenFactory.deploy(totalSupply, 'BUSD', 'BUSD')
+    await BUSDToken.deployed()
 
     // get ERC721
     const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZEC', '0');
@@ -60,7 +62,7 @@ async function main() {
     _genesisAccountRoot = '0x0183a70fce0e15afa57ec979de5e429ea547132f49d22631f16f2a2f41b08c1d';
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
-    const _listingToken = LEGToken.address
+    const _listingToken = BUSDToken.address
     const baseNode = namehash.hash('legend')
     // deploy DeployFactory
     console.log('Deploy DeployFactory...')
@@ -106,6 +108,8 @@ async function main() {
     await addAssetTx0.wait()
     let addAssetTx1 = await assetGovernance.addAsset(REYToken.address)
     await addAssetTx1.wait()
+    let addAssetTx2 = await assetGovernance.addAsset(BUSDToken.address)
+    await addAssetTx2.wait()
 
     // Step 4: register zns base node
     console.log('Register ZNS base node...')
@@ -126,8 +130,10 @@ async function main() {
         upgradeGateKeeper: event[6],
         LEGToken: LEGToken.address,
         REYToken: REYToken.address,
+        BUSDToken: BUSDToken.address,
         ERC721: ERC721.address,
         znsPriceOracle: priceOracle.address,
+        DefaultNftFactory: DefaultNftFactory.address,
     })
 }
 
