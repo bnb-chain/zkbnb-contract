@@ -104,9 +104,6 @@ async function main() {
     // Add tokens into assetGovernance
     // add asset
     console.log('Add tokens into assetGovernance asset list...')
-    let addAssetTx2 = await assetGovernance.addAsset(BUSDToken.address)
-    await addAssetTx2.wait()
-
     let addAssetTx0 = await assetGovernance.addAsset(LEGToken.address);
     await addAssetTx0.wait()
     let addAssetTx1 = await assetGovernance.addAsset(REYToken.address)
