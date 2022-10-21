@@ -22,10 +22,11 @@ import "./ZNSController.sol";
 import "./Proxy.sol";
 import "./UpgradeableMaster.sol";
 import "./Storage.sol";
+import "./lib/NFTHelper.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
-contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
+contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
@@ -296,6 +297,9 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         // add into priority request queue
         addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
 
+        // delete nft from account at L1
+        _removeAccountNft(msg.sender, _nftL1Address, nftIndex);
+
         emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
     }
 
@@ -346,6 +350,9 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                 op.nftContentHash,
                 _emptyExtraData
             ) {
+                // add nft to account at L1
+                _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
+
                 emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
             } catch {
                 storePendingNFT(op);
