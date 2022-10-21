@@ -49,12 +49,12 @@ async function main() {
     // get ERC20s
     console.log('Deploy Tokens...')
     const totalSupply = ethers.utils.parseEther('100000000')
+    const BUSDToken = await contractFactories.TokenFactory.deploy(totalSupply, 'BUSD', 'BUSD')
+    await BUSDToken.deployed()
     const LEGToken = await contractFactories.TokenFactory.deploy(totalSupply, 'LEG', 'LEG')
     await LEGToken.deployed()
     const REYToken = await contractFactories.TokenFactory.deploy(totalSupply, 'REY', 'REY')
     await REYToken.deployed()
-    const BUSDToken = await contractFactories.TokenFactory.deploy(totalSupply, 'BUSD', 'BUSD')
-    await BUSDToken.deployed()
 
     // get ERC721
     const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZEC', '0');
@@ -104,12 +104,13 @@ async function main() {
     // Add tokens into assetGovernance
     // add asset
     console.log('Add tokens into assetGovernance asset list...')
+    let addAssetTx2 = await assetGovernance.addAsset(BUSDToken.address)
+    await addAssetTx2.wait()
+
     let addAssetTx0 = await assetGovernance.addAsset(LEGToken.address);
     await addAssetTx0.wait()
     let addAssetTx1 = await assetGovernance.addAsset(REYToken.address)
     await addAssetTx1.wait()
-    let addAssetTx2 = await assetGovernance.addAsset(BUSDToken.address)
-    await addAssetTx2.wait()
 
     // Step 4: register zns base node
     console.log('Register ZNS base node...')
@@ -128,9 +129,9 @@ async function main() {
         znsResolverProxy: event[4],
         zkbnbProxy: event[5],
         upgradeGateKeeper: event[6],
+        BUSDToken: BUSDToken.address,
         LEGToken: LEGToken.address,
         REYToken: REYToken.address,
-        BUSDToken: BUSDToken.address,
         ERC721: ERC721.address,
         znsPriceOracle: priceOracle.address,
         DefaultNftFactory: DefaultNftFactory.address,
