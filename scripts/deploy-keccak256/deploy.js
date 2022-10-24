@@ -104,10 +104,12 @@ async function main() {
     // Add tokens into assetGovernance
     // add asset
     console.log('Add tokens into assetGovernance asset list...')
-    let addAssetTx0 = await assetGovernance.addAsset(LEGToken.address);
+    let addAssetTx0 = await assetGovernance.addAsset(BUSDToken.address);
     await addAssetTx0.wait()
-    let addAssetTx1 = await assetGovernance.addAsset(REYToken.address)
+    let addAssetTx1 = await assetGovernance.addAsset(LEGToken.address);
     await addAssetTx1.wait()
+    let addAssetTx2 = await assetGovernance.addAsset(REYToken.address)
+    await addAssetTx2.wait()
 
     // Step 4: register zns base node
     console.log('Register ZNS base node...')
