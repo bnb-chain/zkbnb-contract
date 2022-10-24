@@ -83,16 +83,16 @@ contract Governance is Config {
         require(totalAssets < MAX_AMOUNT_OF_REGISTERED_ASSETS, "1f");
         // no free identifiers for tokens
 
-        if (totalAssets == 0) {
-            totalAssets = 1; // 0 => BNB asset,  1 => BUSD asset
-        }
         totalAssets++;
         uint16 newAssetId = totalAssets;
         // it is not `totalTokens - 1` because tokenId = 0 is reserved for eth
 
         assetAddresses[newAssetId] = _asset;
         assetsList[_asset] = newAssetId;
-        emit NewAsset(_asset, newAssetId);
+
+        if (newAssetId > 1) { // 0 => BNB,  1 => BUSD
+            emit NewAsset(_asset, newAssetId);
+        }
     }
 
     function setAssetPaused(address _assetAddress, bool _assetPaused) external {
