@@ -178,7 +178,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
         txType : uint8(TxTypes.TxType.RegisterZNS),
         accountIndex : accountIndex,
-        accountName : Utils.stringToBytes32(_name),
+        accountName : Utils.stringToBytes20(_name),
         accountNameHash : node,
         pubKeyX : _zkbnbPubKeyX,
         pubKeyY : _zkbnbPubKeyY
@@ -281,11 +281,9 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
             txType : uint8(TxTypes.TxType.DepositNft),
             accountIndex : 0, // unknown at this point
             nftIndex : nftIndex,
-            nftL1Address : _nftL1Address,
             creatorAccountIndex : creatorAccountIndex,
             creatorTreasuryRate : creatorTreasuryRate,
             nftContentHash : nftContentHash,
-            nftL1TokenId : _nftL1TokenId,
             accountNameHash : accountNameHash,
             collectionId : collectionId
         });
@@ -302,29 +300,25 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
     function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
         require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
 
+        // get nft factory
+        address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
+        bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
+        bool alreadyMintedFlag = false;
+        if (l2Nfts[nftKey].nftContentHash != bytes32(0)) {
+            alreadyMintedFlag = true;
+        }
         // get layer-1 address by account name hash
         bytes memory _emptyExtraData;
-        if (op.nftL1Address != address(0x00)) {
+        if (alreadyMintedFlag) {
             /// This is a NFT from layer 1, withdraw id directly
-            try IERC721(op.nftL1Address).safeTransferFrom{gas : WITHDRAWAL_NFT_GAS_LIMIT}(
+            try IERC721(_factoryAddress).safeTransferFrom{gas : WITHDRAWAL_NFT_GAS_LIMIT}(
                 address(this),
                 op.toAddress,
-                op.nftL1TokenId
+                op.nftIndex
             ) {
-                emit WithdrawNft(op.fromAccountIndex, op.nftL1Address, op.toAddress, op.nftL1TokenId);
+                emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
             }catch{
                 storePendingNFT(op);
-            }
-
-            bytes32 nftKey = keccak256(abi.encode(op.nftL1Address, op.nftL1TokenId));
-            if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
-                l2Nfts[nftKey] = L2NftInfo({
-                nftIndex : op.nftIndex,
-                creatorAccountIndex : op.creatorAccountIndex,
-                creatorTreasuryRate : op.creatorTreasuryRate,
-                nftContentHash : op.nftContentHash,
-                collectionId : uint16(op.collectionId)
-                });
             }
         } else {
             address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
@@ -504,13 +498,11 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                     creatorAccountIndex : _tx.creatorAccountIndex,
                     creatorTreasuryRate : _tx.creatorTreasuryRate,
                     nftIndex : _tx.nftIndex,
-                    nftL1Address : _tx.nftL1Address,
                     toAddress : toAddr,
                     gasFeeAccountIndex : 0,
                     gasFeeAssetId : 0,
                     gasFeeAssetAmount : 0,
                     nftContentHash : _tx.nftContentHash,
-                    nftL1TokenId : _tx.nftL1TokenId,
                     creatorAccountNameHash : _tx.accountNameHash,
                     collectionId : _tx.collectionId
                     });
