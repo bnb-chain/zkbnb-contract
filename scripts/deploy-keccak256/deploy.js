@@ -57,7 +57,7 @@ async function main() {
     // get ERC721
     const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZEC', '0');
     await ERC721.deployed();
-    _genesisAccountRoot = '0x0183a70fce0e15afa57ec979de5e429ea547132f49d22631f16f2a2f41b08c1d';
+    _genesisAccountRoot = '0x2d78e504b2b50e926dabfa3b3a714ad4b026a7a07ebeee307b38bda021bad16e';
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
     const _listingToken = LEGToken.address
