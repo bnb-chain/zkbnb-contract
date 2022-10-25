@@ -37,7 +37,7 @@ contract StablePriceOracle is IPriceOracle, OwnableUpgradeable {
         uint256 basePrice;
         if (len >= 3 && len < 10) {
             basePrice = price1Letter;
-        } else if (len >= 10 && len < 20) {
+        } else if (len >= 10 && len < 15) {
             basePrice = price2Letter;
         } else {
             basePrice = price3Letter;
