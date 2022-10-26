@@ -28,8 +28,8 @@ async function main() {
     registerZnsTx = await zkbnb.registerZNS(
         gasName,
         '0x56744Dc80a3a520F0cCABf083AC874a4bf6433F3',
-        '0x0eac279f6815d42069a79374b0ce6d6bfe563935ddcdee8cc6c15c3618ea819c',
-        '0x26e2d4a47aedf792fb3ea7b97c6f5c7cebb32dd30afca3fe77e31be768fc6c0f',
+        '0x2c24415b75651673b0d7bbf145ac8d7cb744ba6926963d1d014836336df1317a',
+        '0x134f4726b89983a8e7babbf6973e7ee16311e24328edf987bb0fbe7a494ec91e',
         {
             value: gasRegisterFee,
         }
