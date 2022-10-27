@@ -48,7 +48,8 @@ module.exports = {
     etherscan: {
         // Your API key for Etherscan
         // Obtain one at https://etherscan.io/
-        apiKey: process.env.BSCSCAN_KEY
+        apiKey: process.env.BSCSCAN_KEY,
+        bscTestnet: process.env.BSCSCAN_KEY,
     },
     abiExporter: {
         path: './data/abi',
