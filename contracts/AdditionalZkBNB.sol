@@ -314,11 +314,9 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
         creatorTreasuryRate : 0,
         nftIndex : _nftIndex,
         collectionId : 0, // unknown
-        nftL1Address : address(0x0), // unknown
         accountNameHash : accountNameHash,
         creatorAccountNameHash : bytes32(0),
-        nftContentHash : bytes32(0x0), // unknown,
-        nftL1TokenId : 0 // unknown
+        nftContentHash : bytes32(0x0) // unknown,
         });
         bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
         addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
@@ -434,13 +432,13 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
         StoredBlockInfo memory _previousBlock,
         CommitBlockInfo memory _newBlockData
     ) internal view returns (bytes32) {
-        uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
+        // uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
         bytes32 converted = keccak256(abi.encodePacked(
                 uint256(_newBlockData.blockNumber), // block number
                 uint256(_newBlockData.timestamp), // time stamp
                 _previousBlock.stateRoot, // old state root
                 _newBlockData.newStateRoot, // new state root
-                pubData, // pub data
+                _newBlockData.publicData, // pub data
                 uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
             ));
         return converted;
@@ -457,7 +455,7 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
     {
         bytes memory pubData = _newBlockData.publicData;
 
-        require(pubData.length % TX_SIZE == 0, "A");
+        require(pubData.length % TxTypes.PACKED_TX_PUBDATA_BYTES == 0, "A");
 
         uint64 uncommittedPriorityRequestsOffset = firstPriorityRequestId + totalCommittedPriorityRequests;
         priorityOperationsProcessed = 0;
