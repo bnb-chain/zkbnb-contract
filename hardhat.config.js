@@ -4,6 +4,7 @@ require('@openzeppelin/hardhat-upgrades');
 require('hardhat-contract-sizer')
 require('hardhat-abi-exporter');
 require('dotenv').config();
+require("@nomiclabs/hardhat-etherscan");
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -44,6 +45,11 @@ module.exports = {
     //     runOnCompile: true,
     //     strict: true,
     // },
+    etherscan: {
+        // Your API key for Etherscan
+        // Obtain one at https://etherscan.io/
+        apiKey: process.env.BSCSCAN_KEY
+    },
     abiExporter: {
         path: './data/abi',
         clear: true,

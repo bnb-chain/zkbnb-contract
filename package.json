@@ -34,6 +34,7 @@
     "hardhat-watcher": "^2.3.0"
   },
   "dependencies": {
+    "@nomiclabs/hardhat-etherscan": "^3.1.1",
     "@openzeppelin/contracts": "^3.4.2",
     "@openzeppelin/contracts-upgradeable": "^3.4.2",
     "eth-ens-namehash": "^2.0.8",
