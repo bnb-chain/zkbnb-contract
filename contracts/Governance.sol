@@ -89,7 +89,10 @@ contract Governance is Config {
 
         assetAddresses[newAssetId] = _asset;
         assetsList[_asset] = newAssetId;
-        emit NewAsset(_asset, newAssetId);
+
+        if (newAssetId > 1) { // 0 => BNB,  1 => BUSD
+            emit NewAsset(_asset, newAssetId);
+        }
     }
 
     function setAssetPaused(address _assetAddress, bool _assetPaused) external {
