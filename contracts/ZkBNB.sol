@@ -279,16 +279,16 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         uint16 creatorTreasuryRate = l2Nfts[nftKey].creatorTreasuryRate;
 
         TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-            txType : uint8(TxTypes.TxType.DepositNft),
-            accountIndex : 0, // unknown at this point
-            nftIndex : nftIndex,
-            nftL1Address : _nftL1Address,
-            creatorAccountIndex : creatorAccountIndex,
-            creatorTreasuryRate : creatorTreasuryRate,
-            nftContentHash : nftContentHash,
-            nftL1TokenId : _nftL1TokenId,
-            accountNameHash : accountNameHash,
-            collectionId : collectionId
+        txType : uint8(TxTypes.TxType.DepositNft),
+        accountIndex : 0, // unknown at this point
+        nftIndex : nftIndex,
+        nftL1Address : _nftL1Address,
+        creatorAccountIndex : creatorAccountIndex,
+        creatorTreasuryRate : creatorTreasuryRate,
+        nftContentHash : nftContentHash,
+        nftL1TokenId : _nftL1TokenId,
+        accountNameHash : accountNameHash,
+        collectionId : collectionId
         });
 
         // compact pub data
@@ -308,55 +308,31 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
 
         // get layer-1 address by account name hash
         bytes memory _emptyExtraData;
-        if (op.nftL1Address != address(0x00)) {
-            /// This is a NFT from layer 1, withdraw id directly
-            try IERC721(op.nftL1Address).safeTransferFrom{gas : WITHDRAWAL_NFT_GAS_LIMIT}(
-                address(this),
-                op.toAddress,
-                op.nftL1TokenId
-            ) {
-                emit WithdrawNft(op.fromAccountIndex, op.nftL1Address, op.toAddress, op.nftL1TokenId);
-            }catch{
-                storePendingNFT(op);
-            }
+        address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
+        // get nft factory
+        address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
+        // store into l2 nfts
+        bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
+        l2Nfts[nftKey] = L2NftInfo({
+        nftIndex : op.nftIndex,
+        creatorAccountIndex : op.creatorAccountIndex,
+        creatorTreasuryRate : op.creatorTreasuryRate,
+        nftContentHash : op.nftContentHash,
+        collectionId : uint16(op.collectionId)
+        });
+        try NFTFactory(_factoryAddress).mintFromZkBNB(
+            _creatorAddress,
+            op.toAddress,
+            op.nftIndex,
+            op.nftContentHash,
+            _emptyExtraData
+        ) {
+            // add nft to account at L1
+            _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
 
-            bytes32 nftKey = keccak256(abi.encode(op.nftL1Address, op.nftL1TokenId));
-            if (l2Nfts[nftKey].nftContentHash == bytes32(0)) {
-                l2Nfts[nftKey] = L2NftInfo({
-                nftIndex : op.nftIndex,
-                creatorAccountIndex : op.creatorAccountIndex,
-                creatorTreasuryRate : op.creatorTreasuryRate,
-                nftContentHash : op.nftContentHash,
-                collectionId : uint16(op.collectionId)
-                });
-            }
-        } else {
-            address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
-            // get nft factory
-            address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
-            // store into l2 nfts
-            bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
-            l2Nfts[nftKey] = L2NftInfo({
-            nftIndex : op.nftIndex,
-            creatorAccountIndex : op.creatorAccountIndex,
-            creatorTreasuryRate : op.creatorTreasuryRate,
-            nftContentHash : op.nftContentHash,
-            collectionId : uint16(op.collectionId)
-            });
-            try NFTFactory(_factoryAddress).mintFromZkBNB(
-                _creatorAddress,
-                op.toAddress,
-                op.nftIndex,
-                op.nftContentHash,
-                _emptyExtraData
-            ) {
-                // add nft to account at L1
-                _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
-
-                emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
-            } catch {
-                storePendingNFT(op);
-            }
+            emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+        } catch {
+            storePendingNFT(op);
         }
     }
 
