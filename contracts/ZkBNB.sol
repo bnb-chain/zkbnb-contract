@@ -315,6 +315,9 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
                 op.toAddress,
                 op.nftL1TokenId
             ) {
+                // add nft to account at L1
+                _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
+
                 emit WithdrawNft(op.fromAccountIndex, op.nftL1Address, op.toAddress, op.nftL1TokenId);
             }catch{
                 storePendingNFT(op);
