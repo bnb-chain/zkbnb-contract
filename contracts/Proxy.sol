@@ -3,8 +3,8 @@
 pragma solidity ^0.7.6;
 
 import "./ZkBNBOwnable.sol";
-import "./Upgradeable.sol";
-import "./UpgradeableMaster.sol";
+import "./interfaces/Upgradeable.sol";
+import "./interfaces/UpgradeableMaster.sol";
 
 /// @title Proxy Contract
 /// @dev NOTICE: Proxy must implement UpgradeableMaster interface to prevent calling some function of it not by master of proxy

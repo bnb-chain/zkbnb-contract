@@ -4,8 +4,8 @@ pragma solidity ^0.7.6;
 import "../Config.sol";
 import "./StorageTest.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../SafeMathUInt128.sol";
-import "../UpgradeableMaster.sol";
+import "../lib/SafeMathUInt128.sol";
+import "../interfaces/UpgradeableMaster.sol";
 
 
 /// @dev Test target contract to upgrade to

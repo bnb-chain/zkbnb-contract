@@ -4,10 +4,10 @@ pragma solidity ^0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./Events.sol";
+import "./interfaces/Events.sol";
 import "./ZkBNBOwnable.sol";
-import "./Upgradeable.sol";
-import "./UpgradeableMaster.sol";
+import "./interfaces/Upgradeable.sol";
+import "./interfaces/UpgradeableMaster.sol";
 
 /// @title Upgrade Gatekeeper Contract
 /// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract

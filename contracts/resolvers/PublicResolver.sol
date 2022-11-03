@@ -7,7 +7,7 @@ import "./profile/ABIResolver.sol";
 import "./profile/AddrResolver.sol";
 import "./profile/PubKeyResolver.sol";
 import "./profile/NameResolver.sol";
-import "../ZNS.sol";
+import "../interfaces/ZNS.sol";
 import "./profile/ZkBNBPubKeyResolver.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 

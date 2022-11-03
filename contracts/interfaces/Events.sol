@@ -3,7 +3,7 @@
 pragma solidity ^0.7.6;
 
 import "./Upgradeable.sol";
-import "./TxTypes.sol";
+import "../lib/TxTypes.sol";
 
 /// @title ZkBNB events
 /// @author ZkBNB Team
