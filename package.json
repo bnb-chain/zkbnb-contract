@@ -4,18 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "hardhat compile --config ./hardhat.config.js",
+    "build": "hardhat compile",
     "prebuild": "rimraf ./artifacts/ ./cache/",
-    "test": "hardhat test --config ./hardhat.config.js",
-    "profile": "REPORT_GAS=true hardhat test --config ./hardhat.config.js",
+    "test": "hardhat test",
+    "profile": "REPORT_GAS=true hardhat test",
     "lint:check:format": "prettier --check **.{sol,js}",
     "lint:check:solhint": "solhint contracts/**/*.sol",
     "lint:check:eslint": "eslint . --ext js,ts",
     "check": "yarn lint:check:format && yarn lint:check:solhint && yarn lint:check:eslint",
     "lint:fix:format": "prettier --write **.{sol,js}",
     "lint:fix:eslint": "eslint --fix . --ext js",
-    "fix": "yarn lint:fix:format && yarn lint:fix:eslint",
-    "verify": "npx hardhat verify"
+    "fix": "yarn lint:fix:format && yarn lint:fix:eslint"
   },
   "repository": {
     "type": "git",
