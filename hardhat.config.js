@@ -20,9 +20,7 @@ module.exports = {
         },
         BSCTestnet: {
             url: process.env.BSC_TESTNET_RPC || "https://data-seed-prebsc-1-s1.binance.org:8545",
-            accounts: [
-                process.env.BSC_TESTNET_PRIVATE_KEY || '906d5dc5a8ec5050a21987278d42af90852724df53a576e66057990ee48ac269'
-            ],
+            accounts: (process.env.BSC_TESTNET_PRIVATE_KEY || '').split(','),
             timeout: 300000,
             gas: 15000000
         },
