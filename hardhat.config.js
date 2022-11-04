@@ -14,14 +14,12 @@ module.exports = {
         //     allowUnlimitedContractSize: true,
         // },
         local: {
-            url: "http://127.0.0.1:8545",
-            accounts: [
-                '906d5dc5a8ec5050a21987278d42af90852724df53a576e66057990ee48ac269'
-            ],
+            url: process.env.LOCAL_RPC || "http://127.0.0.1:8545",
+            accounts: (process.env.LOCAL_PRIVATE_KEY || '').split(','),
             timeout: 100000,
         },
         BSCTestnet: {
-            url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+            url: process.env.BSC_TESTNET_RPC || "https://data-seed-prebsc-1-s1.binance.org:8545",
             accounts: [
                 process.env.BSC_TESTNET_PRIVATE_KEY || '906d5dc5a8ec5050a21987278d42af90852724df53a576e66057990ee48ac269'
             ],
