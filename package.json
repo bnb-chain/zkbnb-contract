@@ -6,8 +6,7 @@
   "scripts": {
     "build": "hardhat compile",
     "prebuild": "rimraf ./artifacts/ ./cache/",
-    "test": "hardhat test",
-    "profile": "REPORT_GAS=true hardhat test",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "lint:check:format": "prettier --check **.{sol,js}",
     "lint:check:solhint": "solhint contracts/**/*.sol",
     "lint:check:eslint": "eslint . --ext js,ts",
