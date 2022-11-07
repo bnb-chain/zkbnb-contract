@@ -4,7 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "hardhat compile",
+    "prebuild": "rimraf ./artifacts/ ./cache/",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint:check:format": "prettier --check **.{sol,js}",
+    "lint:check:solhint": "solhint contracts/**/*.sol",
+    "lint:check:eslint": "eslint . --ext js,ts",
+    "check": "yarn lint:check:format && yarn lint:check:solhint && yarn lint:check:eslint",
+    "lint:fix:format": "prettier --write **.{sol,js}",
+    "lint:fix:eslint": "eslint --fix . --ext js",
+    "fix": "yarn lint:fix:format && yarn lint:fix:eslint"
   },
   "repository": {
     "type": "git",
@@ -26,12 +35,23 @@
     "@remix-project/remixd": "^0.6.0",
     "chai": "^4.3.6",
     "dotenv": "^16.0.2",
+    "eslint": "8.22.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^6.0.0",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.4",
     "hardhat": "^2.9.7",
     "hardhat-abi-exporter": "^2.9.0",
     "hardhat-contract-sizer": "^2.5.1",
-    "hardhat-watcher": "^2.3.0"
+    "hardhat-watcher": "^2.3.0",
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.6",
+    "solidity-coverage": "^0.8.2"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.4.2",
