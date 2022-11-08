@@ -15,12 +15,12 @@ module.exports = {
         // },
         local: {
             url: process.env.LOCAL_RPC || "http://127.0.0.1:8545",
-            accounts: (process.env.LOCAL_PRIVATE_KEY || '').split(','),
+            accounts: (process.env.LOCAL_PRIVATE_KEY || '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1').split(','),
             timeout: 100000,
         },
         BSCTestnet: {
             url: process.env.BSC_TESTNET_RPC || "https://data-seed-prebsc-1-s1.binance.org:8545",
-            accounts: (process.env.BSC_TESTNET_PRIVATE_KEY || '').split(','),
+            accounts: (process.env.BSC_TESTNET_PRIVATE_KEY || '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1').split(','),
             timeout: 300000,
             gas: 15000000
         },
