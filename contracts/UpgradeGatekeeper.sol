@@ -5,9 +5,9 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./interfaces/Events.sol";
-import "./ZkBNBOwnable.sol";
 import "./interfaces/Upgradeable.sol";
-import "./interfaces/UpgradeableMaster.sol";
+import "./ZkBNBOwnable.sol";
+import "./UpgradeableMaster.sol";
 
 /// @title Upgrade Gatekeeper Contract
 /// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
@@ -39,13 +39,14 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
     uint256 public versionId;
 
     /// @notice Contract which defines notice period duration and allows finish upgrade during preparation of it
-    UpgradeableMaster public mainContract;
+    UpgradeableMaster public masterContract;
 
     /// @notice Contract constructor
-    /// @param _mainContract Contract which defines notice period duration and allows finish upgrade during preparation of it
+    /// @param _masterContract Contract which defines notice period duration and allows finish upgrade during preparation of it
     /// @dev Calls Ownable contract constructor
-    constructor(UpgradeableMaster _mainContract) ZkBNBOwnable(msg.sender) {
-        mainContract = _mainContract;
+
+    constructor(UpgradeableMaster _masterContract) ZkBNBOwnable(msg.sender) {
+        masterContract = _masterContract;
         versionId = 0;
     }
 
@@ -70,8 +71,8 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
         // spu12 - number of new targets must be equal to the number of managed contracts
 
         // this noticePeriod is a configurable shortest notice period
-        uint256 noticePeriod = mainContract.getNoticePeriod();
-        mainContract.upgradeNoticePeriodStarted();
+        uint256 noticePeriod = masterContract.getNoticePeriod();
+        masterContract.upgradeNoticePeriodStarted();
         upgradeStatus = UpgradeStatus.NoticePeriod;
         noticePeriodFinishTimestamp = block.timestamp.add(noticePeriod);
         nextTargets = newTargets;
@@ -84,7 +85,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
         require(upgradeStatus != UpgradeStatus.Idle, "cpu11");
         // cpu11 - unable to cancel not active upgrade mode
 
-        mainContract.upgradeCanceled();
+        masterContract.upgradeCanceled();
         upgradeStatus = UpgradeStatus.Idle;
         noticePeriodFinishTimestamp = 0;
         delete nextTargets;
@@ -100,7 +101,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
         // upg12 - shortest notice period not passed
 
         upgradeStatus = UpgradeStatus.Preparation;
-        mainContract.upgradePreparationStarted();
+        masterContract.upgradePreparationStarted();
         emit PreparationStart(versionId);
     }
 
@@ -112,9 +113,9 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
         // fpu11 - unable to finish upgrade without preparation status active
         require(targetsUpgradeParameters.length == managedContracts.length, "fpu12");
         // fpu12 - number of new targets upgrade parameters must be equal to the number of managed contracts
-        require(mainContract.isReadyForUpgrade(), "fpu13");
+        require(masterContract.isReadyForUpgrade(), "fpu13");
         // fpu13 - main contract is not ready for upgrade
-        mainContract.upgradeFinishes();
+        masterContract.upgradeFinishes();
 
         for (uint64 i = 0; i < managedContracts.length; i++) {
             address newTarget = nextTargets[i];

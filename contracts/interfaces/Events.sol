@@ -62,9 +62,6 @@ interface Events {
         uint128 amount
     );
 
-    /// @notice Notice period changed
-    event NoticePeriodChange(uint256 newNoticePeriod);
-
     /// @notice NFT deposit event.
     event DepositNft(
         bytes32 accountNameHash,

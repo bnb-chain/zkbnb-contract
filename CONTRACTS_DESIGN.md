@@ -234,6 +234,8 @@ as the resolver for his nodes. Then others can resolve this name for detailed in
 
 
 ## Upgradeable Design
+
+<!-- TODO: upgrade this doc -->
 Contracts deployed using `DeployFactory` can be upgraded to modify their code, while preserving their address, state, and balance.
 This allows you to iteratively add new features to your contracts, or fix any bugs after deployed.
 `DeployFactory` deploy a proxy to the implementation contract, which is the contract that you actually interact with.

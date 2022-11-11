@@ -2,6 +2,8 @@
 
 pragma solidity ^0.7.6;
 
+
+import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "./Config.sol";
 import "./lib/Utils.sol";
 import "./AssetGovernance.sol";
@@ -9,7 +11,7 @@ import "./lib/SafeMathUInt32.sol";
 
 /// @title Governance Contract
 /// @author ZkBNB Team
-contract Governance is Config {
+contract Governance is Config, Initializable {
 
     /// @notice Token added to Franklin net
     event NewAsset(address assetAddress, uint16 assetId);
@@ -27,7 +29,7 @@ contract Governance is Config {
     /// @notice Address which will exercise governance over the network i.e. add tokens, change validator set, conduct upgrades
     address public networkGovernor;
 
-    /// @notice Total number of ERC20 tokens registered in the network (excluding ETH, which is hardcoded as assetId = 0)
+    /// @notice Total number of ERC20 tokens registered in the network (excluding BNB, which is hardcoded as assetId = 0)
     uint16 public totalAssets;
 
     mapping(address => bool) public validators;
@@ -45,10 +47,13 @@ contract Governance is Config {
     /// @notice Governance contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
     /// @param initializationParameters Encoded representation of initialization parameters:
     ///     _networkGovernor The address of network governor
-    function initialize(bytes calldata initializationParameters) external {
+    function initialize(bytes calldata initializationParameters) external initializer{
         address _networkGovernor = abi.decode(initializationParameters, (address));
 
         networkGovernor = _networkGovernor;
+
+        // TODO： initialize assets（0 => BNB, 1 => BUSD)
+
     }
 
     /// @notice Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
@@ -90,6 +95,7 @@ contract Governance is Config {
         assetAddresses[newAssetId] = _asset;
         assetsList[_asset] = newAssetId;
 
+        // TODO: BUSD should be initialize
         if (newAssetId > 1) { // 0 => BNB,  1 => BUSD
             emit NewAsset(_asset, newAssetId);
         }

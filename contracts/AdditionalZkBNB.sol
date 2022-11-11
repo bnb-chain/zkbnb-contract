@@ -6,10 +6,10 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./lib/SafeMathUInt128.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "./lib/SafeMathUInt128.sol";
 import "./lib/Utils.sol";
 
 import "./Storage.sol";
@@ -19,11 +19,9 @@ import "./interfaces/Events.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
 
-import "./interfaces/UpgradeableMaster.sol";
-
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
-contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Receiver {
+contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
 
@@ -128,46 +126,6 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard, IERC721Rec
         }
         firstPriorityRequestId += toProcess;
         totalOpenPriorityRequests -= toProcess;
-    }
-
-    // TODO
-    uint256 internal constant SECURITY_COUNCIL_2_WEEKS_THRESHOLD = 3;
-    uint256 internal constant SECURITY_COUNCIL_1_WEEK_THRESHOLD = 2;
-    uint256 internal constant SECURITY_COUNCIL_3_DAYS_THRESHOLD = 1;
-
-    function cutUpgradeNoticePeriod() external {
-        requireActive();
-
-        address payable[SECURITY_COUNCIL_MEMBERS_NUMBER] memory SECURITY_COUNCIL_MEMBERS = [
-        payable(0x00), payable(0x00), payable(0x00)
-        ];
-        for (uint256 id = 0; id < SECURITY_COUNCIL_MEMBERS_NUMBER; ++id) {
-            if (SECURITY_COUNCIL_MEMBERS[id] == msg.sender) {
-                require(upgradeStartTimestamp != 0);
-                require(securityCouncilApproves[id] == false);
-                securityCouncilApproves[id] = true;
-                numberOfApprovalsFromSecurityCouncil++;
-
-                if (numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_2_WEEKS_THRESHOLD) {
-                    if (approvedUpgradeNoticePeriod > 2 weeks) {
-                        approvedUpgradeNoticePeriod = 2 weeks;
-                        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-                    }
-                } else if (numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_1_WEEK_THRESHOLD) {
-                    if (approvedUpgradeNoticePeriod > 1 weeks) {
-                        approvedUpgradeNoticePeriod = 1 weeks;
-                        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-                    }
-                } else if (numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_3_DAYS_THRESHOLD) {
-                    if (approvedUpgradeNoticePeriod > 3 days) {
-                        approvedUpgradeNoticePeriod = 3 days;
-                        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-                    }
-                }
-
-                break;
-            }
-        }
     }
 
     /// @notice Reverts unverified blocks

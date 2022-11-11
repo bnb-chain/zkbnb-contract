@@ -19,27 +19,6 @@ import "./interfaces/NFTFactory.sol";
 /// @title zkbnb storage contract
 /// @author ZkBNB Labs
 contract Storage {
-
-    /// @dev Flag indicates that upgrade preparation status is active
-    /// @dev Will store false in case of not active upgrade mode
-    bool internal upgradePreparationActive;
-
-    /// @dev Upgrade preparation activation timestamp (as seconds since unix epoch)
-    /// @dev Will be equal to zero in case of not active upgrade mode
-    uint256 internal upgradePreparationActivationTime;
-
-    /// @dev Upgrade notice period, possibly shorten by the security council
-    uint256 internal approvedUpgradeNoticePeriod;
-
-    /// @dev Upgrade start timestamp (as seconds since unix epoch)
-    /// @dev Will be equal to zero in case of not active upgrade mode
-    uint256 internal upgradeStartTimestamp;
-
-    /// @dev Stores boolean flags which means the confirmations of the upgrade for each member of security council
-    /// @dev Will store zeroes in case of not active upgrade mode
-    mapping(uint256 => bool) internal securityCouncilApproves;
-    uint256 internal numberOfApprovalsFromSecurityCouncil;
-
     // account root
     bytes32 public stateRoot;
 
@@ -94,7 +73,11 @@ contract Storage {
     uint64 internal totalCommittedPriorityRequests;
 
     /// @notice Packs address and token id into single word to use as a key in balances mapping
-    function packAddressAndAssetId(address _address, uint16 _assetId) internal pure returns (bytes22) {
+    function packAddressAndAssetId(address _address, uint16 _assetId)
+        internal
+        pure
+        returns (bytes22)
+    {
         return bytes22((uint176(_address) | (uint176(_assetId) << 160)));
     }
 
@@ -108,7 +91,11 @@ contract Storage {
         bytes32 commitment;
     }
 
-    function hashStoredBlockInfo(StoredBlockInfo memory _block) internal pure returns (bytes32) {
+    function hashStoredBlockInfo(StoredBlockInfo memory _block)
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encode(_block));
     }
 
@@ -146,5 +133,4 @@ contract Storage {
 
     /// @notice Address which will be used if no factories is specified.
     address public defaultNFTFactory;
-
 }

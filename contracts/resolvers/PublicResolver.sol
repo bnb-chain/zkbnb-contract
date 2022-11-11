@@ -2,6 +2,7 @@
 pragma solidity >=0.7.6;
 pragma abicoder v2;
 
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "./Multicallable.sol";
 import "./profile/ABIResolver.sol";
 import "./profile/AddrResolver.sol";
@@ -9,7 +10,6 @@ import "./profile/PubKeyResolver.sol";
 import "./profile/NameResolver.sol";
 import "../interfaces/ZNS.sol";
 import "./profile/ZkBNBPubKeyResolver.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 /**
  * A simple resolver anyone can use; only allows the owner of a node to set its address.
@@ -21,7 +21,7 @@ AddrResolver,
 NameResolver,
 PubKeyResolver,
 ZkBNBPubKeyResolver,
-ReentrancyGuardUpgradeable
+Initializable
 {
     ZNS zns;
 
@@ -41,8 +41,6 @@ ReentrancyGuardUpgradeable
     );
 
     function initialize(bytes calldata initializationParameters) external initializer {
-        __ReentrancyGuard_init();
-
         (
         address _zns
         ) = abi.decode(initializationParameters, (address));

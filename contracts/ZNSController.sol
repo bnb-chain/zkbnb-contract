@@ -12,7 +12,7 @@ import "./lib/Names.sol";
 /**
  * ZNSController is a registrar allocating subdomain names to users in ZkBNB in a FIFS way.
  */
-contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+contract ZNSController is IBaseRegistrar, OwnableUpgradeable {
 
     using Names for string;
 
@@ -43,7 +43,6 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
 
     function initialize(bytes calldata initializationParameters) external initializer {
         __Ownable_init();
-        __ReentrancyGuard_init();
 
         (address _znsAddr, address _prices, bytes32 _node) = abi.decode(initializationParameters, (address, address, bytes32));
         zns = ZNS(_znsAddr);

@@ -19,14 +19,12 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/NFTFactory.sol";
 import "./Config.sol";
 import "./ZNSController.sol";
-import "./Proxy.sol";
-import "./interfaces/UpgradeableMaster.sol";
 import "./Storage.sol";
 import "./lib/NFTHelper.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
-contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
+contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
     using SafeMath for uint256;
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
@@ -51,68 +49,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4){
         return this.onERC721Received.selector;
     }
-
-    // Upgrade functional
-    /// @notice Shortest Notice period before activation preparation status of upgrade mode
-    ///         Notice period can be set by secure council
-    // TODO: Shortest Notice period cannot be modified now
-    function getNoticePeriod() external pure override returns (uint256) {
-        return SHORTEST_UPGRADE_NOTICE_PERIOD;
-    }
-
-    /// @notice Notification that upgrade notice period started
-    /// @dev Can be external because Proxy contract intercepts illegal calls of this function
-    function upgradeNoticePeriodStarted() external override {
-        upgradeStartTimestamp = block.timestamp;
-    }
-
-    /// @notice Notification that upgrade preparation status is activated
-    /// @dev Can be external because Proxy contract intercepts illegal calls of this function
-    function upgradePreparationStarted() external override {
-        upgradePreparationActive = true;
-        upgradePreparationActivationTime = block.timestamp;
-        // Check if the approvedUpgradeNoticePeriod is passed
-        require(block.timestamp >= upgradeStartTimestamp.add(approvedUpgradeNoticePeriod));
-    }
-
-    /// @dev When upgrade is finished or canceled we must clean upgrade-related state.
-    function clearUpgradeStatus() internal {
-        upgradePreparationActive = false;
-        upgradePreparationActivationTime = 0;
-        approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
-        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
-        upgradeStartTimestamp = 0;
-        for (uint256 i = 0; i < SECURITY_COUNCIL_MEMBERS_NUMBER; ++i) {
-            securityCouncilApproves[i] = false;
-        }
-        numberOfApprovalsFromSecurityCouncil = 0;
-    }
-
-    /// @notice Notification that upgrade canceled
-    /// @dev Can be external because Proxy contract intercepts illegal calls of this function
-    function upgradeCanceled() external override {
-        clearUpgradeStatus();
-    }
-
-    /// @notice Notification that upgrade finishes
-    /// @dev Can be external because Proxy contract intercepts illegal calls of this function
-    function upgradeFinishes() external override {
-        clearUpgradeStatus();
-    }
-
-    /// @notice Checks that contract is ready for upgrade
-    /// @return bool flag indicating that contract is ready for upgrade
-    function isReadyForUpgrade() external view override returns (bool) {
-        return !desertMode;
-    }
-
-    function upgrade(bytes calldata upgradeParameters) external {}
-
-    function cutUpgradeNoticePeriod() external {
-        /// All functions delegated to additional contract should NOT be nonReentrant
-        delegateAdditional();
-    }
-
+    
     /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
     /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
     /// @dev of existed priority requests expiration block number.
@@ -169,8 +106,6 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         );
         stateRoot = _genesisStateRoot;
         storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
-        approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
-        emit NoticePeriodChange(approvedUpgradeNoticePeriod);
     }
 
     function registerZNS(string calldata _name, address _owner, bytes32 _zkbnbPubKeyX, bytes32 _zkbnbPubKeyY) external payable nonReentrant {
