@@ -6,21 +6,21 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./SafeMathUInt128.sol";
-import "./SafeMathUInt32.sol";
+import "./lib/SafeMathUInt128.sol";
+import "./lib/SafeMathUInt32.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
-import "./Events.sol";
-import "./Utils.sol";
-import "./Bytes.sol";
-import "./TxTypes.sol";
+import "./interfaces/Events.sol";
+import "./lib/Utils.sol";
+import "./lib/Bytes.sol";
+import "./lib/TxTypes.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./NFTFactory.sol";
+import "./interfaces/NFTFactory.sol";
 import "./Config.sol";
 import "./ZNSController.sol";
 import "./Proxy.sol";
-import "./UpgradeableMaster.sol";
+import "./interfaces/UpgradeableMaster.sol";
 import "./Storage.sol";
 import "./lib/NFTHelper.sol";
 
@@ -31,6 +31,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
     using SafeMathUInt128 for uint128;
     using SafeMathUInt32 for uint32;
 
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1052.md
     bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
     struct CommitBlockInfo {
@@ -54,6 +55,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
     // Upgrade functional
     /// @notice Shortest Notice period before activation preparation status of upgrade mode
     ///         Notice period can be set by secure council
+    // TODO: Shortest Notice period cannot be modified now
     function getNoticePeriod() external pure override returns (uint256) {
         return SHORTEST_UPGRADE_NOTICE_PERIOD;
     }
@@ -177,12 +179,12 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
 
         // Priority Queue request
         TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
-        txType : uint8(TxTypes.TxType.RegisterZNS),
-        accountIndex : accountIndex,
-        accountName : Utils.stringToBytes20(_name),
-        accountNameHash : node,
-        pubKeyX : _zkbnbPubKeyX,
-        pubKeyY : _zkbnbPubKeyY
+            txType : uint8(TxTypes.TxType.RegisterZNS),
+            accountIndex : accountIndex,
+            accountName : Utils.stringToBytes20(_name),
+            accountNameHash : node,
+            pubKeyX : _zkbnbPubKeyX,
+            pubKeyY : _zkbnbPubKeyY
         });
         // compact pub data
         bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
@@ -209,6 +211,7 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
     /// @param _accountName the receiver account name
     function depositBNB(string calldata _accountName) external payable {
         require(msg.value != 0, "ia");
+        // TODO: `requireActive` should be modifier
         requireActive();
         bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
         require(znsController.isRegisteredNameHash(accountNameHash), "nr");
@@ -642,11 +645,11 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
     ) internal {
         // Priority Queue request
         TxTypes.Deposit memory _tx = TxTypes.Deposit({
-        txType : uint8(TxTypes.TxType.Deposit),
-        accountIndex : 0, // unknown at the moment
-        accountNameHash : _accountNameHash,
-        assetId : _assetId,
-        amount : _amount
+            txType : uint8(TxTypes.TxType.Deposit),
+            accountIndex : 0, // unknown at the moment
+            accountNameHash : _accountNameHash,
+            assetId : _assetId,
+            amount : _amount
         });
         // compact pub data
         bytes memory pubData = TxTypes.writeDepositPubDataForPriorityQueue(_tx);
@@ -668,9 +671,9 @@ contract ZkBNB is UpgradeableMaster, Events, Storage, Config, ReentrancyGuardUpg
         bytes20 hashedPubData = Utils.hashBytesToBytes20(_pubData);
 
         priorityRequests[nextPriorityRequestId] = PriorityTx({
-        hashedPubData : hashedPubData,
-        expirationBlock : expirationBlock,
-        txType : _txType
+            hashedPubData : hashedPubData,
+            expirationBlock : expirationBlock,
+            txType : _txType
         });
 
         emit NewPriorityRequest(msg.sender, nextPriorityRequestId, _txType, _pubData, uint256(expirationBlock));

@@ -2,12 +2,12 @@
 
 pragma solidity ^0.7.6;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./Bytes.sol";
-import "./Storage.sol";
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import './Bytes.sol';
+import '../Storage.sol';
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 
 library Utils {
     /// @notice Returns lesser of two values
@@ -37,9 +37,7 @@ library Utils {
         address _to,
         uint256 _amount
     ) internal returns (bool) {
-        (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
-            abi.encodeWithSignature("transfer(address,uint256)", _to, _amount)
-        );
+        (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(abi.encodeWithSignature('transfer(address,uint256)', _to, _amount));
         // `transfer` method may return (bool) or nothing.
         bool returnedSuccess = callReturnValueEncoded.length == 0 || abi.decode(callReturnValueEncoded, (bool));
         return callSuccess && returnedSuccess;
@@ -59,9 +57,7 @@ library Utils {
         address _to,
         uint256 _amount
     ) internal returns (bool) {
-        (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", _from, _to, _amount)
-        );
+        (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(abi.encodeWithSignature('transferFrom(address,address,uint256)', _from, _to, _amount));
         // `transferFrom` method may return (bool) or nothing.
         bool returnedSuccess = callReturnValueEncoded.length == 0 || abi.decode(callReturnValueEncoded, (bool));
         return callSuccess && returnedSuccess;
@@ -73,12 +69,7 @@ library Utils {
         address _nftL1Address,
         uint256 _nftL1TokenId
     ) internal returns (bool success) {
-
-        try IERC721(_nftL1Address).safeTransferFrom(
-            _from,
-            _to,
-            _nftL1TokenId
-        ) {
+        try IERC721(_nftL1Address).safeTransferFrom(_from, _to, _nftL1TokenId) {
             success = true;
         } catch {
             success = false;
@@ -93,11 +84,7 @@ library Utils {
         address _tokenAddress,
         uint256 _nftTokenId
     ) internal returns (bool success) {
-        try IERC721(_tokenAddress).safeTransferFrom(
-            _from,
-            _to,
-            _nftTokenId
-        ) {
+        try IERC721(_tokenAddress).safeTransferFrom(_from, _to, _nftTokenId) {
             success = true;
         } catch {
             success = false;
@@ -109,12 +96,8 @@ library Utils {
     /// @param _signature 65 bytes concatenated. R (32) + S (32) + V (1)
     /// @param _messageHash signed message hash.
     /// @return address of the signer
-    function recoverAddressFromEthSignature(bytes memory _signature, bytes32 _messageHash)
-    internal
-    pure
-    returns (address)
-    {
-        require(_signature.length == 65, "P");
+    function recoverAddressFromEthSignature(bytes memory _signature, bytes32 _messageHash) internal pure returns (address) {
+        require(_signature.length == 65, 'P');
         // incorrect signature length
 
         bytes32 signR;
@@ -155,9 +138,9 @@ library Utils {
         return bytes20(uint160(uint256(keccak256(_bytes))));
     }
 
-    function bytesToUint256Arr(bytes memory _pubData) internal pure returns (uint256[] memory pubData){
+    function bytesToUint256Arr(bytes memory _pubData) internal pure returns (uint256[] memory pubData) {
         uint256 bytesCount = _pubData.length / 32;
-        pubData = new uint[](bytesCount);
+        pubData = new uint256[](bytesCount);
         uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
         for (uint32 i = 0; i < bytesCount; ++i) {
             bytes32 result = Bytes.bytesToBytes32(Bytes.slice(_pubData, i * 32, 32), 0);
@@ -165,5 +148,4 @@ library Utils {
         }
         return pubData;
     }
-
 }

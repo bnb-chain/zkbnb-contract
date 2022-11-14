@@ -10,11 +10,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./Config.sol";
 import "./Governance.sol";
 import "./ZkBNBVerifier.sol";
-import "./TxTypes.sol";
+import "./lib/TxTypes.sol";
 import "./AdditionalZkBNB.sol";
 import "./ZNSController.sol";
 import "./resolvers/PublicResolver.sol";
-import "./NFTFactory.sol";
+import "./interfaces/NFTFactory.sol";
 
 /// @title zkbnb storage contract
 /// @author ZkBNB Labs

@@ -3,7 +3,7 @@ pragma solidity ^0.7.6;
 
 import "../ResolverBase.sol";
 import "./IZkBNBPubKeyResolver.sol";
-import "../../ZNS.sol";
+import "../../interfaces/ZNS.sol";
 
 abstract contract ZkBNBPubKeyResolver is IZkBNBPubKeyResolver, ResolverBase {
 

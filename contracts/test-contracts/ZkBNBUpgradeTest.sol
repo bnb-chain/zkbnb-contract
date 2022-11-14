@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.7.6;
 
-import "../UpgradeableMaster.sol";
+import "../interfaces/UpgradeableMaster.sol";
 import "./StorageTest.sol";
 import "../Config.sol";
-import "../SafeMathUInt128.sol";
+import "../lib/SafeMathUInt128.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract ZkBNBUpgradeTest is UpgradeableMaster, StorageTest, Config {

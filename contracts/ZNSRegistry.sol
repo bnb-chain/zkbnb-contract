@@ -2,7 +2,7 @@
 
 pragma solidity ^0.7.6;
 
-import "./ZNS.sol";
+import "./interfaces/ZNS.sol";
 
 contract ZNSRegistry is ZNS {
 

@@ -6,20 +6,20 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./SafeMathUInt128.sol";
+import "./lib/SafeMathUInt128.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./Utils.sol";
+import "./lib/Utils.sol";
 
 import "./Storage.sol";
 import "./Config.sol";
-import "./Events.sol";
+import "./interfaces/Events.sol";
 
-import "./Bytes.sol";
-import "./TxTypes.sol";
+import "./lib/Bytes.sol";
+import "./lib/TxTypes.sol";
 
-import "./UpgradeableMaster.sol";
+import "./interfaces/UpgradeableMaster.sol";
 
 /// @title ZkBNB additional main contract
 /// @author ZkBNB

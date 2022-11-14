@@ -1,7 +1,7 @@
 pragma solidity ^0.7.6;
 
-import "./IPriceOracle.sol";
-import "./utils/Names.sol";
+import "./interfaces/IPriceOracle.sol";
+import "./lib/Names.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 

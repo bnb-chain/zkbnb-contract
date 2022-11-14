@@ -4,10 +4,10 @@ pragma solidity ^0.7.6;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "./IBaseRegistrar.sol";
-import "./IPriceOracle.sol";
-import "./ZNS.sol";
-import "./utils/Names.sol";
+import "./interfaces/IBaseRegistrar.sol";
+import "./interfaces/IPriceOracle.sol";
+import "./interfaces/ZNS.sol";
+import "./lib/Names.sol";
 
 /**
  * ZNSController is a registrar allocating subdomain names to users in ZkBNB in a FIFS way.

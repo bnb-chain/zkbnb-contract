@@ -3,9 +3,9 @@
 pragma solidity ^0.7.6;
 
 import "./Config.sol";
-import "./Utils.sol";
+import "./lib/Utils.sol";
 import "./AssetGovernance.sol";
-import "./SafeMathUInt32.sol";
+import "./lib/SafeMathUInt32.sol";
 
 /// @title Governance Contract
 /// @author ZkBNB Team
