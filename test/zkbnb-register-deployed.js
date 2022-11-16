@@ -38,6 +38,7 @@ describe("zkbnb contract", function () {
                 legendNode,
                 znsController.address,
                 ethers.constants.HashZero,
+                ethers.constants.HashZero
             )
             await setBaseNodeTx.wait()
             // deploy governance
@@ -135,7 +136,9 @@ describe("zkbnb contract", function () {
 
             const registerZNSTx = await zkbnb.registerZNS('sher',
                 '0xDA00601380Bc7aE4fe67dA2EB78f9161570c9EB4',
-                '0x6788fdbc635cf86e266853a628b2743643df5c1db1a4f9afbb13bca103322e9a')
+                ethers.constants.HashZero,
+                ethers.constants.HashZero
+            )
             await registerZNSTx.wait()
 
             const hashVal = namehash.hash('sher.legend');
