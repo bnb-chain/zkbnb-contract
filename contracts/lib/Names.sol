@@ -49,7 +49,6 @@ library Names {
 
   // Only supports lowercase letters and digital number
   function isValidCharacter(bytes1 bs) internal pure returns (bool) {
-    return
-      (bs <= 0x39 && bs >= 0x30) || (bs <= 0x7A && bs >= 0x61); // number // lowercase letter
+    return (bs <= 0x39 && bs >= 0x30) || (bs <= 0x7A && bs >= 0x61); // number // lowercase letter
   }
 }
