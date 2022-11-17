@@ -56,6 +56,11 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable {
     controllers[msg.sender] = true;
   }
 
+  /// @notice ZNSController contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+  /// @param upgradeParameters Encoded representation of upgrade parameters
+  // solhint-disable-next-line no-empty-blocks
+  function upgrade(bytes calldata upgradeParameters) external {}
+
   // Authorizes a controller, who can control this registrar.
   function addController(address _controller) external override onlyOwner {
     controllers[_controller] = true;
