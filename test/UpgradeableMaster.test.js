@@ -6,34 +6,44 @@ const { expect } = chai;
 chai.use(smock.matchers);
 
 describe('UpgradeableMaster', function () {
-  let mockStorage;
+  let mockZkBNB;
   let upgradeableMaster;
-  let owner, addr1, addr2, addr3;
+  let owner, councilMember1, councilMember2, councilMember3;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3] = await ethers.getSigners();
-    const MockStorage = await smock.mock('Storage');
-    mockStorage = await MockStorage.deploy();
-    await mockStorage.deployed();
+    [owner, councilMember1, councilMember2, councilMember3] =
+      await ethers.getSigners();
+
+    const Utils = await ethers.getContractFactory('Utils');
+    utils = await Utils.deploy();
+    await utils.deployed();
+    const MockZkBNB = await smock.mock('ZkBNB', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
+    mockZkBNB = await MockZkBNB.deploy();
+    await mockZkBNB.deployed();
 
     const UpgradeableMaster = await ethers.getContractFactory(
       'UpgradeableMaster',
     );
 
     upgradeableMaster = await UpgradeableMaster.deploy(
-      [addr1.address, addr2.address, addr3.address],
-      mockStorage.address,
+      [councilMember1.address, councilMember2.address, councilMember3.address],
+      mockZkBNB.address,
     );
     await upgradeableMaster.deployed();
   });
 
   context('Notice period', () => {
-    it('Default notice period should been shortest', async () => {
+    it('Default notice period should be the shortest', async () => {
       const period = await upgradeableMaster.getNoticePeriod();
       expect(period).to.equal(0);
     });
-    it('Notification that upgrade preparation status is activated', async () => {
+
+    it('Preparation status should be activated 4 weeks after notification started', async () => {
       await upgradeableMaster.upgradeNoticePeriodStarted();
       await expect(upgradeableMaster.upgradePreparationStarted()).to.be
         .reverted;
@@ -46,48 +56,68 @@ describe('UpgradeableMaster', function () {
       await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be
         .reverted;
     });
-    it('cut upgrade notice period', async () => {
+
+    it('Notice period can be cut by council members', async () => {
       await upgradeableMaster.upgradeNoticePeriodStarted();
 
       await expect(upgradeableMaster.upgradePreparationStarted()).to.be
         .reverted;
 
-      await upgradeableMaster.connect(addr1).cutUpgradeNoticePeriod();
-      await upgradeableMaster.connect(addr2).cutUpgradeNoticePeriod();
+      await upgradeableMaster.connect(councilMember1).cutUpgradeNoticePeriod();
+      await upgradeableMaster.connect(councilMember2).cutUpgradeNoticePeriod();
 
       await expect(upgradeableMaster.upgradePreparationStarted()).to.be
         .reverted;
 
-      await upgradeableMaster.connect(addr3).cutUpgradeNoticePeriod();
+      await upgradeableMaster.connect(councilMember3).cutUpgradeNoticePeriod();
 
       await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be
         .reverted;
     });
+
     it('Ready for upgrade', async () => {
       let res = await upgradeableMaster.isReadyForUpgrade();
       expect(res).to.be.true;
 
-      await mockStorage.setVariable('desertMode', true);
+      await mockZkBNB.setVariable('desertMode', true);
 
       res = await upgradeableMaster.isReadyForUpgrade();
       expect(res).to.be.false;
     });
-    it('clear Upgrade Status', async () => {
-      await upgradeableMaster.upgradeNoticePeriodStarted();
-      const fourWeeks = 4 * 7 * 24 * 60 * 60;
 
-      await expect(upgradeableMaster.upgradeCanceled())
-        .to.emit(upgradeableMaster, 'NoticePeriodChange')
-        .withArgs(fourWeeks);
+    context('Clear upgrade status', () => {
+      it('Clear upgrade status when cancelled', async () => {
+        await upgradeableMaster.upgradeNoticePeriodStarted();
+        const fourWeeks = 4 * 7 * 24 * 60 * 60;
+
+        await expect(upgradeableMaster.upgradeCanceled())
+          .to.emit(upgradeableMaster, 'NoticePeriodChange')
+          .withArgs(fourWeeks);
+      });
+
+      it('Clear upgrade status when finishes', async () => {
+        await upgradeableMaster.upgradeNoticePeriodStarted();
+        const fourWeeks = 4 * 7 * 24 * 60 * 60;
+
+        await expect(upgradeableMaster.upgradeFinishes())
+          .to.emit(upgradeableMaster, 'NoticePeriodChange')
+          .withArgs(fourWeeks);
+      });
     });
-    it('access control', async () => {
-      await upgradeableMaster.setOperator(addr1.address);
 
-      await expect(upgradeableMaster.upgradeNoticePeriodStarted()).to.be
-        .reverted;
-      await expect(
-        upgradeableMaster.connect(addr1).upgradeNoticePeriodStarted(),
-      ).not.to.be.reverted;
+    // TODO: add access control to `UpgradeableMaster` contract
+    context.skip('Access control', () => {
+      it('Only council member can invoke `upgradeNoticePeriodStarted`', async () => {
+        await upgradeableMaster.setOperator(councilMember1.address);
+
+        await expect(upgradeableMaster.upgradeNoticePeriodStarted()).to.be
+          .reverted;
+        await expect(
+          upgradeableMaster
+            .connect(councilMember1)
+            .upgradeNoticePeriodStarted(),
+        ).not.to.be.reverted;
+      });
     });
   });
 });
