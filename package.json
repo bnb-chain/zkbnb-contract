@@ -7,6 +7,7 @@
     "build": "hardhat compile",
     "prebuild": "rimraf ./artifacts/ ./cache/",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test-upgradeable": "npx hardhat test test/upgradeable/**.test.js",
     "lint:check:format": "prettier --check **.{sol,js}",
     "lint:check:solhint": "solhint contracts/**/*.sol",
     "lint:check:eslint": "eslint . --ext js,ts",
