@@ -238,7 +238,7 @@ Contracts deployed using `DeployFactory` can be upgraded to modify their code, w
 This allows you to iteratively add new features to your contracts, or fix any bugs after deployed.
 `DeployFactory` deploy a proxy to the implementation contract, which is the contract that you actually interact with.
 
-Upgradeable contracts:
+Upgradeable contracts should implement `upgrade` function to be delegated by proxies. Upgradeable contracts:
 - `Governance`
 - `ZkBNBVerifier`
 - `ZNSController`
@@ -257,17 +257,29 @@ There are several phases to the upgrade process:
     - `UpgradeStatus.Preparation` => `UpgradeStatus.Idle`
 
 ### DeployFactory
+This function deploy proxies for upgradeable contracts in `ZkBNB`:
 ```
     function deployProxyContracts(
-        Governance _governanceTarget,
-        ZkBNBVerifier _verifierTarget,
-        ZkBNB _ZkBNBTarget,
-        ZNSController _znsControllerTarget,
-        PublicResolver _znsResolverTarget,
-        AdditionalParams memory _additionalParams
+        DeployedContractAddress memory _contracts,
+        AdditionalParams memory _additionalParams,
     ) internal;
 ```
-This function deploy proxies for upgradeable contracts in `ZkBNB`.
+The deployed implementation contract addresses should be passed in to `DeployedContractAddress` struct:
+```
+  struct DeployedContractAddress {
+    Governance governanceTarget;
+    ZkBNBVerifier verifierTarget;
+    ZkBNB zkbnbTarget;
+    ZNSController znsControllerTarget;
+    PublicResolver znsResolverTarget;
+    address validator;
+    address governor;
+    address listingToken;
+    address zns;
+    address priceOracle;
+    UpgradeableMaster upgradeableMaster;
+  }
+```
 
 ### UpgradeGatekeeper
 `UpgradeGatekeeper` is the admin contract who will be the only one allowed to manage and upgrade these upgradeable contracts.
@@ -292,7 +304,7 @@ All upgradeable contracts can only remain in the same state if already started u
 ```
     function addUpgradeable(address addr) external;
 ```
-This function adds a new upgradeable contract to the list of contracts managed by the `UpgradeGatekeeper`.
+This function adds a new upgradeable contract to the list of contracts managed by the `UpgradeGatekeeper`. It's called by `DeployFactory` contract on deployment.
 
 #### startUpgrade
 ```

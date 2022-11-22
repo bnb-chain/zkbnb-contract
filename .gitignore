@@ -112,6 +112,12 @@ artifacts
 artifacts-bak
 coverage.json
 
+# Ganache
+ganache
+
 
 .DS_Store
 
+# Editor/IDE
+.tours
+.vscode

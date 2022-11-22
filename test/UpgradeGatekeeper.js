@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
-describe('ZkBNB-Legend contract', function () {
+describe('UpgradeGatekeeper', function () {
   const provider = new ethers.providers.JsonRpcProvider();
 
   let ZkBNB, zkbnb;
@@ -57,7 +57,7 @@ describe('ZkBNB-Legend contract', function () {
     gatekeeper = new ethers.Contract(event[2], abi3, provider);
   });
 
-  describe('ZkBNB Upgrade Test', function () {
+  describe('UpgradeGatekeeper Upgrade', function () {
     it('test normal upgrade', async function () {
       // before upgrade: balance = 0
       const tx1 = await zkbnbProxy.connect(addr1).setBalance(5);
