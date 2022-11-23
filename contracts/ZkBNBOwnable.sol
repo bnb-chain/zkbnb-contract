@@ -1,6 +1,5 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 /// @title ZkBNBOwnable Contract
 /// @author ZkBNB Team
@@ -15,11 +14,10 @@ contract ZkBNBOwnable {
     setMaster(masterAddress);
   }
 
-  /// @notice Check if specified address is master
-  /// @param _address Address to check
-  function requireMaster(address _address) internal view {
-    require(_address == getMaster(), "1c");
+  modifier onlyMaster() {
+    require(msg.sender == getMaster(), "1c");
     // oro11 - only by master
+    _;
   }
 
   /// @notice Returns contract masters address
@@ -42,8 +40,7 @@ contract ZkBNBOwnable {
 
   /// @notice Transfer mastership of the contract to new master
   /// @param _newMaster New masters address
-  function transferMastership(address _newMaster) external {
-    requireMaster(msg.sender);
+  function transferMastership(address _newMaster) external onlyMaster {
     require(_newMaster != address(0), "1d");
     // otp11 - new masters address can't be zero address
     setMaster(_newMaster);

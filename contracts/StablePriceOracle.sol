@@ -1,8 +1,8 @@
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "./interfaces/IPriceOracle.sol";
 import "./lib/Names.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // StablePriceOracle sets a price for zns name in BNB

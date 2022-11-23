@@ -14,18 +14,11 @@ describe('zkbnb contract', function () {
       const PublicResolver = await ethers.getContractFactory('PublicResolver');
       const publicResolver = await PublicResolver.deploy();
       await publicResolver.deployed();
-      const initResolverParams = ethers.utils.defaultAbiCoder.encode(
-        ['address'],
-        [znsRegistry.address],
-      );
-      const initResolverTx = await publicResolver.initialize(
-        initResolverParams,
-      );
+      const initResolverParams = ethers.utils.defaultAbiCoder.encode(['address'], [znsRegistry.address]);
+      const initResolverTx = await publicResolver.initialize(initResolverParams);
       await initResolverTx.wait();
       // deploy zns price oracle
-      const ZNSPriceOracle = await ethers.getContractFactory(
-        'StablePriceOracle',
-      );
+      const ZNSPriceOracle = await ethers.getContractFactory('StablePriceOracle');
       const rentPrices = [0, 1, 2];
       const znsPriceOracle = await ZNSPriceOracle.deploy(rentPrices);
       await znsPriceOracle.deployed();
@@ -39,9 +32,7 @@ describe('zkbnb contract', function () {
         ['address', 'address', 'bytes32'],
         [znsRegistry.address, znsPriceOracle.address, baseNode],
       );
-      const initZnsControllerTx = await znsController.initialize(
-        initZnsControllerParams,
-      );
+      const initZnsControllerTx = await znsController.initialize(initZnsControllerParams);
       await initZnsControllerTx.wait();
 
       const legendNode = getKeccak256('legend');
@@ -65,22 +56,15 @@ describe('zkbnb contract', function () {
       /*
             address _networkGovernor = abi.decode(initializationParameters, (address));
              */
-      const initGovernanceParams = ethers.utils.defaultAbiCoder.encode(
-        ['address'],
-        [governor],
-      );
-      const initGovernanceTx = await governance.initialize(
-        initGovernanceParams,
-      );
+      const initGovernanceParams = ethers.utils.defaultAbiCoder.encode(['address'], [governor]);
+      const initGovernanceTx = await governance.initialize(initGovernanceParams);
       await initGovernanceTx.wait();
       // set committer
       const setCommitterTx = await governance.setValidator(governor, true);
       await setCommitterTx.wait();
 
       // asset governance
-      const AssetGovernance = await ethers.getContractFactory(
-        'AssetGovernance',
-      );
+      const AssetGovernance = await ethers.getContractFactory('AssetGovernance');
       /*
             Governance _governance,
             IERC20 _listingFeeToken,
@@ -109,9 +93,7 @@ describe('zkbnb contract', function () {
       const setListerTx = await assetGovernance.setLister(governor, true);
       await setListerTx.wait();
       // changeAssetGovernance
-      const changeAssetGovernanceTx = await governance.changeAssetGovernance(
-        assetGovernance.address,
-      );
+      const changeAssetGovernanceTx = await governance.changeAssetGovernance(assetGovernance.address);
       await changeAssetGovernanceTx.wait();
 
       // deploy verifier
@@ -140,14 +122,11 @@ describe('zkbnb contract', function () {
       console.log(isController);
 
       // deploy additional zkbnb legend
-      const AdditionalZkBNB = await ethers.getContractFactory(
-        'AdditionalZkBNB',
-      );
+      const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
       const additionalZkBNB = await AdditionalZkBNB.deploy();
       await additionalZkBNB.deployed();
 
-      const _genesisAccountRoot =
-        '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
+      const _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
       const zkbnbInitParams = ethers.utils.defaultAbiCoder.encode(
         ['address', 'address', 'address', 'address', 'address', 'bytes32'],
         [

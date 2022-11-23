@@ -1,13 +1,10 @@
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
-contract ZkBNBRelatedERC721 is ERC721 {
-  constructor(
-    string memory _name,
-    string memory _symbol,
-    uint256 _tokenId
-  ) ERC721(_name, _symbol) {
+contract ZkBNBRelatedERC721 is ERC721URIStorage {
+  constructor(string memory _name, string memory _symbol, uint256 _tokenId) ERC721(_name, _symbol) {
     _mint(msg.sender, _tokenId);
   }
 

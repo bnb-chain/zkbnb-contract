@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AML
 
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.0;
 
 contract ZkBNBVerifier {
   function initialize(bytes calldata) external {}
@@ -344,7 +344,7 @@ contract ZkBNBVerifier {
     add_input[0] = vk_gammaABC[0];
     add_input[1] = vk_gammaABC[1];
 
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+    // uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     // Performs a sum of gammaABC[0] + sum[ gammaABC[i+1]^proof_inputs[i] ]
     for (uint256 i = 0; i < proof_inputs.length; i++) {
       // @dev only for qa test

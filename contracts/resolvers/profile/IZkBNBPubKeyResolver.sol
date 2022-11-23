@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 interface IZkBNBPubKeyResolver {
   event ZkBNBPubKeyChanged(bytes32 indexed node, bytes32 pubKeyX, bytes32 pubKeyY);

@@ -1,7 +1,6 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Config.sol";
 import "./Storage.sol";
 import "./interfaces/IZkBNBDesertMode.sol";
@@ -11,8 +10,6 @@ import "./interfaces/IZkBNBDesertMode.sol";
 
 // TODO: add access control
 contract UpgradeableMaster {
-  using SafeMath for uint256;
-
   // Create a new role identifier for the UpgradeGatekeeper
   bytes32 public constant ROLE_OPERATOR = keccak256("ROLE_OPERATOR");
 
@@ -63,7 +60,7 @@ contract UpgradeableMaster {
   // Upgrade functional
   /// @notice Shortest Notice period before activation preparation status of upgrade mode
   ///         Notice period can be set by secure council
-  function getNoticePeriod() external view returns (uint256) {
+  function getNoticePeriod() external pure returns (uint256) {
     return SHORTEST_UPGRADE_NOTICE_PERIOD;
   }
 
@@ -77,7 +74,7 @@ contract UpgradeableMaster {
     upgradePreparationActive = true;
     _upgradePreparationActivationTime = block.timestamp;
     // Check if the _approvedUpgradeNoticePeriod is passed
-    require(block.timestamp >= _upgradeStartTimestamp.add(_approvedUpgradeNoticePeriod));
+    require(block.timestamp >= _upgradeStartTimestamp + _approvedUpgradeNoticePeriod);
   }
 
   /// @notice Notification that upgrade canceled

@@ -1,8 +1,5 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-pragma solidity ^0.7.6;
-
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "./Bytes.sol";
 import "./Utils.sol";

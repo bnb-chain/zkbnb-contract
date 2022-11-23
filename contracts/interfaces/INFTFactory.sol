@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.7.6;
+pragma solidity ^0.8.0;
 
-interface NFTFactory {
+interface INFTFactory {
   function mintFromZkBNB(
     address _creatorAddress,
     address _toAddress,

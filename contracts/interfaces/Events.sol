@@ -1,8 +1,6 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-
-import "./Upgradeable.sol";
 import "../lib/TxTypes.sol";
 
 /// @title ZkBNB events
@@ -61,6 +59,9 @@ interface Events {
     uint16 indexed tokenId,
     uint128 amount
   );
+
+  /// @notice Notice period changed
+  event NoticePeriodChange(uint256 newNoticePeriod);
 
   /// @notice NFT deposit event.
   event DepositNft(

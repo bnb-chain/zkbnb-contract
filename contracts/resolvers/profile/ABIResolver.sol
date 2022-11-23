@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "./IABIResolver.sol";
 import "../ResolverBase.sol";
@@ -14,11 +14,7 @@ abstract contract ABIResolver is IABIResolver, ResolverBase {
    * @param contentType The content type of the ABI
    * @param data The ABI data.
    */
-  function setABI(
-    bytes32 node,
-    uint256 contentType,
-    bytes calldata data
-  ) external virtual authorised(node) {
+  function setABI(bytes32 node, uint256 contentType, bytes calldata data) external virtual authorised(node) {
     // Content types must be powers of 2
     require(((contentType - 1) & contentType) == 0);
 

@@ -1,11 +1,8 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const abi1 =
-  require('../artifacts/contracts/test-contracts/ZkBNBUpgradeTest.sol/ZkBNBUpgradeTest.json').abi;
-const abi2 =
-  require('../artifacts/contracts/test-contracts/UpgradableBank.sol/UpgradableBank.json').abi;
-const abi3 =
-  require('../artifacts/contracts/UpgradeGatekeeper.sol/UpgradeGatekeeper.json').abi;
+const abi1 = require('../artifacts/contracts/test-contracts/ZkBNBUpgradeTest.sol/ZkBNBUpgradeTest.json').abi;
+const abi2 = require('../artifacts/contracts/test-contracts/UpgradableBank.sol/UpgradableBank.json').abi;
+const abi3 = require('../artifacts/contracts/UpgradeGatekeeper.sol/UpgradeGatekeeper.json').abi;
 const provider = new ethers.providers.JsonRpcProvider();
 
 describe('DeployFactory contract', function () {
@@ -26,9 +23,7 @@ describe('DeployFactory contract', function () {
     const governance = await GovernanceFactory.deploy();
     await governance.deployed();
     // asset governance
-    const AssetGovernanceFactory = await ethers.getContractFactory(
-      'AssetGovernance',
-    );
+    const AssetGovernanceFactory = await ethers.getContractFactory('AssetGovernance');
     // verifier
     const VerifierFactory = await ethers.getContractFactory('ZkBNBVerifier');
     const verifier = await VerifierFactory.deploy();
@@ -45,30 +40,21 @@ describe('DeployFactory contract', function () {
     const zkbnb = await ZkBNBFactory.deploy();
     await zkbnb.deployed();
     // ZNS controller
-    const ZnsControllerFactory = await ethers.getContractFactory(
-      'ZNSController',
-    );
+    const ZnsControllerFactory = await ethers.getContractFactory('ZNSController');
     const znsController = await ZnsControllerFactory.deploy();
     await znsController.deployed();
     // ZNS resolver
-    const PublicResolverFactory = await ethers.getContractFactory(
-      'PublicResolver',
-    );
+    const PublicResolverFactory = await ethers.getContractFactory('PublicResolver');
     const znsResolver = await PublicResolverFactory.deploy();
     await znsResolver.deployed();
     // ZNS price oracle
-    const ZNSPriceOracleFactory = await ethers.getContractFactory(
-      'StablePriceOracle',
-    );
+    const ZNSPriceOracleFactory = await ethers.getContractFactory('StablePriceOracle');
     const rentPrices = [0, 1, 2];
-    const znsPriceOracle = await ZNSPriceOracleFactory.connect(owner).deploy(
-      rentPrices,
-    );
+    const znsPriceOracle = await ZNSPriceOracleFactory.connect(owner).deploy(rentPrices);
     await znsPriceOracle.deployed();
 
     // Step 3: initialize deploy factory and finish deployment
-    const _genesisAccountRoot =
-      '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
+    const _genesisAccountRoot = '0x01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a';
     const _listingFee = ethers.utils.parseEther('100');
     const _listingCap = 2 ** 16 - 1;
     const baseNode = namehash.hash('legend');
@@ -109,22 +95,13 @@ describe('DeployFactory contract', function () {
     zkbnbProxy = ZkBNB.attach(event[5]);
 
     // Step 4: register zns base node
-    const rootNode =
-      '0x0000000000000000000000000000000000000000000000000000000000000000';
-    const baseNodeLabel =
-      '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'; // mimc('legend');
+    const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000';
+    const baseNodeLabel = '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'; // mimc('legend');
     const setBaseNodeTx = await znsRegistry
       .connect(owner)
-      .setSubnodeOwner(
-        rootNode,
-        baseNodeLabel,
-        znsControllerProxy.address,
-        ethers.constants.HashZero,
-      );
+      .setSubnodeOwner(rootNode, baseNodeLabel, znsControllerProxy.address, ethers.constants.HashZero);
     await setBaseNodeTx.wait();
-    expect(await znsRegistry.owner(baseNode)).to.equal(
-      await znsControllerProxy.address,
-    );
+    expect(await znsRegistry.owner(baseNode)).to.equal(await znsControllerProxy.address);
   });
 
   describe('ZkBNB Upgrade Test', function () {

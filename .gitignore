@@ -106,6 +106,10 @@ dist
 *.idea
 /contracts/artifacts/
 
+# IDE or Editor
+.vscode
+.tours
+
 #Hardhat files
 cache
 artifacts

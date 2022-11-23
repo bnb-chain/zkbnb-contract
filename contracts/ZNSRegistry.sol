@@ -1,10 +1,9 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
+import "./interfaces/IZNS.sol";
 
-import "./interfaces/ZNS.sol";
-
-contract ZNSRegistry is ZNS {
+contract ZNSRegistry is IZNS {
   // @dev Require the msg.sender is the owner of this node
   modifier authorized(bytes32 node) {
     require(records[node].owner == msg.sender, "unauthorized");
@@ -185,11 +184,7 @@ contract ZNSRegistry is ZNS {
     }
   }
 
-  function _setPubKey(
-    bytes32 _node,
-    bytes32 _pubKeyX,
-    bytes32 _pubKeyY
-  ) internal {
+  function _setPubKey(bytes32 _node, bytes32 _pubKeyX, bytes32 _pubKeyY) internal {
     if (_pubKeyX != records[_node].pubKeyX && _pubKeyY != records[_node].pubKeyY) {
       records[_node].pubKeyX = _pubKeyX;
       records[_node].pubKeyY = _pubKeyY;
@@ -201,7 +196,7 @@ contract ZNSRegistry is ZNS {
     return records[node].owner != address(0x0);
   }
 
-  function keccak256Hash(bytes memory input) public view returns (bytes32 result) {
+  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
     result = keccak256(input);
   }
 }

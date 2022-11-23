@@ -1,5 +1,5 @@
 const { ethers } = require('hardhat');
-const namehash = require('eth-ens-namehash');
+// const namehash = require('eth-ens-namehash');
 const { getDeployedAddresses, getZkBNBProxy } = require('./utils');
 
 async function main() {
@@ -19,9 +19,7 @@ async function main() {
 
   // update verifier
   console.log('Update Verifier...');
-  const updateVerifierTx = await zkbnb.updateZkBNBVerifier(
-    newVerifierProxy.address,
-  );
+  const updateVerifierTx = await zkbnb.updateZkBNBVerifier(newVerifierProxy.address);
   await updateVerifierTx.wait();
 }
 

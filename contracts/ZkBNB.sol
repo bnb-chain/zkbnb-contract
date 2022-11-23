@@ -1,14 +1,8 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-
-pragma experimental ABIEncoderV2;
-
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./lib/SafeMathUInt128.sol";
-import "./lib/SafeMathUInt32.sol";
-import "@openzeppelin/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "./interfaces/Events.sol";
 import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
@@ -16,7 +10,7 @@ import "./lib/TxTypes.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./interfaces/NFTFactory.sol";
+import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
 import "./ZNSController.sol";
 import "./Storage.sol";
@@ -25,10 +19,6 @@ import "./lib/NFTHelper.sol";
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
 contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
-  using SafeMath for uint256;
-  using SafeMathUInt128 for uint128;
-  using SafeMathUInt32 for uint32;
-
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1052.md
   bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
@@ -51,7 +41,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     address from,
     uint256 tokenId,
     bytes calldata data
-  ) external override returns (bytes4) {
+  ) external pure override returns (bytes4) {
     return this.onERC721Received.selector;
   }
 
@@ -113,8 +103,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     stateRoot = _genesisStateRoot;
     storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
   }
-
-  /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+  
+ /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external {}
@@ -166,10 +156,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
   /// @param _accountName the receiver account name
-  function depositBNB(string calldata _accountName) external payable {
+  function depositBNB(string calldata _accountName) external payable onlyActive {
     require(msg.value != 0, "ia");
-    // TODO: `requireActive` should be modifier
-    requireActive();
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
     require(znsController.isRegisteredNameHash(accountNameHash), "nr");
     registerDeposit(0, SafeCast.toUint128(msg.value), accountNameHash);
@@ -183,9 +171,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     IERC20 _token,
     uint104 _amount,
     string calldata _accountName
-  ) external {
+  ) external onlyActive {
     require(_amount != 0, "I");
-    requireActive();
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
     require(znsController.isRegisteredNameHash(accountNameHash), "N");
     // Get asset id by its address
@@ -197,7 +184,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(Utils.transferFromERC20(_token, msg.sender, address(this), SafeCast.toUint128(_amount)), "c");
     // token transfer failed deposit
     uint256 balanceAfter = _token.balanceOf(address(this));
-    uint128 depositAmount = SafeCast.toUint128(balanceAfter.sub(balanceBefore));
+    uint128 depositAmount = SafeCast.toUint128(balanceAfter - balanceBefore);
     require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
     require(depositAmount > 0, "D");
 
@@ -209,8 +196,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     string calldata _accountName,
     address _nftL1Address,
     uint256 _nftL1TokenId
-  ) external {
-    requireActive();
+  ) external onlyActive {
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
     require(znsController.isRegisteredNameHash(accountNameHash), "nr");
     // Transfer the tokens to this contract
@@ -288,9 +274,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     } else {
       address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
       // get nft factory
-      address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
+      _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
       // store into l2 nfts
-      bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
+      nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
       l2Nfts[nftKey] = L2NftInfo({
         nftIndex: op.nftIndex,
         creatorAccountIndex: op.creatorAccountIndex,
@@ -299,7 +285,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         collectionId: uint16(op.collectionId)
       });
       try
-        NFTFactory(_factoryAddress).mintFromZkBNB(
+        INFTFactory(_factoryAddress).mintFromZkBNB(
           _creatorAddress,
           op.toAddress,
           op.nftIndex,
@@ -407,7 +393,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint256 balanceBefore = _token.balanceOf(address(this));
     _token.transfer(_to, _amount);
     uint256 balanceAfter = _token.balanceOf(address(this));
-    uint256 balanceDiff = balanceBefore.sub(balanceAfter);
+    uint256 balanceDiff = balanceBefore - balanceAfter;
     //        require(balanceDiff > 0, "C");
     // transfer is considered successful only if the balance of the contract decreased after transfer
     require(balanceDiff <= _maxAmount, "7");
@@ -500,8 +486,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
     bool sent = false;
     if (_assetId == 0) {
-      address payable toPayable = address(uint160(_recipient));
-      sent = sendBNBNoRevert(toPayable, _amount);
+      sent = sendBNBNoRevert(payable(_recipient), _amount);
     } else {
       address tokenAddr = governance.assetAddresses(_assetId);
       // We use `_transferERC20` here to check that `ERC20` token indeed transferred `_amount`
@@ -523,9 +508,11 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @notice Verify layer-2 blocks proofs
   /// @param _blocks Verified blocks info
   /// @param _proofs proofs
-  function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs) external {
-    requireActive();
-    governance.requireActiveValidator(msg.sender);
+  function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs)
+    external
+    onlyActive
+  {
+    governance.isActiveValidator(msg.sender);
 
     uint64 priorityRequestsExecuted = 0;
     uint32 nBlocks = uint32(_blocks.length);
@@ -648,7 +635,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
-  function setDefaultNFTFactory(NFTFactory _factory) external {
+  function setDefaultNFTFactory(INFTFactory _factory) external {
     delegateAdditional();
   }
 
@@ -663,7 +650,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
-    pendingBalances[_packedBalanceKey] = PendingBalance(balance.add(_amount), FILLED_GAS_RESERVE_VALUE);
+    pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
   }
 
   /// @notice Reverts unverified blocks

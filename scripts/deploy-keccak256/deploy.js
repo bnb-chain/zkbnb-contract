@@ -1,18 +1,11 @@
 const { ethers } = require('hardhat');
 const namehash = require('eth-ens-namehash');
 const fs = require('fs');
-const {
-  getKeccak256,
-  saveDeployedAddresses,
-  getZkBNBProxy,
-} = require('./utils');
+const { getKeccak256, saveDeployedAddresses, getZkBNBProxy } = require('./utils');
 require('dotenv').config();
 
-const {
-  SECURITY_COUNCIL_MEMBERS_NUMBER_1,
-  SECURITY_COUNCIL_MEMBERS_NUMBER_2,
-  SECURITY_COUNCIL_MEMBERS_NUMBER_3,
-} = process.env;
+const { SECURITY_COUNCIL_MEMBERS_NUMBER_1, SECURITY_COUNCIL_MEMBERS_NUMBER_2, SECURITY_COUNCIL_MEMBERS_NUMBER_3 } =
+  process.env;
 
 async function main() {
   const [owner] = await ethers.getSigners();
@@ -48,11 +41,7 @@ async function main() {
   // UpgradeableMaster
   console.log('Deploy UpgradeableMaster...');
   const upgradeableMaster = await contractFactories.UpgradeableMaster.deploy(
-    [
-      SECURITY_COUNCIL_MEMBERS_NUMBER_1,
-      SECURITY_COUNCIL_MEMBERS_NUMBER_2,
-      SECURITY_COUNCIL_MEMBERS_NUMBER_3,
-    ],
+    [SECURITY_COUNCIL_MEMBERS_NUMBER_1, SECURITY_COUNCIL_MEMBERS_NUMBER_2, SECURITY_COUNCIL_MEMBERS_NUMBER_3],
     zkbnb.address,
   );
   await upgradeableMaster.deployed();
@@ -71,34 +60,17 @@ async function main() {
   // get ERC20s
   console.log('Deploy Tokens...');
   const totalSupply = ethers.utils.parseEther('100000000');
-  const BUSDToken = await contractFactories.TokenFactory.deploy(
-    totalSupply,
-    'BUSD',
-    'BUSD',
-  );
+  const BUSDToken = await contractFactories.TokenFactory.deploy(totalSupply, 'BUSD', 'BUSD');
   await BUSDToken.deployed();
-  const LEGToken = await contractFactories.TokenFactory.deploy(
-    totalSupply,
-    'LEG',
-    'LEG',
-  );
+  const LEGToken = await contractFactories.TokenFactory.deploy(totalSupply, 'LEG', 'LEG');
   await LEGToken.deployed();
-  const REYToken = await contractFactories.TokenFactory.deploy(
-    totalSupply,
-    'REY',
-    'REY',
-  );
+  const REYToken = await contractFactories.TokenFactory.deploy(totalSupply, 'REY', 'REY');
   await REYToken.deployed();
 
   // get ERC721
-  const ERC721 = await contractFactories.ERC721Factory.deploy(
-    'ZkBNB',
-    'ZEC',
-    '0',
-  );
+  const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZEC', '0');
   await ERC721.deployed();
-  const _genesisAccountRoot =
-    '0x07da02dceb062cef450527fcf0960f1e7b50f5cd5a639529b509c8614efe4890';
+  const _genesisAccountRoot = '0x07da02dceb062cef450527fcf0960f1e7b50f5cd5a639529b509c8614efe4890';
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
   const _listingToken = BUSDToken.address;
@@ -148,19 +120,12 @@ async function main() {
 
   // deploy default nft factory
   console.log('Deploy DefaultNftFactory...');
-  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy(
-    'ZkBNB',
-    'ZEC',
-    'ipfs://',
-    event[5],
-  );
+  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy('ZkBNB', 'ZEC', 'ipfs://', event[5]);
   await DefaultNftFactory.deployed();
 
   console.log('Set default nft factory...');
   const proxyZkBNB = contractFactories.ZkBNB.attach(event[5]);
-  const setDefaultNftFactoryTx = await proxyZkBNB.setDefaultNFTFactory(
-    DefaultNftFactory.address,
-  );
+  const setDefaultNftFactoryTx = await proxyZkBNB.setDefaultNFTFactory(DefaultNftFactory.address);
   await setDefaultNftFactoryTx.wait();
 
   // Add tokens into assetGovernance
@@ -175,8 +140,7 @@ async function main() {
 
   // Step 4: register zns base node
   console.log('Register ZNS base node...');
-  const rootNode =
-    '0x0000000000000000000000000000000000000000000000000000000000000000';
+  const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000';
   const baseNodeLabel = getKeccak256('legend'); // keccak256('legend');
   const setBaseNodeTx = await znsRegistry
     .connect(owner)

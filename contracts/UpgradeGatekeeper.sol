@@ -1,9 +1,6 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-pragma experimental ABIEncoderV2;
-
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./interfaces/Events.sol";
 import "./interfaces/Upgradeable.sol";
 import "./ZkBNBOwnable.sol";
@@ -13,8 +10,6 @@ import "./UpgradeableMaster.sol";
 /// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
 /// @author ZkBNB Team
 contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
-  using SafeMath for uint256;
-
   /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
   Upgradeable[] public managedContracts;
 
@@ -44,7 +39,6 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
   /// @notice Contract constructor
   /// @param _masterContract Contract which defines notice period duration and allows finish upgrade during preparation of it
   /// @dev Calls Ownable contract constructor
-
   constructor(UpgradeableMaster _masterContract) ZkBNBOwnable(msg.sender) {
     masterContract = _masterContract;
     versionId = 0;
@@ -52,8 +46,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
 
   /// @notice Adds a new upgradeable contract to the list of contracts managed by the gatekeeper
   /// @param addr Address of upgradeable contract to add
-  function addUpgradeable(address addr) external {
-    requireMaster(msg.sender);
+  function addUpgradeable(address addr) external onlyMaster {
     require(upgradeStatus == UpgradeStatus.Idle, "apc11");
     /// apc11 - upgradeable contract can't be added during upgrade
 
@@ -63,8 +56,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
 
   /// @notice Starts upgrade (activates notice period)
   /// @param newTargets New managed contracts targets (if element of this array is equal to zero address it means that appropriate upgradeable contract wouldn't be upgraded this time)
-  function startUpgrade(address[] calldata newTargets) external {
-    requireMaster(msg.sender);
+  function startUpgrade(address[] calldata newTargets) external onlyMaster {
     require(upgradeStatus == UpgradeStatus.Idle, "spu11");
     // spu11 - unable to activate active upgrade mode
     require(newTargets.length == managedContracts.length, "spu12");
@@ -74,14 +66,13 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
     uint256 noticePeriod = masterContract.getNoticePeriod();
     masterContract.upgradeNoticePeriodStarted();
     upgradeStatus = UpgradeStatus.NoticePeriod;
-    noticePeriodFinishTimestamp = block.timestamp.add(noticePeriod);
+    noticePeriodFinishTimestamp = block.timestamp + noticePeriod;
     nextTargets = newTargets;
     emit NoticePeriodStart(versionId, newTargets, noticePeriod);
   }
 
   /// @notice Cancels upgrade
-  function cancelUpgrade() external {
-    requireMaster(msg.sender);
+  function cancelUpgrade() external onlyMaster {
     require(upgradeStatus != UpgradeStatus.Idle, "cpu11");
     // cpu11 - unable to cancel not active upgrade mode
 
@@ -93,8 +84,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
   }
 
   /// @notice Activates preparation status
-  function startPreparation() external {
-    requireMaster(msg.sender);
+  function startPreparation() external onlyMaster {
     require(upgradeStatus == UpgradeStatus.NoticePeriod, "ugp11");
     // ugp11 - unable to activate preparation status in case of not active notice period status
     require(block.timestamp >= noticePeriodFinishTimestamp, "ugp12");
@@ -107,8 +97,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
 
   /// @notice Finishes upgrade
   /// @param targetsUpgradeParameters New targets upgrade parameters per each upgradeable contract
-  function finishUpgrade(bytes[] calldata targetsUpgradeParameters) external {
-    requireMaster(msg.sender);
+  function finishUpgrade(bytes[] calldata targetsUpgradeParameters) external onlyMaster {
     require(upgradeStatus == UpgradeStatus.Preparation, "fpu11");
     // fpu11 - unable to finish upgrade without preparation status active
     require(targetsUpgradeParameters.length == managedContracts.length, "fpu12");

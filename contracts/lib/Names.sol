@@ -1,6 +1,5 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 library Names {
   /**
@@ -8,10 +7,10 @@ library Names {
    * @param s The string to measure the length of
    * @return The length of the input string
    */
-  function strlen(string memory s) internal pure returns (uint256) {
-    uint256 len;
-    uint256 i = 0;
-    uint256 bytelength = bytes(s).length;
+  function strlen(string memory s) internal pure returns (uint) {
+    uint len;
+    uint i = 0;
+    uint bytelength = bytes(s).length;
     for (len = 0; i < bytelength; len++) {
       bytes1 b = bytes(s)[i];
       if (b <= 0x80) {
@@ -37,8 +36,8 @@ library Names {
    * @return The length of the input string
    */
   function charsetValid(string memory s) internal pure returns (bool) {
-    uint256 bytelength = bytes(s).length;
-    for (uint256 i = 0; i < bytelength; i++) {
+    uint bytelength = bytes(s).length;
+    for (uint i = 0; i < bytelength; i++) {
       bytes1 b = bytes(s)[i];
       if (!isValidCharacter(b)) {
         return false;
@@ -49,6 +48,6 @@ library Names {
 
   // Only supports lowercase letters and digital number
   function isValidCharacter(bytes1 bs) internal pure returns (bool) {
-    return (bs <= 0x39 && bs >= 0x30) || (bs <= 0x7A && bs >= 0x61); // number // lowercase letter
+    return (bs <= 0x39 && bs >= 0x30) || (bs <= 0x7A && bs >= 0x61); // number or lowercase letter
   }
 }

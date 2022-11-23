@@ -1,14 +1,13 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity >=0.7.6;
-pragma abicoder v2;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./Multicallable.sol";
 import "./profile/ABIResolver.sol";
 import "./profile/AddrResolver.sol";
 import "./profile/PubKeyResolver.sol";
 import "./profile/NameResolver.sol";
-import "../interfaces/ZNS.sol";
+import "../interfaces/IZNS.sol";
 import "./profile/ZkBNBPubKeyResolver.sol";
 
 /**
@@ -23,7 +22,7 @@ contract PublicResolver is
   ZkBNBPubKeyResolver,
   Initializable
 {
-  ZNS zns;
+  IZNS zns;
 
   /**
    * @dev A mapping of operators. An address that is authorised for an address
@@ -38,7 +37,7 @@ contract PublicResolver is
 
   function initialize(bytes calldata initializationParameters) external initializer {
     address _zns = abi.decode(initializationParameters, (address));
-    zns = ZNS(_zns);
+    zns = IZNS(_zns);
   }
 
   /// @notice PublicResolver contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.

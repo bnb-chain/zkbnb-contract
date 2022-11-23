@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "../ResolverBase.sol";
 import "./IAddrResolver.sol";
@@ -16,7 +16,7 @@ abstract contract AddrResolver is IAddrResolver, ResolverBase {
    */
   function setAddr(bytes32 node, address a) external virtual authorised(node) {
     _addresses[node] = a;
-    AddrChanged(node, a);
+    emit AddrChanged(node, a);
   }
 
   /**

@@ -15,7 +15,7 @@
     "lint:fix:format": "prettier --write **.{sol,js}",
     "lint:fix:eslint": "eslint --fix . --ext js",
     "fix": "yarn lint:fix:format && yarn lint:fix:eslint",
-    "deploy": "npx hardhat --network local run ./scripts/deploy-keccak256/deploy.js"
+    "deploy": "npx hardhat run ./scripts/deploy-keccak256/deploy.js"
   },
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
     "zkbnb"
   ],
   "author": "zkbnb Team",
-  "license": "ISC",
+  "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/bnb-chain/zkbnb-contract/issues"
   },
@@ -37,7 +37,7 @@
     "@remix-project/remixd": "^0.6.0",
     "chai": "^4.3.6",
     "dotenv": "^16.0.2",
-    "eslint": "8.22.0",
+    "eslint": "8.27.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.25.4",
@@ -51,18 +51,17 @@
     "hardhat-contract-sizer": "^2.5.1",
     "hardhat-watcher": "^2.3.0",
     "prettier": "^2.5.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "prettier-plugin-solidity": "^1.0.0",
+    "solc": "^0.8.17",
     "solhint": "^3.3.6",
-    "solidity-coverage": "^0.8.2"
-  },
-  "dependencies": {
+    "solidity-coverage": "^0.8.2",
     "@defi-wonderland/smock": "^2.3.4",
-    "@openzeppelin/contracts": "^3.4.2",
-    "@openzeppelin/contracts-upgradeable": "^3.4.2",
     "eth-ens-namehash": "^2.0.8",
     "hardhat-tracer": "^1.0.0-alpha.6",
-    "npm": "^8.10.0",
-    "solc": "^0.7.6",
     "web3": "^1.6.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.0",
+    "@openzeppelin/contracts-upgradeable": "^4.8.0"
   }
 }

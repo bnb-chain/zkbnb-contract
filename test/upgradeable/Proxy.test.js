@@ -18,7 +18,11 @@ describe('Proxy', function () {
 
   let proxyGovernance;
   let proxyZkBNBVerifier;
-  let owner, addr1;
+  let owner, addr1, addr2, addr3, addr4;
+
+  let proxyZNSController;
+  let proxyPublicResolver;
+  let proxyZkBNB;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
@@ -59,18 +63,9 @@ describe('Proxy', function () {
     mockZkBNB.initialize.returns();
 
     proxyGovernance = await Proxy.deploy(mockGovernance.address, owner.address);
-    proxyZkBNBVerifier = await Proxy.deploy(
-      mockZkBNBVerifier.address,
-      owner.address,
-    );
-    proxyZNSController = await Proxy.deploy(
-      mockZNSController.address,
-      owner.address,
-    );
-    proxyPublicResolver = await Proxy.deploy(
-      mockPublicResolver.address,
-      owner.address,
-    );
+    proxyZkBNBVerifier = await Proxy.deploy(mockZkBNBVerifier.address, owner.address);
+    proxyZNSController = await Proxy.deploy(mockZNSController.address, owner.address);
+    proxyPublicResolver = await Proxy.deploy(mockPublicResolver.address, owner.address);
     proxyZkBNB = await Proxy.deploy(mockZkBNB.address, owner.address);
     await proxyGovernance.deployed();
     await proxyZkBNBVerifier.deployed();
@@ -80,47 +75,23 @@ describe('Proxy', function () {
   });
 
   it('Proxy contract should initialize target contract', async function () {
-    expect(mockGovernance.initialize).to.be.delegatedFrom(
-      proxyGovernance.address,
-    );
-    expect(mockGovernance.initialize).to.have.been.calledWith(
-      owner.address.toLowerCase(),
-    );
-    expect(mockZkBNBVerifier.initialize).to.be.delegatedFrom(
-      proxyZkBNBVerifier.address,
-    );
-    expect(mockZkBNBVerifier.initialize).to.have.been.calledWith(
-      owner.address.toLowerCase(),
-    );
-    expect(mockZNSController.initialize).to.be.delegatedFrom(
-      proxyZNSController.address,
-    );
-    expect(mockZNSController.initialize).to.have.been.calledWith(
-      owner.address.toLowerCase(),
-    );
-    expect(mockPublicResolver.initialize).to.be.delegatedFrom(
-      proxyPublicResolver.address,
-    );
-    expect(mockPublicResolver.initialize).to.have.been.calledWith(
-      owner.address.toLowerCase(),
-    );
+    expect(mockGovernance.initialize).to.be.delegatedFrom(proxyGovernance.address);
+    expect(mockGovernance.initialize).to.have.been.calledWith(owner.address.toLowerCase());
+    expect(mockZkBNBVerifier.initialize).to.be.delegatedFrom(proxyZkBNBVerifier.address);
+    expect(mockZkBNBVerifier.initialize).to.have.been.calledWith(owner.address.toLowerCase());
+    expect(mockZNSController.initialize).to.be.delegatedFrom(proxyZNSController.address);
+    expect(mockZNSController.initialize).to.have.been.calledWith(owner.address.toLowerCase());
+    expect(mockPublicResolver.initialize).to.be.delegatedFrom(proxyPublicResolver.address);
+    expect(mockPublicResolver.initialize).to.have.been.calledWith(owner.address.toLowerCase());
     expect(mockZkBNB.initialize).to.be.delegatedFrom(proxyZkBNB.address);
-    expect(mockZkBNB.initialize).to.have.been.calledWith(
-      owner.address.toLowerCase(),
-    );
+    expect(mockZkBNB.initialize).to.have.been.calledWith(owner.address.toLowerCase());
   });
 
   it('Proxy contract should store target address ', async function () {
     expect(await proxyGovernance.getTarget()).to.equal(mockGovernance.address);
-    expect(await proxyZkBNBVerifier.getTarget()).to.equal(
-      mockZkBNBVerifier.address,
-    );
-    expect(await proxyZNSController.getTarget()).to.equal(
-      mockZNSController.address,
-    );
-    expect(await proxyPublicResolver.getTarget()).to.equal(
-      mockPublicResolver.address,
-    );
+    expect(await proxyZkBNBVerifier.getTarget()).to.equal(mockZkBNBVerifier.address);
+    expect(await proxyZNSController.getTarget()).to.equal(mockZNSController.address);
+    expect(await proxyPublicResolver.getTarget()).to.equal(mockPublicResolver.address);
     expect(await proxyZkBNB.getTarget()).to.equal(mockZkBNB.address);
   });
 
@@ -130,17 +101,10 @@ describe('Proxy', function () {
       const mockGovernanceNew = await MockGovernance.deploy();
       await mockGovernanceNew.deployed();
 
-      await proxyGovernance.upgradeTarget(
-        mockGovernanceNew.address,
-        addr1.address,
-      );
+      await proxyGovernance.upgradeTarget(mockGovernanceNew.address, addr1.address);
 
-      expect(mockGovernanceNew.upgrade).to.be.delegatedFrom(
-        proxyGovernance.address,
-      );
-      expect(mockGovernanceNew.upgrade).to.have.been.calledWith(
-        addr1.address.toLowerCase(),
-      );
+      expect(mockGovernanceNew.upgrade).to.be.delegatedFrom(proxyGovernance.address);
+      expect(mockGovernanceNew.upgrade).to.have.been.calledWith(addr1.address.toLowerCase());
     });
 
     it('upgrade new `ZkBNBVerifier` target', async function () {
@@ -148,16 +112,9 @@ describe('Proxy', function () {
       const mockZkBNBVerifierNew = await MockZkBNBVerifier.deploy();
       await mockZkBNBVerifierNew.deployed();
 
-      await proxyZkBNBVerifier.upgradeTarget(
-        mockZkBNBVerifierNew.address,
-        ethers.constants.HashZero,
-      );
-      expect(mockZkBNBVerifierNew.upgrade).to.be.delegatedFrom(
-        proxyZkBNBVerifier.address,
-      );
-      expect(mockZkBNBVerifierNew.upgrade).to.have.been.calledWith(
-        ethers.constants.HashZero,
-      );
+      await proxyZkBNBVerifier.upgradeTarget(mockZkBNBVerifierNew.address, ethers.constants.HashZero);
+      expect(mockZkBNBVerifierNew.upgrade).to.be.delegatedFrom(proxyZkBNBVerifier.address);
+      expect(mockZkBNBVerifierNew.upgrade).to.have.been.calledWith(ethers.constants.HashZero);
     });
 
     it('upgrade new `ZNSController` target', async function () {
@@ -167,20 +124,11 @@ describe('Proxy', function () {
 
       const parameters = abi.encode(
         ['address', 'address', 'bytes32'],
-        [
-          addr2.address,
-          addr3.address,
-          ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32),
-        ],
+        [addr2.address, addr3.address, ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)],
       );
 
-      await proxyZNSController.upgradeTarget(
-        mockZNSControllerNew.address,
-        parameters,
-      );
-      expect(mockZNSControllerNew.upgrade).to.be.delegatedFrom(
-        proxyZNSController.address,
-      );
+      await proxyZNSController.upgradeTarget(mockZNSControllerNew.address, parameters);
+      expect(mockZNSControllerNew.upgrade).to.be.delegatedFrom(proxyZNSController.address);
       expect(mockZNSControllerNew.upgrade).to.have.been.calledWith(parameters);
     });
 
@@ -189,16 +137,9 @@ describe('Proxy', function () {
       const mockPublicResolverNew = await MockPublicResolver.deploy();
       await mockPublicResolverNew.deployed();
 
-      await proxyPublicResolver.upgradeTarget(
-        mockPublicResolverNew.address,
-        addr4.address,
-      );
-      expect(mockPublicResolverNew.upgrade).to.be.delegatedFrom(
-        proxyPublicResolver.address,
-      );
-      expect(mockPublicResolverNew.upgrade).to.have.been.calledWith(
-        addr4.address.toLowerCase(),
-      );
+      await proxyPublicResolver.upgradeTarget(mockPublicResolverNew.address, addr4.address);
+      expect(mockPublicResolverNew.upgrade).to.be.delegatedFrom(proxyPublicResolver.address);
+      expect(mockPublicResolverNew.upgrade).to.have.been.calledWith(addr4.address.toLowerCase());
     });
 
     it('upgrade new `ZkBNB` target', async function () {
@@ -212,9 +153,7 @@ describe('Proxy', function () {
 
       await proxyZkBNB.upgradeTarget(mockZkBNBNew.address, addr4.address);
       expect(mockZkBNBNew.upgrade).to.be.delegatedFrom(proxyZkBNB.address);
-      expect(mockZkBNBNew.upgrade).to.have.been.calledWith(
-        addr4.address.toLowerCase(),
-      );
+      expect(mockZkBNBNew.upgrade).to.have.been.calledWith(addr4.address.toLowerCase());
     });
   });
 
@@ -227,9 +166,7 @@ describe('Proxy', function () {
       await implement.changeGovernor(addr1.address);
 
       expect(mockGovernance.changeGovernor).to.be.calledOnce;
-      expect(mockGovernance.changeGovernor).to.have.been.calledWith(
-        addr1.address,
-      );
+      expect(mockGovernance.changeGovernor).to.have.been.calledWith(addr1.address);
     });
 
     it('delegate `verifyProof` function', async function () {
@@ -280,10 +217,7 @@ describe('Proxy', function () {
         blockSize: 1,
         blockNumber: 2,
         priorityOperations: 3,
-        pendingOnchainOperationsHash: ethers.utils.hexZeroPad(
-          ethers.utils.hexlify(0),
-          32,
-        ),
+        pendingOnchainOperationsHash: ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 32),
         timestamp: 4,
         stateRoot: ethers.utils.hexZeroPad(ethers.utils.hexlify(123), 32),
         commitment: ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32),
@@ -302,39 +236,23 @@ describe('Proxy', function () {
 
   describe('Proxy contract should intercept upgrade function', function () {
     it('intercept `Governance` upgrade', async function () {
-      const governanceImplement = mockGovernance.attach(
-        proxyGovernance.address,
-      );
-      expect(governanceImplement.upgrade(addr1.address)).to.be.revertedWith(
-        'upg11',
-      );
+      const governanceImplement = mockGovernance.attach(proxyGovernance.address);
+      expect(governanceImplement.upgrade(addr1.address)).to.be.revertedWith('upg11');
     });
 
     it('intercept `ZkBNBVerifier` upgrade', async function () {
-      const zkBNBVerifierImplement = mockZkBNBVerifier.attach(
-        proxyZkBNBVerifier.address,
-      );
-      expect(zkBNBVerifierImplement.upgrade(addr2.address)).to.be.revertedWith(
-        'upg11',
-      );
+      const zkBNBVerifierImplement = mockZkBNBVerifier.attach(proxyZkBNBVerifier.address);
+      expect(zkBNBVerifierImplement.upgrade(addr2.address)).to.be.revertedWith('upg11');
     });
 
     it('intercept `ZNSController` upgrade', async function () {
-      const zNSControllerImplement = mockZNSController.attach(
-        proxyZNSController.address,
-      );
-      expect(zNSControllerImplement.upgrade(addr2.address)).to.be.revertedWith(
-        'upg11',
-      );
+      const zNSControllerImplement = mockZNSController.attach(proxyZNSController.address);
+      expect(zNSControllerImplement.upgrade(addr2.address)).to.be.revertedWith('upg11');
     });
 
     it('intercept `PublicResolver` upgrade', async function () {
-      const publicResolverImplement = mockPublicResolver.attach(
-        proxyPublicResolver.address,
-      );
-      expect(publicResolverImplement.upgrade(addr3.address)).to.be.revertedWith(
-        'upg11',
-      );
+      const publicResolverImplement = mockPublicResolver.attach(proxyPublicResolver.address);
+      expect(publicResolverImplement.upgrade(addr3.address)).to.be.revertedWith('upg11');
     });
 
     it('intercept `ZkBNB` upgrade', async function () {
