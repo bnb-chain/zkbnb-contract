@@ -101,8 +101,8 @@ describe('ZkBNB contract', function () {
     // console.log(deployFactoryTxReceipt.logs)
     const event = AddressesInterface.decodeEventLog(
       'Addresses',
-      deployFactoryTxReceipt.logs[8].data,
-      deployFactoryTxReceipt.logs[8].topics,
+      deployFactoryTxReceipt.logs[11].data,
+      deployFactoryTxReceipt.logs[11].topics,
     );
     // Get inner contract proxy address
     // console.log(event)

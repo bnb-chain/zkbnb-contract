@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IPriceOracle.sol";
 import "./lib/Names.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 // StablePriceOracle sets a price for zns name in BNB
-contract StablePriceOracle is IPriceOracle, OwnableUpgradeable {
+contract StablePriceOracle is IPriceOracle, Ownable {
   using Names for string;
 
   // Rent in base price units by length
@@ -17,8 +17,6 @@ contract StablePriceOracle is IPriceOracle, OwnableUpgradeable {
   event RentPriceChanged(uint256[] prices);
 
   constructor(uint256[] memory _rentPrices) {
-    __Ownable_init();
-
     price1Letter = _rentPrices[0];
     price2Letter = _rentPrices[1];
     price3Letter = _rentPrices[2];

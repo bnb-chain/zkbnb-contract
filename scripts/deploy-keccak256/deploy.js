@@ -110,8 +110,8 @@ async function main() {
   // console.log(deployFactoryTxReceipt.logs)
   const event = AddressesInterface.decodeEventLog(
     'Addresses',
-    deployFactoryTxReceipt.logs[7].data,
-    deployFactoryTxReceipt.logs[7].topics,
+    deployFactoryTxReceipt.logs[11].data,
+    deployFactoryTxReceipt.logs[11].topics,
   );
   // Get inner contract proxy address
   // console.log(event)
