@@ -48,7 +48,7 @@ const config: HardhatUserConfig = {
             },
         },
     },
-    defaultNetwork: 'BSCTestnet',
+    defaultNetwork: 'local',
     networks: {
         // hardhat: {
         //     allowUnlimitedContractSize: true,

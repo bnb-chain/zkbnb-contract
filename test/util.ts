@@ -63,9 +63,6 @@ const getSeedKey = async (ethSigner: any) => {
     return `${chainId}-${address}`;
 };
 
-const getSeeds = () => {
-        return {};
-};
 
 const generateSeed = async (ethSigner: any) => {
     let chainID = 1;
@@ -73,7 +70,7 @@ const generateSeed = async (ethSigner: any) => {
         const network = await ethSigner.provider.getNetwork();
         chainID = network.chainId;
     }
-    let message = 'Access zkbas account.\n\nOnly sign this message for a trusted client!';
+    let message = 'Test message';
     if (chainID !== 1) {
         message += `\nChain ID: ${chainID}.`;
     }
@@ -126,18 +123,11 @@ const getSignedBytesFromMessage = (
 };
 
 export const getSeed = async (signer: any) => {
-    const seedKey = await getSeedKey(signer);
-    const seeds = getSeeds();
-    if (!seeds[seedKey]) {
-        seeds[seedKey] = await generateSeed(signer);
-        seeds[seedKey].seed = seeds[seedKey].seed
-            .toString()
-            .split(',')
-            .map((x: any) => +x);
-    }
 
-    seeds[seedKey].seed = Uint8Array.from(seeds[seedKey].seed);
-    return seeds[seedKey].seed;
+    return Uint8Array.from((await generateSeed(signer)).seed
+        .toString()
+        .split(',')
+        .map((x: any) => +x));
 };
 
 function toHexString(byteArray: any) {
@@ -149,11 +139,10 @@ function toHexString(byteArray: any) {
 }
 
 export const getPublicKey = async (seed: any) => {
-    const Z = await ZkCrypto();
     const seedString = new TextDecoder().decode(seed);
 
-    const publicKey = Z.getEddsaPublicKey(seedString);
-    const compressedPublicKey = Z.getEddsaCompressedPublicKey(seedString);
+    const publicKey = ZkCrypto.getEddsaPublicKey(seedString);
+    const compressedPublicKey = ZkCrypto.getEddsaCompressedPublicKey(seedString);
 
     const x = `0x${publicKey.slice(0, 64)}`;
     const y = `0x${publicKey.slice(64)}`;
@@ -166,8 +155,7 @@ export const getPublicKey = async (seed: any) => {
 };
 
 export const getAccountNameHash = async (accountName: string) => {
-    const Z = await ZkCrypto();
-    return Z.getAccountNameHash(accountName);
+    return ZkCrypto.getAccountNameHash(accountName);
 };
 
 export const getKeccak256 = (name) => {
