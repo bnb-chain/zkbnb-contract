@@ -1,8 +1,6 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./Governance.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./lib/Utils.sol";
@@ -10,7 +8,7 @@ import "./lib/Utils.sol";
 /// @title Asset Governance Contract
 /// @author ZkBNB Team
 /// @notice Contract is used to allow anyone to add new ERC20 tokens to ZkBNB given sufficient payment
-contract AssetGovernance is ReentrancyGuard {
+contract AssetGovernance {
   /// @notice Token lister added or removed (see `tokenLister`)
   event TokenListerUpdate(address indexed tokenLister, bool isActive);
 

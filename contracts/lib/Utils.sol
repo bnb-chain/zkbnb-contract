@@ -1,13 +1,11 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./Bytes.sol";
-import "../Storage.sol";
-
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "./Bytes.sol";
+import "../Storage.sol";
 
 library Utils {
   /// @notice Returns lesser of two values

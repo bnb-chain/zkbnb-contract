@@ -11,12 +11,9 @@ describe('UpgradeGatekeeper', function () {
   let owner, addr1, addr2, addrs;
   let zkbnbProxy, bankProxy, gatekeeper;
 
-  const abi1 =
-    require('../artifacts/contracts/test-contracts/ZkBNBUpgradeTest.sol/ZkBNBUpgradeTest.json').abi;
-  const abi2 =
-    require('../artifacts/contracts/test-contracts/UpgradableBank.sol/UpgradableBank.json').abi;
-  const abi3 =
-    require('../artifacts/contracts/UpgradeGatekeeper.sol/UpgradeGatekeeper.json').abi;
+  const abi1 = require('../artifacts/contracts/test-contracts/ZkBNBUpgradeTest.sol/ZkBNBUpgradeTest.json').abi;
+  const abi2 = require('../artifacts/contracts/test-contracts/UpgradableBank.sol/UpgradableBank.json').abi;
+  const abi3 = require('../artifacts/contracts/UpgradeGatekeeper.sol/UpgradeGatekeeper.json').abi;
 
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
@@ -34,10 +31,7 @@ describe('UpgradeGatekeeper', function () {
 
     // init deploy factory
     DeployFactory = await ethers.getContractFactory('DeployFactoryTest');
-    factory = await DeployFactory.connect(owner).deploy(
-      zkbnb.address,
-      bank.address,
-    );
+    factory = await DeployFactory.connect(owner).deploy(zkbnb.address, bank.address);
 
     // get deployed proxy contract and the gatekeeper contract
     const tx = await factory.deployTransaction;
@@ -46,11 +40,7 @@ describe('UpgradeGatekeeper', function () {
       'event Addresses(address zkbnb, address bank, address gatekeeper)',
     ]);
     // The event 2 is the required event.
-    const event = AddressesInterface.decodeEventLog(
-      'Addresses',
-      receipt.logs[2].data,
-      receipt.logs[2].topics,
-    );
+    const event = AddressesInterface.decodeEventLog('Addresses', receipt.logs[2].data, receipt.logs[2].topics);
     // get inner contract address
     zkbnbProxy = new ethers.Contract(event[0], abi1, provider);
     bankProxy = new ethers.Contract(event[1], abi2, provider);

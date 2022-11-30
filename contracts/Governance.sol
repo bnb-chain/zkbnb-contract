@@ -1,12 +1,10 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./Config.sol";
 import "./lib/Utils.sol";
 import "./AssetGovernance.sol";
-import "./lib/SafeMathUInt32.sol";
 
 /// @title Governance Contract
 /// @author ZkBNB Team
@@ -124,7 +122,7 @@ contract Governance is Config, Initializable {
     // only by governor
   }
 
-  function requireActiveValidator(address _address) external view {
+  function isActiveValidator(address _address) external view {
     require(validators[_address], "invalid validator");
   }
 

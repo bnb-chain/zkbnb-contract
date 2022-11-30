@@ -1,6 +1,5 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "./Governance.sol";
 import "./AssetGovernance.sol";
@@ -85,12 +84,13 @@ contract DeployFactory {
 
     deployProxyContracts(contracts, params);
 
-    selfdestruct(msg.sender);
+    selfdestruct(payable(msg.sender));
   }
 
-  function deployProxyContracts(DeployedContractAddress memory _contracts, AdditionalParams memory _additionalParams)
-    internal
-  {
+  function deployProxyContracts(
+    DeployedContractAddress memory _contracts,
+    AdditionalParams memory _additionalParams
+  ) internal {
     governance = new Proxy(address(_contracts.governanceTarget), abi.encode(this));
     // Here temporarily give this contract the governor right.
     // TODO treasury rate

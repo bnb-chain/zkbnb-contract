@@ -9,11 +9,11 @@ describe('UpgradeableMaster', function () {
   let mockZkBNB;
   let upgradeableMaster;
   let owner, councilMember1, councilMember2, councilMember3;
+  let utils;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    [owner, councilMember1, councilMember2, councilMember3] =
-      await ethers.getSigners();
+    [owner, councilMember1, councilMember2, councilMember3] = await ethers.getSigners();
 
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
@@ -26,9 +26,7 @@ describe('UpgradeableMaster', function () {
     mockZkBNB = await MockZkBNB.deploy();
     await mockZkBNB.deployed();
 
-    const UpgradeableMaster = await ethers.getContractFactory(
-      'UpgradeableMaster',
-    );
+    const UpgradeableMaster = await ethers.getContractFactory('UpgradeableMaster');
 
     upgradeableMaster = await UpgradeableMaster.deploy(
       [councilMember1.address, councilMember2.address, councilMember3.address],
@@ -45,34 +43,29 @@ describe('UpgradeableMaster', function () {
 
     it('Preparation status should be activated 4 weeks after notification started', async () => {
       await upgradeableMaster.upgradeNoticePeriodStarted();
-      await expect(upgradeableMaster.upgradePreparationStarted()).to.be
-        .reverted;
+      await expect(upgradeableMaster.upgradePreparationStarted()).to.be.reverted;
 
       const fourWeeks = 4 * 7 * 24 * 60 * 60;
 
       await network.provider.send('evm_increaseTime', [fourWeeks]);
       await network.provider.send('evm_mine');
 
-      await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be
-        .reverted;
+      await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be.reverted;
     });
 
     it('Notice period can be cut by council members', async () => {
       await upgradeableMaster.upgradeNoticePeriodStarted();
 
-      await expect(upgradeableMaster.upgradePreparationStarted()).to.be
-        .reverted;
+      await expect(upgradeableMaster.upgradePreparationStarted()).to.be.reverted;
 
       await upgradeableMaster.connect(councilMember1).cutUpgradeNoticePeriod();
       await upgradeableMaster.connect(councilMember2).cutUpgradeNoticePeriod();
 
-      await expect(upgradeableMaster.upgradePreparationStarted()).to.be
-        .reverted;
+      await expect(upgradeableMaster.upgradePreparationStarted()).to.be.reverted;
 
       await upgradeableMaster.connect(councilMember3).cutUpgradeNoticePeriod();
 
-      await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be
-        .reverted;
+      await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be.reverted;
     });
 
     it('Ready for upgrade', async () => {
@@ -110,13 +103,8 @@ describe('UpgradeableMaster', function () {
       it('Only council member can invoke `upgradeNoticePeriodStarted`', async () => {
         await upgradeableMaster.setOperator(councilMember1.address);
 
-        await expect(upgradeableMaster.upgradeNoticePeriodStarted()).to.be
-          .reverted;
-        await expect(
-          upgradeableMaster
-            .connect(councilMember1)
-            .upgradeNoticePeriodStarted(),
-        ).not.to.be.reverted;
+        await expect(upgradeableMaster.upgradeNoticePeriodStarted()).to.be.reverted;
+        await expect(upgradeableMaster.connect(councilMember1).upgradeNoticePeriodStarted()).not.to.be.reverted;
       });
     });
   });

@@ -10,18 +10,11 @@ async function main() {
   await znsRegistry.deployed();
 
   console.log('Register ZNS base node...');
-  const rootNode =
-    '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const baseNodeLabel =
-    '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'; // mimc('legend');
+  const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000';
+  const baseNodeLabel = '0x281aceaf4771e7fba770453ce3ed74983a7343be68063ea7d50ab05c1b8ef751'; // mimc('legend');
   const setBaseNodeTx = await znsRegistry
     .connect(owner)
-    .setSubnodeOwner(
-      rootNode,
-      baseNodeLabel,
-      owner.address,
-      ethers.constants.HashZero,
-    );
+    .setSubnodeOwner(rootNode, baseNodeLabel, owner.address, ethers.constants.HashZero);
   await setBaseNodeTx.wait();
 }
 

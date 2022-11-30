@@ -26,19 +26,16 @@ module.exports = {
       timeout: 100000,
     },
     BSCTestnet: {
-      url:
-        process.env.BSC_TESTNET_RPC ||
-        'https://data-seed-prebsc-1-s1.binance.org:8545',
+      url: process.env.BSC_TESTNET_RPC || 'https://data-seed-prebsc-1-s1.binance.org:8545',
       accounts: (
-        process.env.BSC_TESTNET_PRIVATE_KEY ||
-        '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1'
+        process.env.BSC_TESTNET_PRIVATE_KEY || '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1'
       ).split(','),
       timeout: 300000,
       gas: 15000000,
     },
   },
   solidity: {
-    version: '0.7.6',
+    version: '0.8.17',
     settings: {
       optimizer: {
         enabled: true,
@@ -49,6 +46,7 @@ module.exports = {
           '*': ['storageLayout'],
         },
       },
+      viaIR: true,
     },
   },
   // contractSizer: {
@@ -57,7 +55,6 @@ module.exports = {
   //     runOnCompile: true,
   //     strict: true,
   // },
-
   abiExporter: {
     path: './data/abi',
     clear: true,

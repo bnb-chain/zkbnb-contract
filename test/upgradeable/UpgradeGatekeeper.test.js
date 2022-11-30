@@ -76,22 +76,10 @@ describe('UpgradeGatekeeper', function () {
     mockPublicResolver.initialize.returns();
     mockZkBNB.initialize.returns();
 
-    proxyMockGovernance = await MockProxy.deploy(
-      mockGovernance.address,
-      owner.address,
-    );
-    proxyMockZkBNBVerifier = await MockProxy.deploy(
-      mockZkBNBVerifier.address,
-      owner.address,
-    );
-    proxyMockZNSController = await MockProxy.deploy(
-      mockZNSController.address,
-      owner.address,
-    );
-    proxyMockPublicResolver = await MockProxy.deploy(
-      mockPublicResolver.address,
-      owner.address,
-    );
+    proxyMockGovernance = await MockProxy.deploy(mockGovernance.address, owner.address);
+    proxyMockZkBNBVerifier = await MockProxy.deploy(mockZkBNBVerifier.address, owner.address);
+    proxyMockZNSController = await MockProxy.deploy(mockZNSController.address, owner.address);
+    proxyMockPublicResolver = await MockProxy.deploy(mockPublicResolver.address, owner.address);
     proxyMockZkBNB = await MockProxy.deploy(mockZkBNB.address, owner.address);
     await proxyMockGovernance.deployed();
     await proxyMockZkBNBVerifier.deployed();
@@ -108,103 +96,66 @@ describe('UpgradeGatekeeper', function () {
     await mockUpgradeableMaster.deployed();
 
     // 4. deploy UpgradeGatekeeper
-    const UpgradeGatekeeper = await ethers.getContractFactory(
-      'UpgradeGatekeeper',
-    );
-    upgradeGatekeeper = await UpgradeGatekeeper.deploy(
-      mockUpgradeableMaster.address,
-    );
+    const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
+    upgradeGatekeeper = await UpgradeGatekeeper.deploy(mockUpgradeableMaster.address);
     await upgradeGatekeeper.deployed();
 
-    expect(await upgradeGatekeeper.masterContract()).to.equal(
-      mockUpgradeableMaster.address,
-    );
+    expect(await upgradeGatekeeper.masterContract()).to.equal(mockUpgradeableMaster.address);
 
     // check length of `managedContracts` array which is stored at storage slot 0
-    const initialLength = ethers.BigNumber.from(
-      await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0),
-    );
+    const initialLength = ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0));
     expect(initialLength.eq(0)).to.equal(true);
   });
 
   describe('Add new upgradeable contracts', function () {
     it('added `proxyGovernance`', async function () {
-      await expect(
-        upgradeGatekeeper.addUpgradeable(proxyMockGovernance.address),
-      ).not.to.be.reverted;
+      await expect(upgradeGatekeeper.addUpgradeable(proxyMockGovernance.address)).not.to.be.reverted;
 
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0),
-        ).eq(1),
-      ).to.equal(true);
-
-      expect(await upgradeGatekeeper.managedContracts(0)).to.equal(
-        proxyMockGovernance.address,
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0)).eq(1)).to.equal(
+        true,
       );
+
+      expect(await upgradeGatekeeper.managedContracts(0)).to.equal(proxyMockGovernance.address);
     });
 
     it('added `proxyZkBNBVerifier`', async function () {
-      await expect(
-        upgradeGatekeeper.addUpgradeable(proxyMockZkBNBVerifier.address),
-      ).not.to.be.reverted;
+      await expect(upgradeGatekeeper.addUpgradeable(proxyMockZkBNBVerifier.address)).not.to.be.reverted;
 
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0),
-        ).eq(2),
-      ).to.equal(true);
-
-      expect(await upgradeGatekeeper.managedContracts(1)).to.equal(
-        proxyMockZkBNBVerifier.address,
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0)).eq(2)).to.equal(
+        true,
       );
+
+      expect(await upgradeGatekeeper.managedContracts(1)).to.equal(proxyMockZkBNBVerifier.address);
     });
 
     it('added `proxyZNSController`', async function () {
-      await expect(
-        upgradeGatekeeper.addUpgradeable(proxyMockZNSController.address),
-      ).not.to.be.reverted;
+      await expect(upgradeGatekeeper.addUpgradeable(proxyMockZNSController.address)).not.to.be.reverted;
 
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0),
-        ).eq(3),
-      ).to.equal(true);
-
-      expect(await upgradeGatekeeper.managedContracts(2)).to.equal(
-        proxyMockZNSController.address,
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0)).eq(3)).to.equal(
+        true,
       );
+
+      expect(await upgradeGatekeeper.managedContracts(2)).to.equal(proxyMockZNSController.address);
     });
 
     it('added `proxyPublicResolver`', async function () {
-      await expect(
-        upgradeGatekeeper.addUpgradeable(proxyMockPublicResolver.address),
-      ).not.to.be.reverted;
+      await expect(upgradeGatekeeper.addUpgradeable(proxyMockPublicResolver.address)).not.to.be.reverted;
 
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0),
-        ).eq(4),
-      ).to.equal(true);
-
-      expect(await upgradeGatekeeper.managedContracts(3)).to.equal(
-        proxyMockPublicResolver.address,
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0)).eq(4)).to.equal(
+        true,
       );
+
+      expect(await upgradeGatekeeper.managedContracts(3)).to.equal(proxyMockPublicResolver.address);
     });
 
     it('added `proxyZkBNB`', async function () {
-      await expect(upgradeGatekeeper.addUpgradeable(proxyMockZkBNB.address)).not
-        .to.be.reverted;
+      await expect(upgradeGatekeeper.addUpgradeable(proxyMockZkBNB.address)).not.to.be.reverted;
 
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0),
-        ).eq(5),
-      ).to.equal(true);
-
-      expect(await upgradeGatekeeper.managedContracts(4)).to.equal(
-        proxyMockZkBNB.address,
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 0)).eq(5)).to.equal(
+        true,
       );
+
+      expect(await upgradeGatekeeper.managedContracts(4)).to.equal(proxyMockZkBNB.address);
     });
   });
 
@@ -223,9 +174,7 @@ describe('UpgradeGatekeeper', function () {
       mockUpgradeableMaster.upgradePreparationStarted.returns();
 
       // verisonId == 0
-      await expect(upgradeGatekeeper.startPreparation())
-        .to.emit(upgradeGatekeeper, 'PreparationStart')
-        .withArgs(0);
+      await expect(upgradeGatekeeper.startPreparation()).to.emit(upgradeGatekeeper, 'PreparationStart').withArgs(0);
 
       // upgradeStatus.NoticePeriod == 2
       expect(await upgradeGatekeeper.upgradeStatus()).to.equal(2);
@@ -251,19 +200,15 @@ describe('UpgradeGatekeeper', function () {
       expect(await upgradeGatekeeper.noticePeriodFinishTimestamp()).to.equal(0);
 
       // nextTargets.length == 0
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3),
-        ).eq(0),
-      ).to.equal(true);
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3)).eq(0)).to.equal(
+        true,
+      );
     });
   });
 
   describe('Check upgrade cancellation', function () {
     it('should fail to cancel before upgrade', async function () {
-      await expect(upgradeGatekeeper.cancelUpgrade()).to.be.revertedWith(
-        'cpu11',
-      );
+      await expect(upgradeGatekeeper.cancelUpgrade()).to.be.revertedWith('cpu11');
     });
 
     it('cancel after start upgrade', async function () {
@@ -271,9 +216,7 @@ describe('UpgradeGatekeeper', function () {
       mockUpgradeableMaster.upgradeCanceled.returns();
 
       // verisonId == 1
-      await expect(upgradeGatekeeper.cancelUpgrade())
-        .to.emit(upgradeGatekeeper, 'UpgradeCancel')
-        .withArgs(1);
+      await expect(upgradeGatekeeper.cancelUpgrade()).to.emit(upgradeGatekeeper, 'UpgradeCancel').withArgs(1);
 
       // upgradeStatus.NoticePeriod == 0
       expect(await upgradeGatekeeper.upgradeStatus()).to.equal(0);
@@ -282,11 +225,9 @@ describe('UpgradeGatekeeper', function () {
       expect(await upgradeGatekeeper.noticePeriodFinishTimestamp()).to.equal(0);
 
       // nextTargets.length == 0
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3),
-        ).eq(0),
-      ).to.equal(true);
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3)).eq(0)).to.equal(
+        true,
+      );
     });
 
     it('cancel after start preparation', async function () {
@@ -296,9 +237,7 @@ describe('UpgradeGatekeeper', function () {
       await upgradeGatekeeper.startPreparation();
 
       // verisonId == 1
-      await expect(upgradeGatekeeper.cancelUpgrade())
-        .to.emit(upgradeGatekeeper, 'UpgradeCancel')
-        .withArgs(1);
+      await expect(upgradeGatekeeper.cancelUpgrade()).to.emit(upgradeGatekeeper, 'UpgradeCancel').withArgs(1);
       // upgradeStatus.NoticePeriod == 0
       expect(await upgradeGatekeeper.upgradeStatus()).to.equal(0);
 
@@ -306,11 +245,9 @@ describe('UpgradeGatekeeper', function () {
       expect(await upgradeGatekeeper.noticePeriodFinishTimestamp()).to.equal(0);
 
       // nextTargets.length == 0
-      expect(
-        ethers.BigNumber.from(
-          await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3),
-        ).eq(0),
-      ).to.equal(true);
+      expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3)).eq(0)).to.equal(
+        true,
+      );
     });
 
     it('should fail to cancel after finish upgrade', async function () {
@@ -323,9 +260,7 @@ describe('UpgradeGatekeeper', function () {
 
       const mockParamters = ['0x3a', '0x44', '0x3d', '0x83', '0x81'];
       await upgradeGatekeeper.finishUpgrade(mockParamters);
-      await expect(upgradeGatekeeper.cancelUpgrade()).to.be.revertedWith(
-        'cpu11',
-      );
+      await expect(upgradeGatekeeper.cancelUpgrade()).to.be.revertedWith('cpu11');
     });
   });
 });

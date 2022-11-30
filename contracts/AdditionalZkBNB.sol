@@ -1,15 +1,8 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.0;
-
-pragma experimental ABIEncoderV2;
-
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./lib/SafeMathUInt128.sol";
 import "./lib/Utils.sol";
 
 import "./Storage.sol";
@@ -22,12 +15,9 @@ import "./lib/TxTypes.sol";
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
 contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
-  using SafeMath for uint256;
-  using SafeMathUInt128 for uint128;
-
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
-    pendingBalances[_packedBalanceKey] = PendingBalance(balance.add(_amount), FILLED_GAS_RESERVE_VALUE);
+    pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
   }
 
   function onERC721Received(
@@ -134,10 +124,8 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   }
 
   /// @notice Reverts unverified blocks
-  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
-    requireActive();
-
-    governance.requireActiveValidator(msg.sender);
+  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external onlyActive {
+    governance.isActiveValidator(msg.sender);
 
     uint32 blocksCommitted = totalBlocksCommitted;
     uint32 blocksToRevert = Utils.minU32(uint32(_blocksToRevert.length), blocksCommitted - totalBlocksVerified);
@@ -165,7 +153,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
 
   /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
   /// @param _factory Address of NFT factory
-  function setDefaultNFTFactory(NFTFactory _factory) external {
+  function setDefaultNFTFactory(INFTFactory _factory) external {
     governance.requireGovernor(msg.sender);
     require(address(_factory) != address(0), "mb1");
     // Factory should be non zero
@@ -182,7 +170,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   function registerNFTFactory(
     string calldata _creatorAccountName,
     uint32 _collectionId,
-    NFTFactory _factory
+    INFTFactory _factory
   ) external {
     bytes32 creatorAccountNameHash = znsController.getSubnodeNameHash(_creatorAccountName);
     require(znsController.isRegisteredNameHash(creatorAccountNameHash), "nr");
@@ -225,8 +213,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   /// @notice Register full exit request - pack pubdata, add priority request
   /// @param _accountName account name
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(string calldata _accountName, address _asset) public {
-    requireActive();
+  function requestFullExit(string calldata _accountName, address _asset) public onlyActive {
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
     require(znsController.isRegisteredNameHash(accountNameHash), "nr");
     // get address by account name hash
@@ -260,8 +247,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountName account name
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
-    requireActive();
+  function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public onlyActive {
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
     require(znsController.isRegisteredNameHash(accountNameHash), "nr");
     require(_nftIndex < MAX_NFT_INDEX, "T");
@@ -324,9 +310,9 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
 
   function commitBlocks(StoredBlockInfo memory _lastCommittedBlockData, CommitBlockInfo[] memory _newBlocksData)
     external
+    onlyActive
   {
-    requireActive();
-    governance.requireActiveValidator(msg.sender);
+    governance.isActiveValidator(msg.sender);
     // Check that we commit blocks after last committed block
     // incorrect previous block data
     require(storedBlockHashes[totalBlocksCommitted] == hashStoredBlockInfo(_lastCommittedBlockData), "i");
@@ -388,7 +374,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
 
   function createBlockCommitment(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlockData)
     internal
-    view
+    pure
     returns (bytes32)
   {
     // uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);

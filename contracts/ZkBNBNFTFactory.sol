@@ -1,11 +1,10 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-
-import "./interfaces/NFTFactory.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "./interfaces/INFTFactory.sol";
 
-contract ZkBNBNFTFactory is ERC721, NFTFactory {
+contract ZkBNBNFTFactory is ERC721, INFTFactory {
   // Optional mapping from token ID to token content hash
   mapping(uint256 => bytes32) private _contentHashes;
 
@@ -45,7 +44,7 @@ contract ZkBNBNFTFactory is ERC721, NFTFactory {
     address,
     address to,
     uint256 tokenId
-  ) internal virtual override {
+  ) internal virtual {
     // Sending to address `0` means that the token is getting burned.
     if (to == address(0)) {
       delete _contentHashes[tokenId];

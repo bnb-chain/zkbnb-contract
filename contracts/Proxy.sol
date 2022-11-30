@@ -1,6 +1,5 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "./ZkBNBOwnable.sol";
 import "./interfaces/Upgradeable.sol";
@@ -51,9 +50,7 @@ contract Proxy is Upgradeable, ZkBNBOwnable {
   /// @notice Upgrades target
   /// @param newTarget New target
   /// @param newTargetUpgradeParameters New target upgrade parameters
-  function upgradeTarget(address newTarget, bytes calldata newTargetUpgradeParameters) external override {
-    requireMaster(msg.sender);
-
+  function upgradeTarget(address newTarget, bytes calldata newTargetUpgradeParameters) external override onlyMaster {
     setTarget(newTarget);
     (bool upgradeSuccess, ) = getTarget().delegatecall(
       abi.encodeWithSignature("upgrade(bytes)", newTargetUpgradeParameters)

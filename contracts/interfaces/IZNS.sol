@@ -1,8 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-pragma solidity ^0.7.6;
-
-interface ZNS {
+interface IZNS {
   // Logged when a node has new owner
   // Note that node is a namehash of a specified node, label is a namehash of subnode.
   event NewOwner(bytes32 indexed node, address owner);
@@ -13,13 +12,7 @@ interface ZNS {
   // Logged when the resolver for a node changes.
   event NewResolver(bytes32 indexed node, address resolver);
 
-  function setRecord(
-    bytes32 _node,
-    address _owner,
-    bytes32 _pubKeyX,
-    bytes32 _pubKeyY,
-    address _resolver
-  ) external;
+  function setRecord(bytes32 _node, address _owner, bytes32 _pubKeyX, bytes32 _pubKeyY, address _resolver) external;
 
   function setSubnodeRecord(
     bytes32 _node,

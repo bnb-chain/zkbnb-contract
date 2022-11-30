@@ -23,17 +23,9 @@ describe('NFTHelperTest', function () {
     }
     const nfts = nftsMap.values();
     for (const item of nfts) {
-      await this.nftHelperTest.addAccountNft(
-        account1,
-        item.nftAddress,
-        item.nftIndex,
-      );
+      await this.nftHelperTest.addAccountNft(account1, item.nftAddress, item.nftIndex);
       // repeat add the same nft
-      await this.nftHelperTest.addAccountNft(
-        account1,
-        item.nftAddress,
-        item.nftIndex,
-      );
+      await this.nftHelperTest.addAccountNft(account1, item.nftAddress, item.nftIndex);
     }
 
     await this.nftHelperTest.addAccountNft(account2, nftAddress1, 1);
@@ -54,11 +46,7 @@ describe('NFTHelperTest', function () {
       await this.nftHelperTest.addAccountNft(account1, nftAddress1, i);
     }
     const removeIndex = Math.ceil(Math.random() * 10);
-    await this.nftHelperTest.removeAccountNft(
-      account1,
-      nftAddress1,
-      removeIndex,
-    );
+    await this.nftHelperTest.removeAccountNft(account1, nftAddress1, removeIndex);
 
     const account1Nfts = await this.nftHelperTest.getAccountNfts(account1);
     const nftsMap = new Map();

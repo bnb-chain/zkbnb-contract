@@ -1,22 +1,21 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
-
-pragma solidity ^0.7.6;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./interfaces/IBaseRegistrar.sol";
 import "./interfaces/IPriceOracle.sol";
-import "./interfaces/ZNS.sol";
+import "./interfaces/IZNS.sol";
 import "./lib/Names.sol";
 
 /**
  * ZNSController is a registrar allocating subdomain names to users in ZkBNB in a FIFS way.
  */
-contract ZNSController is IBaseRegistrar, OwnableUpgradeable {
+contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpgradeable {
   using Names for string;
 
   // ZNS registry
-  ZNS public zns;
+  IZNS public zns;
   // Price Oracle
   IPriceOracle public prices;
 
@@ -42,12 +41,13 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable {
 
   function initialize(bytes calldata initializationParameters) external initializer {
     __Ownable_init();
+    __ReentrancyGuard_init();
 
     (address _znsAddr, address _prices, bytes32 _node) = abi.decode(
       initializationParameters,
       (address, address, bytes32)
     );
-    zns = ZNS(_znsAddr);
+    zns = IZNS(_znsAddr);
     prices = IPriceOracle(_prices);
     uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     baseNode = bytes32(uint256(_node) % q);
@@ -177,7 +177,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable {
     return ZNSPubKeyMapper[_pubKey] == 0x0;
   }
 
-  function keccak256Hash(bytes memory input) public view returns (bytes32 result) {
+  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
     result = keccak256(input);
   }
 }

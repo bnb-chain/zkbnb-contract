@@ -1,6 +1,6 @@
 const { expect } = require('chai');
+
 const { ethers } = require('hardhat');
-const namehash = require('eth-ens-namehash');
 
 describe('ZkBNB Registry Contract', function () {
   let ZkBNB, zkbnb;

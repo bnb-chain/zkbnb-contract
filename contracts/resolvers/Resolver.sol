@@ -1,6 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.6;
-pragma abicoder v2;
+pragma solidity ^0.8.0;
 
 import "./profile/INameResolver.sol";
 import "./ISupportsInterface.sol";
@@ -20,21 +19,13 @@ interface Resolver is
   IPubKeyResolver,
   INameResolver
 {
-  function setABI(
-    bytes32 node,
-    uint256 contentType,
-    bytes calldata data
-  ) external;
+  function setABI(bytes32 node, uint256 contentType, bytes calldata data) external;
 
   function setAddr(bytes32 node, address addr) external;
 
   function setName(bytes32 node, string calldata _name) external;
 
-  function setPubKey(
-    bytes32 node,
-    bytes32 x,
-    bytes32 y
-  ) external;
+  function setPubKey(bytes32 node, bytes32 x, bytes32 y) external;
 
   // not support yet
   //    function setZkBNBPubKey(

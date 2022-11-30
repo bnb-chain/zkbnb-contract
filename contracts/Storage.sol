@@ -1,9 +1,7 @@
-// SPDX-License-Identifier: MIT OR Apache-2.0
+// SPDX-License-Identifier: Apache-2.0
 // solhint-disable max-states-count
 
-pragma solidity ^0.7.6;
-
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -14,7 +12,7 @@ import "./lib/TxTypes.sol";
 import "./AdditionalZkBNB.sol";
 import "./ZNSController.sol";
 import "./resolvers/PublicResolver.sol";
-import "./interfaces/NFTFactory.sol";
+import "./interfaces/INFTFactory.sol";
 
 /// @title zkbnb storage contract
 /// @author ZkBNB Labs
@@ -74,7 +72,7 @@ contract Storage {
 
   /// @notice Packs address and token id into single word to use as a key in balances mapping
   function packAddressAndAssetId(address _address, uint16 _assetId) internal pure returns (bytes22) {
-    return bytes22((uint176(_address) | (uint176(_assetId) << 160)));
+    return bytes22((uint176(uint160(_address)) | (uint176(_assetId) << 160)));
   }
 
   struct StoredBlockInfo {
@@ -102,9 +100,10 @@ contract Storage {
   mapping(uint32 => mapping(uint32 => bool)) internal performedDesert;
 
   /// @notice Checks that current state not is exodus mode
-  function requireActive() internal view {
+  modifier onlyActive() {
     require(!desertMode, "L");
     // desert mode activated
+    _;
   }
 
   mapping(uint40 => TxTypes.WithdrawNft) internal pendingWithdrawnNFTs;
