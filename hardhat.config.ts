@@ -46,13 +46,18 @@ const config: HardhatUserConfig = {
                 enabled: true,
                 runs: 200,
             },
+            outputSelection: {
+                "*": {
+                    "*": ["storageLayout"]
+                }
+            }
         },
     },
-    defaultNetwork: 'local',
+    defaultNetwork: 'hardhat',
     networks: {
-        // hardhat: {
-        //     allowUnlimitedContractSize: true,
-        // },
+        hardhat: {
+            allowUnlimitedContractSize: true,
+        },
         local: {
             url: process.env.LOCAL_RPC || "http://127.0.0.1:8545",
             accounts: (process.env.LOCAL_PRIVATE_KEY || '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1').split(','),

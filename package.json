@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/bnb-chain/zkbnb-contract#readme",
   "devDependencies": {
+    "@defi-wonderland/smock": "^2.3.4",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/hardhat-upgrades": "^1.17.0",

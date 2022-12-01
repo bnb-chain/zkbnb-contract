@@ -161,3 +161,12 @@ export const getAccountNameHash = async (accountName: string) => {
 export const getKeccak256 = (name) => {
     return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name))
 }
+
+export const transferFunds = async (signer: any, to: string, amount: string) => {
+    const tx = await signer.sendTransaction({
+        from: await signer.getAddress(),
+        to,
+        value: ethers.utils.parseEther(amount),
+    });
+    await tx.wait();
+}

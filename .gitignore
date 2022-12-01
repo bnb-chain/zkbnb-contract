@@ -112,6 +112,9 @@ artifacts
 artifacts-bak
 coverage.json
 
+#TS related
+typechain-types
+logs.txt
 
 .DS_Store
 
