@@ -46,7 +46,6 @@ module.exports = {
           '*': ['storageLayout'],
         },
       },
-      viaIR: true,
     },
   },
   // contractSizer: {
