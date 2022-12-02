@@ -7,7 +7,6 @@ import "./interfaces/Events.sol";
 import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/INFTFactory.sol";

@@ -147,7 +147,7 @@ library TxTypes {
       _tx.creatorTreasuryRate,
       _tx.nftContentHash,
       _tx.accountNameHash,
-      _tx.collectionId // account name hash
+      _tx.collectionId
     );
   }
 

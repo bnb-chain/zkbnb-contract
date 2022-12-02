@@ -21,8 +21,12 @@ contract ZkBNBTest is ZkBNB {
     znsResolver = PublicResolver(_znsResolver);
   }
 
-  function getL2NftInfo(bytes32 nftKey) external view returns (L2NftInfo memory) {
-    return l2Nfts[nftKey];
+  function getMintedL2NftInfo(bytes32 nftKey) external view returns (L2NftInfo memory) {
+    return mintedNfts[nftKey];
+  }
+
+  function getPriorityRequest(uint64 priorityRequestId) external view returns (PriorityTx memory) {
+    return priorityRequests[priorityRequestId];
   }
 
   function getPendingWithdrawnNFT(uint40 nftIndex) external view returns (TxTypes.WithdrawNft memory) {
