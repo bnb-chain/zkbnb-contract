@@ -103,8 +103,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     stateRoot = _genesisStateRoot;
     storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
   }
-  
- /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+
+  /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external {}
