@@ -23,10 +23,10 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@bnb-chain/zkbas-js-sdk@^3.0.0":
-  version "3.0.0"
-  resolved "https://npm-registry.toolsfdg.net/@bnb-chain%2fzkbas-js-sdk/-/zkbas-js-sdk-3.0.0.tgz#3c8a9dcc9552c67bae200bc1341d46bdfba1cabc"
-  integrity sha512-nicD/tvQmhELV/e6us5dI67kqI8Q/NISKdM/9SV2vryPfDpTaHeufEM3eOVE/f4CDjsn99x82N4A4ZeoW9pHww==
+"@bnb-chain/zkbnb-js-sdk@^4.0.0":
+  version "4.0.0"
+  resolved "https://npm-registry.toolsfdg.net/@bnb-chain%2fzkbnb-js-sdk/-/zkbnb-js-sdk-4.0.0.tgz#f97719008d54c2e5632e9bd9266f0cda3234033e"
+  integrity sha512-mrEJpI32+YdooCYtH66ctG/nkWNiNlGK1ut9QS4OUbhFRkN4lQJc3ZgjXYm9ixf7/KG3UX0HtqIg3/1WQpcu0g==
   dependencies:
     axios "^0.27.2"
     shelljs "^0.8.5"

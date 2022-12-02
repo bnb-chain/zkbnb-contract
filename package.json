@@ -74,7 +74,7 @@
     "typescript": "^4.9.3"
   },
   "dependencies": {
-    "@bnb-chain/zkbas-js-sdk": "^3.0.0",
+    "@bnb-chain/zkbnb-js-sdk": "^4.0.0",
     "@openzeppelin/contracts": "^4.8.0",
     "@openzeppelin/contracts-upgradeable": "^4.8.0",
     "mocha": "^10.0.0",
