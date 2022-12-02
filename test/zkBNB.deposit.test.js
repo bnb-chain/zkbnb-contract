@@ -79,7 +79,7 @@ describe('ZkBNB', function () {
 
         expect(totalAfter).to.be.equal(totalBefore + 3);
       });
-      it('should emit events', async () => {
+      it('should emit `Deposit` events', async () => {
         mockZNSController.isRegisteredNameHash.returns(true);
         mockZNSController.getSubnodeNameHash.returns(accountNameHash);
         await expect(zkBNB.depositBNB('account', { value: 10 }))
@@ -120,7 +120,7 @@ describe('ZkBNB', function () {
 
         expect(mockERC20.transferFrom).to.have.been.calledWith(owner.address, zkBNB.address, 10);
       });
-      it('should emit event', async () => {
+      it('should emit `Deposit` event', async () => {
         const ASSET_ID = 3;
         mockZNSController.getSubnodeNameHash.returns(accountNameHash);
         mockERC20.transferFrom.returns(true);
@@ -131,11 +131,10 @@ describe('ZkBNB', function () {
         mockERC20.balanceOf.returnsAtCall(1, 110);
 
         await expect(zkBNB.depositBEP20(mockERC20.address, 10, 'account'))
+          .to.emit(zkBNB, 'NewPriorityRequest')
           .to.emit(zkBNB, 'Deposit')
           .withArgs(ASSET_ID, accountNameHash, 10);
       });
     });
   });
-
-  describe('ZkBNB contract should be able to withdrew user assets ', function () {});
 });
