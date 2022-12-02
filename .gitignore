@@ -106,11 +106,18 @@ dist
 *.idea
 /contracts/artifacts/
 
+# IDE or Editor
+.vscode
+.tours
+
 #Hardhat files
 cache
 artifacts
 artifacts-bak
 coverage.json
+
+# Ganache
+ganache
 
 #TS related
 typechain-types

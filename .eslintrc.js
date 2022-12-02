@@ -17,21 +17,21 @@ module.exports = {
     'object-shorthand': ['error', 'always'],
     'prettier/prettier': [
       'error',
-      {},
+      { semi: true },
       {
         usePrettierrc: true,
       },
     ],
-    '@typescript-eslint/camelcase': 'off',
-    '@typescript-eslint/no-empty-function': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    '@typescript-eslint/no-empty-interface': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-non-null-assertion': 'error',
-    '@typescript-eslint/no-use-before-define': [
-      'error',
-      { functions: false, typedefs: false },
-    ],
+    camelcase: ['error', { ignoreImports: true }],
+    'prefer-const': 'error',
+    'sort-imports': ['error', { ignoreDeclarationSort: true }],
   },
-}
+  overrides: [
+    {
+      files: ['test/**/*.js'],
+      rules: {
+        'no-unused-expressions': 'off',
+      },
+    },
+  ],
+};
