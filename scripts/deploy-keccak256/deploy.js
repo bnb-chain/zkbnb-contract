@@ -153,6 +153,11 @@ async function main() {
     );
   await setBaseNodeTx.wait();
 
+  // NOTE: UpgradeGateKeeper must be granted permission to invoke the relevant method of the notification period
+  console.log('Granted permission...');
+  const UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
+  await upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, event[6] /* upgradeGateKeeper.address */);
+
   // Save addresses into JSON
   console.log('Save deployed contract addresses...');
   saveDeployedAddresses('info/addresses.json', {
