@@ -212,13 +212,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
     // check if the nft is mint from layer-2
     bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-    require(l2Nfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
+    require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
 
-    bytes32 nftContentHash = l2Nfts[nftKey].nftContentHash;
-    uint16 collectionId = l2Nfts[nftKey].collectionId;
-    uint40 nftIndex = l2Nfts[nftKey].nftIndex;
-    uint32 creatorAccountIndex = l2Nfts[nftKey].creatorAccountIndex;
-    uint16 creatorTreasuryRate = l2Nfts[nftKey].creatorTreasuryRate;
+    bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
+    uint16 collectionId = mintedNfts[nftKey].collectionId;
+    uint40 nftIndex = mintedNfts[nftKey].nftIndex;
+    uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
+    uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
 
     TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
       txType: uint8(TxTypes.TxType.DepositNft),
@@ -250,7 +250,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
     bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
     bool alreadyMintedFlag = false;
-    if (l2Nfts[nftKey].nftContentHash != bytes32(0)) {
+    if (mintedNfts[nftKey].nftContentHash != bytes32(0)) {
       alreadyMintedFlag = true;
     }
     // get layer-1 address by account name hash
@@ -277,13 +277,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
       // store into l2 nfts
       nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
-      l2Nfts[nftKey] = L2NftInfo({
-        nftIndex: op.nftIndex,
-        creatorAccountIndex: op.creatorAccountIndex,
-        creatorTreasuryRate: op.creatorTreasuryRate,
-        nftContentHash: op.nftContentHash,
-        collectionId: uint16(op.collectionId)
-      });
       try
         INFTFactory(_factoryAddress).mintFromZkBNB(
           _creatorAddress,
@@ -296,6 +289,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         // add nft to account at L1
         _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
 
+        mintedNfts[nftKey] = L2NftInfo({
+          nftIndex: op.nftIndex,
+          creatorAccountIndex: op.creatorAccountIndex,
+          creatorTreasuryRate: op.creatorTreasuryRate,
+          nftContentHash: op.nftContentHash,
+          collectionId: uint16(op.collectionId)
+        });
         emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
       } catch {
         storePendingNFT(op);

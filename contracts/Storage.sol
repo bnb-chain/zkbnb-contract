@@ -116,7 +116,7 @@ contract Storage {
     uint16 collectionId;
   }
 
-  mapping(bytes32 => L2NftInfo) internal l2Nfts;
+  mapping(bytes32 => L2NftInfo) internal mintedNfts;
 
   /// @notice NFTFactories registered.
   /// @dev creator accountNameHash => CollectionId => NFTFactory
