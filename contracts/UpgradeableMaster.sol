@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./Config.sol";
 import "./Storage.sol";
 import "./interfaces/IZkBNBDesertMode.sol";
@@ -8,10 +9,9 @@ import "./interfaces/IZkBNBDesertMode.sol";
 /// @title upgradeable master contract (defines notice period duration and allows finish upgrade during preparation of it)
 /// @author ZkBNB Team
 
-// TODO: add access control
-contract UpgradeableMaster {
+contract UpgradeableMaster is AccessControl {
   // Create a new role identifier for the UpgradeGatekeeper
-  bytes32 public constant ROLE_OPERATOR = keccak256("ROLE_OPERATOR");
+  bytes32 public constant UPGRADE_GATEKEEPER_ROLE = keccak256("UPGRADE_GATEKEEPER_ROLE");
 
   /// @dev Configurable notice period
   uint256 public constant UPGRADE_NOTICE_PERIOD = 4 weeks;
@@ -26,7 +26,7 @@ contract UpgradeableMaster {
   event ZkBNBChanged(address zkBNB);
   event SecurityCouncilChanged(address[3] securityCouncilMembers);
 
-  address[] securityCouncilMembers;
+  address[] public securityCouncilMembers;
 
   /// @dev Flag indicates that upgrade preparation status is active
   /// @dev Will store false in case of not active upgrade mode
@@ -53,6 +53,9 @@ contract UpgradeableMaster {
 
     zkBNB = IZkBNBDesertMode(_zkBNB);
 
+    // Set default admin
+    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
     _approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
     emit NoticePeriodChange(_approvedUpgradeNoticePeriod);
   }
@@ -65,12 +68,12 @@ contract UpgradeableMaster {
   }
 
   /// @notice Notification that upgrade notice period started
-  function upgradeNoticePeriodStarted() external {
+  function upgradeNoticePeriodStarted() external onlyRole(UPGRADE_GATEKEEPER_ROLE) {
     _upgradeStartTimestamp = block.timestamp;
   }
 
   /// @notice Notification that upgrade preparation status is activated
-  function upgradePreparationStarted() external {
+  function upgradePreparationStarted() external onlyRole(UPGRADE_GATEKEEPER_ROLE) {
     upgradePreparationActive = true;
     _upgradePreparationActivationTime = block.timestamp;
     // Check if the _approvedUpgradeNoticePeriod is passed
@@ -78,12 +81,12 @@ contract UpgradeableMaster {
   }
 
   /// @notice Notification that upgrade canceled
-  function upgradeCanceled() external {
+  function upgradeCanceled() external onlyRole(UPGRADE_GATEKEEPER_ROLE) {
     clearUpgradeStatus();
   }
 
   /// @notice Notification that upgrade finishes
-  function upgradeFinishes() external {
+  function upgradeFinishes() external onlyRole(UPGRADE_GATEKEEPER_ROLE) {
     clearUpgradeStatus();
   }
 
@@ -128,12 +131,16 @@ contract UpgradeableMaster {
     }
   }
 
-  function changeSecurityCouncilMembers(address[3] memory _securityCouncilMembers) external {
+  function changeSecurityCouncilMembers(address[3] memory _securityCouncilMembers)
+    external
+    onlyRole(DEFAULT_ADMIN_ROLE)
+  {
     securityCouncilMembers = _securityCouncilMembers;
     emit SecurityCouncilChanged(_securityCouncilMembers);
   }
 
-  function changeZkBNBAddress(address _zkBNB) external {
+  function changeZkBNBAddress(address _zkBNB) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    require(_zkBNB != address(0), "nz");
     zkBNB = IZkBNBDesertMode(_zkBNB);
 
     emit ZkBNBChanged(_zkBNB);
