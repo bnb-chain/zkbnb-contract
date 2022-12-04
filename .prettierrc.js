@@ -1,7 +1,7 @@
 module.exports = {
-  semi: false,
+  semi: true,
   singleQuote: true,
-  printWidth: 80,
+  printWidth: 120,
   endOfLine: 'auto',
   tabWidth: 2,
   trailingComma: 'all',
@@ -15,7 +15,7 @@ module.exports = {
         singleQuote: false,
         bracketSpacing: false,
         explicitTypes: 'always',
-        compiler: '0.7.6',
+        compiler: '0.8.17',
       },
     },
   ],

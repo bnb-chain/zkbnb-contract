@@ -12,7 +12,7 @@ module.exports = {
     'object-shorthand': ['error', 'always'],
     'prettier/prettier': [
       'error',
-      {},
+      { semi: true },
       {
         usePrettierrc: true,
       },
@@ -29,4 +29,4 @@ module.exports = {
       },
     },
   ],
-}
+};
