@@ -76,8 +76,10 @@ contract AssetGovernance {
   /// @notice If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
   /// @notice NOTE: before calling this function make sure to approve `listingFeeToken` transfer for this contract.
   function addAsset(address _assetAddress) external {
-    require(governance.totalAssets() < listingCap, "can't add more tokens");
     // Impossible to add more tokens using this contract
+    require(governance.totalAssets() < listingCap, "can't add more tokens");
+    // Check access: if address zero is a lister, any address can add asset
+    require(tokenLister[msg.sender] || tokenLister[address(0)], "no access");
     if (!tokenLister[msg.sender]) {
       // Collect fees
       bool feeTransferOk = Utils.transferFromERC20(listingFeeToken, msg.sender, treasury, listingFee);
