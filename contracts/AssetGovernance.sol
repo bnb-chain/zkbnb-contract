@@ -78,9 +78,9 @@ contract AssetGovernance {
   function addAsset(address _assetAddress) external {
     // Impossible to add more tokens using this contract
     require(governance.totalAssets() < listingCap, "can't add more tokens");
-    // Check access: if address zero is a lister, any address can add asset
-    require(tokenLister[msg.sender] || tokenLister[address(0)], "no access");
     if (!tokenLister[msg.sender]) {
+        // Check access: if address zero is a lister, any address can add asset
+        require(tokenLister[address(0)], "no access");
       // Collect fees
       bool feeTransferOk = Utils.transferFromERC20(listingFeeToken, msg.sender, treasury, listingFee);
       require(feeTransferOk, "fee transfer failed");
