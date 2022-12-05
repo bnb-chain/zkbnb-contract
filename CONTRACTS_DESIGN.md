@@ -341,26 +341,5 @@ interface Upgradeable {
     /// @param newTargetInitializationParameters New target initialization parameters
     function upgradeTarget(address newTarget, bytes calldata newTargetInitializationParameters) external;
 }
-
-interface UpgradeableMaster {
-    /// @notice Notice period before activation preparation status of upgrade mode
-    function getNoticePeriod() external returns (uint256);
-
-    /// @notice Notifies contract that notice period started
-    function upgradeNoticePeriodStarted() external;
-
-    /// @notice Notifies contract that upgrade preparation status is activated
-    function upgradePreparationStarted() external;
-
-    /// @notice Notifies contract that upgrade canceled
-    function upgradeCanceled() external;
-
-    /// @notice Notifies contract that upgrade finishes
-    function upgradeFinishes() external;
-
-    /// @notice Checks that contract is ready for upgrade
-    /// @return bool flag indicating that contract is ready for upgrade
-    function isReadyForUpgrade() external returns (bool);
-}
 ```
-All proxies of upgradeable contracts should implement `Upgradeable` and `UpgradeableMaster` interface for management of `UpgradeGatekeeper`.
+All proxies of upgradeable contracts should implement `Upgradeable` interface for management of `UpgradeGatekeeper`.
