@@ -232,12 +232,12 @@ describe('NFT functionality', function () {
         txType: _txType,
       } = await zkBNB.getPriorityRequest(depositRequestId);
 
-      // // TODO: check hashed pubdata
-      // const expectPubData = ethers.utils.solidityPack(
-      //   ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'bytes32', 'bytes32', 'uint16'],
-      //   [3, 0, nftL1TokenId, 0, 5, mockHash, ethers.constants.HashZero, 0],
-      // );
-      // assert.equal(_hashedPubData, expectPubData);
+      const expectPubData = ethers.utils.solidityPack(
+        ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'bytes32', 'bytes32', 'uint16'],
+        [3, 0, nftL1TokenId, 0, 5, mockHash, ethers.constants.HashZero, 0],
+      );
+      const expectHashedPubData = ethers.utils.keccak256(expectPubData);
+      assert.equal(_hashedPubData, ethers.utils.hexDataSlice(expectHashedPubData, 12)); // bytes32 -> bytes20
 
       assert.equal(_txType, 3);
     });
