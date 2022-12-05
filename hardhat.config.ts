@@ -50,6 +50,9 @@ const config: HardhatUserConfig = {
     networks: {
         hardhat: {
             allowUnlimitedContractSize: true,
+            accounts: {
+                accountsBalance: '10000000000000000000000000000000000000000'
+            }
         },
         local: {
             url: process.env.LOCAL_RPC || "http://127.0.0.1:8545",

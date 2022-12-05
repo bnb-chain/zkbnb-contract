@@ -24,7 +24,7 @@ describe('Governance', function () {
     addr2 = signers[2];
     addr3 = signers[3];
     governerWallet = ethers.Wallet.createRandom().connect(owner.provider);
-    await transferFunds(owner, await governerWallet.getAddress(), '1');
+    await transferFunds(owner, await governerWallet.getAddress(), '1000000');
 
     const GOVERNANCE = await ethers.getContractFactory('Governance');
     governance = await GOVERNANCE.deploy();
@@ -33,7 +33,7 @@ describe('Governance', function () {
     mockAssetGovernance = await smock.fake('AssetGovernance');
   });
 
-  it('should be able to intialize with a EOA Governer', async function () {
+  it('should be able to initialize with a EOA Governer', async function () {
     const abi = ethers.utils.defaultAbiCoder;
     const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
     await governance.initialize(byteAddr);
