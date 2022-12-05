@@ -10,6 +10,7 @@ describe('UpgradeableMaster', function () {
   let upgradeableMaster;
   let owner, councilMember1, councilMember2, councilMember3;
   let utils;
+  let UPGRADE_GATEKEEPER_ROLE;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
@@ -33,8 +34,47 @@ describe('UpgradeableMaster', function () {
       mockZkBNB.address,
     );
     await upgradeableMaster.deployed();
+    UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
+    upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, owner.address);
   });
 
+  context('Access control', () => {
+    it('Only owner can grant role', async () => {
+      await expect(upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, councilMember2.address))
+        .to.emit(upgradeableMaster, 'RoleGranted')
+        .withArgs(UPGRADE_GATEKEEPER_ROLE, councilMember2.address, owner.address);
+      await expect(upgradeableMaster.connect(councilMember1).grantRole(UPGRADE_GATEKEEPER_ROLE, councilMember2.address))
+        .to.be.reverted;
+    });
+    it('Only owner can revoke role', async () => {
+      await expect(upgradeableMaster.revokeRole(UPGRADE_GATEKEEPER_ROLE, owner.address))
+        .to.emit(upgradeableMaster, 'RoleRevoked')
+        .withArgs(UPGRADE_GATEKEEPER_ROLE, owner.address, owner.address);
+      await expect(
+        upgradeableMaster.connect(councilMember1).revokeRole(UPGRADE_GATEKEEPER_ROLE, councilMember2.address),
+      ).to.be.reverted;
+    });
+    it('Only upgrade gatekeeper can invoke upgrade functions', async () => {
+      await expect(upgradeableMaster.connect(councilMember1).upgradeNoticePeriodStarted()).to.be.reverted;
+      await expect(upgradeableMaster.connect(councilMember1).upgradePreparationStarted()).to.be.reverted;
+      await expect(upgradeableMaster.connect(councilMember1).upgradeCanceled()).to.be.reverted;
+      await expect(upgradeableMaster.connect(councilMember1).upgradeFinishes()).to.be.reverted;
+    });
+    it('Only admin can invoke `changeSecurityCouncilMembers`', async () => {
+      const accounts = await ethers.getSigners();
+      const newMembers = [accounts[4].address, accounts[5].address, accounts[6].address];
+      await expect(upgradeableMaster.connect(councilMember1).changeSecurityCouncilMembers(newMembers)).to.be.reverted;
+      await expect(upgradeableMaster.changeSecurityCouncilMembers(newMembers))
+        .to.emit(upgradeableMaster, 'SecurityCouncilChanged')
+        .withArgs(newMembers);
+    });
+    it('Only admin can invoke `changeZkBNBAddress`', async () => {
+      await expect(upgradeableMaster.connect(councilMember1).changeZkBNBAddress(councilMember2)).to.be.reverted;
+      await expect(upgradeableMaster.changeZkBNBAddress(councilMember2.address))
+        .to.emit(upgradeableMaster, 'ZkBNBChanged')
+        .withArgs(councilMember2.address);
+    });
+  });
   context('Notice period', () => {
     it('Default notice period should be the shortest', async () => {
       const period = await upgradeableMaster.getNoticePeriod();
@@ -95,16 +135,6 @@ describe('UpgradeableMaster', function () {
         await expect(upgradeableMaster.upgradeFinishes())
           .to.emit(upgradeableMaster, 'NoticePeriodChange')
           .withArgs(fourWeeks);
-      });
-    });
-
-    // TODO: add access control to `UpgradeableMaster` contract
-    context.skip('Access control', () => {
-      it('Only council member can invoke `upgradeNoticePeriodStarted`', async () => {
-        await upgradeableMaster.setOperator(councilMember1.address);
-
-        await expect(upgradeableMaster.upgradeNoticePeriodStarted()).to.be.reverted;
-        await expect(upgradeableMaster.connect(councilMember1).upgradeNoticePeriodStarted()).not.to.be.reverted;
       });
     });
   });
