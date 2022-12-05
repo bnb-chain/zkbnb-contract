@@ -1,42 +1,36 @@
-import {HardhatUserConfig} from "hardhat/config";
+import { HardhatUserConfig } from "hardhat/config";
 
 import "hardhat-tracer"
 import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-contract-sizer'
 import 'hardhat-abi-exporter'
+import 'solidity-coverage'
 import '@nomiclabs/hardhat-ethers'
-import '@typechain/hardhat'
 import '@nomiclabs/hardhat-waffle'
+import '@typechain/hardhat'
 import * as dotenv from 'dotenv'
+
 dotenv.config()
 
+// const getAccounts = (privateKeys: string | undefined): Array<string> => {
+//     if (!privateKeys) {
+//         return []
+//     }
 
-const getAccounts = (privateKeys: string | undefined): Array<string> => {
-    if (!privateKeys) {
-        return []
-    }
-
-    const privateKeyArr = privateKeys.split(',')
-    return privateKeyArr
-        .filter((privateKey) => {
-            // Filter empty strings, no empty strings should occupy array positions
-            return privateKey.trim().length > 0
-        })
-        .map((privateKey) => {
-            const tempPrivateKey = privateKey.trim()
-            if (tempPrivateKey.startsWith('0x')) {
-                return tempPrivateKey
-            }
-            return `0x${tempPrivateKey}`
-        })
-}
-
-const COMPILER_SETTINGS = {
-    optimizer: {
-        enabled: true,
-        runs: 1000,
-    },
-}
+//     const privateKeyArr = privateKeys.split(',')
+//     return privateKeyArr
+//         .filter((privateKey) => {
+//             // Filter empty strings, no empty strings should occupy array positions
+//             return privateKey.trim().length > 0
+//         })
+//         .map((privateKey) => {
+//             const tempPrivateKey = privateKey.trim()
+//             if (tempPrivateKey.startsWith('0x')) {
+//                 return tempPrivateKey
+//             }
+//             return `0x${tempPrivateKey}`
+//         })
+// }
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -70,23 +64,19 @@ const config: HardhatUserConfig = {
             gas: 15000000
         },
     },
+    contractSizer: {
+        alphaSort: true,
+        disambiguatePaths: false,
+        runOnCompile: true,
+        strict: true,
+    },
+    abiExporter: {
+        path: './abi',
+        clear: true,
+        flat: true,
+        only: [':Governance$', ':ZkBNB', ':StablePriceOracle'],
+        spacing: 2,
+    },
 }
 
 export default config
-
-// module.exports = {
-//
-//     // contractSizer: {
-//     //     alphaSort: true,
-//     //     disambiguatePaths: false,
-//     //     runOnCompile: true,
-//     //     strict: true,
-//     // },
-//     abiExporter: {
-//         path: './data/abi',
-//         clear: true,
-//         flat: true,
-//         only: [':Governance$', ':ZkBNB', ':StablePriceOracle'],
-//         spacing: 2
-//     },
-// };

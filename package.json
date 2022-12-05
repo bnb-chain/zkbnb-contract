@@ -16,6 +16,7 @@
     "lint:fix:format": "prettier --write **.{sol,js}",
     "lint:fix:eslint": "eslint --fix . --ext js",
     "fix": "yarn lint:fix:format && yarn lint:fix:eslint",
+    "abi": "npx hardhat export-abi",
     "deploy": "npx hardhat run ./scripts/deploy-keccak256/deploy.js"
   },
   "repository": {
