@@ -2,7 +2,6 @@ import { HardhatUserConfig } from "hardhat/config";
 
 import "hardhat-tracer"
 import '@openzeppelin/hardhat-upgrades'
-import 'hardhat-contract-sizer'
 import 'hardhat-abi-exporter'
 import 'solidity-coverage'
 import '@nomiclabs/hardhat-ethers'
@@ -63,12 +62,6 @@ const config: HardhatUserConfig = {
             timeout: 300000,
             gas: 15000000
         },
-    },
-    contractSizer: {
-        alphaSort: true,
-        disambiguatePaths: false,
-        runOnCompile: true,
-        strict: true,
     },
     abiExporter: {
         path: './abi',
