@@ -35,18 +35,19 @@ describe('zkbnb contract', function () {
       const initZnsControllerTx = await znsController.initialize(initZnsControllerParams);
       await initZnsControllerTx.wait();
 
-      const legendNode = getKeccak256('legend');
-      const setBaseNodeTx = await znsRegistry.setSubnodeOwner(
-        ethers.constants.HashZero,
-        legendNode,
-        znsController.address,
-        ethers.constants.HashZero,
-      );
-      await setBaseNodeTx.wait();
-      // deploy governance
-      // governance
-      const Governance = await ethers.getContractFactory('Governance');
-      /*
+            const legendNode = getKeccak256('legend')
+            const setBaseNodeTx = await znsRegistry.setSubnodeOwner(
+                ethers.constants.HashZero,
+                legendNode,
+                znsController.address,
+                ethers.constants.HashZero,
+                ethers.constants.HashZero
+            )
+            await setBaseNodeTx.wait()
+            // deploy governance
+            // governance
+            const Governance = await ethers.getContractFactory('Governance')
+            /*
             uint8 _chainId, uint16 _nativeAssetId, uint16 _maxPendingBlocks
              */
       const governance = await Governance.deploy();
@@ -141,12 +142,12 @@ describe('zkbnb contract', function () {
       const zkbnbInitTx = await zkbnb.initialize(zkbnbInitParams);
       await zkbnbInitTx.wait();
 
-      const registerZNSTx = await zkbnb.registerZNS(
-        'sher',
-        '0xDA00601380Bc7aE4fe67dA2EB78f9161570c9EB4',
-        '0x6788fdbc635cf86e266853a628b2743643df5c1db1a4f9afbb13bca103322e9a',
-      );
-      await registerZNSTx.wait();
+        const registerZNSTx = await zkbnb.registerZNS('sher',
+            '0xDA00601380Bc7aE4fe67dA2EB78f9161570c9EB4',
+            ethers.constants.HashZero,
+            ethers.constants.HashZero
+        )
+        await registerZNSTx.wait()
 
       const hashVal = namehash.hash('sher.legend');
       const addr = await zkbnb.getAddressByAccountNameHash(hashVal);

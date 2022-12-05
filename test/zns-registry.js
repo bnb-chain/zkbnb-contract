@@ -32,6 +32,41 @@ describe('ZkBNB Registry Contract', function () {
     await zkbnb.deployed();
   });
 
+    describe('ZNS Registry', function () {
+        it("register", async function () {
+            // register root node
+            const rootL2Account = ethers.utils.formatBytes32String('legend');
+            const rootNode = namehash.hash('');
+            expect(await zns.owner(rootNode)).to.equal(await owner.getAddress());
+
+            const baseNameHash = getKeccak256('legend');
+            const baseNode = namehash.hash('legend');
+            // The owner of ZNS should be registrar
+            const setRootTx = await zns.setSubnodeOwner(rootNode, baseNameHash, zkbnb.address, rootL2Account);
+            await setRootTx.wait();
+            expect(await zns.owner(baseNode)).to.equal(await zkbnb.address);
+
+            // register
+            const addr1L2Account = ethers.utils.formatBytes32String('zkbnb.legend');
+            const registerTx = await zkbnb.connect(owner).register('zkbnb', await addr1.getAddress(), addr1L2Account)
+            await registerTx.wait()
+            expect(await zns.owner(namehash.hash('zkbnb.legend'))).to.equal(await addr1.getAddress());
+
+            // register illegal name
+            const addr2L2Account = ethers.utils.formatBytes32String('zkbnb2.legend');
+            await expect(
+                zkbnb.connect(owner).register('id', await addr2.getAddress(), addr2L2Account)
+            ).to.be.revertedWith("invalid name");
+            await expect(
+                zkbnb.connect(owner).register('id-a', await addr2.getAddress(), addr2L2Account)
+            ).to.be.revertedWith("invalid name");
+
+            // duplicated L2 owner
+            await expect(
+                zkbnb.connect(owner).register('foo', await addr1.getAddress(), addr1L2Account)
+            ).to.be.revertedWith('L2 owner existed');
+        });
+    });
   // describe('ZNS Registry', function () {
   //     it("register", async function () {
   //         // register root node
@@ -68,11 +103,11 @@ describe('ZkBNB Registry Contract', function () {
   //     });
   // });
 
-  // get the keccak256 hash of a specified string name
-  // eg: getKeccak256('zkbnb') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
-  const getKeccak256 = (name) => {
-    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name));
-  };
+    // get the keccak256 hash of a specified string name
+    // eg: getKeccak256('zkbnb') = '0x621eacce7c1f02dbf62859801a97d1b2903abc1c3e00e28acfb32cdac01ab36d'
+    const getKeccak256 = (name) => {
+        return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name));
+    };
 
   // recursively get the keccak256 hash of a specified sub name with its parent node
   // const getNameHash = (name) => {

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "es2018",
+    "module": "commonjs",
+    "strict": true,
+    "noImplicitAny": false,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "declaration": true,
+    "resolveJsonModule": true
+  },
+  "include": ["/**/*.ts"],
+  "exclude": ["node_modules"],
+  "files": ["./hardhat.config.ts"]
+}
