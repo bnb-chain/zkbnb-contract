@@ -16,6 +16,7 @@ describe('NFT functionality', function () {
 
   let zkBNB; // ZkBNBTest.sol
   let additionalZkBNB; // AdditionalZkBNB.sol
+  let zkBNBNFTFactory;
 
   let owner, acc1, acc2;
 
@@ -61,11 +62,21 @@ describe('NFT functionality', function () {
     );
     await zkBNB.deployed();
 
-    const MockNftFactory = await smock.mock('ZkBNBNFTFactory');
-    mockNftFactory = await MockNftFactory.deploy('FooNFT', 'FOO', 'ipfs://', zkBNB.address);
-    await mockNftFactory.deployed();
+    const ZkBNBNFTFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
+    zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', 'ipfs://', zkBNB.address);
+    await zkBNBNFTFactory.deployed();
+    assert.equal(await zkBNBNFTFactory.name(), 'ZkBNBNft');
+    assert.equal(await zkBNBNFTFactory.symbol(), 'Zk');
+    assert.equal(await zkBNBNFTFactory._base(), 'ipfs://');
 
-    await zkBNB.testSetDefaultNFTFactory(mockNftFactory.address);
+    const MockNftFactory = await smock.mock('ZkBNBNFTFactory');
+    mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', 'ipfs://', zkBNB.address);
+    await mockNftFactory.deployed();
+    await mockGovernance.setVariable('networkGovernor', owner.address);
+
+    await expect(await zkBNB.setDefaultNFTFactory(mockNftFactory.address))
+      .to.emit(zkBNB, 'NewDefaultNFTFactory')
+      .withArgs(mockNftFactory.address);
   });
 
   it('check default NFT Factory', async function () {
@@ -225,12 +236,12 @@ describe('NFT functionality', function () {
         txType: _txType,
       } = await zkBNB.getPriorityRequest(depositRequestId);
 
-      // // TODO: check hashed pubdata
-      // const expectPubData = ethers.utils.solidityPack(
-      //   ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'bytes32', 'bytes32', 'uint16'],
-      //   [3, 0, nftL1TokenId, 0, 5, mockHash, ethers.constants.HashZero, 0],
-      // );
-      // assert.equal(_hashedPubData, expectPubData);
+      const expectPubData = ethers.utils.solidityPack(
+        ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'bytes32', 'bytes32', 'uint16'],
+        [3, 0, nftL1TokenId, 0, 5, mockHash, ethers.constants.HashZero, 0],
+      );
+      const expectHashedPubData = ethers.utils.keccak256(expectPubData);
+      assert.equal(_hashedPubData, ethers.utils.hexDataSlice(expectHashedPubData, 12)); // bytes32 -> bytes20
 
       assert.equal(_txType, 3);
     });
@@ -248,5 +259,90 @@ describe('NFT functionality', function () {
     });
   });
 
-  it.skip('request Full Exit Nft', async function () {});
+  describe('Request full exit NFT', async function () {
+    const accountName = 'accountName';
+    const nftIndex = 0; // owned by acc1
+
+    it('should be able to request full exit Nft', async function () {
+      mockZNSController.getSubnodeNameHash.returns();
+      mockZNSController.isRegisteredNameHash.returns(true);
+      await zkBNB.connect(acc1).requestFullExitNft(accountName, nftIndex);
+    });
+
+    it('check pubdata of full exit request', async function () {
+      const firstPriorityRequestId = await zkBNB.firstPriorityRequestId();
+      const totalOpenPriorityRequests = await zkBNB.totalOpenPriorityRequests();
+      const fullExitRequestId = firstPriorityRequestId + totalOpenPriorityRequests - 1;
+      const {
+        hashedPubData: _hashedPubData,
+        expirationBlock: _expirationBlock,
+        txType: _txType,
+      } = await zkBNB.getPriorityRequest(fullExitRequestId);
+
+      const expectPubData = ethers.utils.solidityPack(
+        ['uint8', 'uint32', 'uint32', 'uint16', 'uint40', 'uint16', 'bytes32', 'bytes32', 'bytes32'],
+        [
+          13, // tx type
+          0, // account index
+          0, // creator account index
+          0, // creator treasury rate
+          nftIndex,
+          ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 16), // collection id
+          ethers.constants.HashZero, // account name hash
+          ethers.constants.HashZero, // creator name hash
+          ethers.constants.HashZero, // nft content hash
+        ],
+      );
+      const expectHashedPubData = ethers.utils.keccak256(expectPubData);
+      assert.equal(_hashedPubData, ethers.utils.hexDataSlice(expectHashedPubData, 12)); // bytes32 -> bytes20
+
+      assert.equal(_txType, 13);
+    });
+  });
+
+  describe('ZkBNBNFTFactory', function () {
+    const tokenId = 2;
+
+    // TODO: Move this case to `AdditonalZkBNB.nft.test.js`
+    it.skip('register NFT factory', async function () {
+      mockZNSController.getSubnodeNameHash.returns();
+      mockZNSController.isRegisteredNameHash.returns(true);
+
+      await zkBNB.registerNFTFactory('accountName', 0, zkBNBNFTFactory.address);
+    });
+
+    it('mint from ZkBNB', async function () {
+      await zkBNB.testSetDefaultNFTFactory(zkBNBNFTFactory.address);
+      const extraData = ethers.constants.HashZero;
+
+      expect(
+        zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, mockHash, extraData),
+      ).to.be.revertedWith('only zkbnbAddress');
+
+      await expect(await zkBNB.mintNFT(acc1.address, acc2.address, tokenId, mockHash, ethers.constants.HashZero))
+        .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
+        .withArgs(acc1.address, acc2.address, tokenId, mockHash, extraData);
+    });
+
+    it('check contentHash, and creator after mint', async function () {
+      await expect(await zkBNBNFTFactory.getContentHash(tokenId)).to.be.equal(mockHash);
+      assert(await zkBNBNFTFactory.getCreator(tokenId), acc1.address);
+    });
+
+    // TODO: Complete tokenURI implementation in ZkBNBNFTFactory.sol
+    it('check tokenURI', async function () {
+      await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
+      const expectUri = ethers.utils.toUtf8String(
+        ethers.utils.solidityPack(['string', 'bytes32'], ['ipfs://', mockHash]),
+      );
+
+      await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
+    });
+
+    it('update base URI', async function () {
+      const newBase = 'bar://';
+      await zkBNBNFTFactory.updateBaseUri(newBase);
+      await expect(await zkBNBNFTFactory._base()).to.be.equal(newBase);
+    });
+  });
 });

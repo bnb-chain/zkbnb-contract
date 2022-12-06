@@ -175,7 +175,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
     bytes32 creatorAccountNameHash = znsController.getSubnodeNameHash(_creatorAccountName);
     require(znsController.isRegisteredNameHash(creatorAccountNameHash), "nr");
     require(address(nftFactories[creatorAccountNameHash][_collectionId]) == address(0), "Q");
-    // Check check accountNameHash belongs to msg.sender
+    // Check accountNameHash belongs to msg.sender
     address creatorAddress = getAddressByAccountNameHash(creatorAccountNameHash);
     require(creatorAddress == msg.sender, "ns");
 
