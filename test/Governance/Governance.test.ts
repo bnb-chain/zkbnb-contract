@@ -93,7 +93,6 @@ describe('Governance', function () {
       assert(isPaused === true);
     });
 
-    //TODO: Unpause does not work as intended
     it('should be able to unpause an asset if called by current Governer', async function () {
       // We need to set a asset Governance contract to create an asset but the pause/ unpause actions are controlled by governer
       await governance.connect(governerWallet).changeAssetGovernance(mockAssetGovernance.address);
@@ -101,6 +100,7 @@ describe('Governance', function () {
       await transferFunds(owner, mockAssetGovernance.address, '1');
       await governance.connect(contractSigner).addAsset(BUSD_ASSET_ADDRESS);
       await governance.connect(governerWallet).setAssetPaused(BUSD_ASSET_ADDRESS, true);
+      await expect(governance.connect(governerWallet).validateAssetAddress(BUSD_ASSET_ADDRESS)).to.be.revertedWith('2i');
 
       const tx = await governance.connect(governerWallet).setAssetPaused(BUSD_ASSET_ADDRESS, false);
       const rc = await tx.wait();
@@ -119,6 +119,11 @@ describe('Governance', function () {
 
       assert(validatorAddress === VALIDATOR_ADDRESS);
       assert(isActive === true);
+    });
+
+    it('should revert if is not validator ', async function () {
+      await governance.connect(governerWallet).setValidator(VALIDATOR_ADDRESS, true);
+      await expect(governance.isActiveValidator(owner.address)).to.be.revertedWith('invalid validator')
     });
 
     describe('After a new Asset Governance contract is set', function () {
