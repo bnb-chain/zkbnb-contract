@@ -1,19 +1,15 @@
 module.exports = {
   root: true,
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
   env: {
     es6: true,
     node: true,
     mocha: true,
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended',
-  ],
+  parserOptions: { ecmaVersion: 8 },
+  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
   rules: {
     radix: ['error', 'always'],
+    'no-unused-vars': 'warn',
     'object-shorthand': ['error', 'always'],
     'prettier/prettier': [
       'error',
@@ -32,6 +28,12 @@ module.exports = {
       rules: {
         'no-unused-expressions': 'off',
       },
+    },
+    {
+      parser: '@typescript-eslint/parser',
+      plugins: ['@typescript-eslint'],
+      files: ['*.ts', '*.tsx'],
+      extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
     },
   ],
 };
