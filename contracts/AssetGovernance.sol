@@ -70,9 +70,11 @@ contract AssetGovernance is ReentrancyGuard {
   /// @notice If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
   /// @notice NOTE: before calling this function make sure to approve `listingFeeToken` transfer for this contract.
   function addAsset(address _assetAddress) external nonReentrant {
-    require(governance.totalAssets() < listingCap, "can't add more tokens");
     // Impossible to add more tokens using this contract
+    require(governance.totalAssets() < listingCap, "can't add more tokens");
     if (!tokenLister[msg.sender]) {
+      // Check access: if address zero is a lister, any address can add asset
+      require(tokenLister[address(0)], "no access");
       // Collect fees
       bool feeTransferOk = Utils.transferFromERC20(listingFeeToken, msg.sender, treasury, listingFee);
       require(feeTransferOk, "fee transfer failed");
