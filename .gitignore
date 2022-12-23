@@ -119,9 +119,11 @@ coverage.json
 # Ganache
 ganache
 
+#TS related
+typechain-types
+logs.txt
 
 .DS_Store
 
-# Editor/IDE
-.tours
-.vscode
+# ABI files
+abi

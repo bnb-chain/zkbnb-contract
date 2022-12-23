@@ -131,10 +131,9 @@ contract UpgradeableMaster is AccessControl {
     }
   }
 
-  function changeSecurityCouncilMembers(address[3] memory _securityCouncilMembers)
-    external
-    onlyRole(DEFAULT_ADMIN_ROLE)
-  {
+  function changeSecurityCouncilMembers(
+    address[3] memory _securityCouncilMembers
+  ) external onlyRole(DEFAULT_ADMIN_ROLE) {
     securityCouncilMembers = _securityCouncilMembers;
     emit SecurityCouncilChanged(_securityCouncilMembers);
   }
