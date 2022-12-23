@@ -92,9 +92,9 @@ library TxTypes {
     buf = abi.encodePacked(
       uint8(TxType.Deposit),
       uint32(0),
-      _tx.accountNameHash, // account name hash
       _tx.assetId, // asset id
-      _tx.amount // state amount
+      _tx.amount, // state amount
+      _tx.accountNameHash // account name hash
     );
   }
 
@@ -145,9 +145,9 @@ library TxTypes {
       uint40(_tx.nftIndex),
       _tx.creatorAccountIndex,
       _tx.creatorTreasuryRate,
+      _tx.collectionId,
       _tx.nftContentHash,
-      _tx.accountNameHash,
-      _tx.collectionId
+      _tx.accountNameHash
     );
   }
 
@@ -327,7 +327,7 @@ library TxTypes {
     // uint256 nftL1TokenId;
   }
 
-  //    uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
+  // uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
 
   /// Serialize full exit nft pubdata
   function writeFullExitNftPubDataForPriorityQueue(FullExitNft memory _tx) internal pure returns (bytes memory buf) {
