@@ -164,3 +164,110 @@ export const transferFunds = async (signer: any, to: string, amount: string) => 
   });
   await tx.wait();
 };
+
+export interface StoredBlockInfo {
+  blockSize: number;
+  blockNumber: number;
+  priorityOperations: number;
+  pendingOnchainOperationsHash: string;
+  timestamp: number;
+  stateRoot: string;
+  commitment: string;
+}
+
+export interface CommitBlockInfo {
+  newStateRoot: string;
+  publicData: string;
+  timestamp: number;
+  publicDataOffsets: number[];
+  blockNumber: number;
+  blockSize: number;
+}
+
+export function hashStoredBlockInfo(block: StoredBlockInfo) {
+  const encode = ethers.utils.defaultAbiCoder.encode(
+    ['uint16', 'uint32', 'uint64', 'bytes32', 'uint256', 'bytes32', 'bytes32'],
+    [
+      block.blockSize,
+      block.blockNumber,
+      block.priorityOperations,
+      block.pendingOnchainOperationsHash,
+      block.timestamp,
+      block.stateRoot,
+      block.commitment,
+    ],
+  );
+  return ethers.utils.keccak256(encode);
+}
+export enum PubDataType {
+  EmptyTx,
+  RegisterZNS,
+  Deposit,
+  DepositNft,
+  Transfer,
+  Withdraw,
+  CreateCollection,
+  MintNft,
+  TransferNft,
+  AtomicMatch,
+  CancelOffer,
+  WithdrawNft,
+  FullExit,
+  FullExitNft,
+}
+
+export function encodePubData(pubDataType: string[], pubData: any[]) {
+  return ethers.utils.solidityPack(pubDataType, pubData);
+}
+
+export function encodePackPubData(pubDataType: string[], pubData: any[]) {
+  let data = ethers.utils.solidityPack(pubDataType, pubData);
+
+  while (data.length < 121 * 2 + 2) {
+    data += '00';
+  }
+
+  return data;
+}
+
+export function padEndBytes121(data: string) {
+  while (data.length < 121 * 2 + 2) {
+    data += '00';
+  }
+
+  return data;
+}
+
+export const PubDataTypeMap = {
+  [PubDataType.RegisterZNS]: ['uint8', 'uint32', 'bytes20', 'bytes32', 'bytes32', 'bytes32'],
+  [PubDataType.Deposit]: ['uint8', 'uint32', 'uint16', 'uint128', 'bytes32'],
+  [PubDataType.DepositNft]: ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'uint16', 'bytes32', 'bytes32'],
+  [PubDataType.Withdraw]: ['uint8', 'uint32', 'address', 'uint16', 'uint128', 'uint16', 'uint16'],
+  [PubDataType.WithdrawNft]: [
+    'uint8',
+    'uint32',
+    'uint32',
+    'uint16',
+    'uint40',
+    'address',
+    'uint32',
+    'uint16',
+    'uint16',
+    'bytes32',
+    'bytes32',
+    'uint32',
+  ],
+  [PubDataType.FullExit]: ['uint8', 'uint32', 'uint16', 'uint128', 'bytes32'],
+  [PubDataType.FullExitNft]: [
+    'uint8',
+    'uint32',
+    'uint32',
+    'uint16',
+    'uint40',
+    'uint16',
+    'bytes32',
+    'bytes32',
+    'bytes32',
+  ],
+};
+export const EMPTY_STRING_KECCAK = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';

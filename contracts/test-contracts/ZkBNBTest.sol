@@ -7,20 +7,6 @@ import "../ZkBNB.sol";
 import "../Storage.sol";
 
 contract ZkBNBTest is ZkBNB {
-  constructor(
-    address _governanceAddress,
-    address _verifierAddress,
-    address _additionalZkBNB,
-    address _znsController,
-    address _znsResolver
-  ) {
-    verifier = ZkBNBVerifier(_verifierAddress);
-    governance = Governance(_governanceAddress);
-    additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
-    znsController = ZNSController(_znsController);
-    znsResolver = PublicResolver(_znsResolver);
-  }
-
   function getMintedL2NftInfo(bytes32 nftKey) external view returns (L2NftInfo memory) {
     return mintedNfts[nftKey];
   }

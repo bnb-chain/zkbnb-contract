@@ -1,6 +1,7 @@
 const chai = require('chai');
 const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
+const { PubDataType, encodePubData, PubDataTypeMap } = require('./util');
 
 const { expect } = chai;
 chai.use(smock.matchers);
@@ -58,6 +59,19 @@ describe('ZkBNB', function () {
     await zkBNB.initialize(initParams);
   });
 
+  describe('Delegatecall', function () {
+    it('should delegate to AdditionalZkBNB Contract', async () => {
+      await zkBNB.requestFullExit('', ethers.constants.AddressZero);
+      expect(mockAdditionalZkBNB.requestFullExit).to.be.delegatedFrom(zkBNB.address);
+      await zkBNB.requestFullExitNft('', 1);
+      expect(mockAdditionalZkBNB.requestFullExitNft).to.be.delegatedFrom(zkBNB.address);
+      await zkBNB.setDefaultNFTFactory(ethers.constants.AddressZero);
+      expect(mockAdditionalZkBNB.setDefaultNFTFactory).to.be.delegatedFrom(zkBNB.address);
+      await zkBNB.revertBlocks([]);
+      expect(mockAdditionalZkBNB.revertBlocks).to.be.delegatedFrom(zkBNB.address);
+    });
+  });
+
   describe('Deposit', function () {
     const accountNameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('accountNameHash'));
 
@@ -82,8 +96,18 @@ describe('ZkBNB', function () {
       it('should emit `Deposit` events', async () => {
         mockZNSController.isRegisteredNameHash.returns(true);
         mockZNSController.getSubnodeNameHash.returns(accountNameHash);
+
+        const pubData = encodePubData(PubDataTypeMap[PubDataType.Deposit], [
+          PubDataType.Deposit,
+          0,
+          0,
+          10,
+          accountNameHash,
+        ]);
+
         await expect(zkBNB.depositBNB('account', { value: 10 }))
           .to.emit(zkBNB, 'NewPriorityRequest')
+          .withArgs(owner.address, 0, PubDataType.Deposit, pubData, 201604)
           .to.emit(zkBNB, 'Deposit')
           .withArgs(0, accountNameHash, 10);
       });
@@ -130,8 +154,16 @@ describe('ZkBNB', function () {
         mockERC20.balanceOf.returnsAtCall(0, 100);
         mockERC20.balanceOf.returnsAtCall(1, 110);
 
+        const pubData = encodePubData(PubDataTypeMap[PubDataType.Deposit], [
+          PubDataType.Deposit,
+          0,
+          ASSET_ID,
+          10,
+          accountNameHash,
+        ]);
         await expect(zkBNB.depositBEP20(mockERC20.address, 10, 'account'))
           .to.emit(zkBNB, 'NewPriorityRequest')
+          .withArgs(owner.address, 0, PubDataType.Deposit, pubData, 201604)
           .to.emit(zkBNB, 'Deposit')
           .withArgs(ASSET_ID, accountNameHash, 10);
       });

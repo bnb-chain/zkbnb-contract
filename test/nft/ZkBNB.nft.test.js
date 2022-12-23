@@ -20,6 +20,8 @@ describe('NFT functionality', function () {
 
   let owner, acc1, acc2;
 
+  let utils;
+
   const mockHash = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32); // mock data
 
   before(async function () {
@@ -53,14 +55,21 @@ describe('NFT functionality', function () {
         Utils: utils.address,
       },
     });
-    zkBNB = await ZkBNBTest.deploy(
-      mockGovernance.address,
-      mockZkBNBVerifier.address,
-      additionalZkBNB.address,
-      mockZNSController.address,
-      mockPublicResolver.address,
-    );
+    zkBNB = await ZkBNBTest.deploy();
     await zkBNB.deployed();
+
+    const initParams = ethers.utils.defaultAbiCoder.encode(
+      ['address', 'address', 'address', 'address', 'address', 'bytes32'],
+      [
+        mockGovernance.address,
+        mockZkBNBVerifier.address,
+        additionalZkBNB.address,
+        mockZNSController.address,
+        mockPublicResolver.address,
+        ethers.utils.formatBytes32String('genesisStateRoot'),
+      ],
+    );
+    await zkBNB.initialize(initParams);
 
     const ZkBNBNFTFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
     zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', 'ipfs://', zkBNB.address);
