@@ -67,7 +67,7 @@ library TxTypes {
     (offset, parsed.pubKeyX) = Bytes.readBytes32(_data, offset);
     (offset, parsed.pubKeyY) = Bytes.readBytes32(_data, offset);
 
-    require(offset == PACKED_TX_PUBDATA_BYTES, "N");
+    require(offset == PACKED_TX_PUBDATA_BYTES, "1N");
     return parsed;
   }
 
@@ -113,7 +113,7 @@ library TxTypes {
 
     offset += 66;
 
-    require(offset == PACKED_TX_PUBDATA_BYTES, "N");
+    require(offset == PACKED_TX_PUBDATA_BYTES, "2N");
     return parsed;
   }
 
@@ -172,7 +172,7 @@ library TxTypes {
 
     offset += 39;
 
-    require(offset == PACKED_TX_PUBDATA_BYTES, "N");
+    require(offset == PACKED_TX_PUBDATA_BYTES, "3N");
     return parsed;
   }
 
@@ -212,7 +212,7 @@ library TxTypes {
     (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
     offset += 74;
 
-    require(offset == PACKED_TX_PUBDATA_BYTES, "N");
+    require(offset == PACKED_TX_PUBDATA_BYTES, "4N");
     return parsed;
   }
 
@@ -262,7 +262,7 @@ library TxTypes {
     (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
 
     offset += 15;
-    require(offset == PACKED_TX_PUBDATA_BYTES, "N");
+    require(offset == PACKED_TX_PUBDATA_BYTES, "5N");
     return parsed;
   }
 
@@ -303,7 +303,7 @@ library TxTypes {
 
     offset += 66;
 
-    require(offset == PACKED_TX_PUBDATA_BYTES, "N");
+    require(offset == PACKED_TX_PUBDATA_BYTES, "6N");
     return parsed;
   }
 
@@ -366,7 +366,7 @@ library TxTypes {
     (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
 
     offset += 7;
-    require(offset == PACKED_TX_PUBDATA_BYTES, "N");
+    require(offset == PACKED_TX_PUBDATA_BYTES, "7N");
     return parsed;
   }
 
