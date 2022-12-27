@@ -5,8 +5,6 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces/INFTFactory.sol";
 
 contract ZkBNBNFTFactory is ERC721, INFTFactory {
-  // Optional mapping from token ID to token content hash
-  mapping(uint256 => bytes32) private _contentHashes;
 
   // tokenId => creator
   mapping(uint256 => address) private _nftCreators;
@@ -35,7 +33,6 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory {
     require(_msgSender() == _zkbnbAddress, "only zkbnbAddress");
     // Minting allowed only from zkbnb
     _safeMint(_toAddress, _nftTokenId);
-    _contentHashes[_nftTokenId] = _nftContentHash;
     _nftCreators[_nftTokenId] = _creatorAddress;
     emit MintNFTFromZkBNB(_creatorAddress, _toAddress, _nftTokenId, _nftContentHash, _extraData);
   }
@@ -47,13 +44,8 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory {
   ) internal virtual {
     // Sending to address `0` means that the token is getting burned.
     if (to == address(0)) {
-      delete _contentHashes[tokenId];
       delete _nftCreators[tokenId];
     }
-  }
-
-  function getContentHash(uint256 _tokenId) external view returns (bytes32) {
-    return _contentHashes[_tokenId];
   }
 
   function getCreator(uint256 _tokenId) external view returns (address) {
@@ -62,9 +54,7 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory {
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
     require(_exists(tokenId), "tokenId not exist");
-    // TODO
-    //        string memory base = "ipfs://";
-    return string(abi.encodePacked(_base, _contentHashes[tokenId]));
+    return string(abi.encodePacked(_base, tokenId));
   }
 
   function updateBaseUri(string memory base) external {
