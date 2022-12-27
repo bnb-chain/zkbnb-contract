@@ -99,7 +99,7 @@ describe('NFT functionality', function () {
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, mockNftIndex]));
       const _l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
 
-      expect(_l2Nft['nftContentHash']).to.equal(ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 32));
+      expect(_l2Nft['nftIndex']).to.equal(0);
     });
 
     it('should done mint and then withdraw', async function () {
@@ -115,7 +115,6 @@ describe('NFT functionality', function () {
         gasFeeAccountIndex: 1,
         gasFeeAssetId: 0, //BNB
         gasFeeAssetAmount: 666,
-        nftContentHash: mockHash,
         creatorAccountNameHash: mockHash,
         collectionId: 0,
       };
@@ -132,7 +131,6 @@ describe('NFT functionality', function () {
       expect(l2Nft['nftIndex']).to.equal(mockNftIndex);
       expect(l2Nft['creatorAccountIndex']).to.equal(0);
       expect(l2Nft['creatorTreasuryRate']).to.equal(5);
-      expect(l2Nft['nftContentHash']).to.equal(mockHash);
       expect(l2Nft['collectionId']).to.equal(0);
     });
 
@@ -159,7 +157,6 @@ describe('NFT functionality', function () {
         gasFeeAccountIndex: 1,
         gasFeeAssetId: 0, //BNB
         gasFeeAssetAmount: 666,
-        nftContentHash: mockHash,
         creatorAccountNameHash: mockHash,
         collectionId: 0,
       };
@@ -180,7 +177,6 @@ describe('NFT functionality', function () {
         gasFeeAccountIndex: result['gasFeeAccountIndex'],
         gasFeeAssetId: result['gasFeeAssetId'],
         gasFeeAssetAmount: result['gasFeeAssetAmount'],
-        nftContentHash: result['nftContentHash'],
         creatorAccountNameHash: result['creatorAccountNameHash'],
         collectionId: result['collectionId'],
       });
@@ -189,8 +185,6 @@ describe('NFT functionality', function () {
     it('the NFT should not be minted', async function () {
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, nftIndex]));
       const l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
-
-      assert.equal(l2Nft['nftContentHash'], 0);
       assert.equal(l2Nft['nftIndex'], 0);
     });
 
@@ -209,14 +203,11 @@ describe('NFT functionality', function () {
     it('the NFT should be minted after withdrawal', async function () {
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, nftIndex]));
       const result = await zkBNB.getMintedL2NftInfo(nftKey);
-
-      assert.equal(result['nftContentHash'], mockHash);
       assert.equal(result['nftIndex'], nftIndex);
     });
 
     it('the NFT should not be pending after withdrawal', async function () {
       const result = await zkBNB.getPendingWithdrawnNFT(nftIndex);
-      assert.equal(result['nftContentHash'], 0);
       assert.equal(result['nftIndex'], 0);
     });
   });
@@ -232,7 +223,7 @@ describe('NFT functionality', function () {
       await expect(await zkBNB.desertMode()).to.equal(false);
       await expect(await zkBNB.connect(acc1).depositNft('accountName', mockNftFactory.address, nftL1TokenId))
         .to.emit(zkBNB, 'DepositNft')
-        .withArgs(ethers.constants.HashZero, mockHash, mockNftFactory.address, nftL1TokenId, 0);
+        .withArgs(ethers.constants.HashZero, mockNftFactory.address, nftL1TokenId, 0);
     });
 
     it('the deposit priority request should be added', async function () {
@@ -246,8 +237,8 @@ describe('NFT functionality', function () {
       } = await zkBNB.getPriorityRequest(depositRequestId);
 
       const expectPubData = ethers.utils.solidityPack(
-        ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'bytes32', 'bytes32', 'uint16'],
-        [3, 0, nftL1TokenId, 0, 5, mockHash, ethers.constants.HashZero, 0],
+        ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'bytes32', 'uint16'],
+        [3, 0, nftL1TokenId, 0, 5, ethers.constants.HashZero, 0],
       );
       const expectHashedPubData = ethers.utils.keccak256(expectPubData);
       assert.equal(_hashedPubData, ethers.utils.hexDataSlice(expectHashedPubData, 12)); // bytes32 -> bytes20
@@ -289,7 +280,7 @@ describe('NFT functionality', function () {
       } = await zkBNB.getPriorityRequest(fullExitRequestId);
 
       const expectPubData = ethers.utils.solidityPack(
-        ['uint8', 'uint32', 'uint32', 'uint16', 'uint40', 'uint16', 'bytes32', 'bytes32', 'bytes32'],
+        ['uint8', 'uint32', 'uint32', 'uint16', 'uint40', 'uint16', 'bytes32', 'bytes32'],
         [
           13, // tx type
           0, // account index
@@ -299,12 +290,10 @@ describe('NFT functionality', function () {
           ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 16), // collection id
           ethers.constants.HashZero, // account name hash
           ethers.constants.HashZero, // creator name hash
-          ethers.constants.HashZero, // nft content hash
         ],
       );
       const expectHashedPubData = ethers.utils.keccak256(expectPubData);
       assert.equal(_hashedPubData, ethers.utils.hexDataSlice(expectHashedPubData, 12)); // bytes32 -> bytes20
-
       assert.equal(_txType, 13);
     });
   });
@@ -324,26 +313,26 @@ describe('NFT functionality', function () {
       await zkBNB.testSetDefaultNFTFactory(zkBNBNFTFactory.address);
       const extraData = ethers.constants.HashZero;
 
-      expect(
-        zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, mockHash, extraData),
-      ).to.be.revertedWith('only zkbnbAddress');
+      expect(zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, extraData)).to.be.revertedWith(
+        'only zkbnbAddress',
+      );
 
-      await expect(await zkBNB.mintNFT(acc1.address, acc2.address, tokenId, mockHash, ethers.constants.HashZero))
+      await expect(await zkBNB.mintNFT(acc1.address, acc2.address, tokenId, ethers.constants.HashZero))
         .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
-        .withArgs(acc1.address, acc2.address, tokenId, mockHash, extraData);
+        .withArgs(acc1.address, acc2.address, tokenId, extraData);
     });
 
     it('check contentHash, and creator after mint', async function () {
-      await expect(await zkBNBNFTFactory.getContentHash(tokenId)).to.be.equal(mockHash);
       assert(await zkBNBNFTFactory.getCreator(tokenId), acc1.address);
     });
 
-    // TODO: Complete tokenURI implementation in ZkBNBNFTFactory.sol
     it('check tokenURI', async function () {
-      await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
-      const expectUri = ethers.utils.toUtf8String(
-        ethers.utils.solidityPack(['string', 'bytes32'], ['ipfs://', mockHash]),
-      );
+      await zkBNB.testSetDefaultNFTFactory(zkBNBNFTFactory.address);
+      await expect(await zkBNB.mintNFT(acc1.address, acc2.address, tokenId, ethers.constants.HashZero))
+        .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
+        .withArgs(acc1.address, acc2.address, tokenId, ethers.constants.HashZero);
+
+      const expectUri = ethers.utils.toUtf8String(ethers.utils.solidityPack(['string', 'uint'], ['ipfs://', tokenId]));
 
       await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
     });

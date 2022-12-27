@@ -192,7 +192,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(znsController.isRegisteredNameHash(accountNameHash), "nr");
     // check if the nft is mint from layer-2
     bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-    require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
+    //TODO: Validate if this check is proper
+    require(mintedNfts[nftKey].creatorAccountIndex == 0, "l1 nft is not allowed");
 
     // Transfer the tokens to this contract
     bool success;
@@ -205,7 +206,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // check if the NFT has arrived
     require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
 
-    bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
     uint16 collectionId = mintedNfts[nftKey].collectionId;
     uint40 nftIndex = mintedNfts[nftKey].nftIndex;
     uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
@@ -217,7 +217,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       nftIndex: nftIndex,
       creatorAccountIndex: creatorAccountIndex,
       creatorTreasuryRate: creatorTreasuryRate,
-      nftContentHash: nftContentHash,
       accountNameHash: accountNameHash,
       collectionId: collectionId
     });
@@ -231,7 +230,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // delete nft from account at L1
     _removeAccountNft(msg.sender, _nftL1Address, nftIndex);
 
-    emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
+    emit DepositNft(accountNameHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
 
   function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
@@ -241,7 +240,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
     bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
     bool alreadyMintedFlag = false;
-    if (mintedNfts[nftKey].nftContentHash != bytes32(0)) {
+    if (mintedNfts[nftKey].creatorAccountIndex != 0) {
       alreadyMintedFlag = true;
     }
     // get layer-1 address by account name hash
@@ -268,15 +267,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
       // store into l2 nfts
       nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
-      try
-        INFTFactory(_factoryAddress).mintFromZkBNB(
-          _creatorAddress,
-          op.toAddress,
-          op.nftIndex,
-          op.nftContentHash,
-          _emptyExtraData
-        )
-      {
+      try INFTFactory(_factoryAddress).mintFromZkBNB(_creatorAddress, op.toAddress, op.nftIndex, _emptyExtraData) {
         // add nft to account at L1
         _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
 
@@ -284,7 +275,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           nftIndex: op.nftIndex,
           creatorAccountIndex: op.creatorAccountIndex,
           creatorTreasuryRate: op.creatorTreasuryRate,
-          nftContentHash: op.nftContentHash,
           collectionId: uint16(op.collectionId)
         });
         emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
@@ -431,7 +421,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         // get address by account name hash
         address toAddr = getAddressByAccountNameHash(_tx.accountNameHash);
         // withdraw nft
-        if (_tx.nftContentHash != bytes32(0)) {
+        if (_tx.creatorAccountIndex != 0) {
           TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
             txType: uint8(TxTypes.TxType.WithdrawNft),
             fromAccountIndex: _tx.accountIndex,
@@ -442,7 +432,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
             gasFeeAccountIndex: 0,
             gasFeeAssetId: 0,
             gasFeeAssetAmount: 0,
-            nftContentHash: _tx.nftContentHash,
             creatorAccountNameHash: _tx.accountNameHash,
             collectionId: _tx.collectionId
           });

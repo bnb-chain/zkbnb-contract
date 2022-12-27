@@ -264,8 +264,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
       nftIndex: _nftIndex,
       collectionId: 0, // unknown
       accountNameHash: accountNameHash,
-      creatorAccountNameHash: bytes32(0),
-      nftContentHash: bytes32(0x0) // unknown,
+      creatorAccountNameHash: bytes32(0)
     });
     bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
     addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);

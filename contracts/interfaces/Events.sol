@@ -64,13 +64,7 @@ interface Events {
   event NoticePeriodChange(uint256 newNoticePeriod);
 
   /// @notice NFT deposit event.
-  event DepositNft(
-    bytes32 accountNameHash,
-    bytes32 nftContentHash,
-    address tokenAddress,
-    uint256 nftTokenId,
-    uint16 creatorTreasuryRate
-  );
+  event DepositNft(bytes32 accountNameHash, address tokenAddress, uint256 nftTokenId, uint16 creatorTreasuryRate);
 
   /// @notice NFT withdraw event.
   event WithdrawNft(uint32 accountIndex, address nftL1Address, address toAddress, uint256 nftL1TokenId);

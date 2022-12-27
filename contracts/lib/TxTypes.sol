@@ -129,7 +129,6 @@ library TxTypes {
     // address nftL1Address;
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
-    bytes32 nftContentHash;
     // uint256 nftL1TokenId;
     bytes32 accountNameHash;
     uint16 collectionId;
@@ -146,7 +145,6 @@ library TxTypes {
       _tx.creatorAccountIndex,
       _tx.creatorTreasuryRate,
       _tx.collectionId,
-      _tx.nftContentHash,
       _tx.accountNameHash
     );
   }
@@ -165,8 +163,6 @@ library TxTypes {
     (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
     // collection id
     (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
-    // nft content hash
-    (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
     // account name
     (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
 
@@ -228,7 +224,6 @@ library TxTypes {
     uint32 gasFeeAccountIndex;
     uint16 gasFeeAssetId;
     uint16 gasFeeAssetAmount;
-    bytes32 nftContentHash;
     // uint256 nftL1TokenId;
     bytes32 creatorAccountNameHash;
     uint32 collectionId;
@@ -256,8 +251,6 @@ library TxTypes {
     (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
     // gas fee asset amount
     (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
-    // nft content hash
-    (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
     // account name hash
     (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
 
@@ -323,7 +316,6 @@ library TxTypes {
     // address nftL1Address;
     bytes32 accountNameHash;
     bytes32 creatorAccountNameHash;
-    bytes32 nftContentHash;
     // uint256 nftL1TokenId;
   }
 
@@ -339,8 +331,7 @@ library TxTypes {
       _tx.nftIndex,
       uint16(0), // collection id
       _tx.accountNameHash, // account name hash
-      bytes32(0), // creator account name hash
-      bytes32(0) // nft content hash
+      bytes32(0) // creator account name hash
     );
   }
 
@@ -362,8 +353,6 @@ library TxTypes {
     (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
     // creator account name hash
     (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
-    // nft content hash
-    (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
 
     offset += 7;
     require(offset == PACKED_TX_PUBDATA_BYTES, "7N");
