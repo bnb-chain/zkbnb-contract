@@ -134,7 +134,7 @@ describe('NFT functionality', function () {
       expect(l2Nft['nftIndex']).to.equal(mockNftIndex);
       expect(l2Nft['creatorAccountIndex']).to.equal(0);
       expect(l2Nft['creatorTreasuryRate']).to.equal(5);
-      expect(l2Nft['nftContentHash']).to.equal(IPFSHash);
+      expect(l2Nft['nftContentHash']).to.equal(mockHash);
       expect(l2Nft['collectionId']).to.equal(0);
     });
 
@@ -338,7 +338,6 @@ describe('NFT functionality', function () {
       expect(
         zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, extraData),
       ).to.be.revertedWith('only zkbnbAddress');
-
       await expect(
         await zkBNB.mintNFT(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, ethers.constants.HashZero),
       )
@@ -354,11 +353,12 @@ describe('NFT functionality', function () {
     it('should return proper IPFS compatible tokenURI for a NFT', async function () {
       await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
       await zkBNBNFTFactory.updateBaseUri(baseURI);
-
-      const expectUri = '1';
+      const expectUri = ethers.utils.toUtf8String(
+          ethers.utils.solidityPack(['string', 'bytes32'], [baseURI, IPFSMultiHashDigest]),
+      );
       const output = await zkBNBNFTFactory.tokenURI(tokenId);
       console.log('output', output);
-      //await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
+      await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
 
       //Check if the tokenURI is indeed valid using a IPFS gateway
       const response = await fetch(`https://ipfs.io/ipfs/${base16CID}`);
