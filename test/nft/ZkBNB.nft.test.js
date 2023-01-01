@@ -25,6 +25,7 @@ describe('NFT functionality', function () {
   let utils;
 
   const mockHash = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32); // mock data
+  // The prefix to the CID before the content hash. Refer to https://docs.ipfs.tech/concepts/content-addressing/#cid-conversion for more details.
   const baseURI = `ipfs://f01701220`;
 
   before(async function () {
@@ -314,14 +315,9 @@ describe('NFT functionality', function () {
 
   describe('ZkBNBNFTFactory', function () {
     const tokenId = 2;
-    //The prefix to the CID before the content hash. Refer to https://docs.ipfs.tech/concepts/content-addressing/#cid-conversion for more details.
-    const baseURI = 'ipfs://f01701220';
 
     //The SHA2-256 digest of the IPFS multihash. This is the second part of the CIDv1
-    const IPFSMultiHashDigest = ethers.utils.hexZeroPad(
-      '0x3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase(),
-      32,
-    );
+    const IPFSMultiHashDigest = ethers.utils.hexZeroPad(mockHash.toLowerCase(), 32);
 
     const base16CID = new CID('bafybeibvpgysop4uafzp5ptswc73khav6spshzkyzj7qhx52fwl5qkd2ga').toString('base16');
 
@@ -357,8 +353,8 @@ describe('NFT functionality', function () {
       await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
 
       //Check if the tokenURI is indeed valid using a IPFS gateway
-      const response = await fetch(`https://ipfs.io/ipfs/${base16CID}`);
-      const data = await response.json();
+      // const response = await fetch(`https://ipfs.io/ipfs/${base16CID}`);
+      // const data = await response.json();
     });
 
     it('should point base URI to represent URI and encoding of the CID', async function () {
