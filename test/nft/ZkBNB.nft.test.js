@@ -23,6 +23,7 @@ describe('NFT functionality', function () {
   let utils;
 
   const mockHash = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32); // mock data
+  const baseURI = `ipfs://f01701220`;
 
   before(async function () {
     [owner, acc1, acc2] = await ethers.getSigners();
@@ -72,14 +73,14 @@ describe('NFT functionality', function () {
     await zkBNB.initialize(initParams);
 
     const ZkBNBNFTFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
-    zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', 'ipfs://', zkBNB.address);
+    zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', baseURI, zkBNB.address);
     await zkBNBNFTFactory.deployed();
     assert.equal(await zkBNBNFTFactory.name(), 'ZkBNBNft');
     assert.equal(await zkBNBNFTFactory.symbol(), 'Zk');
-    assert.equal(await zkBNBNFTFactory._base(), 'ipfs://');
+    assert.equal(await zkBNBNFTFactory._base(), baseURI);
 
     const MockNftFactory = await smock.mock('ZkBNBNFTFactory');
-    mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', 'ipfs://', zkBNB.address);
+    mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', baseURI, zkBNB.address);
     await mockNftFactory.deployed();
     await mockGovernance.setVariable('networkGovernor', owner.address);
 
@@ -341,9 +342,7 @@ describe('NFT functionality', function () {
     // TODO: Complete tokenURI implementation in ZkBNBNFTFactory.sol
     it('check tokenURI', async function () {
       await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
-      const expectUri = ethers.utils.toUtf8String(
-        ethers.utils.solidityPack(['string', 'bytes32'], ['ipfs://', mockHash]),
-      );
+      const expectUri = `${baseURI}${mockHash.substring(2)}`;
 
       await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
     });
