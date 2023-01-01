@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces/INFTFactory.sol";
+import "./lib/Bytes.sol";
 
 contract ZkBNBNFTFactory is ERC721, INFTFactory {
   // Optional mapping from token ID to token content hash
@@ -15,12 +16,7 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory {
 
   address private _zkbnbAddress;
 
-  constructor(
-    string memory name,
-    string memory symbol,
-    string memory base,
-    address zkbnbAddress
-  ) ERC721(name, symbol) {
+  constructor(string memory name, string memory symbol, string memory base, address zkbnbAddress) ERC721(name, symbol) {
     _zkbnbAddress = zkbnbAddress;
     _base = base;
   }
@@ -40,11 +36,7 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory {
     emit MintNFTFromZkBNB(_creatorAddress, _toAddress, _nftTokenId, _nftContentHash, _extraData);
   }
 
-  function _beforeTokenTransfer(
-    address,
-    address to,
-    uint256 tokenId
-  ) internal virtual {
+  function _beforeTokenTransfer(address, address to, uint256 tokenId) internal virtual {
     // Sending to address `0` means that the token is getting burned.
     if (to == address(0)) {
       delete _contentHashes[tokenId];
@@ -62,9 +54,7 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory {
 
   function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
     require(_exists(tokenId), "tokenId not exist");
-    // TODO
-    //        string memory base = "ipfs://";
-    return string(abi.encodePacked(_base, _contentHashes[tokenId]));
+    return string(abi.encodePacked(_base, Bytes.bytes32ToHexString(_contentHashes[tokenId], false)));
   }
 
   function updateBaseUri(string memory base) external {
