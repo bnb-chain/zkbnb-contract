@@ -10023,7 +10023,7 @@ swarm-js@^0.1.40:
     tar "^4.0.2"
     xhr-request "^1.0.1"
 
-sync-request@^6.0.0:
+sync-request@^6.0.0, sync-request@^6.1.0:
   version "6.1.0"
   resolved "https://npm-registry.toolsfdg.net/sync-request/-/sync-request-6.1.0.tgz#e96217565b5e50bbffe179868ba75532fb597e68"
   integrity sha512-8fjNkrNlNCrVc/av+Jn+xxqfCjYaBoHqCsDz6mt030UMxJGr+GSfCV1dQt2gRtlL63+VPidwDVLr7V2OcTSdRw==
