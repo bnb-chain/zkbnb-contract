@@ -48,12 +48,8 @@ async function main() {
 
   // Step 3: initialize deploy factory and finish deployment
   // deploy price oracle
-  console.log('Deploy PriceOracle...');
-  const priceOracle = await contractFactories.ZNSPriceOracle.deploy([
-    ethers.utils.parseEther('0.05'),
-    ethers.utils.parseEther('0.03'),
-    ethers.utils.parseEther('0.01'),
-  ]);
+  console.log('Deploy PriceOracleV1...');
+  const priceOracle = await contractFactories.ZNSPriceOracle.deploy(ethers.utils.parseEther('0.05'));
   await priceOracle.deployed();
 
   // prepare deploy params
@@ -187,7 +183,7 @@ async function getContractFactories() {
     ERC721Factory: await ethers.getContractFactory('ZkBNBRelatedERC721'),
     ZNSRegistry: await ethers.getContractFactory('ZNSRegistry'),
     ZNSResolver: await ethers.getContractFactory('PublicResolver'),
-    ZNSPriceOracle: await ethers.getContractFactory('StablePriceOracle'),
+    ZNSPriceOracle: await ethers.getContractFactory('PriceOracleV1'),
     ZNSController: await ethers.getContractFactory('ZNSController'),
     Governance: await ethers.getContractFactory('Governance'),
     AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
