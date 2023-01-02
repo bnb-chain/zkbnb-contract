@@ -170,7 +170,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
   }
 
   function _validLength(string memory _name) internal pure returns (bool) {
-    return _name.strlen() >= 3 && _name.strlen() <= 20;
+    return _name.strlen() >= 1 && _name.strlen() <= 20;
   }
 
   function _validPubKey(bytes32 _pubKey) internal view returns (bool) {
