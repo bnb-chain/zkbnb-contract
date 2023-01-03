@@ -5,33 +5,17 @@ import '@openzeppelin/hardhat-upgrades';
 import 'hardhat-abi-exporter';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-// const getAccounts = (privateKeys: string | undefined): Array<string> => {
-//     if (!privateKeys) {
-//         return []
-//     }
-
-//     const privateKeyArr = privateKeys.split(',')
-//     return privateKeyArr
-//         .filter((privateKey) => {
-//             // Filter empty strings, no empty strings should occupy array positions
-//             return privateKey.trim().length > 0
-//         })
-//         .map((privateKey) => {
-//             const tempPrivateKey = privateKey.trim()
-//             if (tempPrivateKey.startsWith('0x')) {
-//                 return tempPrivateKey
-//             }
-//             return `0x${tempPrivateKey}`
-//         })
-// }
-
 const config: HardhatUserConfig = {
+  etherscan: {
+    apiKey: 'HHHQV1FM9HVSK82JMPEEBG44PR24CM3B5U',
+  },
   solidity: {
     version: '0.8.17',
     settings: {

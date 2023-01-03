@@ -1,9 +1,11 @@
+const hardhat = require('hardhat');
 const { getDeployedAddresses, getZkBNBProxy } = require('./utils');
-const { ethers } = require('hardhat');
+const { ethers } = hardhat;
 
 async function main() {
+  const addrs = getDeployedAddresses(hardhat.network.name, 'info/addresses.json');
   const [owner] = await ethers.getSigners();
-  const addrs = getDeployedAddresses('info/addresses.json');
+
   const zkbnb = await getZkBNBProxy(addrs.zkbnbProxy);
   const treasuryName = 'treasury';
   const gasName = 'gas';

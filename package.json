@@ -18,6 +18,7 @@
     "fix": "yarn lint:fix:format && yarn lint:fix:eslint",
     "abi": "npx hardhat export-abi",
     "deploy": "npx hardhat run ./scripts/deploy-keccak256/deploy.js",
+    "upgrade": "npx hardhat run ./scripts/upgrade/index.js",
     "prepare": "husky install"
   },
   "lint-staged": {
@@ -46,6 +47,7 @@
   "devDependencies": {
     "@defi-wonderland/smock": "^2.3.4",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-etherscan": "^3.1.4",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/hardhat-upgrades": "^1.17.0",
     "@remix-project/remixd": "^0.6.0",
@@ -69,9 +71,11 @@
     "eth-ens-namehash": "^2.0.8",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.7.2",
+    "figlet": "^1.5.2",
     "hardhat": "^2.12.3",
     "hardhat-abi-exporter": "^2.9.0",
     "hardhat-contract-sizer": "^2.5.1",
+    "hardhat-deploy": "^0.11.22",
     "hardhat-gas-reporter": "^1.0.9",
     "hardhat-tracer": "^1.0.0-alpha.6",
     "hardhat-watcher": "^2.3.0",
