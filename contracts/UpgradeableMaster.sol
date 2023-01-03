@@ -25,6 +25,7 @@ contract UpgradeableMaster is AccessControl {
   event NoticePeriodChange(uint256 newNoticePeriod);
   event ZkBNBChanged(address zkBNB);
   event SecurityCouncilChanged(address[3] securityCouncilMembers);
+  event SecurityCouncilApproved(uint256 numberOfApprovalsFromSecurityCouncil);
 
   address[] public securityCouncilMembers;
 
@@ -77,7 +78,7 @@ contract UpgradeableMaster is AccessControl {
     upgradePreparationActive = true;
     _upgradePreparationActivationTime = block.timestamp;
     // Check if the _approvedUpgradeNoticePeriod is passed
-    require(block.timestamp >= _upgradeStartTimestamp + _approvedUpgradeNoticePeriod);
+    require(block.timestamp >= _upgradeStartTimestamp + _approvedUpgradeNoticePeriod, "upf");
   }
 
   /// @notice Notification that upgrade canceled
@@ -115,10 +116,11 @@ contract UpgradeableMaster is AccessControl {
 
     for (uint256 id = 0; id < securityCouncilMembers.length; ++id) {
       if (securityCouncilMembers[id] == msg.sender) {
-        require(_upgradeStartTimestamp != 0);
-        require(!_securityCouncilApproves[id]);
+        require(_upgradeStartTimestamp != 0, "ust");
+        require(!_securityCouncilApproves[id], "scf");
         _securityCouncilApproves[id] = true;
         _numberOfApprovalsFromSecurityCouncil++;
+        emit SecurityCouncilApproved(_numberOfApprovalsFromSecurityCouncil);
 
         if (_numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_THRESHOLD) {
           if (_approvedUpgradeNoticePeriod > 0) {

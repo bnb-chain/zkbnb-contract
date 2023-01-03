@@ -2,15 +2,20 @@ const fs = require('fs');
 const { ethers } = require('hardhat');
 
 // Read deployed addresses from file
-exports.getDeployedAddresses = function (path) {
+exports.getDeployedAddresses = function (network, path) {
   const raw = fs.readFileSync(path);
-  return JSON.parse(raw);
+  const data = JSON.parse(raw);
+
+  return data[network];
 };
 
 // Write deployed addresses to json file
-exports.saveDeployedAddresses = function (path, addrs) {
-  const data = JSON.stringify(addrs, null, 2);
-  fs.writeFileSync(path, data);
+exports.saveDeployedAddresses = function (network, path, addrs) {
+  const raw = fs.readFileSync(path);
+  const data = JSON.parse(raw);
+  data[network] = addrs;
+  const jsonString = JSON.stringify(data, null, 2);
+  fs.writeFileSync(path, jsonString);
 };
 
 exports.getZkBNBProxy = async function (addr) {

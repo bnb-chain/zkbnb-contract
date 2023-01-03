@@ -1,9 +1,10 @@
-const { ethers } = require('hardhat');
+const hardhat = require('hardhat');
 const namehash = require('eth-ens-namehash');
 const fs = require('fs');
 const { getKeccak256, saveDeployedAddresses, getZkBNBProxy } = require('./utils');
 require('dotenv').config();
 
+const { ethers } = hardhat;
 const { SECURITY_COUNCIL_MEMBERS_NUMBER_1, SECURITY_COUNCIL_MEMBERS_NUMBER_2, SECURITY_COUNCIL_MEMBERS_NUMBER_3 } =
   process.env;
 
@@ -153,14 +154,14 @@ async function main() {
     );
   await setBaseNodeTx.wait();
 
-  // NOTE: UpgradeGateKeeper must be granted permission to invoke the relevant method of the notification period
   console.log('Granted permission...');
   const UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
   await upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, event[6] /* upgradeGateKeeper.address */);
+  await upgradeableMaster.changeZkBNBAddress(event[5] /* zkbnb.address */);
 
   // Save addresses into JSON
   console.log('Save deployed contract addresses...');
-  saveDeployedAddresses('info/addresses.json', {
+  saveDeployedAddresses(hardhat.network.name, 'info/addresses.json', {
     governance: event[0],
     assetGovernance: event[1],
     verifierProxy: event[2],
@@ -174,6 +175,7 @@ async function main() {
     ERC721: ERC721.address,
     znsPriceOracle: priceOracle.address,
     DefaultNftFactory: DefaultNftFactory.address,
+    upgradeableMaster: upgradeableMaster.address,
   });
 }
 
