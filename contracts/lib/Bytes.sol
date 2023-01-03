@@ -10,6 +10,32 @@ pragma solidity ^0.8.0;
 // 2) We load W from memory into out, last N bytes of W are placed into out
 
 library Bytes {
+  bytes16 private constant _SYMBOLS = "0123456789abcdef";
+
+  /**
+   * @dev Converts a `bytes32` to its ASCII `string` hexadecimal representation with fixed length.
+   */
+  function bytes32ToHexString(bytes32 bytesValue, bool prefix) internal pure returns (string memory) {
+    uint256 uint256Value = uint256(bytesValue);
+    uint skip;
+    bytes memory buffer;
+    if (prefix) {
+      skip = 2;
+      buffer = new bytes(66);
+      buffer[0] = "0";
+      buffer[1] = "x";
+    } else {
+      skip = 0;
+      buffer = new bytes(64);
+    }
+    for (uint256 i = 65; i > 1; --i) {
+      buffer[i + skip - 2] = _SYMBOLS[uint256Value & 0xf];
+      uint256Value >>= 4;
+    }
+    require(uint256Value == 0, "Strings: hex length insufficient");
+    return string(buffer);
+  }
+
   function toBytesFromUInt16(uint16 self) internal pure returns (bytes memory _bts) {
     return toBytesFromUIntTruncated(uint256(self), 2);
   }
@@ -147,11 +173,7 @@ library Bytes {
   // Get slice from bytes arrays
   // Returns the newly created 'bytes memory'
   // NOTE: theoretically possible overflow of (_start + _length)
-  function slice(
-    bytes memory _bytes,
-    uint256 _start,
-    uint256 _length
-  ) internal pure returns (bytes memory) {
+  function slice(bytes memory _bytes, uint256 _start, uint256 _length) internal pure returns (bytes memory) {
     require(_bytes.length >= (_start + _length), "Z");
     // bytes length is less then start byte + length bytes
 

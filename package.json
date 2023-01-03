@@ -90,9 +90,12 @@
     "@bnb-chain/zkbnb-js-sdk": "^4.0.0",
     "@openzeppelin/contracts": "^4.8.0",
     "@openzeppelin/contracts-upgradeable": "^4.8.0",
+    "cids": "^1.1.9",
     "husky": "^8.0.2",
     "lint-staged": "^13.1.0",
     "mocha": "^10.0.0",
+    "sha256": "^0.2.0",
+    "sync-request": "^6.1.0",
     "tslog": "^3.3.4"
   }
 }
