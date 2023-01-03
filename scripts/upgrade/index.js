@@ -40,11 +40,14 @@ function main() {
         type: 'list',
         name: 'operator',
         message: 'What do you want?',
-        choices: ['start', 'preparation', 'cut period', 'cancel', 'finish'],
+        choices: ['Show All Implement Contract', 'start', 'preparation', 'cut period', 'cancel', 'finish'],
       },
     ])
     .then(async (answers) => {
       switch (answers.operator) {
+        case 'Show All Implement Contract':
+          ShowAllImplContract();
+          break;
         case 'start':
           start();
           break;
@@ -215,6 +218,11 @@ async function finish() {
   console.table(impls);
   console.log(chalk.green('✅ Finished'));
   console.log('Current version is %s', receipt.events[1].args.versionId);
+}
+async function ShowAllImplContract() {
+  const impls = await getUpgradeableContractImplement();
+  console.log('**** New implement Contract ****');
+  console.log(impls);
 }
 
 main();
