@@ -70,7 +70,7 @@ async function main() {
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
   const _listingToken = BUSDToken.address;
-  const baseNode = namehash.hash('legend');
+  const baseNode = namehash.hash('zkbnb');
   // deploy DeployFactory
   console.log('Deploy DeployFactory...');
   const deployFactory = await contractFactories.DeployFactory.deploy(
@@ -137,7 +137,7 @@ async function main() {
   // Step 4: register zns base node
   console.log('Register ZNS base node...');
   const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const baseNodeLabel = getKeccak256('legend'); // keccak256('legend');
+  const baseNodeLabel = getKeccak256('zkbnb'); // keccak256('zkbnb');
   const setBaseNodeTx = await znsRegistry
     .connect(owner)
     .setSubnodeOwner(
