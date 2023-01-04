@@ -66,6 +66,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     //            _proof
     //        );
     //        require(proofCorrect, "x");
+    require(znsRegistry.owner(node) == msg.sender, "z");
 
     if (_tokenId <= MAX_FUNGIBLE_ASSET_ID) {
       bytes22 packedBalanceKey = packAddressAndAssetId(_owner, uint16(_tokenId));
