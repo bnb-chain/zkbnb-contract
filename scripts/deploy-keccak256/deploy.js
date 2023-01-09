@@ -1,7 +1,7 @@
 const hardhat = require('hardhat');
 const namehash = require('eth-ens-namehash');
 const fs = require('fs');
-const { getKeccak256, saveDeployedAddresses, getZkBNBProxy } = require('./utils');
+const { getKeccak256, saveDeployedAddresses } = require('./utils');
 require('dotenv').config();
 
 const { ethers } = hardhat;
@@ -161,7 +161,7 @@ async function main() {
 
   // Save addresses into JSON
   console.log('Save deployed contract addresses...');
-  saveDeployedAddresses(hardhat.network.name, 'info/addresses.json', {
+  saveDeployedAddresses('info/addresses.json', {
     governance: event[0],
     assetGovernance: event[1],
     verifierProxy: event[2],

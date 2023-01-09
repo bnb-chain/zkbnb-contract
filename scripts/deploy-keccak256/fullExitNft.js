@@ -4,7 +4,7 @@ const { getDeployedAddresses, getZkBNBProxy } = require('./utils');
 const { ethers } = hardhat;
 
 async function main() {
-  const addrs = getDeployedAddresses(hardhat.network.name, 'info/addresses.json');
+  const addrs = getDeployedAddresses('info/addresses.json');
   const zkbnb = await getZkBNBProxy(addrs.zkbnbProxy);
 
   console.log('FullExit NFT...');

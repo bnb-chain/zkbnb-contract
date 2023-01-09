@@ -10,7 +10,7 @@ const chalk = require('chalk');
 const AddressZero = ethers.constants.AddressZero;
 
 let targetContracts;
-const addrs = getDeployedAddresses(hardhat.network.name, 'info/addresses.json');
+const addrs = getDeployedAddresses('info/addresses.json');
 
 const targetContractsDeployed = {
   governance: AddressZero,
@@ -178,7 +178,7 @@ async function cutPeriod() {
   //   ethers.provider,
   // );
 
-  // const addrs = getDeployedAddresses(hardhat.network.name, 'info/addresses.json');
+  // const addrs = getDeployedAddresses('info/addresses.json');
 
   // const UpgradeableMaster = await ethers.getContractFactory('UpgradeableMaster');
   // const upgradeableMaster = await UpgradeableMaster.attach(addrs.upgradeableMaster);

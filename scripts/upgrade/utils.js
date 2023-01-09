@@ -4,7 +4,7 @@ const { getDeployedAddresses } = require('../deploy-keccak256/utils');
 const { ethers } = hardhat;
 
 async function getUpgradeableContractImplement() {
-  const addrs = getDeployedAddresses(hardhat.network.name, 'info/addresses.json');
+  const addrs = getDeployedAddresses('info/addresses.json');
   const contractFactories = await getContractFactories();
 
   /* ----------------------- current implement contracts ---------------------- */
