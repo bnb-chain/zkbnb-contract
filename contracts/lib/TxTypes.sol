@@ -92,9 +92,9 @@ library TxTypes {
     buf = abi.encodePacked(
       uint8(TxType.Deposit),
       uint32(0),
+      _tx.accountNameHash, // account name hash
       _tx.assetId, // asset id
-      _tx.amount, // state amount
-      _tx.accountNameHash // account name hash
+      _tx.amount // state amount
     );
   }
 
@@ -145,9 +145,9 @@ library TxTypes {
       uint40(_tx.nftIndex),
       _tx.creatorAccountIndex,
       _tx.creatorTreasuryRate,
-      _tx.collectionId,
       _tx.nftContentHash,
-      _tx.accountNameHash
+      _tx.accountNameHash,
+      _tx.collectionId
     );
   }
 
