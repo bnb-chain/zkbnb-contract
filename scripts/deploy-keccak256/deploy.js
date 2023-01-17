@@ -49,12 +49,8 @@ async function main() {
 
   // Step 3: initialize deploy factory and finish deployment
   // deploy price oracle
-  console.log('Deploy PriceOracle...');
-  const priceOracle = await contractFactories.ZNSPriceOracle.deploy([
-    ethers.utils.parseEther('0.05'),
-    ethers.utils.parseEther('0.03'),
-    ethers.utils.parseEther('0.01'),
-  ]);
+  console.log('Deploy PriceOracleV1...');
+  const priceOracle = await contractFactories.ZNSPriceOracle.deploy(ethers.utils.parseEther('0.05'));
   await priceOracle.deployed();
 
   // prepare deploy params
@@ -75,7 +71,7 @@ async function main() {
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
   const _listingToken = BUSDToken.address;
-  const baseNode = namehash.hash('legend');
+  const baseNode = namehash.hash('zkbnb');
   // deploy DeployFactory
   console.log('Deploy DeployFactory...');
   const deployFactory = await contractFactories.DeployFactory.deploy(
@@ -142,7 +138,7 @@ async function main() {
   // Step 4: register zns base node
   console.log('Register ZNS base node...');
   const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const baseNodeLabel = getKeccak256('legend'); // keccak256('legend');
+  const baseNodeLabel = getKeccak256('zkbnb'); // keccak256('zkbnb');
   const setBaseNodeTx = await znsRegistry
     .connect(owner)
     .setSubnodeOwner(
@@ -189,7 +185,7 @@ async function getContractFactories() {
     ERC721Factory: await ethers.getContractFactory('ZkBNBRelatedERC721'),
     ZNSRegistry: await ethers.getContractFactory('ZNSRegistry'),
     ZNSResolver: await ethers.getContractFactory('PublicResolver'),
-    ZNSPriceOracle: await ethers.getContractFactory('StablePriceOracle'),
+    ZNSPriceOracle: await ethers.getContractFactory('PriceOracleV1'),
     ZNSController: await ethers.getContractFactory('ZNSController'),
     Governance: await ethers.getContractFactory('Governance'),
     AssetGovernance: await ethers.getContractFactory('AssetGovernance'),

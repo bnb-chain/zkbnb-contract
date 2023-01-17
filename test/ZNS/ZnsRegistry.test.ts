@@ -23,12 +23,12 @@ describe('ZNS', function () {
     await zns.deployed();
   });
 
-  it('Should own the blank root node', async function () {
+  it('should own the blank root node', async function () {
     const rootNode = namehash.hash('');
     expect(await zns.owner(rootNode)).to.equal(await owner.getAddress());
   });
 
-  it('Should be able to create a sub node and give control to a ZNSController', async function () {
+  it('should be able to create a sub node and give control to a ZNSController', async function () {
     const rootNode = namehash.hash('');
     const baseNodeLabel = getKeccak256('legend');
 
