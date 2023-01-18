@@ -124,4 +124,14 @@ contract Storage {
 
   /// @notice Address which will be used if no factories is specified.
   address public defaultNFTFactory;
+
+  /// @notice Min time a user has to wait for registering a account name
+  uint public minCommitmentAge = 30 seconds;
+
+  /// @notice Max time after which a commitment to register a account name expires
+  uint public maxCommitmentAge = 7 days;
+
+  // @notice Commitments for registering user names
+  mapping(bytes32 => uint) public commitments;
+
 }

@@ -108,12 +108,42 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external {}
 
-  function registerZNS(
-    string calldata _name,
+  /// @notice Create a commitment on the chosen name for a prospective L1 owner
+  /// @param _name The account name to register
+  /// @param _owner The L1 account to associate the name with
+  /// @param _secret The secret to create commitment with
+  function makeCommitment(
+    string memory _name,
     address _owner,
+    bytes32 _secret
+  ) public pure returns (bytes32) {
+    bytes32 label = keccak256(bytes(_name));
+    return keccak256(abi.encodePacked(label, _owner, _secret));
+  }
+
+  /// @notice Commit for registering a new name
+  /// @param commitment The commitment hash to reserve the name
+  function commit(bytes32 commitment) public {
+    require(commitments[commitment] + maxCommitmentAge < block.timestamp, "ae");
+    commitments[commitment] = block.timestamp;
+  }
+
+  /// @notice Register a new account with ZKBNB
+  /// @param _name The account name to register
+  /// @param _owner The L1 account to associate the name with
+  /// @param _secret The secret used in creating the commitment hash
+  /// @param _zkbnbPubKeyX The X part of L2 public key
+  /// @param _zkbnbPubKeyY The Y part of L2 public key
+  function registerZNS(
+    string memory _name,
+    address _owner,
+    bytes32 _secret,
     bytes32 _zkbnbPubKeyX,
     bytes32 _zkbnbPubKeyY
-  ) external payable nonReentrant {
+  ) public payable nonReentrant{
+    bytes32 commitment = makeCommitment(_name, _owner, _secret);
+    _consumeCommitment(_name, commitment);
+
     // Register ZNS
     (bytes32 node, uint32 accountIndex) = znsController.registerZNS{value: msg.value}(
       _name,
@@ -125,12 +155,12 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
     // Priority Queue request
     TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
-      txType: uint8(TxTypes.TxType.RegisterZNS),
-      accountIndex: accountIndex,
-      accountName: Utils.stringToBytes20(_name),
-      accountNameHash: node,
-      pubKeyX: _zkbnbPubKeyX,
-      pubKeyY: _zkbnbPubKeyY
+    txType: uint8(TxTypes.TxType.RegisterZNS),
+    accountIndex: accountIndex,
+    accountName: Utils.stringToBytes20(_name),
+    accountNameHash: node,
+    pubKeyX: _zkbnbPubKeyX,
+    pubKeyY: _zkbnbPubKeyY
     });
     // compact pub data
     bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
@@ -139,6 +169,19 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
 
     emit RegisterZNS(_name, node, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, accountIndex);
+  }
+
+  //Check previous commitment
+  function _consumeCommitment(
+  string memory name,
+  bytes32 commitment
+  ) internal {
+    // Require a valid commitment
+    require(commitments[commitment] + minCommitmentAge <= block.timestamp, "not enough wait");
+    // If the commitment not created, is too old, or the name is registered, stop
+    require(commitments[commitment] + maxCommitmentAge > block.timestamp, "too old");
+    require(!znsController.isRegisteredZNSName(name), "already exists");
+    delete (commitments[commitment]);
   }
 
   function isRegisteredZNSName(string memory _name) external view returns (bool) {

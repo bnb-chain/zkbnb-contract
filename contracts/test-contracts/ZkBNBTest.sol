@@ -27,6 +27,11 @@ contract ZkBNBTest is ZkBNB {
     defaultNFTFactory = address(_factory);
   }
 
+  function testSetMinMaxIntervalsForNameRegistration(uint min, uint max) external {
+    minCommitmentAge = min;
+    maxCommitmentAge = max;
+  }
+
   function mintNFT(
     address _creatorAddress,
     address _toAddress,
