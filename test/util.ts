@@ -1,4 +1,4 @@
-import { Signer, utils } from 'ethers';
+import { Signer, utils, Bytes } from 'ethers';
 
 import log from '../logger.config';
 import { ethers } from 'hardhat';
@@ -182,6 +182,11 @@ export interface CommitBlockInfo {
   publicDataOffsets: number[];
   blockNumber: number;
   blockSize: number;
+}
+
+export interface VerifyAndExecuteBlockInfo {
+  blockHeader: StoredBlockInfo;
+  pendingOnchainOpsPubData: string[];
 }
 
 export function hashStoredBlockInfo(block: StoredBlockInfo) {
