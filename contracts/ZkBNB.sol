@@ -112,11 +112,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _name The account name to register
   /// @param _owner The L1 account to associate the name with
   /// @param _secret The secret to create commitment with
-  function makeCommitment(
-    string memory _name,
-    address _owner,
-    bytes32 _secret
-  ) public pure returns (bytes32) {
+  function makeCommitment(string memory _name, address _owner, bytes32 _secret) public pure returns (bytes32) {
     bytes32 label = keccak256(bytes(_name));
     return keccak256(abi.encodePacked(label, _owner, _secret));
   }
@@ -140,7 +136,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     bytes32 _secret,
     bytes32 _zkbnbPubKeyX,
     bytes32 _zkbnbPubKeyY
-  ) public payable nonReentrant{
+  ) public payable nonReentrant {
     bytes32 commitment = makeCommitment(_name, _owner, _secret);
     _consumeCommitment(_name, commitment);
 
@@ -155,12 +151,12 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
     // Priority Queue request
     TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
-    txType: uint8(TxTypes.TxType.RegisterZNS),
-    accountIndex: accountIndex,
-    accountName: Utils.stringToBytes20(_name),
-    accountNameHash: node,
-    pubKeyX: _zkbnbPubKeyX,
-    pubKeyY: _zkbnbPubKeyY
+      txType: uint8(TxTypes.TxType.RegisterZNS),
+      accountIndex: accountIndex,
+      accountName: Utils.stringToBytes20(_name),
+      accountNameHash: node,
+      pubKeyX: _zkbnbPubKeyX,
+      pubKeyY: _zkbnbPubKeyY
     });
     // compact pub data
     bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
@@ -172,10 +168,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   //Check previous commitment
-  function _consumeCommitment(
-  string memory name,
-  bytes32 commitment
-  ) internal {
+  function _consumeCommitment(string memory name, bytes32 commitment) internal {
     // Require a valid commitment
     require(commitments[commitment] + minCommitmentAge <= block.timestamp, "not enough wait");
     // If the commitment not created, is too old, or the name is registered, stop

@@ -133,5 +133,4 @@ contract Storage {
 
   // @notice Commitments for registering user names
   mapping(bytes32 => uint) public commitments;
-
 }
