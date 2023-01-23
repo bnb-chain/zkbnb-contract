@@ -74,7 +74,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
-  function upgrade(bytes calldata upgradeParameters) external {}
+  function upgrade(bytes calldata upgradeParameters) external {
+    address _additionalZkBNB = abi.decode(upgradeParameters, (address));
+    additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
+  }
 
   function registerZNS(
     string calldata _name,

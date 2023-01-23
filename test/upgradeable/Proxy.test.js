@@ -150,10 +150,11 @@ describe('Proxy', function () {
       });
       const mockZkBNBNew = await MockZkBNB.deploy();
       await mockZkBNBNew.deployed();
+      mockZkBNBNew.upgrade.returns(true);
 
-      await proxyZkBNB.upgradeTarget(mockZkBNBNew.address, addr4.address);
+      await proxyZkBNB.upgradeTarget(mockZkBNBNew.address, ethers.constants.AddressZero);
       expect(mockZkBNBNew.upgrade).to.be.delegatedFrom(proxyZkBNB.address);
-      expect(mockZkBNBNew.upgrade).to.have.been.calledWith(addr4.address.toLowerCase());
+      expect(mockZkBNBNew.upgrade).to.have.been.calledWith(ethers.constants.AddressZero);
     });
   });
 
