@@ -111,13 +111,19 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     // This subnode should not be registered before
     require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
     // Register subnode
-    subnode = zns.setSubnodeRecord(baseNode, label, _owner, _pubKeyX, _pubKeyY, _resolver);
-    accountIndex = zns.setSubnodeAccountIndex(subnode);
+    (bytes32 subnode, uint32 accountIndex) = zns.setSubnodeRecord(
+      baseNode,
+      label,
+      _owner,
+      _pubKeyX,
+      _pubKeyY,
+      _resolver
+    );
 
     // Update L2 owner mapper
     ZNSPubKeyMapper[_pubKeyY] = subnode;
 
-    emit ZNSRegistered(_name, subnode, _owner, _pubKeyX, _pubKeyY, price);
+    emit ZNSRegistered(_name, subnode, accountIndex, _owner, _pubKeyX, _pubKeyY, price);
 
     // Refund remained value to the owner of this name
     if (msg.value > price) {

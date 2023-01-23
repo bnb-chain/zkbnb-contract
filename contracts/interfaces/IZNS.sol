@@ -21,9 +21,7 @@ interface IZNS {
     bytes32 _pubKeyX,
     bytes32 _pubKeyY,
     address _resolver
-  ) external returns (bytes32);
-
-  function setSubnodeAccountIndex(bytes32 _node) external returns (uint32);
+  ) external returns (bytes32, uint32);
 
   function setSubnodeOwner(
     bytes32 _node,
@@ -40,6 +38,8 @@ interface IZNS {
   function owner(bytes32 node) external view returns (address);
 
   function pubKey(bytes32 node) external view returns (bytes32, bytes32);
+
+  function accountIndex(bytes32 node) external view returns (uint32);
 
   function recordExists(bytes32 node) external view returns (bool);
 

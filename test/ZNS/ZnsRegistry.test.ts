@@ -170,8 +170,8 @@ describe('ZNS', function () {
       expect(await zns.subNodeRecordExists(baseNode, accountNode)).to.equal(true);
 
       //overwrite L1 address and L2 address
-      const seed = await getSeed(addr2);
-      const { x, y } = await getPublicKey(seed);
+      const x = ethers.utils.hexZeroPad(NULL_ADDRESS, 32);
+      const y = ethers.utils.hexZeroPad(NULL_ADDRESS, 32);
       const tx2 = await zns.setSubnodeRecord(
         baseNode,
         accountNode,
@@ -188,9 +188,13 @@ describe('ZNS', function () {
       expect(await zns.owner(nodeCreated)).to.equal(newAccounAlternatetL1Address);
     });
 
-    it('should be able to create multiple account indexes for a same account', async function () {
+    it('Each account name must have unique account Index', async function () {
       const accountNode = getKeccak256('xiaoming');
+      const accountNode2 = getKeccak256('minyan');
+
       const newAccountL1Address = await addr1.getAddress();
+      const newAccountL2Address = await addr1.getAddress();
+
       const tx = await zns.setSubnodeRecord(
         baseNode,
         accountNode,
@@ -200,13 +204,24 @@ describe('ZNS', function () {
         NULL_ADDRESS,
       );
       const rc = await tx.wait();
-      const event1 = rc.events.find((event) => event.event === 'NewOwner');
-      const [nodeCreated, newOwner] = event1.args;
+      const event = rc.events.find((event) => event.event === 'NewOwner');
+      const [nodeCreated, newOwner] = event.args;
 
-      await zns.setSubnodeAccountIndex(nodeCreated);
-      await zns.setSubnodeAccountIndex(nodeCreated);
-      await zns.setSubnodeAccountIndex(nodeCreated);
-      //Care must be taken at controller to ensure this does not happen
+      const tx2 = await zns.setSubnodeRecord(
+        baseNode,
+        accountNode2,
+        newAccountL2Address,
+        ethers.constants.HashZero,
+        ethers.constants.HashZero,
+        NULL_ADDRESS,
+      );
+      const rc2 = await tx2.wait();
+      const event2 = rc2.events.find((event) => event.event === 'NewOwner');
+      const [nodeCreated2, newOwner2] = event2.args;
+
+      const res = await zns.accountIndex(nodeCreated);
+      const res2 = await zns.accountIndex(nodeCreated2);
+      assert(res != res2 && res2 == res + 1);
     });
   });
 

@@ -56,12 +56,6 @@ contract ZNSRegistry is IZNS {
     _setResolver(_node, _resolver);
   }
 
-  function setSubnodeAccountIndex(bytes32 _node) external override returns (uint32) {
-    records[_node].accountIndex = count;
-    count++;
-    return records[_node].accountIndex;
-  }
-
   /**
    * @dev Set the record for a subnode.
    * @param _node The parent node.
@@ -70,6 +64,8 @@ contract ZNSRegistry is IZNS {
    * @param _resolver The address of the resolver.
    * @param _pubKeyX The layer-2 public key
    * @param _pubKeyY The layer-2 public key
+   * @return subnode The name hash of the newly created label
+   * @return accountIndex The index of the created account name
    */
   function setSubnodeRecord(
     bytes32 _node,
@@ -78,10 +74,12 @@ contract ZNSRegistry is IZNS {
     bytes32 _pubKeyX,
     bytes32 _pubKeyY,
     address _resolver
-  ) external override returns (bytes32) {
+  ) external override returns (bytes32, uint32) {
     bytes32 subnode = setSubnodeOwner(_node, _label, _owner, _pubKeyX, _pubKeyY);
     _setResolver(subnode, _resolver);
-    return subnode;
+    records[subnode].accountIndex = count;
+    count++;
+    return (subnode, records[subnode].accountIndex);
   }
 
   /**
@@ -146,6 +144,15 @@ contract ZNSRegistry is IZNS {
    */
   function pubKey(bytes32 node) public view override returns (bytes32, bytes32) {
     return (records[node].pubKeyX, records[node].pubKeyY);
+  }
+
+  /**
+   * @dev Returns the account Index of the node in the L2
+   * @param node The specified node.
+   * @return The account index of the specified node
+   */
+  function accountIndex(bytes32 node) public view override returns (uint32) {
+    return records[node].accountIndex;
   }
 
   /**
