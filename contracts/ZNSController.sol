@@ -23,7 +23,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
 
   // The nodehash/namehash of the root node this registrar owns (eg, .legend)
   bytes32 public baseNode;
-  // A map of addresses that are authorized to controll the registrar(eg, register names)
+  // A map of addresses that are authorized to control the registrar(eg, register names)
   mapping(address => bool) public controllers;
   // A map to record the L2 owner of each node. A L2 owner can own only 1 name.
   // pubKey => nodeHash

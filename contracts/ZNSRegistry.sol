@@ -7,6 +7,7 @@ contract ZNSRegistry is IZNS {
   // @dev Require the msg.sender is the owner of this node
   modifier authorized(bytes32 node) {
     require(records[node].owner == msg.sender, "unauthorized");
+    require(topLevelDomains[node], "node not allowed");
     _;
   }
 
@@ -29,31 +30,15 @@ contract ZNSRegistry is IZNS {
   mapping(bytes32 => Record) records; // nameHash of node => Record
   uint32 count = 0;
 
+  // @dev Top level domains allowed in the registry such as ".zkbnb"
+  mapping(bytes32 => bool) public topLevelDomains;
+
   /**
    * @dev Constructs a new registry.
    */
   constructor() {
     records[0x0].owner = msg.sender;
-  }
-
-  /**
-   * @dev Set the record for a node.
-   * @param _node The node to update.
-   * @param _owner The address of the new owner.
-   * @param _resolver The address of the resolver.
-   * @param _pubKeyX The pub key of the node
-   * @param _pubKeyY The pub key of the node
-   */
-  function setRecord(
-    bytes32 _node,
-    address _owner,
-    bytes32 _pubKeyX,
-    bytes32 _pubKeyY,
-    address _resolver
-  ) external override {
-    _setOwner(_node, _owner);
-    _setPubKey(_node, _pubKeyX, _pubKeyY);
-    _setResolver(_node, _resolver);
+    topLevelDomains[0x0] = true;
   }
 
   /**
@@ -100,8 +85,13 @@ contract ZNSRegistry is IZNS {
     uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(_node, _label));
     subnode = bytes32(uint256(subnode) % q);
+    require(!_exists(subnode), "sub node exists");
     _setOwner(subnode, _owner);
     _setPubKey(subnode, _pubKeyX, _pubKeyY);
+    if (_node == 0x0) {
+      topLevelDomains[subnode] = true;
+      emit TLDAdded(subnode);
+    }
     return subnode;
   }
 
@@ -110,7 +100,8 @@ contract ZNSRegistry is IZNS {
    * @param _node The node to update.
    * @param _resolver The address of the resolver.
    */
-  function setResolver(bytes32 _node, address _resolver) public override authorized(_node) {
+  function setResolver(bytes32 _node, address _resolver) public override {
+    require(records[_node].owner == msg.sender, "unauthorized");
     _setResolver(_node, _resolver);
   }
 
@@ -124,7 +115,6 @@ contract ZNSRegistry is IZNS {
     if (addr == address(this)) {
       return address(0x0);
     }
-
     return addr;
   }
 
