@@ -30,4 +30,6 @@ interface IBaseRegistrar {
   function pauseRegistration() external;
 
   function unPauseRegistration() external;
+
+  function setAccountNameLengthThreshold(uint newMinLengthAllowed) external;
 }

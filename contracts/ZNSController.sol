@@ -29,6 +29,10 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
   // pubKey => nodeHash
   mapping(bytes32 => bytes32) ZNSPubKeyMapper;
 
+  // The minimum account name length allowed to register
+  uint public minAccountNameLengthAllowed = 1;
+  event AccountNameLengthThresholdChanged(uint newMinLengthAllowed);
+
   // True if the registration is paused
   bool public isPaused;
   event RegistrationPaused();
@@ -165,6 +169,16 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     }
   }
 
+  /**
+   * @dev Set the minimum account name length allowed to register
+   */
+  function setAccountNameLengthThreshold(uint newMinLengthAllowed) external override onlyOwner {
+    if (newMinLengthAllowed != minAccountNameLengthAllowed) {
+      minAccountNameLengthAllowed = newMinLengthAllowed;
+      emit AccountNameLengthThresholdChanged(newMinLengthAllowed);
+    }
+  }
+
   function getSubnodeNameHash(string memory name) external view returns (bytes32) {
     uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(baseNode, keccak256Hash(bytes(name))));
@@ -185,7 +199,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     return prices.price(name);
   }
 
-  function _valid(string memory _name) internal pure returns (bool) {
+  function _valid(string memory _name) internal view returns (bool) {
     return _validCharset(_name) && _validLength(_name);
   }
 
@@ -193,8 +207,8 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     return _name.charsetValid();
   }
 
-  function _validLength(string memory _name) internal pure returns (bool) {
-    return _name.strlen() >= 1 && _name.strlen() <= 20;
+  function _validLength(string memory _name) internal view returns (bool) {
+    return _name.strlen() >= minAccountNameLengthAllowed && _name.strlen() <= 20;
   }
 
   function _validPubKey(bytes32 _pubKey) internal view returns (bool) {
