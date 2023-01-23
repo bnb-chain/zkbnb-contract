@@ -29,13 +29,19 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
   // pubKey => nodeHash
   mapping(bytes32 => bytes32) ZNSPubKeyMapper;
 
+  // True if the registration is paused
+  bool public isPaused;
+  event RegistrationPaused();
+  event RegistrationResumed();
+
   modifier onlyController() {
     require(controllers[msg.sender]);
     _;
   }
 
   modifier live() {
-    require(zns.owner(baseNode) == address(this));
+    require(zns.owner(baseNode) == address(this), "zns not assigned");
+    require(!isPaused, "paused");
     _;
   }
 
@@ -96,7 +102,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     bytes32 _pubKeyX,
     bytes32 _pubKeyY,
     address _resolver
-  ) external payable override onlyController returns (bytes32 subnode, uint32 accountIndex) {
+  ) external payable override onlyController live returns (bytes32 subnode, uint32 accountIndex) {
     // Check if this name is valid
     require(_valid(_name), "invalid name");
     // This L2 owner should not own any name before
@@ -139,6 +145,24 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     payable(_to).transfer(_value);
 
     emit Withdraw(_to, _value);
+  }
+
+  /**
+   * @dev Pause the registration through this controller
+   */
+  function pauseRegistration() external override onlyOwner {
+    if (!isPaused) {
+      isPaused = true;
+    }
+  }
+
+  /**
+   * @dev Resume registration
+   */
+  function unPauseRegistration() external override onlyOwner {
+    if (isPaused) {
+      isPaused = false;
+    }
   }
 
   function getSubnodeNameHash(string memory name) external view returns (bytes32) {
