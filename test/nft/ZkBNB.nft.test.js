@@ -100,6 +100,11 @@ describe('NFT functionality', function () {
     expect(await zkBNB.defaultNFTFactory()).to.equal(mockNftFactory.address);
   });
 
+  it('on ERC721 received', async function () {
+    const HashZero = ethers.constants.HashZero;
+
+    await zkBNB.onERC721Received(owner.address, acc1.address, 0, HashZero);
+  });
   describe('withdraw NFT from L2 to L1 and store as IPFS CID hash', function () {
     const mockNftIndex = 0;
 
@@ -329,11 +334,19 @@ describe('NFT functionality', function () {
     //Convert to bytes32
     const IPFSMultiHashDigest = ethers.utils.hexZeroPad(digestInHexFromCID, 32);
 
-    it.skip('register NFT factory', async function () {
-      mockZNSController.getSubnodeNameHash.returns();
+    it('register NFT factory', async function () {
+      const creatorAccountName = 'bar';
+      const collectionId = 0;
       mockZNSController.isRegisteredNameHash.returns(true);
+      mockZNSController.getOwner.returns(owner.address);
 
-      await zkBNB.registerNFTFactory('accountName', 0, zkBNBNFTFactory.address);
+      const creatorAccountNameHash = await mockZNSController.getSubnodeNameHash(creatorAccountName);
+
+      await expect(await zkBNB.registerNFTFactory(creatorAccountName, collectionId, mockNftFactory.address))
+        .to.emit(zkBNB, 'NewNFTFactory')
+        .withArgs(creatorAccountNameHash, collectionId, mockNftFactory.address);
+
+      expect(await zkBNB.nftFactories(creatorAccountNameHash, 0)).to.equal(mockNftFactory.address);
     });
 
     it('mint from ZkBNB using a IPFS CID Hash', async function () {

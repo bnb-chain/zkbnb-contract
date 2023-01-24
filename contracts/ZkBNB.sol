@@ -259,15 +259,204 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice Commit block
   /// @notice 1. Checks onchain operations, timestamp.
+
   function commitBlocks(
     StoredBlockInfo memory _lastCommittedBlockData,
     CommitBlockInfo[] memory _newBlocksData
-  ) external {
-    delegateAdditional();
+  ) external onlyActive {
+    governance.isActiveValidator(msg.sender);
+    // Check that we commit blocks after last committed block
+    // incorrect previous block data
+    require(storedBlockHashes[totalBlocksCommitted] == hashStoredBlockInfo(_lastCommittedBlockData), "i");
+
+    for (uint32 i = 0; i < _newBlocksData.length; ++i) {
+      _lastCommittedBlockData = commitOneBlock(_lastCommittedBlockData, _newBlocksData[i]);
+
+      totalCommittedPriorityRequests += _lastCommittedBlockData.priorityOperations;
+      storedBlockHashes[_lastCommittedBlockData.blockNumber] = hashStoredBlockInfo(_lastCommittedBlockData);
+
+      emit BlockCommit(_lastCommittedBlockData.blockNumber);
+    }
+
+    totalBlocksCommitted += uint32(_newBlocksData.length);
+
+    require(totalCommittedPriorityRequests <= totalOpenPriorityRequests, "j");
   }
 
-  function setDefaultNFTFactory(INFTFactory _factory) external {
-    delegateAdditional();
+  /// @dev Process one block commit using previous block StoredBlockInfo,
+  /// @dev returns new block StoredBlockInfo
+  function commitOneBlock(
+    StoredBlockInfo memory _previousBlock,
+    CommitBlockInfo memory _newBlock
+  ) internal view returns (StoredBlockInfo memory storedNewBlock) {
+    // only commit next block
+    require(_newBlock.blockNumber == _previousBlock.blockNumber + 1, "f");
+
+    // Check timestamp of the new block
+    // Block should be after previous block
+    {
+      require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
+    }
+
+    // Check onchain operations
+    (bytes32 pendingOnchainOpsHash, uint64 priorityReqCommitted) = collectOnchainOps(_newBlock);
+
+    // Create block commitment for verification proof
+    bytes32 commitment = createBlockCommitment(_previousBlock, _newBlock);
+
+    return
+      StoredBlockInfo(
+        _newBlock.blockSize,
+        _newBlock.blockNumber,
+        priorityReqCommitted,
+        pendingOnchainOpsHash,
+        _newBlock.timestamp,
+        _newBlock.newStateRoot,
+        commitment
+      );
+  }
+
+  function createBlockCommitment(
+    StoredBlockInfo memory _previousBlock,
+    CommitBlockInfo memory _newBlockData
+  ) internal pure returns (bytes32) {
+    // uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
+    bytes32 converted = keccak256(
+      abi.encodePacked(
+        uint256(_newBlockData.blockNumber), // block number
+        uint256(_newBlockData.timestamp), // time stamp
+        _previousBlock.stateRoot, // old state root
+        _newBlockData.newStateRoot, // new state root
+        _newBlockData.publicData, // pub data
+        uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
+      )
+    );
+    return converted;
+  }
+
+  /// @notice Collect onchain ops and ensure it was not executed before
+  function collectOnchainOps(
+    CommitBlockInfo memory _newBlockData
+  ) internal view returns (bytes32 processableOperationsHash, uint64 priorityOperationsProcessed) {
+    bytes memory pubData = _newBlockData.publicData;
+
+    require(pubData.length % TxTypes.PACKED_TX_PUBDATA_BYTES == 0, "A");
+
+    uint64 uncommittedPriorityRequestsOffset = firstPriorityRequestId + totalCommittedPriorityRequests;
+    priorityOperationsProcessed = 0;
+    processableOperationsHash = EMPTY_STRING_KECCAK;
+
+    for (uint16 i = 0; i < _newBlockData.publicDataOffsets.length; ++i) {
+      uint32 pubdataOffset = _newBlockData.publicDataOffsets[i];
+      require(pubdataOffset < pubData.length, "B");
+
+      TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
+
+      if (txType == TxTypes.TxType.RegisterZNS) {
+        bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+
+        TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
+        checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+        priorityOperationsProcessed++;
+      } else if (txType == TxTypes.TxType.Deposit) {
+        bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+        TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
+        checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+        priorityOperationsProcessed++;
+      } else if (txType == TxTypes.TxType.DepositNft) {
+        bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+
+        TxTypes.DepositNft memory depositNftData = TxTypes.readDepositNftPubData(txPubData);
+        checkPriorityOperation(depositNftData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+        priorityOperationsProcessed++;
+      } else {
+        bytes memory txPubData;
+
+        if (txType == TxTypes.TxType.Withdraw) {
+          txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+        } else if (txType == TxTypes.TxType.WithdrawNft) {
+          txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+        } else if (txType == TxTypes.TxType.FullExit) {
+          txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+
+          TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(txPubData);
+
+          checkPriorityOperation(fullExitData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+          priorityOperationsProcessed++;
+        } else if (txType == TxTypes.TxType.FullExitNft) {
+          txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+
+          TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubData(txPubData);
+
+          checkPriorityOperation(fullExitNFTData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
+          priorityOperationsProcessed++;
+        } else {
+          // unsupported _tx
+          revert("F");
+        }
+        processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
+      }
+    }
+  }
+
+  /// @notice Checks that register zns is same as _tx in priority queue
+  /// @param _registerZNS register zns
+  /// @param _priorityRequestId _tx's id in priority queue
+  function checkPriorityOperation(TxTypes.RegisterZNS memory _registerZNS, uint64 _priorityRequestId) internal view {
+    TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+    // incorrect priority _tx type
+    require(priorReqType == TxTypes.TxType.RegisterZNS, "1H");
+
+    bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+    require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "1K");
+  }
+
+  /// @notice Checks that deposit is same as _tx in priority queue
+  /// @param _deposit Deposit data
+  /// @param _priorityRequestId _tx's id in priority queue
+  function checkPriorityOperation(TxTypes.Deposit memory _deposit, uint64 _priorityRequestId) internal view {
+    TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+    // incorrect priority _tx type
+    require(priorReqType == TxTypes.TxType.Deposit, "2H");
+
+    bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+    require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubData), "2K");
+  }
+
+  /// @notice Checks that deposit is same as _tx in priority queue
+  /// @param _deposit Deposit data
+  /// @param _priorityRequestId _tx's id in priority queue
+  function checkPriorityOperation(TxTypes.DepositNft memory _deposit, uint64 _priorityRequestId) internal view {
+    TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+    // incorrect priority _tx type
+    require(priorReqType == TxTypes.TxType.DepositNft, "3H");
+
+    bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+    require(TxTypes.checkDepositNftInPriorityQueue(_deposit, hashedPubData), "3K");
+  }
+
+  /// @notice Checks that FullExit is same as _tx in priority queue
+  /// @param _fullExit FullExit data
+  /// @param _priorityRequestId _tx's id in priority queue
+  function checkPriorityOperation(TxTypes.FullExit memory _fullExit, uint64 _priorityRequestId) internal view {
+    TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+    // incorrect priority _tx type
+    require(priorReqType == TxTypes.TxType.FullExit, "4H");
+
+    bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+    require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubData), "4K");
+  }
+
+  /// @notice Checks that FullExitNFT is same as _tx in priority queue
+  /// @param _fullExitNft FullExit nft data
+  /// @param _priorityRequestId _tx's id in priority queue
+  function checkPriorityOperation(TxTypes.FullExitNft memory _fullExitNft, uint64 _priorityRequestId) internal view {
+    TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
+    // incorrect priority _tx type
+    require(priorReqType == TxTypes.TxType.FullExitNft, "5H");
+
+    bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
+    require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubData), "5K");
   }
 
   /// @notice Verify layer-2 blocks proofs
@@ -387,19 +576,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  /// @notice Register full exit request - pack pubdata, add priority request
-  /// @param _accountName account name
-  /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(string calldata _accountName, address _asset) public {
-    delegateAdditional();
-  }
-
-  /// @notice Register full exit nft request - pack pubdata, add priority request
-  /// @param _accountName account name
-  /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
-    delegateAdditional();
-  }
 
   function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address) {
     return znsController.getOwner(accountNameHash);
@@ -629,6 +805,71 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     totalOpenPriorityRequests++;
   }
 
+  /// @notice Register full exit request - pack pubdata, add priority request
+  /// @param _accountName account name
+  /// @param _asset Token address, 0 address for BNB
+  function requestFullExit(string calldata _accountName, address _asset) public onlyActive {
+    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+    // get address by account name hash
+    address creatorAddress = getAddressByAccountNameHash(accountNameHash);
+    require(msg.sender == creatorAddress, "ia");
+
+    uint16 assetId;
+    if (_asset == address(0)) {
+      assetId = 0;
+    } else {
+      assetId = governance.validateAssetAddress(_asset);
+    }
+
+    // Priority Queue request
+    TxTypes.FullExit memory _tx = TxTypes.FullExit({
+      txType: uint8(TxTypes.TxType.FullExit),
+      accountIndex: 0, // unknown at this point
+      accountNameHash: accountNameHash,
+      assetId: assetId,
+      assetAmount: 0 // unknown at this point
+    });
+    bytes memory pubData = TxTypes.writeFullExitPubDataForPriorityQueue(_tx);
+    addPriorityRequest(TxTypes.TxType.FullExit, pubData);
+
+    // User must fill storage slot of balancesToWithdraw(msg.sender, tokenId) with nonzero value
+    // In this case operator should just overwrite this slot during confirming withdrawal
+    bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, assetId);
+    pendingBalances[packedBalanceKey].gasReserveValue = FILLED_GAS_RESERVE_VALUE;
+  }
+
+  /// @notice Register full exit nft request - pack pubdata, add priority request
+  /// @param _accountName account name
+  /// @param _nftIndex account NFT index in zkbnb network
+  function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public onlyActive {
+    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
+    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+    require(_nftIndex < MAX_NFT_INDEX, "T");
+    // get address by account name hash
+    address creatorAddress = getAddressByAccountNameHash(accountNameHash);
+    require(msg.sender == creatorAddress, "ia");
+
+    // Priority Queue request
+    TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
+      txType: uint8(TxTypes.TxType.FullExitNft),
+      accountIndex: 0, // unknown
+      creatorAccountIndex: 0, // unknown
+      creatorTreasuryRate: 0,
+      nftIndex: _nftIndex,
+      collectionId: 0, // unknown
+      accountNameHash: accountNameHash,
+      creatorAccountNameHash: bytes32(0),
+      nftContentHash: bytes32(0x0) // unknown,
+    });
+    bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
+    addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
+  }
+
+  function setDefaultNFTFactory(INFTFactory _factory) external {
+    delegateAdditional();
+  }
+
   /// @notice Sends ETH
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
@@ -636,6 +877,26 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function sendBNBNoRevert(address payable _to, uint256 _amount) internal returns (bool) {
     (bool callSuccess, ) = _to.call{gas: WITHDRAWAL_GAS_LIMIT, value: _amount}("");
     return callSuccess;
+  }
+
+  /// @notice Register NFTFactory to this contract
+  /// @param _creatorAccountName accountName of the creator
+  /// @param _collectionId collection Id of the NFT related to this creator
+  /// @param _factory NFT Factory
+  function registerNFTFactory(
+    string calldata _creatorAccountName,
+    uint32 _collectionId,
+    INFTFactory _factory
+  ) external {
+    bytes32 creatorAccountNameHash = znsController.getSubnodeNameHash(_creatorAccountName);
+    require(znsController.isRegisteredNameHash(creatorAccountNameHash), "nr");
+    require(address(nftFactories[creatorAccountNameHash][_collectionId]) == address(0), "Q");
+    // Check accountNameHash belongs to msg.sender
+    address creatorAddress = getAddressByAccountNameHash(creatorAccountNameHash);
+    require(creatorAddress == msg.sender, "ns");
+
+    nftFactories[creatorAccountNameHash][_collectionId] = address(_factory);
+    emit NewNFTFactory(creatorAccountNameHash, _collectionId, address(_factory));
   }
 
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {

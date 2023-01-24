@@ -61,10 +61,8 @@ describe('ZkBNB', function () {
 
   describe('Delegatecall', function () {
     it('should delegate to AdditionalZkBNB Contract', async () => {
-      await zkBNB.requestFullExit('', ethers.constants.AddressZero);
-      expect(mockAdditionalZkBNB.requestFullExit).to.be.delegatedFrom(zkBNB.address);
-      await zkBNB.requestFullExitNft('', 1);
-      expect(mockAdditionalZkBNB.requestFullExitNft).to.be.delegatedFrom(zkBNB.address);
+      mockZNSController.isRegisteredNameHash.returns(true);
+
       await zkBNB.setDefaultNFTFactory(ethers.constants.AddressZero);
       expect(mockAdditionalZkBNB.setDefaultNFTFactory).to.be.delegatedFrom(zkBNB.address);
       await zkBNB.revertBlocks([]);
