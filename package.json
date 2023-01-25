@@ -7,7 +7,7 @@
     "prebuild": "rimraf ./artifacts/ ./cache/",
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile --show-stack-traces",
-    "test": "npx hardhat test test/*.{ts,js} --network hardhat",
+    "test": "npx hardhat test test/**/*.{ts,js} --network hardhat",
     "test-upgradeable": "npx hardhat test test/upgradeable/**.test.js",
     "lint:check:format": "prettier --check **.{sol,js}",
     "lint:check:solhint": "solhint contracts/**/*.sol",

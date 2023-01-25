@@ -1,7 +1,7 @@
 const chai = require('chai');
 const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
-const { PubDataType, encodePubData, PubDataTypeMap } = require('./util');
+const { PubDataType, encodePubData, PubDataTypeMap } = require('../util');
 
 const { expect } = chai;
 chai.use(smock.matchers);
