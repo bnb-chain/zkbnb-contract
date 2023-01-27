@@ -15,7 +15,7 @@ dotenv.config();
 const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
-      bscTestnet: 'HHHQV1FM9HVSK82JMPEEBG44PR24CM3B5U',
+      bscTestnet: process.env.BSCSCAN_APIKEY || '',
     },
   },
   solidity: {
