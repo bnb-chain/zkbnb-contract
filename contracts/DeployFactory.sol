@@ -25,7 +25,8 @@ contract DeployFactory {
     address znsController,
     address znsResolver,
     address zkbnb,
-    address gatekeeper
+    address gatekeeper,
+    address additionalZkBNB
   );
 
   // This struct is used for avoiding StackTooDeep
@@ -147,7 +148,8 @@ contract DeployFactory {
       address(znsController),
       address(znsResolver),
       address(zkbnb),
-      address(upgradeGatekeeper)
+      address(upgradeGatekeeper),
+      address(additionalZkBNB)
     );
 
     // finally set governance

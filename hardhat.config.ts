@@ -14,7 +14,9 @@ dotenv.config();
 
 const config: HardhatUserConfig = {
   etherscan: {
-    apiKey: 'HHHQV1FM9HVSK82JMPEEBG44PR24CM3B5U',
+    apiKey: {
+      bscTestnet: 'HHHQV1FM9HVSK82JMPEEBG44PR24CM3B5U',
+    },
   },
   solidity: {
     version: '0.8.17',
