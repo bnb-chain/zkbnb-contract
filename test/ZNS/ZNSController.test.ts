@@ -74,6 +74,17 @@ describe('ZNSController', function () {
     assert((await znsController.isPaused()) == false);
   });
 
+  it('should allow querying price of a ZNS account name', async function () {
+    //More detailed tests are covered in the price oracles
+    priceOracle.price.returns(ethers.utils.parseEther('1'));
+    const namePrice = await znsController.getZNSNamePrice('sri');
+    expect(namePrice).to.equal(ethers.utils.parseEther('1'));
+  });
+
+  it('should provide getter method to see if the name is already registered', async function () {
+    expect(await znsController.isRegisteredZNSName('sri')).to.equal(false);
+  });
+
   describe('After registering the base node with the registry', async function () {
     let pubX;
     let pubY;

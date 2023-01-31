@@ -122,6 +122,10 @@ describe('ZNS', function () {
       expect(event2 === undefined).to.equal(true); //No resolver event emitted on null address
       expect(await zns.recordExists(nodeCreated)).to.equal(true);
       expect(await zns.owner(nodeCreated)).to.equal(newAccountL1Address);
+      expect(await zns.resolver(nodeCreated)).to.equal(NULL_ADDRESS);
+      const [x, y] = await zns.pubKey(nodeCreated);
+      expect(x).to.equal(ethers.constants.HashZero);
+      expect(y).to.equal(ethers.constants.HashZero);
     });
 
     it('should be able to create a new account name with a resolver contract address and pub keys', async function () {
