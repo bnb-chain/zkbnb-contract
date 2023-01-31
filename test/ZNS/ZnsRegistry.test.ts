@@ -2,7 +2,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { getKeccak256 } from '../util';
 import { assert, expect } from 'chai';
 import { ethers } from 'hardhat';
-import { NON_NULL_ADDRESS, NULL_ADDRESS } from '../constants';
+import { NON_NULL_ADDRESS, NULL_ADDRESS, X_ADDRESS, Y_ADDRESS } from '../constants';
 /* eslint-disable */
 const namehash = require('eth-ens-namehash');
 
@@ -26,6 +26,7 @@ describe('ZNS', function () {
 
   it('should own the blank root node', async function () {
     const rootNode = namehash.hash('');
+    expect(await zns.owner(rootNode)).to.equal(await owner.getAddress());
     expect(await zns.owner(rootNode)).to.equal(await owner.getAddress());
   });
 
@@ -123,27 +124,35 @@ describe('ZNS', function () {
       expect(await zns.owner(nodeCreated)).to.equal(newAccountL1Address);
     });
 
-    it('should be able to create a new account name with a resolver contract address', async function () {
+    it('should be able to create a new account name with a resolver contract address and pub keys', async function () {
       const accountNode = getKeccak256('xiaoming');
 
       const newAccountL1Address = await addr1.getAddress();
       const resolverContractAddress = NON_NULL_ADDRESS;
+      const pubX = ethers.utils.hexZeroPad(X_ADDRESS, 32);
+      const pubY = ethers.utils.hexZeroPad(Y_ADDRESS, 32);
+
       const tx = await zns.setSubnodeRecord(
         baseNode,
         accountNode,
         newAccountL1Address,
-        ethers.constants.HashZero,
-        ethers.constants.HashZero,
+        pubX,
+        pubY,
         resolverContractAddress,
       );
       const rc = await tx.wait();
       const event1 = rc.events.find((event) => event.event === 'NewOwner');
       const event2 = rc.events.find((event) => event.event === 'NewResolver');
+      const event3 = rc.events.find((event) => event.event === 'NewPubKey');
+
       const [nodeCreated] = event1.args;
       const [nodeCreatedDuplicate, newResolver] = event2.args;
+      const [newPubKeyAddedForNode, pubKeyX, pubKeyY] = event3.args;
 
       assert(nodeCreated === nodeCreatedDuplicate);
       assert(newResolver === resolverContractAddress);
+      assert(newPubKeyAddedForNode == nodeCreated && pubKeyX === pubX && pubKeyY == pubY);
+
       expect(await zns.recordExists(nodeCreated)).to.equal(true);
       expect(await zns.owner(nodeCreated)).to.equal(newAccountL1Address);
     });
@@ -185,7 +194,7 @@ describe('ZNS', function () {
       await expect(zns.connect(addr1).setResolver(nodeCreated, resolverContractAddress)).to.not.be.reverted;
     });
 
-    it('Each account name must have unique account Index', async function () {
+    it('each account name must have unique account Index', async function () {
       const accountNode = getKeccak256('xiaoming');
       const accountNode2 = getKeccak256('minyan');
 
@@ -221,7 +230,7 @@ describe('ZNS', function () {
       assert(res != res2 && res2 == res + 1);
     });
 
-    it('Should disallow a user owning a subnode to set a nested node such as jackie.chan.zkbnb', async function () {
+    it('should disallow a user owning a subnode to set a nested node such as jackie.chan.zkbnb', async function () {
       //Register chan.legend first
       const accountNode = getKeccak256('chan');
       const newAccountL1Address = await addr1.getAddress();
@@ -253,6 +262,30 @@ describe('ZNS', function () {
             NULL_ADDRESS,
           ),
       ).to.be.revertedWith('node not allowed');
+    });
+
+    it('should return the pub key and resolver of a existing node ', async function () {
+      // register new account name
+      const accountNode = getKeccak256('xiaoming');
+
+      const newAccountL1Address = await addr1.getAddress();
+      const tx = await zns.setSubnodeRecord(
+        baseNode,
+        accountNode,
+        newAccountL1Address,
+        ethers.constants.HashZero,
+        ethers.constants.HashZero,
+        NON_NULL_ADDRESS,
+      );
+      const rc = await tx.wait();
+      const event1 = rc.events.find((event) => event.event === 'NewOwner');
+      const event2 = rc.events.find((event) => event.event === 'NewResolver');
+      const [nodeCreated] = event1.args;
+
+      const resolver = await zns.resolver(nodeCreated);
+      const [pubX, pubY] = await zns.pubKey(nodeCreated);
+      assert(resolver == NON_NULL_ADDRESS);
+      assert(pubX == ethers.constants.HashZero && pubY == ethers.constants.HashZero);
     });
   });
 });
