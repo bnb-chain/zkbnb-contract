@@ -12,7 +12,7 @@ interface IZNS {
   // Logged when the resolver for a node changes.
   event NewResolver(bytes32 indexed node, address resolver);
 
-  function setRecord(bytes32 _node, address _owner, bytes32 _pubKeyX, bytes32 _pubKeyY, address _resolver) external;
+  event TLDAdded(bytes32 indexed node);
 
   function setSubnodeRecord(
     bytes32 _node,
@@ -21,9 +21,7 @@ interface IZNS {
     bytes32 _pubKeyX,
     bytes32 _pubKeyY,
     address _resolver
-  ) external returns (bytes32);
-
-  function setSubnodeAccountIndex(bytes32 _node) external returns (uint32);
+  ) external returns (bytes32, uint32);
 
   function setSubnodeOwner(
     bytes32 _node,
@@ -40,6 +38,8 @@ interface IZNS {
   function owner(bytes32 node) external view returns (address);
 
   function pubKey(bytes32 node) external view returns (bytes32, bytes32);
+
+  function accountIndex(bytes32 node) external view returns (uint32);
 
   function recordExists(bytes32 node) external view returns (bool);
 

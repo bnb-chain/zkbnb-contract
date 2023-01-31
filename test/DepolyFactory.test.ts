@@ -1,8 +1,9 @@
 import chai, { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { FakeContract, smock } from '@defi-wonderland/smock';
-import { BUSD_ASSET_ADDRESS, NEW_ASSET_ADDRESS, NULL_ADDRESS, VALIDATOR_ADDRESS } from '../constants';
-import namehash from 'eth-ens-namehash';
+
+/* eslint-disable */
+const namehash = require('eth-ens-namehash');
 
 chai.use(smock.matchers);
 
