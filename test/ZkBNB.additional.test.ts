@@ -334,9 +334,12 @@ describe('ZkBNB', function () {
     // execute onchain operations if needed.(`Withdraw`, `WithdrawNft`, `FullExit`, `FullExitNft`)
     const nftL1TokenId = 1;
     let storedBlockInfo: StoredBlockInfo;
-    const verifyAndExecuteBlockInfos: VerifyAndExecuteBlockInfo[] = [];
+    let verifyAndExecuteBlockInfos: VerifyAndExecuteBlockInfo[];
+    let revertBlocks: StoredBlockInfo[];
     let lastBlock;
     beforeEach(async () => {
+      verifyAndExecuteBlockInfos = [];
+      revertBlocks = [];
       // mock
       mockZNSController.getOwner.returns(owner.address);
       mockZNSController.isRegisteredNameHash.returns(true);
@@ -411,6 +414,8 @@ describe('ZkBNB', function () {
         blockHeader: storedBlockInfo,
         pendingOnchainOpsPubData: [commitBlock2.publicData],
       });
+
+      revertBlocks.push(storedBlockInfo);
     });
     it('should be executing block after committed', async () => {
       mockZkBNBVerifier.verifyBatchProofs.returns(true);
@@ -484,6 +489,17 @@ describe('ZkBNB', function () {
 
       const proofs = new Array(24).fill(10);
       await expect(zkBNB.verifyAndExecuteBlocks(verifyAndExecuteBlockInfos, proofs)).to.revertedWith('l');
+    });
+    it('Should revert unverified blocks', async () => {
+      mockZkBNBVerifier.verifyBatchProofs.returns(true);
+      mockZNSController.isRegisteredNameHash.returns(true);
+      mockZNSController.getSubnodeNameHash.returns(accountNameHash);
+
+      expect(await zkBNB.totalBlocksCommitted()).to.be.equal(2);
+
+      // revert latest block;
+      await expect(zkBNB.revertBlocks(revertBlocks)).to.emit(zkBNB, 'BlocksRevert').withArgs(0, 1);
+      expect(await zkBNB.totalBlocksCommitted()).to.be.equal(1);
     });
   });
 });
