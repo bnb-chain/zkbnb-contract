@@ -144,7 +144,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
    */
   function withdraw(address _to, uint256 _value) external onlyOwner {
     // Check not too much value
-    require(_value < address(this).balance, "tmv");
+    require(_value <= address(this).balance, "tmv");
     // Withdraw
     payable(_to).transfer(_value);
 

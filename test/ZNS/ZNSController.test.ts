@@ -4,8 +4,6 @@ import { assert, expect } from 'chai';
 import { ethers } from 'hardhat';
 import { NON_NULL_ADDRESS, NULL_ADDRESS, X_ADDRESS, Y_ADDRESS } from '../constants';
 import { smock } from '@defi-wonderland/smock';
-import { IERC20 } from 'zksync-web3/build/typechain';
-import { arrayify, keccak256 } from 'ethers/lib/utils';
 /* eslint-disable */
 const namehash = require('eth-ens-namehash');
 
@@ -134,26 +132,27 @@ describe('ZNSController', function () {
       await expect(znsController.connect(addr1).registerZNS('chan', addr1.getAddress(), pubX, pubY, NULL_ADDRESS)).to
         .not.be.reverted;
 
-      expect(
-        await znsController.connect(addr1).registerZNS('chan', addr1.getAddress(), pubX, pubY, NULL_ADDRESS),
+      await expect(
+        znsController.connect(addr1).registerZNS('chan', addr1.getAddress(), pubX, pubY, NULL_ADDRESS),
       ).to.be.revertedWith('pub key existed');
     });
 
     it('should allow withdrawing collected contract funds when called by owner', async function () {
       //Send money to the contract first by registering a name
       priceOracle.price.returns(ethers.utils.parseEther('1'));
-
       await znsController.addController(addr1.getAddress());
       await znsController
         .connect(addr1)
-        .registerZNS('chan', addr1.getAddress(), pubX, pubY, NULL_ADDRESS, { value: ethers.utils.parseEther('10') });
+        .registerZNS('chan', addr1.getAddress(), pubX, pubY, NULL_ADDRESS, { value: ethers.utils.parseEther('10') }); //Send a lot
 
-      await expect(znsController.withdraw(NON_NULL_ADDRESS, ethers.utils.parseEther('0.5')))
-        .to.emit(znsRegistry, 'Withdraw')
-        .withArgs(NON_NULL_ADDRESS, ethers.utils.parseEther('0.5'));
+      //Should be able to precisely withdraw all the funds
+      const wallet = ethers.Wallet.createRandom();
+      await expect(znsController.withdraw(await wallet.getAddress(), ethers.utils.parseEther('1')))
+        .to.emit(znsController, 'Withdraw')
+        .withArgs(await wallet.getAddress(), ethers.utils.parseEther('1'));
 
-      const receivedBalance = await ethers.provider.getBalance(NON_NULL_ADDRESS);
-      assert(receivedBalance == ethers.utils.parseEther('0.5'));
+      const balanceAfter = await ethers.provider.getBalance(await wallet.getAddress());
+      expect(balanceAfter).to.equal(ethers.utils.parseEther('1'));
     });
   });
 });
