@@ -168,6 +168,5 @@ contract DeployFactory {
 
   function finalizeZNSController(ZNSController _znsController, address _zkbnb) internal {
     _znsController.addController(_zkbnb);
-    _znsController.transferOwnership(_zkbnb);
   }
 }

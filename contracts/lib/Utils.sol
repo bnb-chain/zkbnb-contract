@@ -30,11 +30,7 @@ library Utils {
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
   /// @return bool flag indicating that transfer is successful
-  function sendERC20(
-    IERC20 _token,
-    address _to,
-    uint256 _amount
-  ) internal returns (bool) {
+  function sendERC20(IERC20 _token, address _to, uint256 _amount) internal returns (bool) {
     (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
       abi.encodeWithSignature("transfer(address,uint256)", _to, _amount)
     );
@@ -51,12 +47,7 @@ library Utils {
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
   /// @return bool flag indicating that transfer is successful
-  function transferFromERC20(
-    IERC20 _token,
-    address _from,
-    address _to,
-    uint256 _amount
-  ) internal returns (bool) {
+  function transferFromERC20(IERC20 _token, address _from, address _to, uint256 _amount) internal returns (bool) {
     (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
       abi.encodeWithSignature("transferFrom(address,address,uint256)", _from, _to, _amount)
     );
@@ -98,11 +89,10 @@ library Utils {
   /// @param _signature 65 bytes concatenated. R (32) + S (32) + V (1)
   /// @param _messageHash signed message hash.
   /// @return address of the signer
-  function recoverAddressFromEthSignature(bytes memory _signature, bytes32 _messageHash)
-    internal
-    pure
-    returns (address)
-  {
+  function recoverAddressFromEthSignature(
+    bytes memory _signature,
+    bytes32 _messageHash
+  ) internal pure returns (address) {
     require(_signature.length == 65, "P");
     // incorrect signature length
 
