@@ -1,4 +1,4 @@
-#The docker file helps to launch a L1 independant of this project
+#The docker file helps to launch a L1 independent of this project
 FROM ethereumoptimism/hardhat
 
 WORKDIR /
