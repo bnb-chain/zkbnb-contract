@@ -34,4 +34,10 @@ interface IBaseRegistrar {
     bytes32 zkbnbPubKeyY,
     address _resolver
   ) external payable returns (bytes32, uint32);
+
+  function pauseRegistration() external;
+
+  function unPauseRegistration() external;
+
+  function setAccountNameLengthThreshold(uint newMinLengthAllowed) external;
 }
