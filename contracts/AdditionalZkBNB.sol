@@ -175,7 +175,7 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
     bytes32 creatorAccountNameHash = znsController.getSubnodeNameHash(_creatorAccountName);
     require(znsController.isRegisteredNameHash(creatorAccountNameHash), "nr");
     require(address(nftFactories[creatorAccountNameHash][_collectionId]) == address(0), "Q");
-    // Check check accountNameHash belongs to msg.sender
+    // Check accountNameHash belongs to msg.sender
     address creatorAddress = getAddressByAccountNameHash(creatorAccountNameHash);
     require(creatorAddress == msg.sender, "ns");
 
@@ -271,30 +271,6 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
     addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
   }
 
-  /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
-  /// @param _assetId Asset by id
-  /// @param _amount Asset amount
-  /// @param _accountNameHash Receiver Account Name
-  function registerDeposit(
-    uint16 _assetId,
-    uint128 _amount,
-    bytes32 _accountNameHash
-  ) internal {
-    // Priority Queue request
-    TxTypes.Deposit memory _tx = TxTypes.Deposit({
-      txType: uint8(TxTypes.TxType.Deposit),
-      accountIndex: 0, // unknown at the moment
-      accountNameHash: _accountNameHash,
-      assetId: _assetId,
-      amount: _amount
-    });
-    // compact pub data
-    bytes memory pubData = TxTypes.writeDepositPubDataForPriorityQueue(_tx);
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.Deposit, pubData);
-    emit Deposit(_assetId, _accountNameHash, _amount);
-  }
-
   event NewZkBNBVerifier(address verifier);
 
   bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
@@ -308,10 +284,10 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
     uint16 blockSize;
   }
 
-  function commitBlocks(StoredBlockInfo memory _lastCommittedBlockData, CommitBlockInfo[] memory _newBlocksData)
-    external
-    onlyActive
-  {
+  function commitBlocks(
+    StoredBlockInfo memory _lastCommittedBlockData,
+    CommitBlockInfo[] memory _newBlocksData
+  ) external onlyActive {
     governance.isActiveValidator(msg.sender);
     // Check that we commit blocks after last committed block
     // incorrect previous block data
@@ -331,20 +307,12 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
     require(totalCommittedPriorityRequests <= totalOpenPriorityRequests, "j");
   }
 
-  // @dev This function is only for test
-  // TODO delete this function
-  function updateZkBNBVerifier(address _newVerifierAddress) external {
-    verifier = ZkBNBVerifier(_newVerifierAddress);
-    emit NewZkBNBVerifier(_newVerifierAddress);
-  }
-
   /// @dev Process one block commit using previous block StoredBlockInfo,
   /// @dev returns new block StoredBlockInfo
-  function commitOneBlock(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
-    internal
-    view
-    returns (StoredBlockInfo memory storedNewBlock)
-  {
+  function commitOneBlock(
+    StoredBlockInfo memory _previousBlock,
+    CommitBlockInfo memory _newBlock
+  ) internal view returns (StoredBlockInfo memory storedNewBlock) {
     // only commit next block
     require(_newBlock.blockNumber == _previousBlock.blockNumber + 1, "f");
 
@@ -372,11 +340,10 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
       );
   }
 
-  function createBlockCommitment(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlockData)
-    internal
-    pure
-    returns (bytes32)
-  {
+  function createBlockCommitment(
+    StoredBlockInfo memory _previousBlock,
+    CommitBlockInfo memory _newBlockData
+  ) internal pure returns (bytes32) {
     // uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
     bytes32 converted = keccak256(
       abi.encodePacked(
@@ -392,11 +359,9 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   }
 
   /// @notice Collect onchain ops and ensure it was not executed before
-  function collectOnchainOps(CommitBlockInfo memory _newBlockData)
-    internal
-    view
-    returns (bytes32 processableOperationsHash, uint64 priorityOperationsProcessed)
-  {
+  function collectOnchainOps(
+    CommitBlockInfo memory _newBlockData
+  ) internal view returns (bytes32 processableOperationsHash, uint64 priorityOperationsProcessed) {
     bytes memory pubData = _newBlockData.publicData;
 
     require(pubData.length % TxTypes.PACKED_TX_PUBDATA_BYTES == 0, "A");
@@ -464,10 +429,10 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   function checkPriorityOperation(TxTypes.RegisterZNS memory _registerZNS, uint64 _priorityRequestId) internal view {
     TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
     // incorrect priority _tx type
-    require(priorReqType == TxTypes.TxType.RegisterZNS, "H");
+    require(priorReqType == TxTypes.TxType.RegisterZNS, "1H");
 
     bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-    require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "I");
+    require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "1K");
   }
 
   /// @notice Checks that deposit is same as _tx in priority queue
@@ -476,10 +441,10 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   function checkPriorityOperation(TxTypes.Deposit memory _deposit, uint64 _priorityRequestId) internal view {
     TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
     // incorrect priority _tx type
-    require(priorReqType == TxTypes.TxType.Deposit, "H");
+    require(priorReqType == TxTypes.TxType.Deposit, "2H");
 
     bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-    require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubData), "I");
+    require(TxTypes.checkDepositInPriorityQueue(_deposit, hashedPubData), "2K");
   }
 
   /// @notice Checks that deposit is same as _tx in priority queue
@@ -488,10 +453,10 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   function checkPriorityOperation(TxTypes.DepositNft memory _deposit, uint64 _priorityRequestId) internal view {
     TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
     // incorrect priority _tx type
-    require(priorReqType == TxTypes.TxType.DepositNft, "H");
+    require(priorReqType == TxTypes.TxType.DepositNft, "3H");
 
     bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-    require(TxTypes.checkDepositNftInPriorityQueue(_deposit, hashedPubData), "I");
+    require(TxTypes.checkDepositNftInPriorityQueue(_deposit, hashedPubData), "3K");
   }
 
   /// @notice Checks that FullExit is same as _tx in priority queue
@@ -500,10 +465,10 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   function checkPriorityOperation(TxTypes.FullExit memory _fullExit, uint64 _priorityRequestId) internal view {
     TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
     // incorrect priority _tx type
-    require(priorReqType == TxTypes.TxType.FullExit, "J");
+    require(priorReqType == TxTypes.TxType.FullExit, "4H");
 
     bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-    require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubData), "K");
+    require(TxTypes.checkFullExitInPriorityQueue(_fullExit, hashedPubData), "4K");
   }
 
   /// @notice Checks that FullExitNFT is same as _tx in priority queue
@@ -512,9 +477,9 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
   function checkPriorityOperation(TxTypes.FullExitNft memory _fullExitNft, uint64 _priorityRequestId) internal view {
     TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
     // incorrect priority _tx type
-    require(priorReqType == TxTypes.TxType.FullExitNft, "J");
+    require(priorReqType == TxTypes.TxType.FullExitNft, "5H");
 
     bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-    require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubData), "K");
+    require(TxTypes.checkFullExitNftInPriorityQueue(_fullExitNft, hashedPubData), "5K");
   }
 }

@@ -100,6 +100,9 @@ describe('UpgradeGatekeeper', function () {
     upgradeGatekeeper = await UpgradeGatekeeper.deploy(mockUpgradeableMaster.address);
     await upgradeGatekeeper.deployed();
 
+    const UPGRADE_GATEKEEPER_ROLE = await mockUpgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
+    mockUpgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, upgradeGatekeeper.address);
+
     expect(await upgradeGatekeeper.masterContract()).to.equal(mockUpgradeableMaster.address);
 
     // check length of `managedContracts` array which is stored at storage slot 0

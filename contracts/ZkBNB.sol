@@ -7,7 +7,6 @@ import "./interfaces/Events.sol";
 import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/INFTFactory.sol";
@@ -103,8 +102,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     stateRoot = _genesisStateRoot;
     storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
   }
-  
- /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+
+  /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external {}
@@ -167,11 +166,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _token Token address
   /// @param _amount Token amount
   /// @param _accountName Receiver Layer 2 account name
-  function depositBEP20(
-    IERC20 _token,
-    uint104 _amount,
-    string calldata _accountName
-  ) external onlyActive {
+  function depositBEP20(IERC20 _token, uint104 _amount, string calldata _accountName) external onlyActive {
     require(_amount != 0, "I");
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
     require(znsController.isRegisteredNameHash(accountNameHash), "N");
@@ -192,13 +187,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Deposit NFT to Layer 2, ERC721 is supported
-  function depositNft(
-    string calldata _accountName,
-    address _nftL1Address,
-    uint256 _nftL1TokenId
-  ) external onlyActive {
+  function depositNft(string calldata _accountName, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
     require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+    // check if the nft is mint from layer-2
+    bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
+    require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
+
     // Transfer the tokens to this contract
     bool success;
     try IERC721(_nftL1Address).safeTransferFrom(msg.sender, address(this), _nftL1TokenId) {
@@ -207,18 +202,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       success = false;
     }
     require(success, "ntf");
-    // check owner
+    // check if the NFT has arrived
     require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
 
-    // check if the nft is mint from layer-2
-    bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-    require(l2Nfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
-
-    bytes32 nftContentHash = l2Nfts[nftKey].nftContentHash;
-    uint16 collectionId = l2Nfts[nftKey].collectionId;
-    uint40 nftIndex = l2Nfts[nftKey].nftIndex;
-    uint32 creatorAccountIndex = l2Nfts[nftKey].creatorAccountIndex;
-    uint16 creatorTreasuryRate = l2Nfts[nftKey].creatorTreasuryRate;
+    bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
+    uint16 collectionId = mintedNfts[nftKey].collectionId;
+    uint40 nftIndex = mintedNfts[nftKey].nftIndex;
+    uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
+    uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
 
     TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
       txType: uint8(TxTypes.TxType.DepositNft),
@@ -250,7 +241,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
     bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
     bool alreadyMintedFlag = false;
-    if (l2Nfts[nftKey].nftContentHash != bytes32(0)) {
+    if (mintedNfts[nftKey].nftContentHash != bytes32(0)) {
       alreadyMintedFlag = true;
     }
     // get layer-1 address by account name hash
@@ -277,13 +268,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
       // store into l2 nfts
       nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
-      l2Nfts[nftKey] = L2NftInfo({
-        nftIndex: op.nftIndex,
-        creatorAccountIndex: op.creatorAccountIndex,
-        creatorTreasuryRate: op.creatorTreasuryRate,
-        nftContentHash: op.nftContentHash,
-        collectionId: uint16(op.collectionId)
-      });
       try
         INFTFactory(_factoryAddress).mintFromZkBNB(
           _creatorAddress,
@@ -296,6 +280,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         // add nft to account at L1
         _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
 
+        mintedNfts[nftKey] = L2NftInfo({
+          nftIndex: op.nftIndex,
+          creatorAccountIndex: op.creatorAccountIndex,
+          creatorTreasuryRate: op.creatorTreasuryRate,
+          nftContentHash: op.nftContentHash,
+          collectionId: uint16(op.collectionId)
+        });
         emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
       } catch {
         storePendingNFT(op);
@@ -348,11 +339,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _amount Amount to withdraw to request.
   ///         NOTE: We will call ERC20.transfer(.., _amount), but if according to internal logic of ERC20 token ZkBNB contract
   ///         balance will be decreased by value more then _amount we will try to subtract this value from user pending balance
-  function withdrawPendingBalance(
-    address payable _owner,
-    address _token,
-    uint128 _amount
-  ) external {
+  function withdrawPendingBalance(address payable _owner, address _token, uint128 _amount) external {
     uint16 _assetId = 0;
     if (_token != address(0)) {
       _assetId = governance.validateAssetAddress(_token);
@@ -405,9 +392,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice Commit block
   /// @notice 1. Checks onchain operations, timestamp.
-  function commitBlocks(StoredBlockInfo memory _lastCommittedBlockData, CommitBlockInfo[] memory _newBlocksData)
-    external
-  {
+  function commitBlocks(
+    StoredBlockInfo memory _lastCommittedBlockData,
+    CommitBlockInfo[] memory _newBlocksData
+  ) external {
     delegateAdditional();
   }
 
@@ -477,11 +465,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @dev 1. Try to send token to _recipients
   /// @dev 2. On failure: Increment _recipients balance to withdraw.
-  function withdrawOrStore(
-    uint16 _assetId,
-    address _recipient,
-    uint128 _amount
-  ) internal {
+  function withdrawOrStore(uint16 _assetId, address _recipient, uint128 _amount) internal {
     bytes22 packedBalanceKey = packAddressAndAssetId(_recipient, _assetId);
 
     bool sent = false;
@@ -508,10 +492,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @notice Verify layer-2 blocks proofs
   /// @param _blocks Verified blocks info
   /// @param _proofs proofs
-  function verifyAndExecuteBlocks(VerifyAndExecuteBlockInfo[] memory _blocks, uint256[] memory _proofs)
-    external
-    onlyActive
-  {
+  function verifyAndExecuteBlocks(
+    VerifyAndExecuteBlockInfo[] memory _blocks,
+    uint256[] memory _proofs
+  ) external onlyActive {
     governance.isActiveValidator(msg.sender);
 
     uint64 priorityRequestsExecuted = 0;
@@ -578,11 +562,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _assetId Asset by id
   /// @param _amount Asset amount
   /// @param _accountNameHash Receiver Account Name
-  function registerDeposit(
-    uint16 _assetId,
-    uint128 _amount,
-    bytes32 _accountNameHash
-  ) internal {
+  function registerDeposit(uint16 _assetId, uint128 _amount, bytes32 _accountNameHash) internal {
     // Priority Queue request
     TxTypes.Deposit memory _tx = TxTypes.Deposit({
       txType: uint8(TxTypes.TxType.Deposit),

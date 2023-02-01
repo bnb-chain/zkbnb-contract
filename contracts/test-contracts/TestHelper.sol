@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../lib/NFTHelper.sol";
 
-contract NFTHelperTest is NFTHelper {
+contract TestHelper is NFTHelper {
   constructor() {}
 
   function addAccountNft(address _account, address _nftAddress, uint256 _nftIndex) external {
@@ -12,5 +12,13 @@ contract NFTHelperTest is NFTHelper {
 
   function removeAccountNft(address _account, address _nftAddress, uint256 _nftIndex) external {
     _removeAccountNft(_account, _nftAddress, _nftIndex);
+  }
+
+  function contractExists(address _contract) public view returns (bool) {
+    uint size;
+    assembly {
+      size := extcodesize(_contract)
+    }
+    return size > 0;
   }
 }

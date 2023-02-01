@@ -1,6 +1,7 @@
-const { ethers } = require('hardhat');
+const hardhat = require('hardhat');
 const namehash = require('eth-ens-namehash');
 const { getDeployedAddresses, getZkBNBProxy } = require('./utils');
+const { ethers } = hardhat;
 
 async function main() {
   const addrs = getDeployedAddresses('info/addresses.json');

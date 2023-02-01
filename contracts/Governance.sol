@@ -100,7 +100,9 @@ contract Governance is Config, Initializable {
   function setAssetPaused(address _assetAddress, bool _assetPaused) external {
     requireGovernor(msg.sender);
 
-    uint16 assetId = this.validateAssetAddress(_assetAddress);
+    uint16 assetId = assetsList[_assetAddress];
+    require(assetId != 0, "1i");
+
     if (pausedAssets[assetId] != _assetPaused) {
       pausedAssets[assetId] = _assetPaused;
       emit AssetPausedUpdate(_assetAddress, _assetPaused);

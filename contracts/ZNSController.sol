@@ -23,11 +23,20 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
 
   // The nodehash/namehash of the root node this registrar owns (eg, .legend)
   bytes32 public baseNode;
-  // A map of addresses that are authorized to controll the registrar(eg, register names)
+  // A map of addresses that are authorized to control the registrar(eg, register names)
   mapping(address => bool) public controllers;
   // A map to record the L2 owner of each node. A L2 owner can own only 1 name.
   // pubKey => nodeHash
   mapping(bytes32 => bytes32) ZNSPubKeyMapper;
+
+  // The minimum account name length allowed to register
+  uint public minAccountNameLengthAllowed = 1;
+  event AccountNameLengthThresholdChanged(uint newMinLengthAllowed);
+
+  // True if the registration is paused
+  bool public isPaused;
+  event RegistrationPaused();
+  event RegistrationResumed();
 
   modifier onlyController() {
     require(controllers[msg.sender]);
@@ -35,7 +44,8 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
   }
 
   modifier live() {
-    require(zns.owner(baseNode) == address(this));
+    require(zns.owner(baseNode) == address(this), "zns not assigned");
+    require(!isPaused, "paused");
     _;
   }
 
@@ -96,7 +106,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     bytes32 _pubKeyX,
     bytes32 _pubKeyY,
     address _resolver
-  ) external payable override onlyController returns (bytes32 subnode, uint32 accountIndex) {
+  ) external payable override onlyController live returns (bytes32 subnode, uint32 accountIndex) {
     // Check if this name is valid
     require(_valid(_name), "invalid name");
     // This L2 owner should not own any name before
@@ -111,13 +121,19 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     // This subnode should not be registered before
     require(!zns.subNodeRecordExists(baseNode, label), "subnode existed");
     // Register subnode
-    subnode = zns.setSubnodeRecord(baseNode, label, _owner, _pubKeyX, _pubKeyY, _resolver);
-    accountIndex = zns.setSubnodeAccountIndex(subnode);
+    (bytes32 subnode, uint32 accountIndex) = zns.setSubnodeRecord(
+      baseNode,
+      label,
+      _owner,
+      _pubKeyX,
+      _pubKeyY,
+      _resolver
+    );
 
     // Update L2 owner mapper
     ZNSPubKeyMapper[_pubKeyY] = subnode;
 
-    emit ZNSRegistered(_name, subnode, _owner, _pubKeyX, _pubKeyY, price);
+    emit ZNSRegistered(_name, subnode, accountIndex, _owner, _pubKeyX, _pubKeyY, price);
 
     // Refund remained value to the owner of this name
     if (msg.value > price) {
@@ -134,11 +150,39 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
    */
   function withdraw(address _to, uint256 _value) external onlyOwner {
     // Check not too much value
-    require(_value < address(this).balance, "tmv");
+    require(_value <= address(this).balance, "tmv");
     // Withdraw
     payable(_to).transfer(_value);
 
     emit Withdraw(_to, _value);
+  }
+
+  /**
+   * @dev Pause the registration through this controller
+   */
+  function pauseRegistration() external override onlyOwner {
+    if (!isPaused) {
+      isPaused = true;
+    }
+  }
+
+  /**
+   * @dev Resume registration
+   */
+  function unPauseRegistration() external override onlyOwner {
+    if (isPaused) {
+      isPaused = false;
+    }
+  }
+
+  /**
+   * @dev Set the minimum account name length allowed to register
+   */
+  function setAccountNameLengthThreshold(uint newMinLengthAllowed) external override onlyOwner {
+    if (newMinLengthAllowed != minAccountNameLengthAllowed) {
+      minAccountNameLengthAllowed = newMinLengthAllowed;
+      emit AccountNameLengthThresholdChanged(newMinLengthAllowed);
+    }
   }
 
   function getSubnodeNameHash(string memory name) external view returns (bytes32) {
@@ -161,7 +205,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     return prices.price(name);
   }
 
-  function _valid(string memory _name) internal pure returns (bool) {
+  function _valid(string memory _name) internal view returns (bool) {
     return _validCharset(_name) && _validLength(_name);
   }
 
@@ -169,8 +213,8 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     return _name.charsetValid();
   }
 
-  function _validLength(string memory _name) internal pure returns (bool) {
-    return _name.strlen() >= 3 && _name.strlen() <= 20;
+  function _validLength(string memory _name) internal view returns (bool) {
+    return _name.strlen() >= minAccountNameLengthAllowed && _name.strlen() <= 20;
   }
 
   function _validPubKey(bytes32 _pubKey) internal view returns (bool) {

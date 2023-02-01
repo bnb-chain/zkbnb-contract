@@ -1,9 +1,10 @@
-const { ethers } = require('hardhat');
+const hardhat = require('hardhat');
 const namehash = require('eth-ens-namehash');
 const fs = require('fs');
-const { getKeccak256, saveDeployedAddresses, getZkBNBProxy } = require('./utils');
+const { getKeccak256, saveDeployedAddresses } = require('./utils');
 require('dotenv').config();
 
+const { ethers } = hardhat;
 const { SECURITY_COUNCIL_MEMBERS_NUMBER_1, SECURITY_COUNCIL_MEMBERS_NUMBER_2, SECURITY_COUNCIL_MEMBERS_NUMBER_3 } =
   process.env;
 
@@ -48,12 +49,8 @@ async function main() {
 
   // Step 3: initialize deploy factory and finish deployment
   // deploy price oracle
-  console.log('Deploy PriceOracle...');
-  const priceOracle = await contractFactories.ZNSPriceOracle.deploy([
-    ethers.utils.parseEther('0.05'),
-    ethers.utils.parseEther('0.03'),
-    ethers.utils.parseEther('0.01'),
-  ]);
+  console.log('Deploy PriceOracleV1...');
+  const priceOracle = await contractFactories.ZNSPriceOracle.deploy(ethers.utils.parseEther('0.05'));
   await priceOracle.deployed();
 
   // prepare deploy params
@@ -74,7 +71,7 @@ async function main() {
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
   const _listingToken = BUSDToken.address;
-  const baseNode = namehash.hash('legend');
+  const baseNode = namehash.hash('zkbnb');
   // deploy DeployFactory
   console.log('Deploy DeployFactory...');
   const deployFactory = await contractFactories.DeployFactory.deploy(
@@ -141,7 +138,7 @@ async function main() {
   // Step 4: register zns base node
   console.log('Register ZNS base node...');
   const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const baseNodeLabel = getKeccak256('legend'); // keccak256('legend');
+  const baseNodeLabel = getKeccak256('zkbnb'); // keccak256('zkbnb');
   const setBaseNodeTx = await znsRegistry
     .connect(owner)
     .setSubnodeOwner(
@@ -153,10 +150,10 @@ async function main() {
     );
   await setBaseNodeTx.wait();
 
-  // NOTE: UpgradeGateKeeper must be granted permission to invoke the relevant method of the notification period
   console.log('Granted permission...');
   const UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
   await upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, event[6] /* upgradeGateKeeper.address */);
+  await upgradeableMaster.changeZkBNBAddress(event[5] /* zkbnb.address */);
 
   // Save addresses into JSON
   console.log('Save deployed contract addresses...');
@@ -174,6 +171,7 @@ async function main() {
     ERC721: ERC721.address,
     znsPriceOracle: priceOracle.address,
     DefaultNftFactory: DefaultNftFactory.address,
+    upgradeableMaster: upgradeableMaster.address,
   });
 }
 
@@ -187,7 +185,7 @@ async function getContractFactories() {
     ERC721Factory: await ethers.getContractFactory('ZkBNBRelatedERC721'),
     ZNSRegistry: await ethers.getContractFactory('ZNSRegistry'),
     ZNSResolver: await ethers.getContractFactory('PublicResolver'),
-    ZNSPriceOracle: await ethers.getContractFactory('StablePriceOracle'),
+    ZNSPriceOracle: await ethers.getContractFactory('PriceOracleV1'),
     ZNSController: await ethers.getContractFactory('ZNSController'),
     Governance: await ethers.getContractFactory('Governance'),
     AssetGovernance: await ethers.getContractFactory('AssetGovernance'),

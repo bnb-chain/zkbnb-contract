@@ -3,13 +3,13 @@ const { ethers } = require('hardhat');
 const { BigNumber } = require('ethers');
 
 // Start test block
-describe('NFTHelperTest', function () {
+describe('TestHelper', function () {
   const account1 = ethers.Wallet.createRandom().address;
   const account2 = ethers.Wallet.createRandom().address;
   const nftAddress1 = ethers.Wallet.createRandom().address;
   const nftAddress2 = ethers.Wallet.createRandom().address;
   beforeEach(async function () {
-    const NftHelperTest = await ethers.getContractFactory('NFTHelperTest');
+    const NftHelperTest = await ethers.getContractFactory('TestHelper');
     this.nftHelperTest = await NftHelperTest.deploy();
   });
 
@@ -73,5 +73,10 @@ describe('NFTHelperTest', function () {
       expect(item.nftAddress).to.equal(nftAddress1);
       expect(item.nftIndex.toString()).to.equal((i + 1).toString());
     });
+  });
+
+  it('contract exists', async function () {
+    const res = await this.nftHelperTest.contractExists(account1);
+    expect(res).to.equal(false);
   });
 });
