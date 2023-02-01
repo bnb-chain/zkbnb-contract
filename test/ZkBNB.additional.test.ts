@@ -248,6 +248,32 @@ describe('ZkBNB', function () {
           .to.emit(zkBNB, 'BlockCommit')
           .withArgs(1);
       });
+      it('should not commit other operation', async () => {
+        // mock user request full exit, and get pubData
+        mockZNSController.isRegisteredNameHash.returns(true);
+        mockZNSController.getSubnodeNameHash.returns(accountNameHash);
+        mockZNSController.getOwner.returns(owner.address);
+
+        await zkBNB.requestFullExit('accountNameHash', ethers.constants.AddressZero);
+
+        const pubDataOther = encodePackPubData(PubDataTypeMap[PubDataType.Deposit], [
+          PubDataType.AtomicMatch,
+          0,
+          ASSET_ID,
+          10,
+          accountNameHash,
+        ]);
+
+        const commitBlock: CommitBlockInfo = {
+          newStateRoot,
+          publicData: ethers.utils.hexConcat([padEndBytes121(pubDataOther)]),
+          timestamp: Date.now(),
+          publicDataOffsets: [0],
+          blockNumber: 1,
+          blockSize: 1,
+        };
+        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).revertedWith('F');
+      });
       describe('NFT', async () => {
         const nftL1TokenId = 0;
         const mockHash = ethers.utils.formatBytes32String('mock hash');
