@@ -373,5 +373,12 @@ describe('NFT functionality', function () {
       await zkBNBNFTFactory.updateBaseUri(newBase);
       await expect(await zkBNBNFTFactory._base()).to.be.equal(newBase);
     });
+
+    it('non-owner should fail to update base URI', async function () {
+      const newBase = 'bar://';
+      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith(
+        'Ownable: caller is not the owner',
+      );
+    });
   });
 });
