@@ -2,10 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/INFTFactory.sol";
 import "./lib/Bytes.sol";
 
-contract ZkBNBNFTFactory is ERC721, INFTFactory {
+contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable {
   // Optional mapping from token ID to token content hash
   mapping(uint256 => bytes32) private _contentHashes;
 
@@ -57,7 +58,7 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory {
     return string(abi.encodePacked(_base, Bytes.bytes32ToHexString(_contentHashes[tokenId], false)));
   }
 
-  function updateBaseUri(string memory base) external {
+  function updateBaseUri(string memory base) external onlyOwner {
     _base = base;
   }
 }
