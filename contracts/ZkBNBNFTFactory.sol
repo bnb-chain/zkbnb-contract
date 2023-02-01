@@ -3,10 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/INFTFactory.sol";
 import "./lib/Bytes.sol";
 
-contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable {
+contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable, ReentrancyGuard {
   // Optional mapping from token ID to token content hash
   mapping(uint256 => bytes32) private _contentHashes;
 
@@ -28,7 +29,7 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable {
     uint256 _nftTokenId,
     bytes32 _nftContentHash,
     bytes memory _extraData
-  ) external override {
+  ) external override nonReentrant {
     require(_msgSender() == _zkbnbAddress, "only zkbnbAddress");
     // Minting allowed only from zkbnb
     _safeMint(_toAddress, _nftTokenId);
