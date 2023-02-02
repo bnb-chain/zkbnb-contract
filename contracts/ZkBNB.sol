@@ -535,6 +535,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         blockVerified[blockIdx] = true;
         // verify block proof
         VerifyAndExecuteBlockInfo memory _block = _blocks[blockIdx];
+        // Since the Solidity uint256 type can hold numbers larger than the snark scalar field order.
+        // publicInputs must be less than B, otherwise there will be an out-of-bounds.
+        // Same issue can be seen from https://github.com/0xPARC/zk-bug-tracker#semaphore-1
         publicInputs[i] = uint256(_block.blockHeader.commitment) % q;
         for (uint256 j = 0; j < 8; j++) {
           proofs[8 * i + j] = _proofs[8 * blockIdx + j];
