@@ -1,18 +1,19 @@
 module.exports = {
   root: true,
   env: {
-    browser: false,
-    es2021: true,
-    mocha: true,
+    es6: true,
     node: true,
+    mocha: true,
   },
+  parserOptions: { ecmaVersion: 8 },
   extends: ['eslint:recommended', 'plugin:prettier/recommended'],
   rules: {
     radix: ['error', 'always'],
+    'no-unused-vars': 'warn',
     'object-shorthand': ['error', 'always'],
     'prettier/prettier': [
       'error',
-      {},
+      { semi: true },
       {
         usePrettierrc: true,
       },
@@ -28,5 +29,11 @@ module.exports = {
         'no-unused-expressions': 'off',
       },
     },
+    {
+      parser: '@typescript-eslint/parser',
+      plugins: ['@typescript-eslint'],
+      files: ['*.ts', '*.tsx'],
+      extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended'],
+    },
   ],
-}
+};
