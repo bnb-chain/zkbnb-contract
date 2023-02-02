@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IPriceOracle.sol";
 import "./lib/Names.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 // StablePriceOracle sets a price for zns name in BNB
-contract StablePriceOracle is IPriceOracle, Ownable {
+contract StablePriceOracle is IPriceOracle, Ownable2Step {
   using Names for string;
 
   // Rent in base price units by length
