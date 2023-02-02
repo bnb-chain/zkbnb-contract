@@ -131,6 +131,7 @@ library Utils {
   }
 
   function hashBytesToBytes20(bytes memory _bytes) internal pure returns (bytes20) {
+    // downcast uint160 to take lowest 20 bytes
     return bytes20(uint160(uint256(keccak256(_bytes))));
   }
 

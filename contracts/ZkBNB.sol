@@ -386,8 +386,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(balanceDiff <= _maxAmount, "7");
     // rollup balance difference (before and after transfer) is bigger than `_maxAmount`
 
-    // It is safe to convert `balanceDiff` to `uint128` without additional checks, because `balanceDiff <= _maxAmount`
-    return uint128(balanceDiff);
+    return SafeCast.toUint128(balanceDiff);
   }
 
   /// @notice Commit block
