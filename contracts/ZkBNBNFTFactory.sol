@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/INFTFactory.sol";
 import "./lib/Bytes.sol";
 
-contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable, ReentrancyGuard {
+contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable2Step, ReentrancyGuard {
   // Optional mapping from token ID to token content hash
   mapping(uint256 => bytes32) private _contentHashes;
 
