@@ -15,6 +15,19 @@ import "./lib/TxTypes.sol";
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
 contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
+  struct CommitBlockInfo {
+    bytes32 newStateRoot;
+    bytes publicData;
+    uint256 timestamp;
+    uint32[] publicDataOffsets;
+    uint32 blockNumber;
+    uint16 blockSize;
+  }
+
+  bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
+
+  event NewZkBNBVerifier(address verifier);
+
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
@@ -269,19 +282,6 @@ contract AdditionalZkBNB is Storage, Config, Events, IERC721Receiver {
     });
     bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
     addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
-  }
-
-  event NewZkBNBVerifier(address verifier);
-
-  bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
-
-  struct CommitBlockInfo {
-    bytes32 newStateRoot;
-    bytes publicData;
-    uint256 timestamp;
-    uint32[] publicDataOffsets;
-    uint32 blockNumber;
-    uint16 blockSize;
   }
 
   function commitBlocks(

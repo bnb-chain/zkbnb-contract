@@ -201,7 +201,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     } catch {
       success = false;
     }
-    require(success, "ntf");
+    require(success, "nft transfer failed");
     // check if the NFT has arrived
     require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
 
