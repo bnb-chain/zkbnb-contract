@@ -175,21 +175,34 @@ async function main() {
 
   // Save addresses into JSON
   console.log(chalk.blue('📥 Save deployed contract addresses and arguments'));
-  saveDeployedAddresses('info/addresses.json', {
-    governance: event[0],
-    assetGovernance: event[1],
-    verifierProxy: event[2],
-    znsControllerProxy: event[3],
-    znsResolverProxy: event[4],
-    zkbnbProxy: event[5],
-    upgradeGateKeeper: event[6],
-    additionalZkBNB: event[7],
-    ERC721: ERC721.address,
-    znsPriceOracle: priceOracle.address,
-    DefaultNftFactory: DefaultNftFactory.address,
-    upgradeableMaster: upgradeableMaster.address,
-    utils: contractFactories.Utils.address,
-  });
+  const ERC20ForTestnet = isMainnet
+    ? {}
+    : {
+        BUSDToken: tokens[0],
+        LEGToken: tokens[1],
+        REYToken: tokens[2],
+      };
+  saveDeployedAddresses(
+    'info/addresses.json',
+    Object.assign(
+      {
+        governance: event[0],
+        assetGovernance: event[1],
+        verifierProxy: event[2],
+        znsControllerProxy: event[3],
+        znsResolverProxy: event[4],
+        zkbnbProxy: event[5],
+        upgradeGateKeeper: event[6],
+        additionalZkBNB: event[7],
+        ERC721: ERC721.address,
+        znsPriceOracle: priceOracle.address,
+        DefaultNftFactory: DefaultNftFactory.address,
+        upgradeableMaster: upgradeableMaster.address,
+        utils: contractFactories.Utils.address,
+      },
+      ERC20ForTestnet,
+    ),
+  );
 
   // Save contract constructor arguments to JSON for verify
   saveConstructorArgumentsForVerify('info/constructor.json', {
