@@ -15,7 +15,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
             node-version: 16.x
-      - name: Clean and install dependencies
-        run: rm -rf node_modules && npm install
+      - name: Clean cache and node modules
+        run: |
+          rm -rf node_modules 
+          rm -f package-lock.json
+          rm -f yarn.lock
+      - name: Install dependencies
+        run: npm install
       - name: Compile and Unit test contracts
         run: npm run test
