@@ -25,8 +25,8 @@ describe('NFT functionality', function () {
   let utils;
 
   const mockHash = ethers.utils.hexZeroPad(
-      '0x3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase(),
-      32,
+    '0x3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase(),
+    32,
   );
 
   // The prefix to the CID before the content hash. Refer to https://docs.ipfs.tech/concepts/content-addressing/#cid-conversion for more details.
@@ -324,13 +324,10 @@ describe('NFT functionality', function () {
     const base16CID = new CID('bafybeibvpgysop4uafzp5ptswc73khav6spshzkyzj7qhx52fwl5qkd2ga').toString('base16');
 
     //The SHA2-256 digest of the IPFS multihash. This is the second part of the CIDv1
-    const digestInHexFromCID = '0x'+ base16CID.substring(9)
+    const digestInHexFromCID = '0x' + base16CID.substring(9);
 
     //Convert to bytes32
-    const IPFSMultiHashDigest = ethers.utils.hexZeroPad(
-        digestInHexFromCID,
-        32,
-    );
+    const IPFSMultiHashDigest = ethers.utils.hexZeroPad(digestInHexFromCID, 32);
 
     it.skip('register NFT factory', async function () {
       mockZNSController.getSubnodeNameHash.returns();
@@ -363,18 +360,25 @@ describe('NFT functionality', function () {
       const expectUri = `${baseURI}${mockHash.substring(2)}`;
       await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
 
-      const queryableResource = `${baseURI}`.split("//")[1] + `${mockHash.substring(2)}`
+      const queryableResource = `${baseURI}`.split('//')[1] + `${mockHash.substring(2)}`;
 
       //Check if the tokenURI is indeed valid using a IPFS gateway
-      const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'))
-      assert(res.name, '2 nft.storage store test')
-      assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.')
+      const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'));
+      assert(res.name, '2 nft.storage store test');
+      assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.');
     });
 
     it('should point base URI to represent URI and encoding of the CID', async function () {
       const newBase = 'ipfs://dbvKFHFH'; //Change the encoding prefix to a different value
       await zkBNBNFTFactory.updateBaseUri(newBase);
       await expect(await zkBNBNFTFactory._base()).to.be.equal(newBase);
+    });
+
+    it('non-owner should fail to update base URI', async function () {
+      const newBase = 'bar://';
+      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith(
+        'Ownable: caller is not the owner',
+      );
     });
   });
 });

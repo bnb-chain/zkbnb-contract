@@ -201,7 +201,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     } catch {
       success = false;
     }
-    require(success, "ntf");
+    require(success, "nft transfer failed");
     // check if the NFT has arrived
     require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
 
@@ -386,8 +386,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(balanceDiff <= _maxAmount, "7");
     // rollup balance difference (before and after transfer) is bigger than `_maxAmount`
 
-    // It is safe to convert `balanceDiff` to `uint128` without additional checks, because `balanceDiff <= _maxAmount`
-    return uint128(balanceDiff);
+    return SafeCast.toUint128(balanceDiff);
   }
 
   /// @notice Commit block
@@ -536,6 +535,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         blockVerified[blockIdx] = true;
         // verify block proof
         VerifyAndExecuteBlockInfo memory _block = _blocks[blockIdx];
+        // Since the Solidity uint256 type can hold numbers larger than the snark scalar field order.
+        // publicInputs must be less than B, otherwise there will be an out-of-bounds.
+        // Same issue can be seen from https://github.com/0xPARC/zk-bug-tracker#semaphore-1
         publicInputs[i] = uint256(_block.blockHeader.commitment) % q;
         for (uint256 j = 0; j < 8; j++) {
           proofs[8 * i + j] = _proofs[8 * blockIdx + j];

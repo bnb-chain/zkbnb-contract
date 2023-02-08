@@ -102,7 +102,7 @@ contract Governance is Config, Initializable {
 
     uint16 assetId = assetsList[_assetAddress];
     require(assetId != 0, "1i");
-    
+
     if (pausedAssets[assetId] != _assetPaused) {
       pausedAssets[assetId] = _assetPaused;
       emit AssetPausedUpdate(_assetAddress, _assetPaused);
