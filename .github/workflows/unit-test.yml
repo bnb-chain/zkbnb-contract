@@ -15,7 +15,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
             node-version: 16.x
-      - name: Install dependencies
-        run: npm install
+      - name: Clean and install dependencies
+        run: rm -rf node_modules && npm install
       - name: Compile and Unit test contracts
         run: npm run test
