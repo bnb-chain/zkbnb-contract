@@ -1,4 +1,4 @@
-name: Build and verify contracts
+name: Build and run contract unit tests
 
 on:
   pull_request:
