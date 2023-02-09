@@ -76,7 +76,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external {
     address _additionalZkBNB = abi.decode(upgradeParameters, (address));
-    additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
+    if (_additionalZkBNB != address(0)) {
+      additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
+    }
   }
 
   function registerZNS(
