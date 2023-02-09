@@ -8,7 +8,7 @@
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile --show-stack-traces",
     "coverage": "npx hardhat coverage",
-    "test": "npx hardhat test test/*.{ts,js} --network hardhat --parallel",
+    "test": "npx hardhat test --network hardhat --parallel",
     "test-upgradeable": "npx hardhat test test/upgradeable/**.test.js",
     "lint:check:format": "prettier --check **.{sol,js}",
     "lint:check:solhint": "solhint contracts/**/*.sol",
