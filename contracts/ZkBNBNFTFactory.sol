@@ -23,6 +23,10 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable2Step, ReentrancyGuard {
     _base = base;
   }
 
+  function updateBaseUri(string memory base) external onlyOwner {
+    _base = base;
+  }
+
   function mintFromZkBNB(
     address _creatorAddress,
     address _toAddress,
@@ -38,14 +42,6 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable2Step, ReentrancyGuard {
     emit MintNFTFromZkBNB(_creatorAddress, _toAddress, _nftTokenId, _nftContentHash, _extraData);
   }
 
-  function _beforeTokenTransfer(address, address to, uint256 tokenId) internal virtual {
-    // Sending to address `0` means that the token is getting burned.
-    if (to == address(0)) {
-      delete _contentHashes[tokenId];
-      delete _nftCreators[tokenId];
-    }
-  }
-
   function getContentHash(uint256 _tokenId) external view returns (bytes32) {
     return _contentHashes[_tokenId];
   }
@@ -59,7 +55,11 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable2Step, ReentrancyGuard {
     return string(abi.encodePacked(_base, Bytes.bytes32ToHexString(_contentHashes[tokenId], false)));
   }
 
-  function updateBaseUri(string memory base) external onlyOwner {
-    _base = base;
+  function _beforeTokenTransfer(address, address to, uint256 tokenId) internal virtual {
+    // Sending to address `0` means that the token is getting burned.
+    if (to == address(0)) {
+      delete _contentHashes[tokenId];
+      delete _nftCreators[tokenId];
+    }
   }
 }

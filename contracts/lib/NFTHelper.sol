@@ -18,6 +18,20 @@ contract NFTHelper {
   mapping(address => AccountNft[]) public accountNfts;
 
   /**
+   * @dev Query nft list by account.
+   *
+   * @param _account The account address at L1.
+   */
+  function getAccountNfts(address _account) external view returns (AccountNft[] memory) {
+    AccountNft[] memory nfts = new AccountNft[](accountNfts[_account].length);
+    for (uint256 i = 0; i < accountNfts[_account].length; i++) {
+      AccountNft memory accountNft = accountNfts[_account][i];
+      nfts[i] = AccountNft({nftAddress: accountNft.nftAddress, nftIndex: accountNft.nftIndex});
+    }
+    return nfts;
+  }
+
+  /**
    * @dev Add nft to a account.
    *
    * @param _account The account address at L1.
@@ -47,19 +61,5 @@ contract NFTHelper {
         break;
       }
     }
-  }
-
-  /**
-   * @dev Query nft list by account.
-   *
-   * @param _account The account address at L1.
-   */
-  function getAccountNfts(address _account) external view returns (AccountNft[] memory) {
-    AccountNft[] memory nfts = new AccountNft[](accountNfts[_account].length);
-    for (uint256 i = 0; i < accountNfts[_account].length; i++) {
-      AccountNft memory accountNft = accountNfts[_account][i];
-      nfts[i] = AccountNft({nftAddress: accountNft.nftAddress, nftIndex: accountNft.nftIndex});
-    }
-    return nfts;
   }
 }

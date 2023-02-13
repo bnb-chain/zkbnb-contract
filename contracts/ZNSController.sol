@@ -16,27 +16,32 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
 
   // ZNS registry
   IZNS public zns;
+
   // Price Oracle
   IPriceOracle public prices;
 
-  event Withdraw(address _to, uint256 _value);
-
   // The nodehash/namehash of the root node this registrar owns (eg, .legend)
   bytes32 public baseNode;
+
   // A map of addresses that are authorized to control the registrar(eg, register names)
   mapping(address => bool) public controllers;
+
   // A map to record the L2 owner of each node. A L2 owner can own only 1 name.
   // pubKey => nodeHash
   mapping(bytes32 => bytes32) ZNSPubKeyMapper;
 
   // The minimum account name length allowed to register
   uint public minAccountNameLengthAllowed = 1;
-  event AccountNameLengthThresholdChanged(uint newMinLengthAllowed);
 
   // True if the registration is paused
   bool public isPaused;
+
+  uint256 immutable q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
   event RegistrationPaused();
   event RegistrationResumed();
+  event Withdraw(address _to, uint256 _value);
+  event AccountNameLengthThresholdChanged(uint newMinLengthAllowed);
 
   modifier onlyController() {
     require(controllers[msg.sender]);
@@ -59,38 +64,10 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     );
     zns = IZNS(_znsAddr);
     prices = IPriceOracle(_prices);
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     baseNode = bytes32(uint256(_node) % q);
 
     // initialize ownership
     controllers[msg.sender] = true;
-  }
-
-  /// @notice ZNSController contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
-  /// @param upgradeParameters Encoded representation of upgrade parameters
-  // solhint-disable-next-line no-empty-blocks
-  function upgrade(bytes calldata upgradeParameters) external {}
-
-  // Authorizes a controller, who can control this registrar.
-  function addController(address _controller) external override onlyOwner {
-    controllers[_controller] = true;
-    emit ControllerAdded(_controller);
-  }
-
-  // Revoke controller permission for an address.
-  function removeController(address _controller) external override onlyOwner {
-    controllers[_controller] = false;
-    emit ControllerRemoved(_controller);
-  }
-
-  // Set resolver for the node this registrar manages.
-  // This msg.sender must be the owner of base node.
-  function setThisResolver(address _resolver) external override onlyOwner {
-    zns.setResolver(baseNode, _resolver);
-  }
-
-  function getOwner(bytes32 node) external view returns (address) {
-    return zns.owner(node);
   }
 
   /**
@@ -143,6 +120,29 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     return (subnode, accountIndex);
   }
 
+  /// @notice ZNSController contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+  /// @param upgradeParameters Encoded representation of upgrade parameters
+  // solhint-disable-next-line no-empty-blocks
+  function upgrade(bytes calldata upgradeParameters) external {}
+
+  // Authorizes a controller, who can control this registrar.
+  function addController(address _controller) external override onlyOwner {
+    controllers[_controller] = true;
+    emit ControllerAdded(_controller);
+  }
+
+  // Revoke controller permission for an address.
+  function removeController(address _controller) external override onlyOwner {
+    controllers[_controller] = false;
+    emit ControllerRemoved(_controller);
+  }
+
+  // Set resolver for the node this registrar manages.
+  // This msg.sender must be the owner of base node.
+  function setThisResolver(address _resolver) external override onlyOwner {
+    zns.setResolver(baseNode, _resolver);
+  }
+
   /**
    * @dev Withdraw BNB from this contract, only called by the owner of this contract.
    * @param _to The address to receive
@@ -185,8 +185,11 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     }
   }
 
+  function getOwner(bytes32 node) external view returns (address) {
+    return zns.owner(node);
+  }
+
   function getSubnodeNameHash(string memory name) external view returns (bytes32) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(baseNode, keccak256Hash(bytes(name))));
     subnode = bytes32(uint256(subnode) % q);
     return subnode;
@@ -205,12 +208,12 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     return prices.price(name);
   }
 
-  function _valid(string memory _name) internal view returns (bool) {
-    return _validCharset(_name) && _validLength(_name);
+  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
+    result = keccak256(input);
   }
 
-  function _validCharset(string memory _name) internal pure returns (bool) {
-    return _name.charsetValid();
+  function _valid(string memory _name) internal view returns (bool) {
+    return _validCharset(_name) && _validLength(_name);
   }
 
   function _validLength(string memory _name) internal view returns (bool) {
@@ -221,7 +224,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     return ZNSPubKeyMapper[_pubKey] == 0x0;
   }
 
-  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
-    result = keccak256(input);
+  function _validCharset(string memory _name) internal pure returns (bool) {
+    return _name.charsetValid();
   }
 }

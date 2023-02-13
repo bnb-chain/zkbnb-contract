@@ -4,13 +4,6 @@ pragma solidity ^0.8.0;
 import "./interfaces/IZNS.sol";
 
 contract ZNSRegistry is IZNS {
-  // @dev Require the msg.sender is the owner of this node
-  modifier authorized(bytes32 node) {
-    require(records[node].owner == msg.sender, "unauthorized");
-    require(topLevelDomains[node], "node not allowed");
-    _;
-  }
-
   // @dev A Record is a record of node
   struct Record {
     // The owner of a record may:
@@ -26,7 +19,7 @@ contract ZNSRegistry is IZNS {
     // string slot1;
     // string slot2;
   }
-
+  uint256 immutable q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
   mapping(bytes32 => Record) records; // nameHash of node => Record
   uint32 count = 0;
 
@@ -39,6 +32,13 @@ contract ZNSRegistry is IZNS {
   constructor() {
     records[0x0].owner = msg.sender;
     topLevelDomains[0x0] = true;
+  }
+
+  // @dev Require the msg.sender is the owner of this node
+  modifier authorized(bytes32 node) {
+    require(records[node].owner == msg.sender, "unauthorized");
+    require(topLevelDomains[node], "node not allowed");
+    _;
   }
 
   /**
@@ -82,7 +82,6 @@ contract ZNSRegistry is IZNS {
     bytes32 _pubKeyX,
     bytes32 _pubKeyY
   ) public override authorized(_node) returns (bytes32) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(_node, _label));
     subnode = bytes32(uint256(subnode) % q);
     require(!_exists(subnode), "sub node exists");
@@ -161,10 +160,13 @@ contract ZNSRegistry is IZNS {
    * @return bool If record exists
    */
   function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(node, label));
     subnode = bytes32(uint256(subnode) % q);
     return _exists(subnode);
+  }
+
+  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
+    result = keccak256(input);
   }
 
   function _setResolver(bytes32 _node, address _resolver) internal {
@@ -191,9 +193,5 @@ contract ZNSRegistry is IZNS {
 
   function _exists(bytes32 node) internal view returns (bool) {
     return records[node].owner != address(0x0);
-  }
-
-  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
-    result = keccak256(input);
   }
 }
