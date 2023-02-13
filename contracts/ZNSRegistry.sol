@@ -19,7 +19,7 @@ contract ZNSRegistry is IZNS {
     // string slot1;
     // string slot2;
   }
-
+  uint256 immutable q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
   mapping(bytes32 => Record) records; // nameHash of node => Record
   uint32 count = 0;
 
@@ -82,7 +82,6 @@ contract ZNSRegistry is IZNS {
     bytes32 _pubKeyX,
     bytes32 _pubKeyY
   ) public override authorized(_node) returns (bytes32) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(_node, _label));
     subnode = bytes32(uint256(subnode) % q);
     require(!_exists(subnode), "sub node exists");
@@ -161,7 +160,6 @@ contract ZNSRegistry is IZNS {
    * @return bool If record exists
    */
   function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(node, label));
     subnode = bytes32(uint256(subnode) % q);
     return _exists(subnode);

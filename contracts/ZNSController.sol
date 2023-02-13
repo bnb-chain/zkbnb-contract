@@ -35,6 +35,9 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
 
   // True if the registration is paused
   bool public isPaused;
+
+  uint256 immutable q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
   event RegistrationPaused();
   event RegistrationResumed();
   event Withdraw(address _to, uint256 _value);
@@ -61,7 +64,6 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
     );
     zns = IZNS(_znsAddr);
     prices = IPriceOracle(_prices);
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     baseNode = bytes32(uint256(_node) % q);
 
     // initialize ownership
@@ -188,7 +190,6 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
   }
 
   function getSubnodeNameHash(string memory name) external view returns (bytes32) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(baseNode, keccak256Hash(bytes(name))));
     subnode = bytes32(uint256(subnode) % q);
     return subnode;
