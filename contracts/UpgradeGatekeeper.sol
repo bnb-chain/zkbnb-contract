@@ -10,15 +10,15 @@ import "./UpgradeableMaster.sol";
 /// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
 /// @author ZkBNB Team
 contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
-  /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
-  Upgradeable[] public managedContracts;
-
   /// @notice Upgrade mode statuses
   enum UpgradeStatus {
     Idle,
     NoticePeriod,
     Preparation
   }
+
+  /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
+  Upgradeable[] public managedContracts;
 
   UpgradeStatus public upgradeStatus;
 

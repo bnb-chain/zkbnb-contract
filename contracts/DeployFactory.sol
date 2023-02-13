@@ -12,6 +12,28 @@ import "./Config.sol";
 import "./ZNSController.sol";
 
 contract DeployFactory {
+  // This struct is used for avoiding StackTooDeep
+  struct DeployedContractAddress {
+    Governance governanceTarget;
+    ZkBNBVerifier verifierTarget;
+    ZkBNB zkbnbTarget;
+    ZNSController znsControllerTarget;
+    PublicResolver znsResolverTarget;
+    address validator;
+    address governor;
+    address listingToken;
+    address zns;
+    address priceOracle;
+    UpgradeableMaster upgradeableMaster;
+  }
+
+  struct AdditionalParams {
+    bytes32 genesisAccountRoot;
+    uint256 listingFee;
+    uint16 listingCap;
+    bytes32 baseNode;
+  }
+
   Proxy governance;
   Proxy verifier;
   Proxy znsController;
@@ -28,27 +50,6 @@ contract DeployFactory {
     address gatekeeper,
     address additionalZkBNB
   );
-
-  // This struct is used for avoiding StackTooDeep
-  struct DeployedContractAddress {
-    Governance governanceTarget;
-    ZkBNBVerifier verifierTarget;
-    ZkBNB zkbnbTarget;
-    ZNSController znsControllerTarget;
-    PublicResolver znsResolverTarget;
-    address validator;
-    address governor;
-    address listingToken;
-    address zns;
-    address priceOracle;
-    UpgradeableMaster upgradeableMaster;
-  }
-  struct AdditionalParams {
-    bytes32 genesisAccountRoot;
-    uint256 listingFee;
-    uint16 listingCap;
-    bytes32 baseNode;
-  }
 
   /// @dev Doing development in constructor method costs lower gas fee,
   ///      giving us simplicity and atomicity of our deployment.

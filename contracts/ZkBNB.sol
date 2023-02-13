@@ -18,9 +18,6 @@ import "./lib/NFTHelper.sol";
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
 contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
-  // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1052.md
-  bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
-
   struct CommitBlockInfo {
     bytes32 newStateRoot;
     bytes publicData;
@@ -35,37 +32,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     bytes[] pendingOnchainOpsPubData;
   }
 
-  function onERC721Received(
-    address operator,
-    address from,
-    uint256 tokenId,
-    bytes calldata data
-  ) external pure override returns (bytes4) {
-    return this.onERC721Received.selector;
-  }
-
-  /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
-  /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
-  /// @dev of existed priority requests expiration block number.
-  /// @return bool flag that is true if the Exodus mode must be entered.
-  function activateDesertMode() public returns (bool) {
-    // #if EASY_DESERT
-    bool trigger = true;
-    // #else
-    trigger =
-      block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
-      priorityRequests[firstPriorityRequestId].expirationBlock != 0;
-    // #endif
-    if (trigger) {
-      if (!desertMode) {
-        desertMode = true;
-        emit DesertMode();
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
+  // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1052.md
+  bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
   /// @notice ZkBNB contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param initializationParameters Encoded representation of initialization parameters:
@@ -139,18 +107,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
 
     emit RegisterZNS(_name, node, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, accountIndex);
-  }
-
-  function isRegisteredZNSName(string memory _name) external view returns (bool) {
-    return znsController.isRegisteredZNSName(_name);
-  }
-
-  function getZNSNamePrice(string calldata name) external view returns (uint256) {
-    return znsController.getZNSNamePrice(name);
-  }
-
-  function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address) {
-    return znsController.getOwner(accountNameHash);
   }
 
   /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
@@ -234,103 +190,12 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
 
-  function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
-    require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
-
-    // get nft factory
-    address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
-    bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
-    bool alreadyMintedFlag = false;
-    if (mintedNfts[nftKey].nftContentHash != bytes32(0)) {
-      alreadyMintedFlag = true;
-    }
-    // get layer-1 address by account name hash
-    bytes memory _emptyExtraData;
-    if (alreadyMintedFlag) {
-      /// This is a NFT from layer 1, withdraw id directly
-      try
-        IERC721(_factoryAddress).safeTransferFrom{gas: WITHDRAWAL_NFT_GAS_LIMIT}(
-          address(this),
-          op.toAddress,
-          op.nftIndex
-        )
-      {
-        // add nft to account at L1
-        _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
-
-        emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
-      } catch {
-        storePendingNFT(op);
-      }
-    } else {
-      address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
-      // get nft factory
-      _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
-      // store into l2 nfts
-      nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
-      try
-        INFTFactory(_factoryAddress).mintFromZkBNB(
-          _creatorAddress,
-          op.toAddress,
-          op.nftIndex,
-          op.nftContentHash,
-          _emptyExtraData
-        )
-      {
-        // add nft to account at L1
-        _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
-
-        mintedNfts[nftKey] = L2NftInfo({
-          nftIndex: op.nftIndex,
-          creatorAccountIndex: op.creatorAccountIndex,
-          creatorTreasuryRate: op.creatorTreasuryRate,
-          nftContentHash: op.nftContentHash,
-          collectionId: uint16(op.collectionId)
-        });
-        emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
-      } catch {
-        storePendingNFT(op);
-      }
-    }
-  }
-
-  /// @notice Get a registered NFTFactory according to the creator accountNameHash and the collectionId
-  /// @param _creatorAccountNameHash creator account name hash of the factory
-  /// @param _collectionId collection id of the nft collection related to this creator
-  function getNFTFactory(bytes32 _creatorAccountNameHash, uint32 _collectionId) public view returns (address) {
-    address _factoryAddr = nftFactories[_creatorAccountNameHash][_collectionId];
-    if (_factoryAddr == address(0)) {
-      require(address(defaultNFTFactory) != address(0), "F");
-      // NFTFactory does not set
-      return defaultNFTFactory;
-    } else {
-      return _factoryAddr;
-    }
-  }
-
-  /// @dev Save NFT as pending to withdraw
-  function storePendingNFT(TxTypes.WithdrawNft memory op) internal {
-    pendingWithdrawnNFTs[op.nftIndex] = op;
-    emit WithdrawalNFTPending(op.nftIndex);
-  }
-
   /// @notice  Withdraws NFT from zkSync contract to the owner
   /// @param _nftIndex Id of NFT token
   function withdrawPendingNFTBalance(uint40 _nftIndex) external {
     TxTypes.WithdrawNft memory op = pendingWithdrawnNFTs[_nftIndex];
     withdrawOrStoreNFT(op);
     delete pendingWithdrawnNFTs[_nftIndex];
-  }
-
-  /// @notice Get pending balance that the user can withdraw
-  /// @param _address The layer-1 address
-  /// @param _assetAddr Token address
-  function getPendingBalance(address _address, address _assetAddr) public view returns (uint128) {
-    uint16 assetId = 0;
-    if (_assetAddr != address(0)) {
-      assetId = governance.validateAssetAddress(_assetAddr);
-    }
-    return pendingBalances[packAddressAndAssetId(_address, assetId)].balanceToWithdraw;
   }
 
   /// @notice  Withdraws tokens from ZkBNB contract to the owner
@@ -396,6 +261,236 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     CommitBlockInfo[] memory _newBlocksData
   ) external {
     delegateAdditional();
+  }
+
+  function setDefaultNFTFactory(INFTFactory _factory) external {
+    delegateAdditional();
+  }
+
+  /// @notice Verify layer-2 blocks proofs
+  /// @param _blocks Verified blocks info
+  /// @param _proofs proofs
+  function verifyAndExecuteBlocks(
+    VerifyAndExecuteBlockInfo[] memory _blocks,
+    uint256[] memory _proofs
+  ) external onlyActive {
+    governance.isActiveValidator(msg.sender);
+
+    uint64 priorityRequestsExecuted = 0;
+    uint32 nBlocks = uint32(_blocks.length);
+    // proof public inputs
+    for (uint16 i = 0; i < _blocks.length; ++i) {
+      priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
+      // update account root
+      verifyAndExecuteOneBlock(_blocks[i], i);
+      emit BlockVerification(_blocks[i].blockHeader.blockNumber);
+    }
+    uint256 numBlocksVerified = 0;
+    bool[] memory blockVerified = new bool[](nBlocks);
+    uint256[] memory batch = new uint256[](nBlocks);
+    uint256 firstBlockSize = 0;
+    while (numBlocksVerified < nBlocks) {
+      // Find all blocks of the same type
+      uint256 batchLength = 0;
+      for (uint256 i = 0; i < nBlocks; i++) {
+        if (blockVerified[i] == false) {
+          if (batchLength == 0) {
+            firstBlockSize = _blocks[i].blockHeader.blockSize;
+            batch[batchLength++] = i;
+          } else {
+            if (_blocks[i].blockHeader.blockSize == firstBlockSize) {
+              batch[batchLength++] = i;
+            }
+          }
+        }
+      }
+      // Prepare the data for batch verification
+      uint256[] memory publicInputs = new uint256[](batchLength);
+      uint256[] memory proofs = new uint256[](batchLength * 8);
+      uint16 block_size = 0;
+      uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
+      for (uint256 i = 0; i < batchLength; i++) {
+        uint256 blockIdx = batch[i];
+        blockVerified[blockIdx] = true;
+        // verify block proof
+        VerifyAndExecuteBlockInfo memory _block = _blocks[blockIdx];
+        // Since the Solidity uint256 type can hold numbers larger than the snark scalar field order.
+        // publicInputs must be less than B, otherwise there will be an out-of-bounds.
+        // Same issue can be seen from https://github.com/0xPARC/zk-bug-tracker#semaphore-1
+        publicInputs[i] = uint256(_block.blockHeader.commitment) % q;
+        for (uint256 j = 0; j < 8; j++) {
+          proofs[8 * i + j] = _proofs[8 * blockIdx + j];
+        }
+        block_size = _block.blockHeader.blockSize;
+      }
+      bool res = verifier.verifyBatchProofs(proofs, publicInputs, batchLength, block_size);
+      require(res, "inp");
+      numBlocksVerified += batchLength;
+    }
+
+    // update account root
+    stateRoot = _blocks[nBlocks - 1].blockHeader.stateRoot;
+    firstPriorityRequestId += priorityRequestsExecuted;
+    totalCommittedPriorityRequests -= priorityRequestsExecuted;
+    totalOpenPriorityRequests -= priorityRequestsExecuted;
+
+    totalBlocksVerified += nBlocks;
+    // Can't execute blocks more then committed.
+    require(totalBlocksVerified <= totalBlocksCommitted, "n");
+  }
+
+  /// @notice Reverts unverified blocks
+  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
+    delegateAdditional();
+  }
+
+  function isRegisteredZNSName(string memory _name) external view returns (bool) {
+    return znsController.isRegisteredZNSName(_name);
+  }
+
+  function getZNSNamePrice(string calldata name) external view returns (uint256) {
+    return znsController.getZNSNamePrice(name);
+  }
+
+  function onERC721Received(
+    address operator,
+    address from,
+    uint256 tokenId,
+    bytes calldata data
+  ) external pure override returns (bytes4) {
+    return this.onERC721Received.selector;
+  }
+
+  /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
+  /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
+  /// @dev of existed priority requests expiration block number.
+  /// @return bool flag that is true if the Exodus mode must be entered.
+  function activateDesertMode() public returns (bool) {
+    // #if EASY_DESERT
+    bool trigger = true;
+    // #else
+    trigger =
+      block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
+      priorityRequests[firstPriorityRequestId].expirationBlock != 0;
+    // #endif
+    if (trigger) {
+      if (!desertMode) {
+        desertMode = true;
+        emit DesertMode();
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /// @notice Register full exit request - pack pubdata, add priority request
+  /// @param _accountName account name
+  /// @param _asset Token address, 0 address for BNB
+  function requestFullExit(string calldata _accountName, address _asset) public {
+    delegateAdditional();
+  }
+
+  /// @notice Register full exit nft request - pack pubdata, add priority request
+  /// @param _accountName account name
+  /// @param _nftIndex account NFT index in zkbnb network
+  function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
+    delegateAdditional();
+  }
+
+  function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address) {
+    return znsController.getOwner(accountNameHash);
+  }
+
+  /// @notice Get a registered NFTFactory according to the creator accountNameHash and the collectionId
+  /// @param _creatorAccountNameHash creator account name hash of the factory
+  /// @param _collectionId collection id of the nft collection related to this creator
+  function getNFTFactory(bytes32 _creatorAccountNameHash, uint32 _collectionId) public view returns (address) {
+    address _factoryAddr = nftFactories[_creatorAccountNameHash][_collectionId];
+    if (_factoryAddr == address(0)) {
+      require(address(defaultNFTFactory) != address(0), "F");
+      // NFTFactory does not set
+      return defaultNFTFactory;
+    } else {
+      return _factoryAddr;
+    }
+  }
+
+  /// @notice Get pending balance that the user can withdraw
+  /// @param _address The layer-1 address
+  /// @param _assetAddr Token address
+  function getPendingBalance(address _address, address _assetAddr) public view returns (uint128) {
+    uint16 assetId = 0;
+    if (_assetAddr != address(0)) {
+      assetId = governance.validateAssetAddress(_assetAddr);
+    }
+    return pendingBalances[packAddressAndAssetId(_address, assetId)].balanceToWithdraw;
+  }
+
+  function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
+    require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
+
+    // get nft factory
+    address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
+    bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
+    bool alreadyMintedFlag = false;
+    if (mintedNfts[nftKey].nftContentHash != bytes32(0)) {
+      alreadyMintedFlag = true;
+    }
+    // get layer-1 address by account name hash
+    bytes memory _emptyExtraData;
+    if (alreadyMintedFlag) {
+      /// This is a NFT from layer 1, withdraw id directly
+      try
+        IERC721(_factoryAddress).safeTransferFrom{gas: WITHDRAWAL_NFT_GAS_LIMIT}(
+          address(this),
+          op.toAddress,
+          op.nftIndex
+        )
+      {
+        // add nft to account at L1
+        _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
+
+        emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+      } catch {
+        storePendingNFT(op);
+      }
+    } else {
+      address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
+      // get nft factory
+      _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
+      // store into l2 nfts
+      nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
+      try
+        INFTFactory(_factoryAddress).mintFromZkBNB(
+          _creatorAddress,
+          op.toAddress,
+          op.nftIndex,
+          op.nftContentHash,
+          _emptyExtraData
+        )
+      {
+        // add nft to account at L1
+        _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
+
+        mintedNfts[nftKey] = L2NftInfo({
+          nftIndex: op.nftIndex,
+          creatorAccountIndex: op.creatorAccountIndex,
+          creatorTreasuryRate: op.creatorTreasuryRate,
+          nftContentHash: op.nftContentHash,
+          collectionId: uint16(op.collectionId)
+        });
+        emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+      } catch {
+        storePendingNFT(op);
+      }
+    }
+  }
+
+  /// @dev Save NFT as pending to withdraw
+  function storePendingNFT(TxTypes.WithdrawNft memory op) internal {
+    pendingWithdrawnNFTs[op.nftIndex] = op;
+    emit WithdrawalNFTPending(op.nftIndex);
   }
 
   /// @notice Verify block index and proofs
@@ -488,78 +583,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  /// @notice Verify layer-2 blocks proofs
-  /// @param _blocks Verified blocks info
-  /// @param _proofs proofs
-  function verifyAndExecuteBlocks(
-    VerifyAndExecuteBlockInfo[] memory _blocks,
-    uint256[] memory _proofs
-  ) external onlyActive {
-    governance.isActiveValidator(msg.sender);
-
-    uint64 priorityRequestsExecuted = 0;
-    uint32 nBlocks = uint32(_blocks.length);
-    // proof public inputs
-    for (uint16 i = 0; i < _blocks.length; ++i) {
-      priorityRequestsExecuted += _blocks[i].blockHeader.priorityOperations;
-      // update account root
-      verifyAndExecuteOneBlock(_blocks[i], i);
-      emit BlockVerification(_blocks[i].blockHeader.blockNumber);
-    }
-    uint256 numBlocksVerified = 0;
-    bool[] memory blockVerified = new bool[](nBlocks);
-    uint256[] memory batch = new uint256[](nBlocks);
-    uint256 firstBlockSize = 0;
-    while (numBlocksVerified < nBlocks) {
-      // Find all blocks of the same type
-      uint256 batchLength = 0;
-      for (uint256 i = 0; i < nBlocks; i++) {
-        if (blockVerified[i] == false) {
-          if (batchLength == 0) {
-            firstBlockSize = _blocks[i].blockHeader.blockSize;
-            batch[batchLength++] = i;
-          } else {
-            if (_blocks[i].blockHeader.blockSize == firstBlockSize) {
-              batch[batchLength++] = i;
-            }
-          }
-        }
-      }
-      // Prepare the data for batch verification
-      uint256[] memory publicInputs = new uint256[](batchLength);
-      uint256[] memory proofs = new uint256[](batchLength * 8);
-      uint16 block_size = 0;
-      uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-      for (uint256 i = 0; i < batchLength; i++) {
-        uint256 blockIdx = batch[i];
-        blockVerified[blockIdx] = true;
-        // verify block proof
-        VerifyAndExecuteBlockInfo memory _block = _blocks[blockIdx];
-        // Since the Solidity uint256 type can hold numbers larger than the snark scalar field order.
-        // publicInputs must be less than B, otherwise there will be an out-of-bounds.
-        // Same issue can be seen from https://github.com/0xPARC/zk-bug-tracker#semaphore-1
-        publicInputs[i] = uint256(_block.blockHeader.commitment) % q;
-        for (uint256 j = 0; j < 8; j++) {
-          proofs[8 * i + j] = _proofs[8 * blockIdx + j];
-        }
-        block_size = _block.blockHeader.blockSize;
-      }
-      bool res = verifier.verifyBatchProofs(proofs, publicInputs, batchLength, block_size);
-      require(res, "inp");
-      numBlocksVerified += batchLength;
-    }
-
-    // update account root
-    stateRoot = _blocks[nBlocks - 1].blockHeader.stateRoot;
-    firstPriorityRequestId += priorityRequestsExecuted;
-    totalCommittedPriorityRequests -= priorityRequestsExecuted;
-    totalOpenPriorityRequests -= priorityRequestsExecuted;
-
-    totalBlocksVerified += nBlocks;
-    // Can't execute blocks more then committed.
-    require(totalBlocksVerified <= totalBlocksCommitted, "n");
-  }
-
   /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
   /// @param _assetId Asset by id
   /// @param _amount Asset amount
@@ -603,24 +626,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     totalOpenPriorityRequests++;
   }
 
-  /// @notice Register full exit request - pack pubdata, add priority request
-  /// @param _accountName account name
-  /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(string calldata _accountName, address _asset) public {
-    delegateAdditional();
-  }
-
-  /// @notice Register full exit nft request - pack pubdata, add priority request
-  /// @param _accountName account name
-  /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public {
-    delegateAdditional();
-  }
-
-  function setDefaultNFTFactory(INFTFactory _factory) external {
-    delegateAdditional();
-  }
-
   /// @notice Sends ETH
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
@@ -633,11 +638,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
-  }
-
-  /// @notice Reverts unverified blocks
-  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
-    delegateAdditional();
   }
 
   /// @notice Delegates the call to the additional part of the main contract.

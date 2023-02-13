@@ -52,22 +52,6 @@ library Bytes {
     return toBytesFromUIntTruncated(uint256(self), 16);
   }
 
-  // Copies 'len' lower bytes from 'self' into a new 'bytes memory'.
-  // Returns the newly created 'bytes memory'. The returned bytes will be of length 'len'.
-  function toBytesFromUIntTruncated(uint256 self, uint8 byteLength) private pure returns (bytes memory bts) {
-    require(byteLength <= 32, "Q");
-    bts = new bytes(byteLength);
-    // Even though the bytes will allocate a full word, we don't want
-    // any potential garbage bytes in there.
-    uint256 data = self << ((32 - byteLength) * 8);
-    assembly {
-      mstore(
-        add(bts, 32), // BYTES_HEADER_SIZE
-        data
-      )
-    }
-  }
-
   // Copies 'self' into a new 'bytes memory'.
   // Returns the newly created 'bytes memory'. The returned bytes will be of length '20'.
   function toBytesFromAddress(address self) internal pure returns (bytes memory bts) {
@@ -339,5 +323,21 @@ library Bytes {
       }
     }
     return outStringBytes;
+  }
+
+  // Copies 'len' lower bytes from 'self' into a new 'bytes memory'.
+  // Returns the newly created 'bytes memory'. The returned bytes will be of length 'len'.
+  function toBytesFromUIntTruncated(uint256 self, uint8 byteLength) private pure returns (bytes memory bts) {
+    require(byteLength <= 32, "Q");
+    bts = new bytes(byteLength);
+    // Even though the bytes will allocate a full word, we don't want
+    // any potential garbage bytes in there.
+    uint256 data = self << ((32 - byteLength) * 8);
+    assembly {
+      mstore(
+        add(bts, 32), // BYTES_HEADER_SIZE
+        data
+      )
+    }
   }
 }
