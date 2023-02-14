@@ -33,19 +33,19 @@ describe('DeployFactory', function () {
   beforeEach(async function () {
     [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
 
-    DeployFactory = await ethers.getContractFactory('DeployFactory');
-
-    mockGovernanceTarget = await smock.fake('Governance');
-    mockVerifierTarget = await smock.fake('ZkBNBVerifier');
-
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
-    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
+
+    DeployFactory = await ethers.getContractFactory('DeployFactory', {
       libraries: {
         Utils: utils.address,
       },
     });
+
+    mockGovernanceTarget = await smock.fake('Governance');
+    mockVerifierTarget = await smock.fake('ZkBNBVerifier');
+    const ZkBNB = await ethers.getContractFactory('ZkBNB');
     mockZkbnbTarget = await smock.fake(ZkBNB);
 
     mockZnsControllerTarget = await smock.fake('ZNSController');

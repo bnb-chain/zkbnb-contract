@@ -50,19 +50,19 @@ describe('NFT functionality', function () {
     mockPublicResolver = await MockPublicResolver.deploy();
     await mockPublicResolver.deployed();
 
-    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
-    additionalZkBNB = await AdditionalZkBNB.deploy();
-    await additionalZkBNB.deployed();
-
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
 
-    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB', {
       libraries: {
         Utils: utils.address,
       },
     });
+    additionalZkBNB = await AdditionalZkBNB.deploy();
+    await additionalZkBNB.deployed();
+
+    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest');
     zkBNB = await ZkBNBTest.deploy();
     await zkBNB.deployed();
 

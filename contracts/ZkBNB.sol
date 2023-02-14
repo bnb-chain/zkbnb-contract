@@ -96,40 +96,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     bytes32 _zkbnbPubKeyX,
     bytes32 _zkbnbPubKeyY
   ) external payable nonReentrant {
-    // Register ZNS
-    (bytes32 node, uint32 accountIndex) = znsController.registerZNS{value: msg.value}(
-      _name,
-      _owner,
-      _zkbnbPubKeyX,
-      _zkbnbPubKeyY,
-      address(znsResolver)
-    );
-
-    // Priority Queue request
-    TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
-      txType: uint8(TxTypes.TxType.RegisterZNS),
-      accountIndex: accountIndex,
-      accountName: Utils.stringToBytes20(_name),
-      accountNameHash: node,
-      pubKeyX: _zkbnbPubKeyX,
-      pubKeyY: _zkbnbPubKeyY
-    });
-    // compact pub data
-    bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
-
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
-
-    emit RegisterZNS(_name, node, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, accountIndex);
+    delegateAdditional();
   }
 
   /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
   /// @param _accountName the receiver account name
   function depositBNB(string calldata _accountName) external payable onlyActive {
-    require(msg.value != 0, "ia");
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    registerDeposit(0, SafeCast.toUint128(msg.value), accountNameHash);
+    delegateAdditional();
   }
 
   /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
@@ -137,71 +110,12 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _amount Token amount
   /// @param _accountName Receiver Layer 2 account name
   function depositBEP20(IERC20 _token, uint104 _amount, string calldata _accountName) external onlyActive {
-    require(_amount != 0, "I");
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "N");
-    // Get asset id by its address
-    uint16 assetId = governance.validateAssetAddress(address(_token));
-    require(!governance.pausedAssets(assetId), "b");
-    // token deposits are paused
-
-    uint256 balanceBefore = _token.balanceOf(address(this));
-    require(Utils.transferFromERC20(_token, msg.sender, address(this), SafeCast.toUint128(_amount)), "c");
-    // token transfer failed deposit
-    uint256 balanceAfter = _token.balanceOf(address(this));
-    uint128 depositAmount = SafeCast.toUint128(balanceAfter - balanceBefore);
-    require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
-    require(depositAmount > 0, "D");
-
-    registerDeposit(assetId, depositAmount, accountNameHash);
+    delegateAdditional();
   }
 
   /// @notice Deposit NFT to Layer 2, ERC721 is supported
   function depositNft(string calldata _accountName, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    // check if the nft is mint from layer-2
-    bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-    require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
-
-    // Transfer the tokens to this contract
-    bool success;
-    try IERC721(_nftL1Address).safeTransferFrom(msg.sender, address(this), _nftL1TokenId) {
-      success = true;
-    } catch {
-      success = false;
-    }
-    require(success, "nft transfer failed");
-    // check if the NFT has arrived
-    require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
-
-    bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
-    uint16 collectionId = mintedNfts[nftKey].collectionId;
-    uint40 nftIndex = mintedNfts[nftKey].nftIndex;
-    uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
-    uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
-
-    TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-      txType: uint8(TxTypes.TxType.DepositNft),
-      accountIndex: 0, // unknown at this point
-      nftIndex: nftIndex,
-      creatorAccountIndex: creatorAccountIndex,
-      creatorTreasuryRate: creatorTreasuryRate,
-      nftContentHash: nftContentHash,
-      accountNameHash: accountNameHash,
-      collectionId: collectionId
-    });
-
-    // compact pub data
-    bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
-
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
-
-    // delete nft from account at L1
-    _removeAccountNft(msg.sender, _nftL1Address, nftIndex);
-
-    emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
+    delegateAdditional();
   }
 
   /// @notice  Withdraws NFT from zkSync contract to the owner
@@ -761,26 +675,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     } else {
       increaseBalanceToWithdraw(packedBalanceKey, _amount);
     }
-  }
-
-  /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
-  /// @param _assetId Asset by id
-  /// @param _amount Asset amount
-  /// @param _accountNameHash Receiver Account Name
-  function registerDeposit(uint16 _assetId, uint128 _amount, bytes32 _accountNameHash) internal {
-    // Priority Queue request
-    TxTypes.Deposit memory _tx = TxTypes.Deposit({
-      txType: uint8(TxTypes.TxType.Deposit),
-      accountIndex: 0, // unknown at the moment
-      accountNameHash: _accountNameHash,
-      assetId: _assetId,
-      amount: _amount
-    });
-    // compact pub data
-    bytes memory pubData = TxTypes.writeDepositPubDataForPriorityQueue(_tx);
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.Deposit, pubData);
-    emit Deposit(_assetId, _accountNameHash, _amount);
   }
 
   /// @notice Saves priority request in storage

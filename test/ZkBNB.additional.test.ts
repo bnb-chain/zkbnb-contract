@@ -63,15 +63,15 @@ describe('ZkBNB', function () {
     utils = await Utils.deploy();
     await utils.deployed();
 
-    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest');
-    additionalZkBNB = await AdditionalZkBNB.deploy(ethers.constants.AddressZero, ethers.constants.AddressZero);
-    await additionalZkBNB.deployed();
-
-    const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest', {
       libraries: {
         Utils: utils.address,
       },
     });
+    additionalZkBNB = await AdditionalZkBNB.deploy(ethers.constants.AddressZero, ethers.constants.AddressZero);
+    await additionalZkBNB.deployed();
+
+    const ZkBNB = await ethers.getContractFactory('ZkBNBTest');
     zkBNB = await ZkBNB.deploy();
     await zkBNB.deployed();
 

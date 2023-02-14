@@ -46,11 +46,7 @@ describe('Proxy', function () {
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
-    const MockZkBNB = await smock.mock('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
+    const MockZkBNB = await smock.mock('ZkBNB');
     mockZkBNB = await MockZkBNB.deploy();
     await mockZkBNB.deployed();
 
@@ -143,11 +139,7 @@ describe('Proxy', function () {
     });
 
     it('upgrade new `ZkBNB` target', async function () {
-      const MockZkBNB = await smock.mock('ZkBNB', {
-        libraries: {
-          Utils: utils.address,
-        },
-      });
+      const MockZkBNB = await smock.mock('ZkBNB');
       const mockZkBNBNew = await MockZkBNB.deploy();
       await mockZkBNBNew.deployed();
       mockZkBNBNew.upgrade.returns(true);
