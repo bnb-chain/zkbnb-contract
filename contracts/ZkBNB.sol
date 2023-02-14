@@ -35,6 +35,15 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1052.md
   bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
+  function onERC721Received(
+    address operator,
+    address from,
+    uint256 tokenId,
+    bytes calldata data
+  ) external pure override returns (bytes4) {
+    return this.onERC721Received.selector;
+  }
+
   /// @notice ZkBNB contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param initializationParameters Encoded representation of initialization parameters:
   /// @dev _governanceAddress The address of Governance contract
@@ -546,15 +555,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     return znsController.getZNSNamePrice(name);
   }
 
-  function onERC721Received(
-    address operator,
-    address from,
-    uint256 tokenId,
-    bytes calldata data
-  ) external pure override returns (bytes4) {
-    return this.onERC721Received.selector;
-  }
-
   /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
   /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
@@ -577,7 +577,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       return false;
     }
   }
-
 
   function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address) {
     return znsController.getOwner(accountNameHash);
