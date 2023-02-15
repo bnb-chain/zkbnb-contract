@@ -355,7 +355,8 @@ describe('NFT functionality', function () {
       assert(await zkBNBNFTFactory.getCreator(tokenId), acc1.address);
     });
 
-    it('should return proper IPFS compatible tokenURI for a NFT', async function () {
+    //TODO: This test is flaky as it is dependant on ipfs to validate a CID v1. Consider rewriting
+    it.skip('should return proper IPFS compatible tokenURI for a NFT', async function () {
       await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
       const expectUri = `${baseURI}${mockHash.substring(2)}`;
       await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
@@ -372,6 +373,13 @@ describe('NFT functionality', function () {
       const newBase = 'ipfs://dbvKFHFH'; //Change the encoding prefix to a different value
       await zkBNBNFTFactory.updateBaseUri(newBase);
       await expect(await zkBNBNFTFactory._base()).to.be.equal(newBase);
+    });
+
+    it('non-owner should fail to update base URI', async function () {
+      const newBase = 'bar://';
+      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith(
+        'Ownable: caller is not the owner',
+      );
     });
   });
 });

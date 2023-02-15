@@ -1,0 +1,57 @@
+{
+  "proxy": [
+    "0xCcCb1F7DCE849309Cc3100a30376beA2059f0B07",
+    [
+      "0x000000000000000000000000f067dd7615a029c070533309bb833201d69b5ba1"
+    ]
+  ],
+  "governance": [
+    "0x05bDCeA6B6F952B3EaA49cEC3939379788a67856"
+  ],
+  "assetGovernance": [
+    "0xE2e059523FbE0B0dFB6a9b15bdadcb23A4D412A7",
+    [
+      "0x05bDCeA6B6F952B3EaA49cEC3939379788a67856",
+      "0xDf7EfA75e66F5Fe7e0A25d6F6B6b9276ef57e41d",
+      "100000000000000000000",
+      65535,
+      "0x217B3AFAF29c7C7CEb30F494bdA97807B2C54958",
+      0
+    ]
+  ],
+  "utils": [
+    "0x2000b3d21b711b97bBCb764dB5e48da48b4e4c19"
+  ],
+  "verifier": [
+    "0xEA2eb9EaBc7b374207Cb85eCa4C9F32b1b4E2016"
+  ],
+  "znsController": [
+    "0x354Da85F98D6B8FfDf65a94DD3C412654927db21"
+  ],
+  "znsResolver": [
+    "0x3FA537d296323E84297F11CEe5B950EB98fc6eFC"
+  ],
+  "zkbnb": [
+    "0xB043621007Fb1De61f8e77e9E79652f0c38B4103"
+  ],
+  "upgradeGateKeeper": [
+    "0x04B910Ab3f12a5A4b7d7c9e51714305112B13dE8"
+  ],
+  "additionalZkBNB": [
+    "0x5d0bf6E5aee6C2bE267B772a8fEade13de8dBB00"
+  ],
+  "ERC721": [],
+  "znsPriceOracle": [],
+  "DefaultNftFactory": [],
+  "upgradeableMaster": [
+    "0x04B910Ab3f12a5A4b7d7c9e51714305112B13dE8",
+    [
+      [
+        "0x8af4aE9E347b01d81eC0Bf1b784e8182Ec0d98d9",
+        "0x9da24B4c7142B32326438d9b53fcE36b200FA0dD",
+        "0xf56F120E3c66255E9744a2fb906AAcaAC1Dd7008"
+      ],
+      "0xB043621007Fb1De61f8e77e9E79652f0c38B4103"
+    ]
+  ]
+}

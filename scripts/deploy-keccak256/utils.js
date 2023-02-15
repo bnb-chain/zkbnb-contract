@@ -12,7 +12,10 @@ exports.saveDeployedAddresses = function (path, addrs) {
   const data = JSON.stringify(addrs, null, 2);
   fs.writeFileSync(path, data);
 };
-
+exports.saveConstructorArgumentsForVerify = function (path, args) {
+  const data = JSON.stringify(args, null, 2);
+  fs.writeFileSync(path, data);
+};
 exports.getZkBNBProxy = async function (addr) {
   // Get utils contract
   const Utils = await ethers.getContractFactory('Utils');

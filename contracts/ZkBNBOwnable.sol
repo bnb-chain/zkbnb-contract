@@ -20,6 +20,14 @@ contract ZkBNBOwnable {
     _;
   }
 
+  /// @notice Transfer mastership of the contract to new master
+  /// @param _newMaster New masters address
+  function transferMastership(address _newMaster) external onlyMaster {
+    require(_newMaster != address(0), "1d");
+    // otp11 - new masters address can't be zero address
+    setMaster(_newMaster);
+  }
+
   /// @notice Returns contract masters address
   /// @return master Master's address
   function getMaster() public view returns (address master) {
@@ -36,13 +44,5 @@ contract ZkBNBOwnable {
     assembly {
       sstore(position, _newMaster)
     }
-  }
-
-  /// @notice Transfer mastership of the contract to new master
-  /// @param _newMaster New masters address
-  function transferMastership(address _newMaster) external onlyMaster {
-    require(_newMaster != address(0), "1d");
-    // otp11 - new masters address can't be zero address
-    setMaster(_newMaster);
   }
 }

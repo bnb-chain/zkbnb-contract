@@ -23,40 +23,14 @@ contract Proxy is Upgradeable, ZkBNBOwnable {
     // uin11 - target initialization failed
   }
 
-  /// @notice Intercepts upgrade calls, upgrade function only call by upgradeTarget
-  function upgrade(bytes calldata) external pure {
-    revert("upg11");
-    // upg11 - interception of upgrade call
+  /// @notice Same as fallback but called when calldata is empty
+  receive() external payable {
+    _fallback();
   }
 
-  /// @notice Returns target of contract
-  /// @return target Actual implementation address
-  function getTarget() public view returns (address target) {
-    bytes32 position = TARGET_POSITION;
-    assembly {
-      target := sload(position)
-    }
-  }
-
-  /// @notice Sets new target of contract
-  /// @param _newTarget New actual implementation address
-  function setTarget(address _newTarget) internal {
-    bytes32 position = TARGET_POSITION;
-    assembly {
-      sstore(position, _newTarget)
-    }
-  }
-
-  /// @notice Upgrades target
-  /// @param newTarget New target
-  /// @param newTargetUpgradeParameters New target upgrade parameters
-  function upgradeTarget(address newTarget, bytes calldata newTargetUpgradeParameters) external override onlyMaster {
-    setTarget(newTarget);
-    (bool upgradeSuccess, ) = getTarget().delegatecall(
-      abi.encodeWithSignature("upgrade(bytes)", newTargetUpgradeParameters)
-    );
-    require(upgradeSuccess, "ufu11");
-    // ufu11 - target upgrade failed
+  /// @notice Will run when no functions matches call data
+  fallback() external payable {
+    _fallback();
   }
 
   /// @notice Performs a delegatecall to the contract implementation
@@ -88,13 +62,39 @@ contract Proxy is Upgradeable, ZkBNBOwnable {
     }
   }
 
-  /// @notice Will run when no functions matches call data
-  fallback() external payable {
-    _fallback();
+  /// @notice Upgrades target
+  /// @param newTarget New target
+  /// @param newTargetUpgradeParameters New target upgrade parameters
+  function upgradeTarget(address newTarget, bytes calldata newTargetUpgradeParameters) external override onlyMaster {
+    setTarget(newTarget);
+    (bool upgradeSuccess, ) = getTarget().delegatecall(
+      abi.encodeWithSignature("upgrade(bytes)", newTargetUpgradeParameters)
+    );
+    require(upgradeSuccess, "ufu11");
+    // ufu11 - target upgrade failed
   }
 
-  /// @notice Same as fallback but called when calldata is empty
-  receive() external payable {
-    _fallback();
+  /// @notice Intercepts upgrade calls, upgrade function only call by upgradeTarget
+  function upgrade(bytes calldata) external pure {
+    revert("upg11");
+    // upg11 - interception of upgrade call
+  }
+
+  /// @notice Returns target of contract
+  /// @return target Actual implementation address
+  function getTarget() public view returns (address target) {
+    bytes32 position = TARGET_POSITION;
+    assembly {
+      target := sload(position)
+    }
+  }
+
+  /// @notice Sets new target of contract
+  /// @param _newTarget New actual implementation address
+  function setTarget(address _newTarget) internal {
+    bytes32 position = TARGET_POSITION;
+    assembly {
+      sstore(position, _newTarget)
+    }
   }
 }

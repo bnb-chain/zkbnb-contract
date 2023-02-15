@@ -12,22 +12,6 @@ import "./Config.sol";
 import "./ZNSController.sol";
 
 contract DeployFactory {
-  Proxy governance;
-  Proxy verifier;
-  Proxy znsController;
-  Proxy znsResolver;
-  Proxy zkbnb;
-
-  event Addresses(
-    address governance,
-    address assetGovernance,
-    address verifier,
-    address znsController,
-    address znsResolver,
-    address zkbnb,
-    address gatekeeper
-  );
-
   // This struct is used for avoiding StackTooDeep
   struct DeployedContractAddress {
     Governance governanceTarget;
@@ -42,12 +26,30 @@ contract DeployFactory {
     address priceOracle;
     UpgradeableMaster upgradeableMaster;
   }
+
   struct AdditionalParams {
     bytes32 genesisAccountRoot;
     uint256 listingFee;
     uint16 listingCap;
     bytes32 baseNode;
   }
+
+  Proxy governance;
+  Proxy verifier;
+  Proxy znsController;
+  Proxy znsResolver;
+  Proxy zkbnb;
+
+  event Addresses(
+    address governance,
+    address assetGovernance,
+    address verifier,
+    address znsController,
+    address znsResolver,
+    address zkbnb,
+    address gatekeeper,
+    address additionalZkBNB
+  );
 
   /// @dev Doing development in constructor method costs lower gas fee,
   ///      giving us simplicity and atomicity of our deployment.
@@ -147,7 +149,8 @@ contract DeployFactory {
       address(znsController),
       address(znsResolver),
       address(zkbnb),
-      address(upgradeGatekeeper)
+      address(upgradeGatekeeper),
+      address(additionalZkBNB)
     );
 
     // finally set governance
@@ -168,6 +171,5 @@ contract DeployFactory {
 
   function finalizeZNSController(ZNSController _znsController, address _zkbnb) internal {
     _znsController.addController(_zkbnb);
-    _znsController.transferOwnership(_zkbnb);
   }
 }
