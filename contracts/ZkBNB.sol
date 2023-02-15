@@ -76,75 +76,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external {}
 
-  /// @notice Create a commitment on the chosen name for a prospective L1 owner
-  /// @param _name The account name to register
-  /// @param _owner The L1 account to associate the name with
-  /// @param _secret The secret to create commitment with
-  function makeCommitment(string memory _name, address _owner, bytes32 _secret) public pure returns (bytes32) {
-    bytes32 label = keccak256(bytes(_name));
-    return keccak256(abi.encodePacked(label, _owner, _secret));
-  }
-
-  /// @notice Commit for registering a new name
-  /// @param commitment The commitment hash to reserve the name
-  function commit(bytes32 commitment) public {
-    require(commitments[commitment] + maxCommitmentAge < block.timestamp, "ae");
-    commitments[commitment] = block.timestamp;
-  }
-
-  /// @notice Register a new account with ZKBNB
-  /// @param _name The account name to register
-  /// @param _owner The L1 account to associate the name with
-  /// @param _secret The secret used in creating the commitment hash
-  /// @param _zkbnbPubKeyX The X part of L2 public key
-  /// @param _zkbnbPubKeyY The Y part of L2 public key
-  function registerZNS(
-    string memory _name,
-    address _owner,
-    bytes32 _secret,
-    bytes32 _zkbnbPubKeyX,
-    bytes32 _zkbnbPubKeyY
-  ) public payable nonReentrant {
-    bytes32 commitment = makeCommitment(_name, _owner, _secret);
-    _consumeCommitment(_name, commitment);
-
-    // Register ZNS
-    (bytes32 node, uint32 accountIndex) = znsController.registerZNS{value: msg.value}(
-      _name,
-      _owner,
-      _zkbnbPubKeyX,
-      _zkbnbPubKeyY,
-      address(znsResolver)
-    );
-
-    // Priority Queue request
-    TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
-      txType: uint8(TxTypes.TxType.RegisterZNS),
-      accountIndex: accountIndex,
-      accountName: Utils.stringToBytes20(_name),
-      accountNameHash: node,
-      pubKeyX: _zkbnbPubKeyX,
-      pubKeyY: _zkbnbPubKeyY
-    });
-    // compact pub data
-    bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
-
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
-
-    emit RegisterZNS(_name, node, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, accountIndex);
-  }
-
-  //Check previous commitment
-  function _consumeCommitment(string memory name, bytes32 commitment) internal {
-    // Require a valid commitment
-    require(commitments[commitment] + minCommitmentAge <= block.timestamp, "not enough wait");
-    // If the commitment not created, is too old, or the name is registered, stop
-    require(commitments[commitment] + maxCommitmentAge > block.timestamp, "too old");
-    require(!znsController.isRegisteredZNSName(name), "already exists");
-    delete (commitments[commitment]);
-  }
-
   /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
   /// @param _accountName the receiver account name
   function depositBNB(string calldata _accountName) external payable onlyActive {
@@ -397,6 +328,49 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     return this.onERC721Received.selector;
   }
 
+  /// @notice Register a new account with ZKBNB
+  /// @param _name The account name to register
+  /// @param _owner The L1 account to associate the name with
+  /// @param _secret The secret used in creating the commitment hash
+  /// @param _zkbnbPubKeyX The X part of L2 public key
+  /// @param _zkbnbPubKeyY The Y part of L2 public key
+  function registerZNS(
+    string memory _name,
+    address _owner,
+    bytes32 _secret,
+    bytes32 _zkbnbPubKeyX,
+    bytes32 _zkbnbPubKeyY
+  ) public payable nonReentrant {
+    bytes32 commitment = makeCommitment(_name, _owner, _secret);
+    _consumeCommitment(_name, commitment);
+
+    // Register ZNS
+    (bytes32 node, uint32 accountIndex) = znsController.registerZNS{value: msg.value}(
+      _name,
+      _owner,
+      _zkbnbPubKeyX,
+      _zkbnbPubKeyY,
+      address(znsResolver)
+    );
+
+    // Priority Queue request
+    TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
+      txType: uint8(TxTypes.TxType.RegisterZNS),
+      accountIndex: accountIndex,
+      accountName: Utils.stringToBytes20(_name),
+      accountNameHash: node,
+      pubKeyX: _zkbnbPubKeyX,
+      pubKeyY: _zkbnbPubKeyY
+    });
+    // compact pub data
+    bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
+
+    // add into priority request queue
+    addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
+
+    emit RegisterZNS(_name, node, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, accountIndex);
+  }
+
   /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
   /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
@@ -434,6 +408,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
+  /// @notice Commit for registering a new name
+  /// @param commitment The commitment hash to reserve the name
+  function commit(bytes32 commitment) public {
+    require(commitments[commitment] + maxCommitmentAge < block.timestamp, "ae");
+    commitments[commitment] = block.timestamp;
+  }
+
   function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address) {
     return znsController.getOwner(accountNameHash);
   }
@@ -461,6 +442,25 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       assetId = governance.validateAssetAddress(_assetAddr);
     }
     return pendingBalances[packAddressAndAssetId(_address, assetId)].balanceToWithdraw;
+  }
+
+  /// @notice Create a commitment on the chosen name for a prospective L1 owner
+  /// @param _name The account name to register
+  /// @param _owner The L1 account to associate the name with
+  /// @param _secret The secret to create commitment with
+  function makeCommitment(string memory _name, address _owner, bytes32 _secret) public pure returns (bytes32) {
+    bytes32 label = keccak256(bytes(_name));
+    return keccak256(abi.encodePacked(label, _owner, _secret));
+  }
+
+  //Check previous commitment
+  function _consumeCommitment(string memory name, bytes32 commitment) internal {
+    // Require a valid commitment
+    require(commitments[commitment] + minCommitmentAge <= block.timestamp, "not enough wait");
+    // If the commitment not created, is too old, or the name is registered, stop
+    require(commitments[commitment] + maxCommitmentAge > block.timestamp, "too old");
+    require(!znsController.isRegisteredZNSName(name), "already exists");
+    delete (commitments[commitment]);
   }
 
   function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {

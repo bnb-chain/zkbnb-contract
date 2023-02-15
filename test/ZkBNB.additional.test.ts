@@ -10,9 +10,11 @@ import {
   StoredBlockInfo,
   VerifyAndExecuteBlockInfo,
   encodePackPubData,
+  getKeccak256,
   hashStoredBlockInfo,
   padEndBytes121,
 } from './util';
+import { NON_NULL_ADDRESS } from './constants';
 
 chai.use(smock.matchers);
 
@@ -67,7 +69,7 @@ describe('ZkBNB', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
+    const ZkBNB = await smock.mock('ZkBNBTest', {
       libraries: {
         Utils: utils.address,
       },
@@ -174,7 +176,14 @@ describe('ZkBNB', function () {
         const pubKeyX = ethers.utils.formatBytes32String('pubKeyX');
         const pubKeyY = ethers.utils.formatBytes32String('pubKeyY');
 
-        const tx = await zkBNB.registerZNS('accountName', owner.address, pubKeyX, pubKeyY);
+        //Make commitment before registering the account name
+        const secretHashFromString = getKeccak256('My secret seed string');
+        const commitment: string = await zkBNB.makeCommitment('accountName', owner.address, secretHashFromString);
+        await zkBNB.commit(commitment);
+        await zkBNB.testSetMinMaxIntervalsForNameRegistration(1, 6); //Reduce commit scheme timings for testing
+        await new Promise((f) => setTimeout(f, 1 * 1000)); //Have to wait min interval before registration
+
+        const tx = await zkBNB.registerZNS('accountName', owner.address, secretHashFromString, pubKeyX, pubKeyY);
 
         const receipt = await tx.wait();
         const event = receipt.events.find((event) => {
