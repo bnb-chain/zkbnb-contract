@@ -95,7 +95,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     address _owner,
     bytes32 _zkbnbPubKeyX,
     bytes32 _zkbnbPubKeyY
-  ) external payable nonReentrant {
+  ) external payable {
     delegateAdditional();
   }
 
