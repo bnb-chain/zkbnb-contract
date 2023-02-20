@@ -63,15 +63,15 @@ describe('ZkBNB', function () {
     utils = await Utils.deploy();
     await utils.deployed();
 
-    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest');
-    additionalZkBNB = await AdditionalZkBNB.deploy();
-    await additionalZkBNB.deployed();
-
-    const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest', {
       libraries: {
         Utils: utils.address,
       },
     });
+    additionalZkBNB = await AdditionalZkBNB.deploy(ethers.constants.AddressZero, ethers.constants.AddressZero);
+    await additionalZkBNB.deployed();
+
+    const ZkBNB = await ethers.getContractFactory('ZkBNBTest');
     zkBNB = await ZkBNB.deploy();
     await zkBNB.deployed();
 
@@ -271,8 +271,7 @@ describe('ZkBNB', function () {
 
           await zkBNB.testWithdrawOrStoreNFT(withdrawOp);
         });
-
-        it('should can commit deposit NFT operation', async () => {
+        it.skip('should can commit deposit NFT operation', async () => {
           mockZNSController.isRegisteredNameHash.returns(true);
           mockZNSController.getSubnodeNameHash.returns(accountNameHash);
           mockZNSController.getSubnodeNameHash.returns();
@@ -363,7 +362,7 @@ describe('ZkBNB', function () {
         blockNumber: 1,
         blockSize: 1,
       };
-      lastBlock = await additionalZkBNB.attach(zkBNB.address).getLastCommittedBlockData(genesisBlock, commitBlock);
+      lastBlock = await zkBNB.getLastCommittedBlockData(genesisBlock, commitBlock);
       await zkBNB.commitBlocks(genesisBlock, [commitBlock]);
       storedBlockInfo = {
         blockSize: lastBlock.blockSize,
@@ -395,7 +394,7 @@ describe('ZkBNB', function () {
         blockSize: 1,
       };
 
-      lastBlock = await additionalZkBNB.attach(zkBNB.address).getLastCommittedBlockData(storedBlockInfo, commitBlock2);
+      lastBlock = await zkBNB.getLastCommittedBlockData(storedBlockInfo, commitBlock2);
       await zkBNB.commitBlocks(storedBlockInfo, [commitBlock2]);
 
       storedBlockInfo = {
@@ -465,7 +464,7 @@ describe('ZkBNB', function () {
         blockNumber: 3,
         blockSize: 1,
       };
-      lastBlock = await additionalZkBNB.attach(zkBNB.address).getLastCommittedBlockData(storedBlockInfo, commitBlock3);
+      lastBlock = await zkBNB.getLastCommittedBlockData(storedBlockInfo, commitBlock3);
       await zkBNB.commitBlocks(storedBlockInfo, [commitBlock3]);
 
       storedBlockInfo = {

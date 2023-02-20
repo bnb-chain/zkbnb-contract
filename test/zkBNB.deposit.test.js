@@ -11,7 +11,7 @@ describe('ZkBNB', function () {
   let mockZkBNBVerifier;
   let mockZNSController;
   let mockPublicResolver;
-  let mockAdditionalZkBNB;
+  let additionalZkBNB;
   let mockERC20;
   let mockERC721;
   let zkBNB;
@@ -29,7 +29,6 @@ describe('ZkBNB', function () {
     mockZkBNBVerifier = await smock.fake('ZkBNBVerifier');
     mockZNSController = await smock.fake('ZNSController');
     mockPublicResolver = await smock.fake('PublicResolver');
-    mockAdditionalZkBNB = await smock.fake('AdditionalZkBNB');
     mockERC20 = await smock.fake('ERC20');
     mockERC721 = await smock.fake('ERC721');
 
@@ -37,11 +36,15 @@ describe('ZkBNB', function () {
     utils = await Utils.deploy();
     await utils.deployed();
 
-    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB', {
       libraries: {
         Utils: utils.address,
       },
     });
+    additionalZkBNB = await AdditionalZkBNB.deploy();
+    await additionalZkBNB.deployed();
+
+    const ZkBNB = await ethers.getContractFactory('ZkBNB');
     zkBNB = await ZkBNB.deploy();
     await zkBNB.deployed();
 
@@ -50,26 +53,13 @@ describe('ZkBNB', function () {
       [
         mockGovernance.address,
         mockZkBNBVerifier.address,
-        mockAdditionalZkBNB.address,
+        additionalZkBNB.address,
         mockZNSController.address,
         mockPublicResolver.address,
         '0x0000000000000000000000000000000000000000000000000000000000000000',
       ],
     );
     await zkBNB.initialize(initParams);
-  });
-
-  describe('Delegatecall', function () {
-    it('should delegate to AdditionalZkBNB Contract', async () => {
-      await zkBNB.requestFullExit('', ethers.constants.AddressZero);
-      expect(mockAdditionalZkBNB.requestFullExit).to.be.delegatedFrom(zkBNB.address);
-      await zkBNB.requestFullExitNft('', 1);
-      expect(mockAdditionalZkBNB.requestFullExitNft).to.be.delegatedFrom(zkBNB.address);
-      await zkBNB.setDefaultNFTFactory(ethers.constants.AddressZero);
-      expect(mockAdditionalZkBNB.setDefaultNFTFactory).to.be.delegatedFrom(zkBNB.address);
-      await zkBNB.revertBlocks([]);
-      expect(mockAdditionalZkBNB.revertBlocks).to.be.delegatedFrom(zkBNB.address);
-    });
   });
 
   describe('Deposit', function () {

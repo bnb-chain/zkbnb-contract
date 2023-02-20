@@ -1,5 +1,5 @@
-import { ILogObject, Logger } from 'tslog'
-import { appendFileSync } from 'fs'
+import { ILogObject, Logger } from 'tslog';
+import { appendFileSync } from 'fs';
 
 function logToTransport(logObject: ILogObject) {
   appendFileSync(
@@ -10,17 +10,17 @@ function logToTransport(logObject: ILogObject) {
       '   ' +
       logObject.argumentsArray.concat().toString() +
       '\n',
-  )
+  );
 }
 
-const log: Logger = new Logger()
+const log: Logger = new Logger();
 log.setSettings({
   type: 'pretty',
   displayFilePath: 'hidden',
   displayFunctionName: false,
   minLevel: 'info',
   dateTimePattern: 'year-month-day hour:minute:second',
-})
+});
 
 log.attachTransport(
   {
@@ -33,6 +33,6 @@ log.attachTransport(
     fatal: logToTransport,
   },
   'debug',
-)
+);
 
-export default log
+export default log;

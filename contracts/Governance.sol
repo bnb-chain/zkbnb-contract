@@ -9,19 +9,6 @@ import "./AssetGovernance.sol";
 /// @title Governance Contract
 /// @author ZkBNB Team
 contract Governance is Config, Initializable {
-  /// @notice Token added to Franklin net
-  event NewAsset(address assetAddress, uint16 assetId);
-
-  /// @notice Governor changed
-  event NewGovernor(address newGovernor);
-
-  /// @notice Token Governance changed
-  event NewAssetGovernance(AssetGovernance newAssetGovernance);
-
-  event ValidatorStatusUpdate(address validatorAddress, bool isActive);
-
-  event AssetPausedUpdate(address token, bool paused);
-
   /// @notice Address which will exercise governance over the network i.e. add tokens, change validator set, conduct upgrades
   address public networkGovernor;
 
@@ -39,6 +26,19 @@ contract Governance is Config, Initializable {
 
   /// @notice Address that is authorized to add tokens to the Governance.
   AssetGovernance public assetGovernance;
+
+  /// @notice Token added to Franklin net
+  event NewAsset(address assetAddress, uint16 assetId);
+
+  /// @notice Governor changed
+  event NewGovernor(address newGovernor);
+
+  /// @notice Token Governance changed
+  event NewAssetGovernance(AssetGovernance newAssetGovernance);
+
+  event ValidatorStatusUpdate(address validatorAddress, bool isActive);
+
+  event AssetPausedUpdate(address token, bool paused);
 
   /// @notice Governance contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param initializationParameters Encoded representation of initialization parameters:
@@ -102,7 +102,7 @@ contract Governance is Config, Initializable {
 
     uint16 assetId = assetsList[_assetAddress];
     require(assetId != 0, "1i");
-    
+
     if (pausedAssets[assetId] != _assetPaused) {
       pausedAssets[assetId] = _assetPaused;
       emit AssetPausedUpdate(_assetAddress, _assetPaused);
@@ -117,13 +117,6 @@ contract Governance is Config, Initializable {
     }
   }
 
-  /// @notice Check if specified address is governor
-  /// @param _address Address to check
-  function requireGovernor(address _address) public view {
-    require(_address == networkGovernor, "1g");
-    // only by governor
-  }
-
   function isActiveValidator(address _address) external view {
     require(validators[_address], "invalid validator");
   }
@@ -133,5 +126,12 @@ contract Governance is Config, Initializable {
     require(assetId != 0, "1i");
     require(!pausedAssets[assetId], "2i");
     return assetId;
+  }
+
+  /// @notice Check if specified address is governor
+  /// @param _address Address to check
+  function requireGovernor(address _address) public view {
+    require(_address == networkGovernor, "1g");
+    // only by governor
   }
 }

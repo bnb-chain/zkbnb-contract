@@ -24,14 +24,6 @@ library TxTypes {
     FullExitNft
   }
 
-  // Byte lengths
-  uint8 internal constant CHUNK_SIZE = 32;
-  // operation type bytes
-  uint8 internal constant TX_TYPE_BYTES = 1;
-
-  // 968 bits
-  uint256 internal constant PACKED_TX_PUBDATA_BYTES = 121;
-
   struct RegisterZNS {
     uint8 txType;
     uint32 accountIndex;
@@ -40,6 +32,89 @@ library TxTypes {
     bytes32 pubKeyX;
     bytes32 pubKeyY;
   }
+
+  // Deposit pubdata
+  struct Deposit {
+    uint8 txType;
+    uint32 accountIndex;
+    bytes32 accountNameHash;
+    uint16 assetId;
+    uint128 amount;
+  }
+
+  // Withdraw pubdata
+  struct Withdraw {
+    uint8 txType;
+    uint32 accountIndex;
+    address toAddress;
+    uint16 assetId;
+    uint128 assetAmount;
+    uint16 gasFeeAssetId;
+    uint16 gasFeeAssetAmount;
+  }
+
+  // Withdraw Nft pubdata
+  struct WithdrawNft {
+    uint8 txType;
+    uint32 fromAccountIndex;
+    uint32 creatorAccountIndex;
+    uint16 creatorTreasuryRate;
+    uint40 nftIndex;
+    // address nftL1Address;
+    address toAddress;
+    uint32 gasFeeAccountIndex;
+    uint16 gasFeeAssetId;
+    uint16 gasFeeAssetAmount;
+    bytes32 nftContentHash;
+    // uint256 nftL1TokenId;
+    bytes32 creatorAccountNameHash;
+    uint32 collectionId;
+  }
+
+  // full exit pubdata
+  struct FullExit {
+    uint8 txType;
+    uint32 accountIndex;
+    uint16 assetId;
+    uint128 assetAmount;
+    bytes32 accountNameHash;
+  }
+
+  // full exit nft pubdata
+  struct FullExitNft {
+    uint8 txType;
+    uint32 accountIndex;
+    uint32 creatorAccountIndex;
+    uint16 creatorTreasuryRate;
+    uint40 nftIndex;
+    uint16 collectionId;
+    // address nftL1Address;
+    bytes32 accountNameHash;
+    bytes32 creatorAccountNameHash;
+    bytes32 nftContentHash;
+    // uint256 nftL1TokenId;
+  }
+
+  struct DepositNft {
+    uint8 txType;
+    uint32 accountIndex;
+    uint40 nftIndex;
+    // address nftL1Address;
+    uint32 creatorAccountIndex;
+    uint16 creatorTreasuryRate;
+    bytes32 nftContentHash;
+    // uint256 nftL1TokenId;
+    bytes32 accountNameHash;
+    uint16 collectionId;
+  }
+
+  // Byte lengths
+  uint8 internal constant CHUNK_SIZE = 32;
+  // operation type bytes
+  uint8 internal constant TX_TYPE_BYTES = 1;
+
+  // 968 bits
+  uint256 internal constant PACKED_TX_PUBDATA_BYTES = 121;
 
   /// Serialize register zns pubdata
   function writeRegisterZNSPubDataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
@@ -74,15 +149,6 @@ library TxTypes {
   /// @notice Write register zns pubdata for priority queue check.
   function checkRegisterZNSInPriorityQueue(RegisterZNS memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
     return Utils.hashBytesToBytes20(writeRegisterZNSPubDataForPriorityQueue(_tx)) == hashedPubData;
-  }
-
-  // Deposit pubdata
-  struct Deposit {
-    uint8 txType;
-    uint32 accountIndex;
-    bytes32 accountNameHash;
-    uint16 assetId;
-    uint128 amount;
   }
 
   //    uint256 internal constant PACKED_DEPOSIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
@@ -120,19 +186,6 @@ library TxTypes {
   /// @notice Write deposit pubdata for priority queue check.
   function checkDepositInPriorityQueue(Deposit memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
     return Utils.hashBytesToBytes20(writeDepositPubDataForPriorityQueue(_tx)) == hashedPubData;
-  }
-
-  struct DepositNft {
-    uint8 txType;
-    uint32 accountIndex;
-    uint40 nftIndex;
-    // address nftL1Address;
-    uint32 creatorAccountIndex;
-    uint16 creatorTreasuryRate;
-    bytes32 nftContentHash;
-    // uint256 nftL1TokenId;
-    bytes32 accountNameHash;
-    uint16 collectionId;
   }
 
   //    uint256 internal constant PACKED_DEPOSIT_NFT_PUBDATA_BYTES = 5 * CHUNK_SIZE;
@@ -181,17 +234,6 @@ library TxTypes {
     return Utils.hashBytesToBytes20(writeDepositNftPubDataForPriorityQueue(_tx)) == hashedPubData;
   }
 
-  // Withdraw pubdata
-  struct Withdraw {
-    uint8 txType;
-    uint32 accountIndex;
-    address toAddress;
-    uint16 assetId;
-    uint128 assetAmount;
-    uint16 gasFeeAssetId;
-    uint16 gasFeeAssetAmount;
-  }
-
   //    uint256 internal constant PACKED_WITHDRAW_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
   /// Deserialize withdraw pubdata
@@ -214,24 +256,6 @@ library TxTypes {
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "4N");
     return parsed;
-  }
-
-  // Withdraw Nft pubdata
-  struct WithdrawNft {
-    uint8 txType;
-    uint32 fromAccountIndex;
-    uint32 creatorAccountIndex;
-    uint16 creatorTreasuryRate;
-    uint40 nftIndex;
-    // address nftL1Address;
-    address toAddress;
-    uint32 gasFeeAccountIndex;
-    uint16 gasFeeAssetId;
-    uint16 gasFeeAssetAmount;
-    bytes32 nftContentHash;
-    // uint256 nftL1TokenId;
-    bytes32 creatorAccountNameHash;
-    uint32 collectionId;
   }
 
   //    uint256 internal constant PACKED_WITHDRAWNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;
@@ -264,15 +288,6 @@ library TxTypes {
     offset += 15;
     require(offset == PACKED_TX_PUBDATA_BYTES, "5N");
     return parsed;
-  }
-
-  // full exit pubdata
-  struct FullExit {
-    uint8 txType;
-    uint32 accountIndex;
-    uint16 assetId;
-    uint128 assetAmount;
-    bytes32 accountNameHash;
   }
 
   //    uint256 internal constant PACKED_FULLEXIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
@@ -310,21 +325,6 @@ library TxTypes {
   /// @notice Write full exit pubdata for priority queue check.
   function checkFullExitInPriorityQueue(FullExit memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
     return Utils.hashBytesToBytes20(writeFullExitPubDataForPriorityQueue(_tx)) == hashedPubData;
-  }
-
-  // full exit nft pubdata
-  struct FullExitNft {
-    uint8 txType;
-    uint32 accountIndex;
-    uint32 creatorAccountIndex;
-    uint16 creatorTreasuryRate;
-    uint40 nftIndex;
-    uint16 collectionId;
-    // address nftL1Address;
-    bytes32 accountNameHash;
-    bytes32 creatorAccountNameHash;
-    bytes32 nftContentHash;
-    // uint256 nftL1TokenId;
   }
 
   // uint256 internal constant PACKED_FULLEXITNFT_PUBDATA_BYTES = 6 * CHUNK_SIZE;

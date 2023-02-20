@@ -25,8 +25,8 @@ describe('NFT functionality', function () {
   let utils;
 
   const mockHash = ethers.utils.hexZeroPad(
-      '0x3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase(),
-      32,
+    '0x3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase(),
+    32,
   );
 
   // The prefix to the CID before the content hash. Refer to https://docs.ipfs.tech/concepts/content-addressing/#cid-conversion for more details.
@@ -50,19 +50,19 @@ describe('NFT functionality', function () {
     mockPublicResolver = await MockPublicResolver.deploy();
     await mockPublicResolver.deployed();
 
-    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
-    additionalZkBNB = await AdditionalZkBNB.deploy();
-    await additionalZkBNB.deployed();
-
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
 
-    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB', {
       libraries: {
         Utils: utils.address,
       },
     });
+    additionalZkBNB = await AdditionalZkBNB.deploy();
+    await additionalZkBNB.deployed();
+
+    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest');
     zkBNB = await ZkBNBTest.deploy();
     await zkBNB.deployed();
 
@@ -100,6 +100,11 @@ describe('NFT functionality', function () {
     expect(await zkBNB.defaultNFTFactory()).to.equal(mockNftFactory.address);
   });
 
+  it('on ERC721 received', async function () {
+    const HashZero = ethers.constants.HashZero;
+
+    await zkBNB.onERC721Received(owner.address, acc1.address, 0, HashZero);
+  });
   describe('withdraw NFT from L2 to L1 and store as IPFS CID hash', function () {
     const mockNftIndex = 0;
 
@@ -324,19 +329,24 @@ describe('NFT functionality', function () {
     const base16CID = new CID('bafybeibvpgysop4uafzp5ptswc73khav6spshzkyzj7qhx52fwl5qkd2ga').toString('base16');
 
     //The SHA2-256 digest of the IPFS multihash. This is the second part of the CIDv1
-    const digestInHexFromCID = '0x'+ base16CID.substring(9)
+    const digestInHexFromCID = '0x' + base16CID.substring(9);
 
     //Convert to bytes32
-    const IPFSMultiHashDigest = ethers.utils.hexZeroPad(
-        digestInHexFromCID,
-        32,
-    );
+    const IPFSMultiHashDigest = ethers.utils.hexZeroPad(digestInHexFromCID, 32);
 
-    it.skip('register NFT factory', async function () {
-      mockZNSController.getSubnodeNameHash.returns();
+    it('register NFT factory', async function () {
+      const creatorAccountName = 'bar';
+      const collectionId = 0;
       mockZNSController.isRegisteredNameHash.returns(true);
+      mockZNSController.getOwner.returns(owner.address);
 
-      await zkBNB.registerNFTFactory('accountName', 0, zkBNBNFTFactory.address);
+      const creatorAccountNameHash = await mockZNSController.getSubnodeNameHash(creatorAccountName);
+
+      await expect(await zkBNB.registerNFTFactory(creatorAccountName, collectionId, mockNftFactory.address))
+        .to.emit(zkBNB, 'NewNFTFactory')
+        .withArgs(creatorAccountNameHash, collectionId, mockNftFactory.address);
+
+      expect(await zkBNB.nftFactories(creatorAccountNameHash, 0)).to.equal(mockNftFactory.address);
     });
 
     it('mint from ZkBNB using a IPFS CID Hash', async function () {
@@ -358,23 +368,31 @@ describe('NFT functionality', function () {
       assert(await zkBNBNFTFactory.getCreator(tokenId), acc1.address);
     });
 
-    it('should return proper IPFS compatible tokenURI for a NFT', async function () {
+    //TODO: This test is flaky as it is dependant on ipfs to validate a CID v1. Consider rewriting
+    it.skip('should return proper IPFS compatible tokenURI for a NFT', async function () {
       await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
       const expectUri = `${baseURI}${mockHash.substring(2)}`;
       await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
 
-      const queryableResource = `${baseURI}`.split("//")[1] + `${mockHash.substring(2)}`
+      const queryableResource = `${baseURI}`.split('//')[1] + `${mockHash.substring(2)}`;
 
       //Check if the tokenURI is indeed valid using a IPFS gateway
-      const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'))
-      assert(res.name, '2 nft.storage store test')
-      assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.')
+      const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'));
+      assert(res.name, '2 nft.storage store test');
+      assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.');
     });
 
     it('should point base URI to represent URI and encoding of the CID', async function () {
       const newBase = 'ipfs://dbvKFHFH'; //Change the encoding prefix to a different value
       await zkBNBNFTFactory.updateBaseUri(newBase);
       await expect(await zkBNBNFTFactory._base()).to.be.equal(newBase);
+    });
+
+    it('non-owner should fail to update base URI', async function () {
+      const newBase = 'bar://';
+      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith(
+        'Ownable: caller is not the owner',
+      );
     });
   });
 });

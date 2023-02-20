@@ -8,19 +8,15 @@ import "./Bytes.sol";
 import "../Storage.sol";
 
 library Utils {
-  /// @notice Returns lesser of two values
-  function minU32(uint32 a, uint32 b) internal pure returns (uint32) {
-    return a < b ? a : b;
-  }
+  function stringToBytes20(string memory source) public pure returns (bytes20 result) {
+    bytes memory tempEmptyStringTest = bytes(source);
+    if (tempEmptyStringTest.length == 0) {
+      return 0x0;
+    }
 
-  /// @notice Returns lesser of two values
-  function minU64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  /// @notice Returns lesser of two values
-  function minU128(uint128 a, uint128 b) internal pure returns (uint128) {
-    return a < b ? a : b;
+    assembly {
+      result := mload(add(source, 32))
+    }
   }
 
   /// @notice Sends tokens
@@ -30,11 +26,7 @@ library Utils {
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
   /// @return bool flag indicating that transfer is successful
-  function sendERC20(
-    IERC20 _token,
-    address _to,
-    uint256 _amount
-  ) internal returns (bool) {
+  function sendERC20(IERC20 _token, address _to, uint256 _amount) internal returns (bool) {
     (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
       abi.encodeWithSignature("transfer(address,uint256)", _to, _amount)
     );
@@ -51,12 +43,7 @@ library Utils {
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
   /// @return bool flag indicating that transfer is successful
-  function transferFromERC20(
-    IERC20 _token,
-    address _from,
-    address _to,
-    uint256 _amount
-  ) internal returns (bool) {
+  function transferFromERC20(IERC20 _token, address _from, address _to, uint256 _amount) internal returns (bool) {
     (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
       abi.encodeWithSignature("transferFrom(address,address,uint256)", _from, _to, _amount)
     );
@@ -94,15 +81,29 @@ library Utils {
     return success;
   }
 
+  /// @notice Returns lesser of two values
+  function minU32(uint32 a, uint32 b) internal pure returns (uint32) {
+    return a < b ? a : b;
+  }
+
+  /// @notice Returns lesser of two values
+  function minU64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  /// @notice Returns lesser of two values
+  function minU128(uint128 a, uint128 b) internal pure returns (uint128) {
+    return a < b ? a : b;
+  }
+
   /// @notice Recovers signer's address from ethereum signature for given message
   /// @param _signature 65 bytes concatenated. R (32) + S (32) + V (1)
   /// @param _messageHash signed message hash.
   /// @return address of the signer
-  function recoverAddressFromEthSignature(bytes memory _signature, bytes32 _messageHash)
-    internal
-    pure
-    returns (address)
-  {
+  function recoverAddressFromEthSignature(
+    bytes memory _signature,
+    bytes32 _messageHash
+  ) internal pure returns (address) {
     require(_signature.length == 65, "P");
     // incorrect signature length
 
@@ -118,17 +119,6 @@ library Utils {
     return ecrecover(_messageHash, signV, signR, signS);
   }
 
-  function stringToBytes20(string memory source) public pure returns (bytes20 result) {
-    bytes memory tempEmptyStringTest = bytes(source);
-    if (tempEmptyStringTest.length == 0) {
-      return 0x0;
-    }
-
-    assembly {
-      result := mload(add(source, 32))
-    }
-  }
-
   /// @notice Returns new_hash = hash(old_hash + bytes)
   function concatHash(bytes32 _hash, bytes memory _bytes) internal pure returns (bytes32) {
     bytes32 result;
@@ -141,6 +131,7 @@ library Utils {
   }
 
   function hashBytesToBytes20(bytes memory _bytes) internal pure returns (bytes20) {
+    // downcast uint160 to take lowest 20 bytes
     return bytes20(uint160(uint256(keccak256(_bytes))));
   }
 

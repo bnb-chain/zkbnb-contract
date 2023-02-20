@@ -8,13 +8,18 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+import 'hardhat-gas-reporter';
+import 'hardhat-contract-sizer';
+
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 const config: HardhatUserConfig = {
   etherscan: {
-    apiKey: 'HHHQV1FM9HVSK82JMPEEBG44PR24CM3B5U',
+    apiKey: {
+      bscTestnet: process.env.BSCSCAN_APIKEY || '',
+    },
   },
   solidity: {
     version: '0.8.17',
