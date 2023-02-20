@@ -154,6 +154,16 @@ async function main() {
     const addAssetTx = await assetGovernance.addAsset(token);
     await addAssetTx.wait();
   }
+  const proxyGovernance = contractFactories.Governance.attach(event[0]);
+  // Add validators into governance
+  console.log(chalk.blue('📥 Add validators into governance...'));
+  if (process.env.VALIDATORS) {
+    const validators = process.env.VALIDATORS.split(',');
+    for (const validator of validators) {
+      await proxyGovernance.setValidator(validator, true);
+      console.log(chalk.blue(`\t📦 Added validator ${validator}`));
+    }
+  }
 
   // Step 4: register zns base node
   console.log(chalk.blue('📋 Register ZNS base node...'));
