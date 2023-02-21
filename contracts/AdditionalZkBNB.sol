@@ -144,18 +144,6 @@ contract AdditionalZkBNB is Storage, Config, Events, NFTHelper {
     emit BlocksRevert(totalBlocksVerified, blocksCommitted);
   }
 
-  /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
-  /// @param _factory Address of NFT factory
-  function setDefaultNFTFactory(INFTFactory _factory) external {
-    governance.requireGovernor(msg.sender);
-    require(address(_factory) != address(0), "mb1");
-    // Factory should be non zero
-    require(address(defaultNFTFactory) == address(0), "mb2");
-    // NFTFactory is already set
-    defaultNFTFactory = address(_factory);
-    emit NewDefaultNFTFactory(address(_factory));
-  }
-
   function registerZNS(
     string calldata _name,
     address _owner,

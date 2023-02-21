@@ -496,20 +496,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     return znsController.getOwner(accountNameHash);
   }
 
-  /// @notice Get a registered NFTFactory according to the creator accountNameHash and the collectionId
-  /// @param _creatorAccountNameHash creator account name hash of the factory
-  /// @param _collectionId collection id of the nft collection related to this creator
-  function getNFTFactory(bytes32 _creatorAccountNameHash, uint32 _collectionId) public view returns (address) {
-    address _factoryAddr = nftFactories[_creatorAccountNameHash][_collectionId];
-    if (_factoryAddr == address(0)) {
-      require(address(defaultNFTFactory) != address(0), "F");
-      // NFTFactory does not set
-      return defaultNFTFactory;
-    } else {
-      return _factoryAddr;
-    }
-  }
-
   /// @notice Get pending balance that the user can withdraw
   /// @param _address The layer-1 address
   /// @param _assetAddr Token address
@@ -524,8 +510,11 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
     require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
 
+    // get creator address
+    address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
     // get nft factory
-    address _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
+    address _factoryAddress = governance.getNFTFactory(_creatorAddress, op.collectionId);
+    // store into l2 nfts
     bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
     bool alreadyMintedFlag = false;
     if (mintedNfts[nftKey].nftContentHash != bytes32(0)) {
@@ -550,11 +539,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         storePendingNFT(op);
       }
     } else {
-      address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
-      // get nft factory
-      _factoryAddress = address(getNFTFactory(op.creatorAccountNameHash, op.collectionId));
-      // store into l2 nfts
-      nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
       try
         INFTFactory(_factoryAddress).mintFromZkBNB(
           _creatorAddress,
@@ -761,10 +745,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
   }
 
-  function setDefaultNFTFactory(INFTFactory _factory) external {
-    delegateAdditional();
-  }
-
   /// @notice Sends ETH
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
@@ -772,26 +752,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function sendBNBNoRevert(address payable _to, uint256 _amount) internal returns (bool) {
     (bool callSuccess, ) = _to.call{gas: WITHDRAWAL_GAS_LIMIT, value: _amount}("");
     return callSuccess;
-  }
-
-  /// @notice Register NFTFactory to this contract
-  /// @param _creatorAccountName accountName of the creator
-  /// @param _collectionId collection Id of the NFT related to this creator
-  /// @param _factory NFT Factory
-  function registerNFTFactory(
-    string calldata _creatorAccountName,
-    uint32 _collectionId,
-    INFTFactory _factory
-  ) external {
-    bytes32 creatorAccountNameHash = znsController.getSubnodeNameHash(_creatorAccountName);
-    require(znsController.isRegisteredNameHash(creatorAccountNameHash), "nr");
-    require(address(nftFactories[creatorAccountNameHash][_collectionId]) == address(0), "Q");
-    // Check accountNameHash belongs to msg.sender
-    address creatorAddress = getAddressByAccountNameHash(creatorAccountNameHash);
-    require(creatorAddress == msg.sender, "ns");
-
-    nftFactories[creatorAccountNameHash][_collectionId] = address(_factory);
-    emit NewNFTFactory(creatorAccountNameHash, _collectionId, address(_factory));
   }
 
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {

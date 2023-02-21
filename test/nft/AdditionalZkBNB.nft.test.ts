@@ -28,10 +28,4 @@ describe.skip('AdditionalZkBNB', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy(mockZNSController.address, mockGovernance.address);
     await additionalZkBNB.deployed();
   });
-
-  it('set default NFT factory', async function () {
-    await expect(await additionalZkBNB.setDefaultNFTFactory(mockNftFactory.address))
-      .to.emit(additionalZkBNB, 'NewDefaultNFTFactory')
-      .withArgs(mockNftFactory.address);
-  });
 });

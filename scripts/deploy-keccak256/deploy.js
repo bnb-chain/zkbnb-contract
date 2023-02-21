@@ -86,7 +86,7 @@ async function main() {
   }
 
   // get ERC721
-  const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZEC', '0');
+  const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZkBNB', '0');
   await ERC721.deployed();
   const _genesisAccountRoot = '0x18195ae3b8f5962236067a051c3a5f697a19de8442849677dbbee328107cca81';
   const _listingFee = ethers.utils.parseEther('100');
@@ -139,13 +139,22 @@ async function main() {
   // deploy default nft factory
   console.log(chalk.blue('⚙️ Setting ZkBNB DefaultNftFactory'));
   console.log('\t🚀Deploy DefaultNftFactory...');
-  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy('ZkBNB', 'ZEC', 'ipfs://', event[5]);
+  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy(
+    'ZkBNB',
+    'ZkBNB',
+    'ipfs://f01701220',
+    event[5],
+    owner.address,
+  );
   await DefaultNftFactory.deployed();
 
   console.log('\t🔧Set default nft factory...');
-  const proxyZkBNB = contractFactories.ZkBNB.attach(event[5]);
-  const setDefaultNftFactoryTx = await proxyZkBNB.setDefaultNFTFactory(DefaultNftFactory.address);
+  const proxyGovernance = contractFactories.Governance.attach(event[0]);
+  const setDefaultNftFactoryTx = await proxyGovernance.setDefaultNFTFactory(DefaultNftFactory.address);
   await setDefaultNftFactoryTx.wait();
+  console.log(chalk.blue('🚀 Set zkBNB address for governance...'));
+  const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(event[5]);
+  await setZkBNBAddressTx.wait();
 
   // Add tokens into assetGovernance
   // add asset

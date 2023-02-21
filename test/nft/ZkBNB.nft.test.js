@@ -334,21 +334,6 @@ describe('NFT functionality', function () {
     //Convert to bytes32
     const IPFSMultiHashDigest = ethers.utils.hexZeroPad(digestInHexFromCID, 32);
 
-    it('register NFT factory', async function () {
-      const creatorAccountName = 'bar';
-      const collectionId = 0;
-      mockZNSController.isRegisteredNameHash.returns(true);
-      mockZNSController.getOwner.returns(owner.address);
-
-      const creatorAccountNameHash = await mockZNSController.getSubnodeNameHash(creatorAccountName);
-
-      await expect(await zkBNB.registerNFTFactory(creatorAccountName, collectionId, mockNftFactory.address))
-        .to.emit(zkBNB, 'NewNFTFactory')
-        .withArgs(creatorAccountNameHash, collectionId, mockNftFactory.address);
-
-      expect(await zkBNB.nftFactories(creatorAccountNameHash, 0)).to.equal(mockNftFactory.address);
-    });
-
     it('mint from ZkBNB using a IPFS CID Hash', async function () {
       await zkBNB.testSetDefaultNFTFactory(zkBNBNFTFactory.address);
       const extraData = ethers.constants.HashZero;

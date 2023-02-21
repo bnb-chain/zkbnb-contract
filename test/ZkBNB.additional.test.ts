@@ -87,8 +87,6 @@ describe('ZkBNB', function () {
       ],
     );
     await zkBNB.initialize(initParams);
-
-    await zkBNB.setDefaultNFTFactory(mockNftFactory.address);
   });
 
   describe('commit blocks', function () {

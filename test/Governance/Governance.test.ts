@@ -16,6 +16,7 @@ describe('Governance', function () {
   let addr3;
   let governerWallet: Wallet;
   let mockAssetGovernance: FakeContract;
+  let mockZkBNB: FakeContract;
 
   beforeEach('init Wallets', async function () {
     const signers: SignerWithAddress[] = await ethers.getSigners();
@@ -31,18 +32,20 @@ describe('Governance', function () {
     await governance.deployed();
 
     mockAssetGovernance = await smock.fake('AssetGovernance');
+    mockZkBNB = await smock.fake('ZkBNB');
   });
 
-  it('should be able to initialize with a EOA Governer', async function () {
+  it('should be able to initialize with a EOA Governer and ZkBNB', async function () {
     const abi = ethers.utils.defaultAbiCoder;
-    const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
+    const byteAddr = abi.encode(['address', 'address'], [await governerWallet.getAddress(), mockZkBNB.address]);
     await governance.initialize(byteAddr);
     expect(await governance.networkGovernor()).to.equal(await governerWallet.getAddress());
+    expect(await mockZkBNB.zkBNBAddress()).to.equal(mockZkBNB.address);
   });
 
   it('BNB asset should have null address and have Id 0', async function () {
     const abi = ethers.utils.defaultAbiCoder;
-    const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
+    const byteAddr = abi.encode(['address', 'address'], [await governerWallet.getAddress(), mockZkBNB.address]);
     await governance.initialize(byteAddr);
     expect(await governance.networkGovernor()).to.equal(await governerWallet.getAddress());
     expect(await governance.assetAddresses(0)).to.equal(NULL_ADDRESS);
@@ -52,7 +55,7 @@ describe('Governance', function () {
   describe('After a governer is set', function () {
     beforeEach('initialize Governer', async function () {
       const abi = ethers.utils.defaultAbiCoder;
-      const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
+      const byteAddr = abi.encode(['address', 'address'], [await governerWallet.getAddress(), mockZkBNB.address]);
       await governance.initialize(byteAddr);
     });
 
@@ -100,7 +103,9 @@ describe('Governance', function () {
       await transferFunds(owner, mockAssetGovernance.address, '1');
       await governance.connect(contractSigner).addAsset(BUSD_ASSET_ADDRESS);
       await governance.connect(governerWallet).setAssetPaused(BUSD_ASSET_ADDRESS, true);
-      await expect(governance.connect(governerWallet).validateAssetAddress(BUSD_ASSET_ADDRESS)).to.be.revertedWith('2i');
+      await expect(governance.connect(governerWallet).validateAssetAddress(BUSD_ASSET_ADDRESS)).to.be.revertedWith(
+        '2i',
+      );
 
       const tx = await governance.connect(governerWallet).setAssetPaused(BUSD_ASSET_ADDRESS, false);
       const rc = await tx.wait();
@@ -123,7 +128,7 @@ describe('Governance', function () {
 
     it('should revert if is not validator ', async function () {
       await governance.connect(governerWallet).setValidator(VALIDATOR_ADDRESS, true);
-      await expect(governance.isActiveValidator(owner.address)).to.be.revertedWith('invalid validator')
+      await expect(governance.isActiveValidator(owner.address)).to.be.revertedWith('invalid validator');
     });
 
     describe('After a new Asset Governance contract is set', function () {
@@ -210,6 +215,37 @@ describe('Governance', function () {
         }
         await expect(governance.connect(contractSigner).addAsset(NEW_ASSET_ADDRESS)).to.be.revertedWith('1f');
       });
+    });
+  });
+
+  describe('After default Nft factory is set', function () {
+    let mockNftFactory;
+
+    beforeEach('initialize Governer', async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+      const byteAddr = abi.encode(['address', 'address'], [owner.address, mockZkBNB.address]);
+      await governance.initialize(byteAddr);
+      mockNftFactory = await smock.fake('ZkBNBNFTFactory');
+      await expect(await governance.setDefaultNFTFactory(mockNftFactory.address))
+        .to.emit(governance, 'SetDefaultNFTFactory')
+        .withArgs(mockNftFactory.address);
+    });
+
+    it('register NFT factory without deploying NFT Factory', async function () {
+      const mockNftFactory = await smock.fake('ZkBNBNFTFactory');
+      const collectionId = 0;
+      await expect(
+        governance.connect(addr1).registerNFTFactory(collectionId, mockNftFactory.address),
+      ).to.be.revertedWith('ws');
+    });
+
+    it('Deploy and register NFT factory', async function () {
+      const collectionId = 1;
+      await expect(
+        await governance.connect(addr1).deployAndRegisterNFTFactory(collectionId, 'name', 'symbol', 'ipfs://f01701220'),
+      ).to.emit(governance, 'NFTFactoryRegistered');
+
+      expect((await governance.nftFactories(addr1.address, collectionId)) !== ethers.constants.AddressZero);
     });
   });
 });

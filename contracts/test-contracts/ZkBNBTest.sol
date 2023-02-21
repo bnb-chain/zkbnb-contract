@@ -59,32 +59,10 @@ contract ZkBNBTest is ZkBNB {
     return withdrawOrStoreNFT(op);
   }
 
-  function testSetDefaultNFTFactory(INFTFactory _factory) external {
-    defaultNFTFactory = address(_factory);
-  }
-
-  function getLastCommittedBlockData(StoredBlockInfo memory _previousBlock, CommitBlockInfo memory _newBlock)
-    external
-    view
-    returns (StoredBlockInfo memory storedNewBlock)
-  {
+  function getLastCommittedBlockData(
+    StoredBlockInfo memory _previousBlock,
+    CommitBlockInfo memory _newBlock
+  ) external view returns (StoredBlockInfo memory storedNewBlock) {
     return commitOneBlock(_previousBlock, _newBlock);
-  }
-
-  function mintNFT(
-    address _creatorAddress,
-    address _toAddress,
-    uint256 _nftTokenId,
-    bytes32 _nftContentHash,
-    bytes memory _extraData
-  ) external {
-    return
-      INFTFactory(defaultNFTFactory).mintFromZkBNB(
-        _creatorAddress,
-        _toAddress,
-        _nftTokenId,
-        _nftContentHash,
-        _extraData
-      );
   }
 }
