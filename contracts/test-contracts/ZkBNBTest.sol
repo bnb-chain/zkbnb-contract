@@ -65,4 +65,22 @@ contract ZkBNBTest is ZkBNB {
   ) external view returns (StoredBlockInfo memory storedNewBlock) {
     return commitOneBlock(_previousBlock, _newBlock);
   }
+
+  function mintNFT(
+    address defaultNFTFactory,
+    address _creatorAddress,
+    address _toAddress,
+    uint256 _nftTokenId,
+    bytes32 _nftContentHash,
+    bytes memory _extraData
+  ) external {
+    return
+      INFTFactory(defaultNFTFactory).mintFromZkBNB(
+        _creatorAddress,
+        _toAddress,
+        _nftTokenId,
+        _nftContentHash,
+        _extraData
+      );
+  }
 }
