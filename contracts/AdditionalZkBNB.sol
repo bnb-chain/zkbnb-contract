@@ -12,11 +12,10 @@ import "./interfaces/Events.sol";
 
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
-import "./lib/NFTHelper.sol";
 
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
-contract AdditionalZkBNB is Storage, Config, Events, NFTHelper {
+contract AdditionalZkBNB is Storage, Config, Events {
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
@@ -220,54 +219,6 @@ contract AdditionalZkBNB is Storage, Config, Events, NFTHelper {
     require(depositAmount > 0, "D");
 
     registerDeposit(assetId, depositAmount, accountNameHash);
-  }
-
-  /// @notice Deposit NFT to Layer 2, ERC721 is supported
-  function depositNft(string calldata _accountName, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    // check if the nft is mint from layer-2
-    bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
-    require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
-
-    // Transfer the tokens to this contract
-    bool success;
-    try IERC721(_nftL1Address).safeTransferFrom(msg.sender, address(this), _nftL1TokenId) {
-      success = true;
-    } catch {
-      success = false;
-    }
-    require(success, "nft transfer failed");
-    // check if the NFT has arrived
-    require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
-
-    bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
-    uint16 collectionId = mintedNfts[nftKey].collectionId;
-    uint40 nftIndex = mintedNfts[nftKey].nftIndex;
-    uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
-    uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
-
-    TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-      txType: uint8(TxTypes.TxType.DepositNft),
-      accountIndex: 0, // unknown at this point
-      nftIndex: nftIndex,
-      creatorAccountIndex: creatorAccountIndex,
-      creatorTreasuryRate: creatorTreasuryRate,
-      nftContentHash: nftContentHash,
-      accountNameHash: accountNameHash,
-      collectionId: collectionId
-    });
-
-    // compact pub data
-    bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
-
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
-
-    // delete nft from account at L1
-    _removeAccountNft(msg.sender, _nftL1Address, nftIndex);
-
-    emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
 
   /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
