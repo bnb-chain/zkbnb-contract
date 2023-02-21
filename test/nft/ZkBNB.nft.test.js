@@ -345,7 +345,14 @@ describe('NFT functionality', function () {
         zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, extraData),
       ).to.be.revertedWith('only zkbnbAddress');
       await expect(
-        await zkBNB.mintNFT(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, ethers.constants.HashZero),
+        await zkBNB.mintNFT(
+          zkBNBNFTFactory.address,
+          acc1.address,
+          acc2.address,
+          tokenId,
+          IPFSMultiHashDigest,
+          ethers.constants.HashZero,
+        ),
       )
         .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
         .withArgs(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, extraData);
@@ -378,9 +385,7 @@ describe('NFT functionality', function () {
 
     it('non-owner should fail to update base URI', async function () {
       const newBase = 'bar://';
-      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith(
-        'Ownable: caller is not the owner',
-      );
+      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith('Only callable by owner');
     });
   });
 });
