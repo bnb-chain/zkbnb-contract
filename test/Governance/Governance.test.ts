@@ -1,6 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { assert, expect } from 'chai';
-import { BaseContract, Signer, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 
 import { ethers } from 'hardhat';
 import { transferFunds } from '../util';
@@ -35,17 +35,16 @@ describe('Governance', function () {
     mockZkBNB = await smock.fake('ZkBNB');
   });
 
-  it('should be able to initialize with a EOA Governer and ZkBNB', async function () {
+  it('should be able to initialize with a EOA Governer', async function () {
     const abi = ethers.utils.defaultAbiCoder;
-    const byteAddr = abi.encode(['address', 'address'], [await governerWallet.getAddress(), mockZkBNB.address]);
+    const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
     await governance.initialize(byteAddr);
     expect(await governance.networkGovernor()).to.equal(await governerWallet.getAddress());
-    expect(await mockZkBNB.zkBNBAddress()).to.equal(mockZkBNB.address);
   });
 
   it('BNB asset should have null address and have Id 0', async function () {
     const abi = ethers.utils.defaultAbiCoder;
-    const byteAddr = abi.encode(['address', 'address'], [await governerWallet.getAddress(), mockZkBNB.address]);
+    const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
     await governance.initialize(byteAddr);
     expect(await governance.networkGovernor()).to.equal(await governerWallet.getAddress());
     expect(await governance.assetAddresses(0)).to.equal(NULL_ADDRESS);
@@ -55,7 +54,7 @@ describe('Governance', function () {
   describe('After a governer is set', function () {
     beforeEach('initialize Governer', async function () {
       const abi = ethers.utils.defaultAbiCoder;
-      const byteAddr = abi.encode(['address', 'address'], [await governerWallet.getAddress(), mockZkBNB.address]);
+      const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
       await governance.initialize(byteAddr);
     });
 
@@ -223,8 +222,9 @@ describe('Governance', function () {
 
     beforeEach('initialize Governer', async function () {
       const abi = ethers.utils.defaultAbiCoder;
-      const byteAddr = abi.encode(['address', 'address'], [owner.address, mockZkBNB.address]);
+      const byteAddr = abi.encode(['address'], [owner.address]);
       await governance.initialize(byteAddr);
+      await governance.setZkBNBAddress(mockZkBNB.address);
       mockNftFactory = await smock.fake('ZkBNBNFTFactory');
       await expect(await governance.setDefaultNFTFactory(mockNftFactory.address))
         .to.emit(governance, 'SetDefaultNFTFactory')
