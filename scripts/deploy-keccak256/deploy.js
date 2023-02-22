@@ -155,15 +155,6 @@ async function main() {
   console.log(chalk.blue('🚀 Set zkBNB address for governance...'));
   const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(event[5]);
   await setZkBNBAddressTx.wait();
-
-  // Add tokens into assetGovernance
-  // add asset
-  console.log(chalk.blue('📥 Add tokens into assetGovernance asset list...'));
-  for (const token of tokens) {
-    const addAssetTx = await assetGovernance.addAsset(token);
-    await addAssetTx.wait();
-  }
-  const proxyGovernance = contractFactories.Governance.attach(event[0]);
   // Add validators into governance
   console.log(chalk.blue('📥 Add validators into governance...'));
   if (process.env.VALIDATORS) {
@@ -172,6 +163,14 @@ async function main() {
       await proxyGovernance.setValidator(validator, true);
       console.log(chalk.blue(`\t📦 Added validator ${validator}`));
     }
+  }
+
+  // Add tokens into assetGovernance
+  // add asset
+  console.log(chalk.blue('📥 Add tokens into assetGovernance asset list...'));
+  for (const token of tokens) {
+    const addAssetTx = await assetGovernance.addAsset(token);
+    await addAssetTx.wait();
   }
 
   // Step 4: register zns base node
