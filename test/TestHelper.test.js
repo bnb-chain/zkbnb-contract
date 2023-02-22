@@ -9,7 +9,13 @@ describe('TestHelper', function () {
   const nftAddress1 = ethers.Wallet.createRandom().address;
   const nftAddress2 = ethers.Wallet.createRandom().address;
   beforeEach(async function () {
-    const NftHelperTest = await ethers.getContractFactory('TestHelper');
+    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+    const nftHelperLibrary = await NftHelperLibrary.deploy();
+    const NftHelperTest = await ethers.getContractFactory('TestHelper', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    });
     this.nftHelperTest = await NftHelperTest.deploy();
   });
 

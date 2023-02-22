@@ -77,12 +77,6 @@ interface Events {
 
   /// @notice Event emitted when user NFT is withdrawn from the zkSync state but not from contract
   event WithdrawalNFTPending(uint40 indexed nftIndex);
-
-  /// @notice Default NFTFactory changed
-  event NewDefaultNFTFactory(address indexed factory);
-
-  /// @notice New NFT Factory
-  event NewNFTFactory(bytes32 indexed _creatorAccountNameHash, uint32 _collectionId, address _factoryAddress);
 }
 
 /// @title Upgrade events

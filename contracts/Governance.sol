@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./Config.sol";
 import "./lib/Utils.sol";
 import "./AssetGovernance.sol";
+import "./ZkBNBNFTFactory.sol";
 
 /// @title Governance Contract
 /// @author ZkBNB Team
@@ -27,6 +28,19 @@ contract Governance is Config, Initializable {
   /// @notice Address that is authorized to add tokens to the Governance.
   AssetGovernance public assetGovernance;
 
+  /// @notice NFT Creator account to factory address mapping
+  /// @dev creator address => CollectionId => NFTFactory
+  mapping(address => mapping(uint32 => address)) public nftFactories;
+
+  /// @notice NFT factory address to creator address mapping
+  mapping(address => address) public nftFactoryCreators;
+
+  /// @notice Address which will be used if no factories is specified.
+  address public defaultNFTFactory;
+
+  /// @notice zkBNB contract address.
+  address public zkBNBAddress;
+
   /// @notice Token added to Franklin net
   event NewAsset(address assetAddress, uint16 assetId);
 
@@ -39,6 +53,18 @@ contract Governance is Config, Initializable {
   event ValidatorStatusUpdate(address validatorAddress, bool isActive);
 
   event AssetPausedUpdate(address token, bool paused);
+
+  /// @notice New nft factory deployed
+  event NFTFactoryDeployed(address indexed creator, address indexed factory);
+
+  /// @notice New NFT factory registered
+  event NFTFactoryRegistered(address indexed creator, address indexed factory, uint32 indexed collectionId);
+
+  /// @notice Default nft factory has set
+  event SetDefaultNFTFactory(address indexed factory);
+
+  /// @notice ZkBNB address has set
+  event SetZkBNB(address indexed zkBNBAddress);
 
   /// @notice Governance contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param initializationParameters Encoded representation of initialization parameters:
@@ -133,5 +159,68 @@ contract Governance is Config, Initializable {
   function requireGovernor(address _address) public view {
     require(_address == networkGovernor, "1g");
     // only by governor
+  }
+
+  /// @notice Register collection corresponding to the factory
+  /// @param _collectionId L2 collection id
+  /// @param _factoryAddress NFT factor address
+  function registerNFTFactory(uint32 _collectionId, address _factoryAddress) public {
+    require(nftFactories[msg.sender][_collectionId] == address(0), "Q");
+    require(nftFactoryCreators[_factoryAddress] == msg.sender, "ws");
+    nftFactories[msg.sender][_collectionId] = _factoryAddress;
+    emit NFTFactoryRegistered(msg.sender, _factoryAddress, _collectionId);
+  }
+
+  /// @notice Deploy and register collection corresponding to the factory
+  /// @param _collectionId L2 collection id
+  /// @param _name NFT factory name
+  /// @param _symbol NFT factory symbol
+  /// @param _baseURI NFT baseURI
+  function deployAndRegisterNFTFactory(
+    uint32 _collectionId,
+    string memory _name,
+    string memory _symbol,
+    string memory _baseURI
+  ) external {
+    require(zkBNBAddress != address(0), "ZkBNB address does not set");
+    ZkBNBNFTFactory _factory = new ZkBNBNFTFactory(_name, _symbol, _baseURI, zkBNBAddress, msg.sender);
+    address _factoryAddress = address(_factory);
+    nftFactoryCreators[_factoryAddress] = msg.sender;
+    emit NFTFactoryDeployed(msg.sender, _factoryAddress);
+    registerNFTFactory(_collectionId, _factoryAddress);
+  }
+
+  /// @notice Set ZkBNB address
+  /// @param _zkBNBAddress ZkBNB address
+  function setZkBNBAddress(address _zkBNBAddress) external {
+    requireGovernor(msg.sender);
+    require(_zkBNBAddress != address(0), "Invalid address");
+    require(zkBNBAddress != _zkBNBAddress, "Unchanged");
+    zkBNBAddress = _zkBNBAddress;
+    emit SetZkBNB(_zkBNBAddress);
+  }
+
+  /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
+  /// @param _factoryAddress Address of NFT factory
+  function setDefaultNFTFactory(address _factoryAddress) external {
+    requireGovernor(msg.sender);
+    require(_factoryAddress != address(0), "mb1"); // Factory should be non zero
+    require(defaultNFTFactory == address(0), "mb2"); // NFTFactory is already set
+    defaultNFTFactory = _factoryAddress;
+    emit SetDefaultNFTFactory(_factoryAddress);
+  }
+
+  /// @notice Get a registered NFTFactory according to the creator address and the collectionId
+  /// @param _creatorAddress creator account address
+  /// @param _collectionId collection id of the nft collection related to this creator
+  function getNFTFactory(address _creatorAddress, uint32 _collectionId) external view returns (address) {
+    address _factory = nftFactories[_creatorAddress][_collectionId];
+    // Use the default factory when the collection is not bound a factory
+    if (_factory == address(0)) {
+      require(defaultNFTFactory != address(0), "fs"); // NFTFactory does not set
+      return defaultNFTFactory;
+    } else {
+      return _factory;
+    }
   }
 }

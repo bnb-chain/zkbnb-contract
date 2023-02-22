@@ -44,7 +44,13 @@ describe('ZkBNB', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const ZkBNB = await ethers.getContractFactory('ZkBNB');
+    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+    const nftHelperLibrary = await NftHelperLibrary.deploy();
+    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    });
     zkBNB = await ZkBNB.deploy();
     await zkBNB.deployed();
 

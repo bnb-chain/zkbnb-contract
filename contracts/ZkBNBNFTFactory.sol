@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/INFTFactory.sol";
 import "./lib/Bytes.sol";
+import "./lib/Ownable2Step.sol";
 
 contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable2Step, ReentrancyGuard {
   // Optional mapping from token ID to token content hash
@@ -18,7 +18,13 @@ contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable2Step, ReentrancyGuard {
 
   address private _zkbnbAddress;
 
-  constructor(string memory name, string memory symbol, string memory base, address zkbnbAddress) ERC721(name, symbol) {
+  constructor(
+    string memory name,
+    string memory symbol,
+    string memory base,
+    address zkbnbAddress,
+    address owner
+  ) ERC721(name, symbol) Ownable2Step(owner) {
     _zkbnbAddress = zkbnbAddress;
     _base = base;
   }
