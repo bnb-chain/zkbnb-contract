@@ -94,6 +94,10 @@ describe('ZkBNB', function () {
       ],
     );
     await zkBNB.initialize(initParams);
+
+    // mock functions
+    mockGovernance.getNFTFactory.returns(mockNftFactory.address);
+    mockNftFactory.mintFromZkBNB.returns();
   });
 
   describe('commit blocks', function () {
