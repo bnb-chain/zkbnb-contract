@@ -171,5 +171,6 @@ contract DeployFactory {
 
   function finalizeZNSController(ZNSController _znsController, address _zkbnb) internal {
     _znsController.addController(_zkbnb);
+    _znsController.transferOwnership(msg.sender); //The sender can withdraw the ZNS account registration fees
   }
 }

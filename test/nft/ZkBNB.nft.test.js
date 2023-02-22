@@ -10,7 +10,7 @@ chai.use(smock.matchers);
 const abi = ethers.utils.defaultAbiCoder;
 
 describe('NFT functionality', function () {
-  let mockGovernance;
+  let governance;
   let mockZkBNBVerifier;
   let mockZNSController;
   let mockPublicResolver;
@@ -34,9 +34,9 @@ describe('NFT functionality', function () {
 
   before(async function () {
     [owner, acc1, acc2] = await ethers.getSigners();
-    const MockGovernance = await smock.mock('Governance');
-    mockGovernance = await MockGovernance.deploy();
-    await mockGovernance.deployed();
+    const Governance = await ethers.getContractFactory('Governance');
+    governance = await Governance.deploy();
+    await governance.deployed();
 
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
@@ -62,14 +62,20 @@ describe('NFT functionality', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest');
+    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+    const nftHelperLibrary = await NftHelperLibrary.deploy();
+    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    });
     zkBNB = await ZkBNBTest.deploy();
     await zkBNB.deployed();
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'address', 'bytes32'],
       [
-        mockGovernance.address,
+        governance.address,
         mockZkBNBVerifier.address,
         additionalZkBNB.address,
         mockZNSController.address,
@@ -80,24 +86,28 @@ describe('NFT functionality', function () {
     await zkBNB.initialize(initParams);
 
     const ZkBNBNFTFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
-    zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', baseURI, zkBNB.address);
+    zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', baseURI, zkBNB.address, owner.address);
     await zkBNBNFTFactory.deployed();
     assert.equal(await zkBNBNFTFactory.name(), 'ZkBNBNft');
     assert.equal(await zkBNBNFTFactory.symbol(), 'Zk');
     assert.equal(await zkBNBNFTFactory._base(), baseURI);
 
     const MockNftFactory = await smock.mock('ZkBNBNFTFactory');
-    mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', baseURI, zkBNB.address);
+    mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', baseURI, zkBNB.address, owner.address);
     await mockNftFactory.deployed();
-    await mockGovernance.setVariable('networkGovernor', owner.address);
 
-    await expect(await zkBNB.setDefaultNFTFactory(mockNftFactory.address))
-      .to.emit(zkBNB, 'NewDefaultNFTFactory')
+    const abi = ethers.utils.defaultAbiCoder;
+    const byteAddr = abi.encode(['address'], [owner.address]);
+    await governance.initialize(byteAddr);
+    await governance.setZkBNBAddress(zkBNB.address);
+
+    await expect(await governance.setDefaultNFTFactory(mockNftFactory.address))
+      .to.emit(governance, 'SetDefaultNFTFactory')
       .withArgs(mockNftFactory.address);
   });
 
   it('check default NFT Factory', async function () {
-    expect(await zkBNB.defaultNFTFactory()).to.equal(mockNftFactory.address);
+    expect(await governance.defaultNFTFactory()).to.equal(mockNftFactory.address);
   });
 
   it('on ERC721 received', async function () {
@@ -334,30 +344,21 @@ describe('NFT functionality', function () {
     //Convert to bytes32
     const IPFSMultiHashDigest = ethers.utils.hexZeroPad(digestInHexFromCID, 32);
 
-    it('register NFT factory', async function () {
-      const creatorAccountName = 'bar';
-      const collectionId = 0;
-      mockZNSController.isRegisteredNameHash.returns(true);
-      mockZNSController.getOwner.returns(owner.address);
-
-      const creatorAccountNameHash = await mockZNSController.getSubnodeNameHash(creatorAccountName);
-
-      await expect(await zkBNB.registerNFTFactory(creatorAccountName, collectionId, mockNftFactory.address))
-        .to.emit(zkBNB, 'NewNFTFactory')
-        .withArgs(creatorAccountNameHash, collectionId, mockNftFactory.address);
-
-      expect(await zkBNB.nftFactories(creatorAccountNameHash, 0)).to.equal(mockNftFactory.address);
-    });
-
     it('mint from ZkBNB using a IPFS CID Hash', async function () {
-      await zkBNB.testSetDefaultNFTFactory(zkBNBNFTFactory.address);
       const extraData = ethers.constants.HashZero;
 
       expect(
         zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, extraData),
       ).to.be.revertedWith('only zkbnbAddress');
       await expect(
-        await zkBNB.mintNFT(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, ethers.constants.HashZero),
+        await zkBNB.mintNFT(
+          zkBNBNFTFactory.address,
+          acc1.address,
+          acc2.address,
+          tokenId,
+          IPFSMultiHashDigest,
+          ethers.constants.HashZero,
+        ),
       )
         .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
         .withArgs(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, extraData);
@@ -390,9 +391,7 @@ describe('NFT functionality', function () {
 
     it('non-owner should fail to update base URI', async function () {
       const newBase = 'bar://';
-      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith(
-        'Ownable: caller is not the owner',
-      );
+      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith('Only callable by owner');
     });
   });
 });

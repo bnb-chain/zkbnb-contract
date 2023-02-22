@@ -117,11 +117,4 @@ contract Storage {
   }
 
   mapping(bytes32 => L2NftInfo) internal mintedNfts;
-
-  /// @notice NFTFactories registered.
-  /// @dev creator accountNameHash => CollectionId => NFTFactory
-  mapping(bytes32 => mapping(uint32 => address)) public nftFactories;
-
-  /// @notice Address which will be used if no factories is specified.
-  address public defaultNFTFactory;
 }

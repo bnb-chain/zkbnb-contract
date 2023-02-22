@@ -50,7 +50,14 @@ describe('UpgradeGatekeeper', function () {
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
-    const MockZkBNB = await smock.mock('ZkBNB');
+    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+    const nftHelperLibrary = await NftHelperLibrary.deploy();
+    await nftHelperLibrary.deployed();
+    const MockZkBNB = await smock.mock('ZkBNB', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    });
     mockZkBNB = await MockZkBNB.deploy();
     await mockZkBNB.deployed();
     mockZkBNBNew = await MockZkBNB.deploy();
