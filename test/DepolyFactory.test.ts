@@ -45,7 +45,13 @@ describe('DeployFactory', function () {
 
     mockGovernanceTarget = await smock.fake('Governance');
     mockVerifierTarget = await smock.fake('ZkBNBVerifier');
-    const ZkBNB = await ethers.getContractFactory('ZkBNB');
+    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+    const nftHelperLibrary = await NftHelperLibrary.deploy();
+    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    });
     mockZkbnbTarget = await smock.fake(ZkBNB);
 
     mockZnsControllerTarget = await smock.fake('ZNSController');
@@ -81,7 +87,13 @@ describe('DeployFactory', function () {
       baseNode,
     );
 
-    const TestHelper = await ethers.getContractFactory('TestHelper');
+    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+    const nftHelperLibrary = await NftHelperLibrary.deploy();
+    const TestHelper = await ethers.getContractFactory('TestHelper', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    });
     const testHelper = await TestHelper.deploy();
     const result = await testHelper.contractExists(deployFactory.address);
     expect(result).to.be.equal(false);

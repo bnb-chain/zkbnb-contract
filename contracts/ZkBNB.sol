@@ -139,14 +139,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
 
     TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-    txType: uint8(TxTypes.TxType.DepositNft),
-    accountIndex: 0, // unknown at this point
-    nftIndex: nftIndex,
-    creatorAccountIndex: creatorAccountIndex,
-    creatorTreasuryRate: creatorTreasuryRate,
-    nftContentHash: nftContentHash,
-    accountNameHash: accountNameHash,
-    collectionId: collectionId
+      txType: uint8(TxTypes.TxType.DepositNft),
+      accountIndex: 0, // unknown at this point
+      nftIndex: nftIndex,
+      creatorAccountIndex: creatorAccountIndex,
+      creatorTreasuryRate: creatorTreasuryRate,
+      nftContentHash: nftContentHash,
+      accountNameHash: accountNameHash,
+      collectionId: collectionId
     });
 
     // compact pub data

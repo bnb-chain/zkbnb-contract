@@ -255,6 +255,10 @@ async function getContractFactories() {
   const Utils = await ethers.getContractFactory('Utils');
   const utils = await Utils.deploy();
   await utils.deployed();
+  // TODO: remove in next version
+  const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+  const nftHelperLibrary = await NftHelperLibrary.deploy();
+  await nftHelperLibrary.deployed();
 
   return {
     TokenFactory: await ethers.getContractFactory('ZkBNBRelatedERC20'),
@@ -266,7 +270,11 @@ async function getContractFactories() {
     Governance: await ethers.getContractFactory('Governance'),
     AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
     Verifier: await ethers.getContractFactory('ZkBNBVerifier'),
-    ZkBNB: await ethers.getContractFactory('ZkBNB'),
+    ZkBNB: await ethers.getContractFactory('ZkBNB', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    }),
     DeployFactory: await ethers.getContractFactory('DeployFactory', {
       libraries: {
         Utils: utils.address,

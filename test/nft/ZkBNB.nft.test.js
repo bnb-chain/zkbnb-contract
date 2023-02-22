@@ -62,7 +62,13 @@ describe('NFT functionality', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest');
+    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+    const nftHelperLibrary = await NftHelperLibrary.deploy();
+    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
+      libraries: {
+        NftHelperLibrary: nftHelperLibrary.address,
+      },
+    });
     zkBNB = await ZkBNBTest.deploy();
     await zkBNB.deployed();
 
