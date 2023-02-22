@@ -15,6 +15,7 @@ describe('ZkBNB', function () {
   let mockERC20;
   let mockERC721;
   let zkBNB;
+  let zkBNBAdditional;
   let owner, addr1, addr2, addr3, addr4;
 
   // `ZkBNB` needs to link to library `Utils` before deployed
@@ -60,6 +61,8 @@ describe('ZkBNB', function () {
       ],
     );
     await zkBNB.initialize(initParams);
+
+    zkBNBAdditional = AdditionalZkBNB.attach(zkBNB.address);
   });
 
   describe('Deposit', function () {
@@ -67,18 +70,18 @@ describe('ZkBNB', function () {
 
     describe('deposit BNB', async function () {
       it('should reverted if insufficient', async () => {
-        await expect(zkBNB.depositBNB('account', { value: 0 })).to.be.revertedWith('ia');
+        await expect(zkBNBAdditional.depositBNB('account', { value: 0 })).to.be.revertedWith('ia');
       });
       it('should reverted if account name not registered', async () => {
         mockZNSController.isRegisteredNameHash.returns(false);
-        await expect(zkBNB.depositBNB('account', { value: 10 })).to.be.revertedWith('nr');
+        await expect(zkBNBAdditional.depositBNB('account', { value: 10 })).to.be.revertedWith('nr');
       });
       it('should increase totalOpenPriorityRequests', async () => {
         mockZNSController.isRegisteredNameHash.returns(true);
         const totalBefore = await zkBNB.totalOpenPriorityRequests();
-        await zkBNB.depositBNB('account', { value: 10 });
-        await zkBNB.depositBNB('account', { value: 10 });
-        await zkBNB.depositBNB('account', { value: 10 });
+        await zkBNBAdditional.depositBNB('account', { value: 10 });
+        await zkBNBAdditional.depositBNB('account', { value: 10 });
+        await zkBNBAdditional.depositBNB('account', { value: 10 });
         const totalAfter = await zkBNB.totalOpenPriorityRequests();
 
         expect(totalAfter).to.be.equal(totalBefore + 3);
@@ -95,7 +98,7 @@ describe('ZkBNB', function () {
           accountNameHash,
         ]);
 
-        await expect(zkBNB.depositBNB('account', { value: 10 }))
+        await expect(zkBNBAdditional.depositBNB('account', { value: 10 }))
           .to.emit(zkBNB, 'NewPriorityRequest')
           .withArgs(owner.address, 0, PubDataType.Deposit, pubData, 201604)
           .to.emit(zkBNB, 'Deposit')
@@ -105,24 +108,24 @@ describe('ZkBNB', function () {
     describe('deposit ERC20', async function () {
       it('should reverted', async () => {
         // amount check
-        await expect(zkBNB.depositBEP20(mockERC20.address, 0, 'account')).to.be.revertedWith('I');
+        await expect(zkBNBAdditional.depositBEP20(mockERC20.address, 0, 'account')).to.be.revertedWith('I');
 
         // account must registered
         mockZNSController.isRegisteredNameHash.returns(false);
-        await expect(zkBNB.depositBEP20(mockERC20.address, 10, 'account')).to.be.revertedWith('N');
+        await expect(zkBNBAdditional.depositBEP20(mockERC20.address, 10, 'account')).to.be.revertedWith('N');
 
         // assets must exist
         mockGovernance.validateAssetAddress.returns(2);
         mockGovernance.pausedAssets.returns(true);
         mockZNSController.isRegisteredNameHash.returns(true);
-        await expect(zkBNB.depositBEP20(mockERC20.address, 10, 'account')).to.be.revertedWith('b');
+        await expect(zkBNBAdditional.depositBEP20(mockERC20.address, 10, 'account')).to.be.revertedWith('b');
 
         // insufficient
         mockGovernance.pausedAssets.returns(false);
         mockERC20.transferFrom.returns(true);
         mockERC20.balanceOf.returnsAtCall(0, 100);
         mockERC20.balanceOf.returnsAtCall(1, 100);
-        await expect(zkBNB.depositBEP20(mockERC20.address, 10, 'account')).to.be.revertedWith('D');
+        await expect(zkBNBAdditional.depositBEP20(mockERC20.address, 10, 'account')).to.be.revertedWith('D');
       });
       it('should transfer erc20', async () => {
         mockERC20.transferFrom.returns(true);
@@ -130,7 +133,7 @@ describe('ZkBNB', function () {
         mockGovernance.pausedAssets.returns(false);
         mockERC20.balanceOf.returnsAtCall(0, 100);
         mockERC20.balanceOf.returnsAtCall(1, 110);
-        await zkBNB.depositBEP20(mockERC20.address, 10, 'account');
+        await zkBNBAdditional.depositBEP20(mockERC20.address, 10, 'account');
 
         expect(mockERC20.transferFrom).to.have.been.calledWith(owner.address, zkBNB.address, 10);
       });
@@ -151,7 +154,7 @@ describe('ZkBNB', function () {
           10,
           accountNameHash,
         ]);
-        await expect(zkBNB.depositBEP20(mockERC20.address, 10, 'account'))
+        await expect(zkBNBAdditional.depositBEP20(mockERC20.address, 10, 'account'))
           .to.emit(zkBNB, 'NewPriorityRequest')
           .withArgs(owner.address, 0, PubDataType.Deposit, pubData, 201604)
           .to.emit(zkBNB, 'Deposit')

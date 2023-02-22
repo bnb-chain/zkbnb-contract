@@ -90,29 +90,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  function registerZNS(
-    string calldata _name,
-    address _owner,
-    bytes32 _zkbnbPubKeyX,
-    bytes32 _zkbnbPubKeyY
-  ) external payable {
-    delegateAdditional();
-  }
-
-  /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
-  /// @param _accountName the receiver account name
-  function depositBNB(string calldata _accountName) external payable onlyActive {
-    delegateAdditional();
-  }
-
-  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
-  /// @param _token Token address
-  /// @param _amount Token amount
-  /// @param _accountName Receiver Layer 2 account name
-  function depositBEP20(IERC20 _token, uint104 _amount, string calldata _accountName) external onlyActive {
-    delegateAdditional();
-  }
-
   /// @notice Deposit NFT to Layer 2, ERC721 is supported
   function depositNft(string calldata _accountName, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
     bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
@@ -139,14 +116,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
 
     TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-    txType: uint8(TxTypes.TxType.DepositNft),
-    accountIndex: 0, // unknown at this point
-    nftIndex: nftIndex,
-    creatorAccountIndex: creatorAccountIndex,
-    creatorTreasuryRate: creatorTreasuryRate,
-    nftContentHash: nftContentHash,
-    accountNameHash: accountNameHash,
-    collectionId: collectionId
+      txType: uint8(TxTypes.TxType.DepositNft),
+      accountIndex: 0, // unknown at this point
+      nftIndex: nftIndex,
+      creatorAccountIndex: creatorAccountIndex,
+      creatorTreasuryRate: creatorTreasuryRate,
+      nftContentHash: nftContentHash,
+      accountNameHash: accountNameHash,
+      collectionId: collectionId
     });
 
     // compact pub data
@@ -499,11 +476,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(totalBlocksVerified <= totalBlocksCommitted, "n");
   }
 
-  /// @notice Reverts unverified blocks
-  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
-    delegateAdditional();
-  }
-
   function isRegisteredZNSName(string memory _name) external view returns (bool) {
     return znsController.isRegisteredZNSName(_name);
   }
@@ -805,7 +777,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @notice Delegates the call to the additional part of the main contract.
   /// @notice Should be only use to delegate the external calls as it passes the calldata
   /// @notice All functions delegated to additional contract should NOT be nonReentrant
-  function delegateAdditional() internal {
+  fallback() external payable {
     address _target = address(additionalZkBNB);
     assembly {
       // The pointer to the free memory slot

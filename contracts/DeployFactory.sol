@@ -64,7 +64,7 @@ contract DeployFactory {
     DeployedContractAddress memory contracts = DeployedContractAddress({
       governanceTarget: Governance(addrs[0]),
       verifierTarget: ZkBNBVerifier(addrs[1]),
-      zkbnbTarget: ZkBNB(addrs[2]),
+      zkbnbTarget: ZkBNB(payable(addrs[2])),
       znsControllerTarget: ZNSController(addrs[3]),
       znsResolverTarget: PublicResolver(addrs[4]),
       validator: addrs[5],

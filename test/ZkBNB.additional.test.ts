@@ -26,6 +26,7 @@ describe('ZkBNB', function () {
   let mockNftFactory;
   let zkBNB;
   let additionalZkBNB;
+  let zkBNBAdditional;
   let owner, addr1, addr2, addr3, addr4;
   const accountNameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('accountNameHash'));
 
@@ -87,6 +88,11 @@ describe('ZkBNB', function () {
       ],
     );
     await zkBNB.initialize(initParams);
+    zkBNBAdditional = AdditionalZkBNB.attach(zkBNB.address);
+
+    // mock functions
+    mockGovernance.getNFTFactory.returns(mockNftFactory.address);
+    mockNftFactory.mintFromZkBNB.returns();
   });
 
   describe('commit blocks', function () {
@@ -145,7 +151,7 @@ describe('ZkBNB', function () {
         mockZNSController.isRegisteredNameHash.returns(true);
         mockZNSController.getSubnodeNameHash.returns(accountNameHash);
 
-        await zkBNB.depositBNB('accountNameHash', { value: 10 });
+        await zkBNBAdditional.depositBNB('accountNameHash', { value: 10 });
 
         mockZNSController.getSubnodeNameHash.returns(accountNameHash);
         mockERC20.transferFrom.returns(true);
@@ -155,7 +161,7 @@ describe('ZkBNB', function () {
         mockERC20.balanceOf.returnsAtCall(0, 100);
         mockERC20.balanceOf.returnsAtCall(1, 110);
 
-        await zkBNB.depositBEP20(mockERC20.address, 10, 'accountNameHash');
+        await zkBNBAdditional.depositBEP20(mockERC20.address, 10, 'accountNameHash');
 
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
@@ -172,7 +178,7 @@ describe('ZkBNB', function () {
         const pubKeyX = ethers.utils.formatBytes32String('pubKeyX');
         const pubKeyY = ethers.utils.formatBytes32String('pubKeyY');
 
-        const tx = await zkBNB.registerZNS('accountName', owner.address, pubKeyX, pubKeyY);
+        const tx = await zkBNBAdditional.registerZNS('accountName', owner.address, pubKeyX, pubKeyY);
 
         const receipt = await tx.wait();
         const event = receipt.events.find((event) => {
@@ -196,7 +202,7 @@ describe('ZkBNB', function () {
         mockZNSController.isRegisteredNameHash.returns(true);
         mockZNSController.getSubnodeNameHash.returns(accountNameHash);
 
-        await zkBNB.depositBNB('accountNameHash', { value: 10 });
+        await zkBNBAdditional.depositBNB('accountNameHash', { value: 10 });
 
         mockZNSController.getSubnodeNameHash.returns(accountNameHash);
         mockERC20.transferFrom.returns(true);
@@ -206,7 +212,7 @@ describe('ZkBNB', function () {
         mockERC20.balanceOf.returnsAtCall(0, 100);
         mockERC20.balanceOf.returnsAtCall(1, 110);
 
-        await zkBNB.depositBEP20(mockERC20.address, 10, 'accountNameHash');
+        await zkBNBAdditional.depositBEP20(mockERC20.address, 10, 'accountNameHash');
 
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
@@ -276,7 +282,7 @@ describe('ZkBNB', function () {
           mockZNSController.isRegisteredNameHash.returns(true);
           mockNftFactory.ownerOf.returns(zkBNB.address);
 
-          const tx = await zkBNB.depositNft('accountName', mockNftFactory.address, nftL1TokenId);
+          const tx = await zkBNBAdditional.depositNft('accountName', mockNftFactory.address, nftL1TokenId);
 
           const receipt = await tx.wait();
           const event = receipt.events.find((event) => {
@@ -453,7 +459,7 @@ describe('ZkBNB', function () {
         accountNameHash,
       ]);
 
-      await zkBNB.depositBNB('accountNameHash', { value: 10 });
+      await zkBNBAdditional.depositBNB('accountNameHash', { value: 10 });
       const commitBlock3: CommitBlockInfo = {
         newStateRoot,
         publicData: ethers.utils.hexConcat([pubDataDeposit]),
