@@ -593,6 +593,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       {
         // add nft to account at L1
         _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
+        // set collection factory
+        governance.setNFTFactory(_creatorAddress, op.collectionId);
 
         mintedNfts[nftKey] = L2NftInfo({
           nftIndex: op.nftIndex,

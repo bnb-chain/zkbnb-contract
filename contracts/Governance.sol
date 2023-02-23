@@ -162,6 +162,16 @@ contract Governance is Config, Initializable {
   }
 
   /// @notice Register collection corresponding to the factory
+  /// @param _creatorAddress L2 collection creator address
+  /// @param _collectionId L2 collection id
+  function setNFTFactory(address _creatorAddress, uint32 _collectionId) external {
+    require(msg.sender == zkBNBAddress, "No access");
+    if (nftFactories[_creatorAddress][_collectionId] == address(0)) {
+      nftFactories[_creatorAddress][_collectionId] = defaultNFTFactory;
+    }
+  }
+
+  /// @notice Register collection corresponding to the factory
   /// @param _collectionId L2 collection id
   /// @param _factoryAddress NFT factor address
   function registerNFTFactory(uint32 _collectionId, address _factoryAddress) public {
