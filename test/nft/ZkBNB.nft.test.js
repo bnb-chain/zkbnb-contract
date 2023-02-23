@@ -105,20 +105,18 @@ describe('NFT functionality', function () {
 
     await zkBNB.onERC721Received(owner.address, acc1.address, 0, HashZero);
   });
+
   describe('withdraw NFT from L2 to L1 and store as IPFS CID hash', function () {
     const mockNftIndex = 0;
+    let withdrawOp;
 
-    it('NFT is not minted before withdrawal', async function () {
-      const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, mockNftIndex]));
-      const _l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
+    before('Init onERC721Received and withdraw op', async function () {
+      const HashZero = ethers.constants.HashZero;
 
-      expect(_l2Nft['nftContentHash']).to.equal(ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 32));
-    });
-
-    it('should perform mint and then withdraw', async function () {
+      await zkBNB.onERC721Received(owner.address, acc1.address, 0, HashZero);
       mockZNSController.getOwner.returns(acc1.address);
 
-      const withdrawOp = {
+      withdrawOp = {
         txType: 11, // WithdrawNft
         fromAccountIndex: 1,
         creatorAccountIndex: 0,
@@ -132,13 +130,20 @@ describe('NFT functionality', function () {
         creatorAccountNameHash: mockHash,
         collectionId: 0,
       };
+    });
 
+    it('NFT is not minted before withdrawal', async function () {
+      const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, mockNftIndex]));
+      const _l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
+
+      expect(_l2Nft['nftContentHash']).to.equal(ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 32));
+    });
+
+    it('should perform mint and then withdraw', async function () {
       await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp))
         .to.emit(zkBNB, 'WithdrawNft')
         .withArgs(1, mockNftFactory.address, acc1.address, mockNftIndex);
-    });
 
-    it('NFT should be minted', async function () {
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, mockNftIndex]));
       const l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
 
@@ -150,6 +155,9 @@ describe('NFT functionality', function () {
     });
 
     it('L1 NFT should be owned by acc1', async function () {
+      //First store NFT
+      await zkBNB.testWithdrawOrStoreNFT(withdrawOp);
+
       expect(await mockNftFactory.ownerOf(mockNftIndex)).to.equal(acc1.address);
       expect(await mockNftFactory.balanceOf(acc1.address)).to.equal(1);
     });
@@ -157,12 +165,13 @@ describe('NFT functionality', function () {
 
   describe('withdraw NFT on mint failure', async function () {
     const nftIndex = 2;
+    let withdrawOp2;
 
-    it('store pending withdrawn NFT on mint failure', async function () {
+    before(async function () {
       mockZNSController.getOwner.returns(acc1.address);
       mockNftFactory.mintFromZkBNB.reverts();
 
-      const withdrawOp2 = {
+      withdrawOp2 = {
         txType: 11, // WithdrawNft
         fromAccountIndex: 1,
         creatorAccountIndex: 0,
@@ -176,7 +185,9 @@ describe('NFT functionality', function () {
         creatorAccountNameHash: mockHash,
         collectionId: 0,
       };
+    });
 
+    it('store pending withdrawn NFT on mint failure', async function () {
       await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp2))
         .to.emit(zkBNB, 'WithdrawalNFTPending')
         .withArgs(nftIndex);
@@ -200,6 +211,7 @@ describe('NFT functionality', function () {
     });
 
     it('the NFT should not be minted', async function () {
+      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, nftIndex]));
       const l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
 
@@ -208,7 +220,7 @@ describe('NFT functionality', function () {
     });
 
     it('withdraw should succeed on retry', async function () {
-      mockZNSController.getOwner.returns(acc1.address);
+      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
       mockNftFactory.mintFromZkBNB.returns();
 
       await expect(await zkBNB.withdrawPendingNFTBalance(nftIndex))
@@ -220,6 +232,10 @@ describe('NFT functionality', function () {
     });
 
     it('the NFT should be minted after withdrawal', async function () {
+      mockNftFactory.mintFromZkBNB.returns();
+      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
+      await zkBNB.withdrawPendingNFTBalance(nftIndex);
+
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, nftIndex]));
       const result = await zkBNB.getMintedL2NftInfo(nftKey);
 
@@ -228,6 +244,9 @@ describe('NFT functionality', function () {
     });
 
     it('the NFT should not be pending after withdrawal', async function () {
+      mockNftFactory.mintFromZkBNB.returns();
+      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
+      await zkBNB.withdrawPendingNFTBalance(nftIndex);
       const result = await zkBNB.getPendingWithdrawnNFT(nftIndex);
       assert.equal(result['nftContentHash'], 0);
       assert.equal(result['nftIndex'], 0);
@@ -367,8 +386,7 @@ describe('NFT functionality', function () {
       await expect(await zkBNBNFTFactory.getContentHash(tokenId)).to.be.equal(IPFSMultiHashDigest);
       assert(await zkBNBNFTFactory.getCreator(tokenId), acc1.address);
     });
-
-    //TODO: This test is flaky as it is dependant on ipfs to validate a CID v1. Consider rewriting
+    //This test is skipped as it depends on the network. However, individually, this should still work
     it.skip('should return proper IPFS compatible tokenURI for a NFT', async function () {
       await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
       const expectUri = `${baseURI}${mockHash.substring(2)}`;
