@@ -271,7 +271,7 @@ describe('ZkBNB', function () {
 
           await zkBNB.testWithdrawOrStoreNFT(withdrawOp);
         });
-        it.skip('should can commit deposit NFT operation', async () => {
+        it('should can commit deposit NFT operation', async () => {
           mockZNSController.isRegisteredNameHash.returns(true);
           mockZNSController.getSubnodeNameHash.returns(accountNameHash);
           mockZNSController.getSubnodeNameHash.returns();
