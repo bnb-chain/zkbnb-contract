@@ -224,11 +224,14 @@ describe('Governance', function () {
       const abi = ethers.utils.defaultAbiCoder;
       const byteAddr = abi.encode(['address'], [owner.address]);
       await governance.initialize(byteAddr);
-      await governance.setZkBNBAddress(mockZkBNB.address);
       mockNftFactory = await smock.fake('ZkBNBNFTFactory');
       await expect(await governance.setDefaultNFTFactory(mockNftFactory.address))
         .to.emit(governance, 'SetDefaultNFTFactory')
         .withArgs(mockNftFactory.address);
+
+      // set zkbnb address
+      await expect(governance.connect(addr1).setZkBNBAddress(addr2.address)).to.be.revertedWith('1g');
+      await expect(governance.setZkBNBAddress(addr2.address)).to.emit(governance, 'SetZkBNB').withArgs(addr2.address);
     });
 
     it('register NFT factory without deploying NFT Factory', async function () {
@@ -243,9 +246,32 @@ describe('Governance', function () {
       const collectionId = 1;
       await expect(
         await governance.connect(addr1).deployAndRegisterNFTFactory(collectionId, 'name', 'symbol', 'ipfs://f01701220'),
-      ).to.emit(governance, 'NFTFactoryRegistered');
+      )
+        .to.emit(governance, 'NFTFactoryRegistered')
+        .withArgs(addr1.address, await governance.getNFTFactory(addr1.address, collectionId), collectionId);
 
-      expect((await governance.nftFactories(addr1.address, collectionId)) !== ethers.constants.AddressZero);
+      const factoryAddress = await governance.getNFTFactory(addr1.address, collectionId);
+      expect(factoryAddress !== mockNftFactory);
+      expect((await governance.nftFactories(addr1.address, collectionId)) === factoryAddress);
+
+      const collectionId2 = 2;
+      await expect(await governance.connect(addr1).registerNFTFactory(collectionId2, factoryAddress))
+        .to.emit(governance, 'NFTFactoryRegistered')
+        .withArgs(addr1.address, factoryAddress, collectionId2);
+    });
+
+    it('Register Default NFT factory', async function () {
+      const collectionId = 1;
+      expect((await governance.nftFactories(addr1.address, collectionId)) === ethers.constants.AddressZero);
+
+      await expect(governance.connect(addr1).registerDefaultNFTFactory(addr1.address, collectionId)).to.be.revertedWith(
+        'No access',
+      );
+
+      await expect(await governance.connect(addr2).registerDefaultNFTFactory(addr1.address, collectionId));
+
+      expect((await governance.nftFactories(addr1.address, collectionId)) === mockNftFactory.address);
+      expect((await governance.getNFTFactory(addr1.address, collectionId)) === mockNftFactory.address);
     });
   });
 });
