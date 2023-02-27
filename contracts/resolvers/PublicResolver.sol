@@ -49,6 +49,10 @@ contract PublicResolver is
     return zns.pubKey(node);
   }
 
+  function owner(bytes32 node) public view returns (address Owner) {
+    return zns.owner(node);
+  }
+
   /**
    * @dev See {IERC1155-setApprovalForAll}.
    */

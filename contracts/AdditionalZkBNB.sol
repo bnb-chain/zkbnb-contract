@@ -13,6 +13,8 @@ import "./interfaces/Events.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
 
+import "./ExodusVerifier.sol";
+
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
 contract AdditionalZkBNB is Storage, Config, Events {
@@ -36,59 +38,73 @@ contract AdditionalZkBNB is Storage, Config, Events {
         Nft
     */
   function performDesert(
-    StoredBlockInfo memory _storedBlockInfo,
-    address _owner,
-    uint32 _accountId,
-    uint32 _tokenId,
-    uint128 _amount
+    /* StoredBlockInfo memory _storedBlockInfo, */
+    bytes32 _nftRoot,
+    ExodusVerifier.ExitData calldata _exitData,
+    bytes32[15] calldata _assetMerkleProof,
+    bytes32[31] calldata _accountMerkleProof
   ) external {
-    require(_accountId <= MAX_ACCOUNT_INDEX, "e");
-    require(_accountId != SPECIAL_ACCOUNT_ID, "v");
+    require(_exitData.accountId <= MAX_ACCOUNT_INDEX, "e");
+    require(_exitData.accountId != SPECIAL_ACCOUNT_ID, "v");
 
-    require(desertMode, "s");
     // must be in exodus mode
-    require(!performedDesert[_accountId][_tokenId], "t");
+    require(desertMode, "s");
     // already exited
-    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
+    require(!performedDesert[_exitData.accountId][_exitData.assetId], "t");
+
+    /* require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u"); */
     // incorrect stored block info
 
-    // TODO
-    //        bool proofCorrect = verifier.verifyExitProof(
-    //            _storedBlockHeader.accountRoot,
-    //            _accountId,
-    //            _owner,
-    //            _tokenId,
-    //            _amount,
-    //            _nftCreatorAccountId,
-    //            _nftCreatorAddress,
-    //            _nftSerialId,
-    //            _nftContentHash,
-    //            _proof
-    //        );
-    //        require(proofCorrect, "x");
-    require(znsRegistry.owner(node) == msg.sender, "z");
+    bool proofCorrect = exodusVerifier.verifyExitProofBalance(
+      uint256(stateRoot),
+      uint256(_nftRoot),
+      _exitData,
+      _assetMerkleProof,
+      _accountMerkleProof
+    );
+    require(proofCorrect, "x");
 
-    if (_tokenId <= MAX_FUNGIBLE_ASSET_ID) {
-      bytes22 packedBalanceKey = packAddressAndAssetId(_owner, uint16(_tokenId));
-      increaseBalanceToWithdraw(packedBalanceKey, _amount);
-    } else {
-      // TODO
-      require(_amount != 0, "Z");
-      // Unsupported nft amount
-      //            TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({
-      //            txType : uint8(TxTypes.TxType.WithdrawNFT),
-      //            accountIndex : _nftCreatorAccountId,
-      //            toAddress : _nftCreatorAddress,
-      //            proxyAddress : _nftCreatorAddress,
-      //            nftAssetId : _nftSerialId,
-      //            gasFeeAccountIndex : 0,
-      //            gasFeeAssetId : 0,
-      //            gasFeeAssetAmount : 0
-      //            });
-      //            pendingWithdrawnNFTs[_tokenId] = withdrawNftOp;
-      //            emit WithdrawalNFTPending(_tokenId);
-    }
-    performedDesert[_accountId][_tokenId] = true;
+    address owner = znsController.getOwner(_exitData.accountNameHash);
+    require(owner == msg.sender, "z");
+
+    performedDesert[_exitData.accountId][_exitData.assetId] = true;
+  }
+
+  /// @notice perform desert mode for nft
+  function performDesertNft(
+    uint _ownerAccountIndex,
+    bytes32 _accountRoot,
+    ExodusVerifier.ExitNftData[] memory _exitNfts,
+    bytes32[39][] memory _nftMerkleProofs
+  ) external {
+    require(_ownerAccountIndex <= MAX_ACCOUNT_INDEX, "e");
+    require(_ownerAccountIndex != SPECIAL_ACCOUNT_ID, "v");
+
+    require(_exitNfts.length >= 1, "Z");
+
+    bool proofCorrect = exodusVerifier.verifyExitNftProof(
+      uint256(stateRoot),
+      uint256(_accountRoot),
+      _ownerAccountIndex,
+      _exitNfts,
+      _nftMerkleProofs
+    );
+    require(proofCorrect, "x");
+
+    /* TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({ */
+    /*   txType: uint8(TxTypes.TxType.WithdrawNFT), */
+    /*   accountIndex: _exitData.creatorAccountIndex, */
+    /*   toAddress: _nftCreatorAddress, */
+    /*   proxyAddress: _nftCreatorAddress, */
+    /*   nftAssetId: _nftSerialId, */
+    /*   gasFeeAccountIndex: 0, */
+    /*   gasFeeAssetId: 0, */
+    /*   gasFeeAssetAmount: 0 */
+    /* }); */
+    /* pendingWithdrawnNFTs[_tokenId] = withdrawNftOp; */
+    /* emit WithdrawalNFTPending(_tokenId); */
+
+    /* performedDesertNft[_exitData.accountId][_exitData.assetId] = true; */
   }
 
   function cancelOutstandingDepositsForExodusMode(uint64 _n, bytes[] memory _depositsPubData) external {
@@ -104,9 +120,8 @@ contract AdditionalZkBNB is Storage, Config, Events {
         require(Utils.hashBytesToBytes20(depositPubdata) == priorityRequests[id].hashedPubData, "a");
         ++currentDepositIdx;
 
-        // TODO get address by account name
-        address owner = address(0x0);
         TxTypes.Deposit memory _tx = TxTypes.readDepositPubData(depositPubdata);
+        address owner = znsController.getOwner(_tx.accountNameHash);
         bytes22 packedBalanceKey = packAddressAndAssetId(owner, uint16(_tx.assetId));
         pendingBalances[packedBalanceKey].balanceToWithdraw += _tx.amount;
       }

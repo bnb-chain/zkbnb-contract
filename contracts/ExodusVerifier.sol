@@ -9,22 +9,29 @@ contract ExodusVerifier {
   IPoseidonT7 poseidonT7;
 
   struct ExitData {
-    uint32 assetID;
+    uint32 assetId;
     uint32 accountId;
-    uint64 nftIndex;
     uint amount;
     uint offerCanceledOrFinalized;
-    uint accountNameHash;
-    uint pubKeyX;
-    uint pubKeyY;
+    bytes32 accountNameHash;
+    bytes32 pubKeyX;
+    bytes32 pubKeyY;
     uint nonce;
     uint collectionNonce;
+  }
+
+  struct ExitNftData {
+    uint64 nftIndex;
     uint creatorAccountIndex;
-    uint ownerAccountIndex;
-    uint nftContentHash;
+    bytes32 nftContentHash;
     uint creatorTreasuryRate;
     uint collectionId;
   }
+
+  /* struct ExitNftData { */
+  /*   uint ownerAccountIndex; */
+  /*   NftData[] nftData;; // list of NFTs to exit */
+  /* } */
 
   constructor(address _poseidonT3, address _poseidonT6, address _poseidonT7) {
     poseidonT3 = IPoseidonT3(_poseidonT3);
@@ -32,56 +39,77 @@ contract ExodusVerifier {
     poseidonT7 = IPoseidonT7(_poseidonT7);
   }
 
-  function verifyExitProof(
+  function verifyExitProofBalance(
     uint256 stateRoot,
+    uint256 nftRoot,
     ExitData calldata exitData,
-    uint256[15] memory assetMerkleProof,
-    uint256[31] memory accountMerkleProof,
-    uint256[39] memory nftMerkleProof
-  ) public view returns (bool) {
+    bytes32[15] memory assetMerkleProof,
+    bytes32[31] memory accountMerkleProof
+  ) external view returns (bool) {
     uint256 assetRoot = getAssetRoot(
-      exitData.assetID,
+      exitData.assetId,
       exitData.amount,
       exitData.offerCanceledOrFinalized,
       assetMerkleProof
     );
     uint256 accountRoot = getAccountRoot(
       exitData.accountId,
-      exitData.accountNameHash,
-      exitData.pubKeyX,
-      exitData.pubKeyY,
+      uint256(exitData.accountNameHash),
+      uint256(exitData.pubKeyX),
+      uint256(exitData.pubKeyY),
       exitData.nonce,
       exitData.collectionNonce,
       assetRoot,
       accountMerkleProof
     );
-    uint256 nftRoot = getNftRoot(
-      exitData.nftIndex,
-      exitData.creatorAccountIndex,
-      exitData.ownerAccountIndex,
-      exitData.nftContentHash,
-      exitData.creatorTreasuryRate,
-      exitData.collectionId,
-      nftMerkleProof
-    );
-
     return (hashNode(accountRoot, nftRoot) == stateRoot);
+  }
+
+  function verifyExitNftProof(
+    uint256 stateRoot,
+    uint256 accountRoot,
+    uint ownerAccountIndex,
+    ExitNftData[] memory exitNfts, // suppose 100 nfts exit at once
+    bytes32[39][] memory nftMerkleProofs
+  ) public view returns (bool) {
+    require(exitNfts.length == nftMerkleProofs.length, "wrong length");
+
+    for (uint i = 0; i < exitNfts.length; i++) {
+      ExitNftData memory nft = exitNfts[i];
+      bytes32[39] memory proofs = nftMerkleProofs[i];
+      uint nftRoot = getNftRoot(
+        nft.nftIndex,
+        nft.creatorAccountIndex,
+        ownerAccountIndex,
+        uint256(nft.nftContentHash),
+        nft.creatorTreasuryRate,
+        nft.collectionId,
+        proofs
+      );
+      if (hashNode(accountRoot, nftRoot) == stateRoot) {
+        continue;
+      } else {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   function getAssetRoot(
     uint256 assetId,
     uint256 amount,
     uint256 offerCanceledOrFinalized,
-    uint256[15] memory assetMerkleProof
+    bytes32[15] memory assetMerkleProof
   ) internal view returns (uint256) {
     uint256 assetLeafHash = hashNode(amount, offerCanceledOrFinalized);
     uint256 rootHash = assetLeafHash;
 
     for (uint i = 0; i < 15; i++) {
       if (assetId % 2 == 0) {
-        rootHash = hashNode(rootHash, assetMerkleProof[i]);
+        rootHash = hashNode(rootHash, uint256(assetMerkleProof[i]));
       } else {
-        rootHash = hashNode(assetMerkleProof[i], rootHash);
+        rootHash = hashNode(uint256(assetMerkleProof[i]), rootHash);
       }
     }
     return rootHash;
@@ -95,7 +123,7 @@ contract ExodusVerifier {
     uint256 nonce,
     uint256 collectionNonce,
     uint256 assetRoot,
-    uint256[31] memory accountMerkleProof
+    bytes32[31] memory accountMerkleProof
   ) private view returns (uint256) {
     uint256[6] memory inputs;
     inputs[0] = accountNameHash;
@@ -109,9 +137,9 @@ contract ExodusVerifier {
 
     for (uint i = 0; i < 31; i++) {
       if (accountId % 2 == 0) {
-        rootHash = hashNode(rootHash, accountMerkleProof[i]);
+        rootHash = hashNode(rootHash, uint256(accountMerkleProof[i]));
       } else {
-        rootHash = hashNode(accountMerkleProof[i], rootHash);
+        rootHash = hashNode(uint256(accountMerkleProof[i]), rootHash);
       }
     }
     return rootHash;
@@ -124,7 +152,7 @@ contract ExodusVerifier {
     uint256 nftContentHash,
     uint256 creatorTreasuryRate,
     uint256 collectionId,
-    uint256[39] memory nftMerkleProof
+    bytes32[39] memory nftMerkleProof
   ) private view returns (uint256) {
     uint256[5] memory inputs;
     inputs[0] = creatorAccountIndex;
@@ -137,9 +165,9 @@ contract ExodusVerifier {
 
     for (uint i = 0; i < 39; i++) {
       if (nftIndex % 2 == 0) {
-        rootHash = hashNode(rootHash, nftMerkleProof[i]);
+        rootHash = hashNode(rootHash, uint256(nftMerkleProof[i]));
       } else {
-        rootHash = hashNode(nftMerkleProof[i], rootHash);
+        rootHash = hashNode(uint256(nftMerkleProof[i]), rootHash);
       }
     }
     return rootHash;

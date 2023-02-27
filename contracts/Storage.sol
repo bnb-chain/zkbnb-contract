@@ -11,6 +11,7 @@ import "./ZkBNBVerifier.sol";
 import "./lib/TxTypes.sol";
 import "./AdditionalZkBNB.sol";
 import "./interfaces/INFTFactory.sol";
+import "./ExodusVerifier.sol";
 
 /// @title zkbnb storage contract
 /// @author ZkBNB Labs
@@ -33,8 +34,11 @@ contract Storage {
   /// @dev Numbers are in order of requests receiving
   mapping(uint64 => PriorityTx) internal priorityRequests;
 
-  /// @dev Verifier contract. Used to verify block proof and exit proof
+  /// @dev Verifier contract. Used to verify block proof
   ZkBNBVerifier internal verifier;
+
+  /// @dev Exodus verifier contract. Used to verify exit proof
+  ExodusVerifier internal exodusVerifier;
 
   /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
   Governance internal governance;

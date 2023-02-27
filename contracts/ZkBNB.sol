@@ -12,6 +12,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
 import "./Storage.sol";
+import "./lib/NFTHelper.sol";
+import "./ExodusVerifier.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
@@ -49,6 +51,54 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     bytes calldata data
   ) external pure override returns (bytes4) {
     return this.onERC721Received.selector;
+  }
+
+  /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
+  /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
+  /// @dev of existed priority requests expiration block number.
+  /// @return bool flag that is true if the Exodus mode must be entered.
+  function activateDesertMode() public returns (bool) {
+    // #if EASY_DESERT
+    bool trigger = true;
+    // #else
+    trigger =
+      block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
+      priorityRequests[firstPriorityRequestId].expirationBlock != 0;
+    // #endif
+    if (trigger) {
+      if (!desertMode) {
+        desertMode = true;
+        emit DesertMode();
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  function performDesert(
+    bytes32 _nftRoot,
+    ExodusVerifier.ExitData calldata _exitData,
+    bytes32[15] calldata _assetMerkleProof,
+    bytes32[31] calldata _accountMerkleProof
+  ) external {
+    /// All functions delegated to additional should NOT be nonReentrant
+    delegateAdditional();
+  }
+
+  function performDesertNft(
+    uint _ownerAccountIndex,
+    bytes32 _accountRoot,
+    ExodusVerifier.ExitNftData[] memory _exitNfts,
+    bytes32[39][] memory _nftMerkleProofs
+  ) external {
+    /// All functions delegated to additional should NOT be nonReentrant
+    delegateAdditional();
+  }
+
+  function cancelOutstandingDepositsForExodusMode(uint64 _n, bytes[] memory _depositsPubData) external {
+    /// All functions delegated to additional should NOT be nonReentrant
+    delegateAdditional();
   }
 
   /// @notice ZkBNB contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
