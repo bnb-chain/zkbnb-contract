@@ -163,6 +163,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
   function pauseRegistration() external override onlyOwner {
     if (!isPaused) {
       isPaused = true;
+      emit RegistrationPaused();
     }
   }
 
@@ -172,6 +173,7 @@ contract ZNSController is IBaseRegistrar, OwnableUpgradeable, ReentrancyGuardUpg
   function unPauseRegistration() external override onlyOwner {
     if (isPaused) {
       isPaused = false;
+      emit RegistrationResumed();
     }
   }
 
