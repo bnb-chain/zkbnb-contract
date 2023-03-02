@@ -216,12 +216,12 @@ library TxTypes {
     (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
     // creator treasury rate
     (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
+    // collection id
+    (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
     // nft content hash
     (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
     // account name
     (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-    // collection id
-    (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
 
     offset += 39;
 
