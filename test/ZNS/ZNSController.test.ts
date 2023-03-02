@@ -68,9 +68,9 @@ describe('ZNSController', function () {
 
   it('should pause and unpause registrations when called by owner', async function () {
     assert((await znsController.isPaused()) == false);
-    await znsController.pauseRegistration();
+    await expect(await znsController.pauseRegistration()).to.emit(znsController, 'RegistrationPaused');
     assert((await znsController.isPaused()) == true);
-    await znsController.unPauseRegistration();
+    await expect(await znsController.unPauseRegistration()).to.emit(znsController, 'RegistrationResumed');
     assert((await znsController.isPaused()) == false);
   });
 
