@@ -2,8 +2,7 @@ import { ethers } from 'hardhat';
 import { assert, expect } from 'chai';
 import { smock } from '@defi-wonderland/smock';
 
-//TODO: Fix failing test cases
-describe.skip('AdditionalZkBNB', function () {
+describe('AdditionalZkBNB', function () {
   let mockZNSController;
   let mockNftFactory;
 
@@ -23,8 +22,15 @@ describe.skip('AdditionalZkBNB', function () {
     await mockGovernance.setVariable('networkGovernor', owner.address);
 
     mockNftFactory = await smock.fake('ZkBNBNFTFactory');
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+    await utils.deployed();
 
-    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest');
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     additionalZkBNB = await AdditionalZkBNB.deploy(mockZNSController.address, mockGovernance.address);
     await additionalZkBNB.deployed();
   });
