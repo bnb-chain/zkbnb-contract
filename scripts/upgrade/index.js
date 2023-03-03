@@ -40,7 +40,7 @@ function main() {
         type: 'list',
         name: 'operator',
         message: 'What do you want?',
-        choices: ['start', 'preparation', 'cut period', 'cancel', 'finish'],
+        choices: ['start', 'preparation', 'cut period(only local)', 'cancel', 'finish', 'rollback'],
       },
     ])
     .then(async (answers) => {
@@ -59,6 +59,9 @@ function main() {
           break;
         case 'finish':
           finish();
+          break;
+        case 'rollback':
+          rollback();
           break;
 
         default:
@@ -253,6 +256,78 @@ async function finish() {
   console.table(impls);
   console.log(chalk.green('✅ Finished'));
   console.log('Current version is %s', receipt.events[1].args.versionId);
+}
+
+async function rollback() {
+  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
+  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+
+  const status = await upgradeGatekeeper.upgradeStatus();
+  if (status !== 0 /* idle */) {
+    console.log(chalk.red(`🙃 Update flow is in progress`));
+    return;
+  }
+
+  console.log(chalk.green('🚀 Rollback'));
+  const versionId = await upgradeGatekeeper.versionId();
+  console.log(`current version is ${chalk.red(versionId)}`);
+
+  console.log(chalk.green('🔍 search old version...'));
+  let previousVersionTargets;
+  // If it is the first version, should get the implementation contract address directly from the proxy contract
+  if (versionId == 0) {
+    previousVersionTargets = {
+      governance: await (await ethers.getContractFactory('Proxy')).attach(addrs.governance).getTarget(),
+      verifier: await (await ethers.getContractFactory('Proxy')).attach(addrs.verifierProxy).getTarget(),
+      znsController: await (await ethers.getContractFactory('Proxy')).attach(addrs.znsControllerProxy).getTarget(),
+      znsResolver: await (await ethers.getContractFactory('Proxy')).attach(addrs.znsResolverProxy).getTarget(),
+      zkbnb: await (await ethers.getContractFactory('Proxy')).attach(addrs.zkbnbProxy).getTarget(),
+    };
+  } else {
+    const block = 27606041;
+    const filter = upgradeGatekeeper.filters.UpgradeComplete(versionId - 1);
+    const event = await upgradeGatekeeper.queryFilter(filter, block, block + 5000);
+    const targets = event[0].args.newTargets;
+    previousVersionTargets = {
+      governance: targets[0],
+      verifier: targets[1],
+      znsController: targets[2],
+      znsResolver: targets[3],
+      zkbnb: targets[4],
+    };
+  }
+
+  console.log(chalk.green('🚚 Start rollback'));
+
+  console.log('**** Old implement Contract ****');
+  console.table(previousVersionTargets);
+  console.log('********************************');
+
+  inquirer
+    .prompt([
+      {
+        type: 'confirm',
+        name: 'confirm',
+        message: 'The contract will be rolled back to the previous version. \n Do you want continue?',
+      },
+    ])
+    .then(async (answers) => {
+      if (!answers.confirm) {
+        return;
+      }
+
+      const tx = await upgradeGatekeeper.startUpgrade([
+        previousVersionTargets.governance,
+        previousVersionTargets.verifier,
+        previousVersionTargets.znsController,
+        previousVersionTargets.znsResolver,
+        previousVersionTargets.zkbnb,
+      ]);
+
+      const receipt = await tx.wait();
+      console.log(chalk.green('✅ rollback process started'));
+      console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+    });
 }
 
 main();
