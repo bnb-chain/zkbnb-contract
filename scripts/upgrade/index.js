@@ -139,19 +139,33 @@ async function start() {
         console.log('%s deployed \t in %s', contract.capitalize(), deployContract.address);
       }
 
-      console.log(chalk.green('🚚 Start Upgrade'));
-      const tx = await upgradeGatekeeper.startUpgrade([
-        targetContractsDeployed.governance,
-        targetContractsDeployed.verifier,
-        targetContractsDeployed.znsController,
-        targetContractsDeployed.znsResolver,
-        targetContractsDeployed.zkbnb,
-      ]);
+      inquirer
+        .prompt([
+          {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'Above contract will be upgrade. \n Do you want continue?',
+          },
+        ])
+        .then(async (answers) => {
+          if (!answers.confirm) {
+            return;
+          }
 
-      const receipt = await tx.wait();
-      console.log(chalk.green('✅ Upgrade process started'));
+          console.log(chalk.green('🚚 Start Upgrade'));
+          const tx = await upgradeGatekeeper.startUpgrade([
+            targetContractsDeployed.governance,
+            targetContractsDeployed.verifier,
+            targetContractsDeployed.znsController,
+            targetContractsDeployed.znsResolver,
+            targetContractsDeployed.zkbnb,
+          ]);
 
-      console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+          const receipt = await tx.wait();
+          console.log(chalk.green('✅ Upgrade process started'));
+
+          console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+        });
     });
 }
 async function preparation() {
