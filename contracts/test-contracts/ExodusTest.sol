@@ -14,7 +14,7 @@ contract ExodusVerifierTest is ExodusVerifier {
     uint256 assetId,
     uint256 amount,
     uint256 offerCanceledOrFinalized,
-    bytes32[15] memory assetMerkleProof
+    bytes32[16] memory assetMerkleProof
   ) external view returns (uint256) {
     return getAssetRoot(assetId, amount, offerCanceledOrFinalized, assetMerkleProof);
   }

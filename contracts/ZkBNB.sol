@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
 import "./Storage.sol";
-import "./lib/NFTHelper.sol";
 import "./ExodusVerifier.sol";
 
 /// @title ZkBNB main contract
@@ -79,8 +78,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function performDesert(
     bytes32 _nftRoot,
     ExodusVerifier.ExitData calldata _exitData,
-    bytes32[15] calldata _assetMerkleProof,
-    bytes32[31] calldata _accountMerkleProof
+    bytes32[16] calldata _assetMerkleProof,
+    bytes32[32] calldata _accountMerkleProof
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
@@ -90,7 +89,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint _ownerAccountIndex,
     bytes32 _accountRoot,
     ExodusVerifier.ExitNftData[] memory _exitNfts,
-    bytes32[39][] memory _nftMerkleProofs
+    bytes32[40][] memory _nftMerkleProofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
@@ -109,12 +108,18 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function initialize(bytes calldata initializationParameters) external initializer {
     __ReentrancyGuard_init();
 
-    (address _governanceAddress, address _verifierAddress, address _additionalZkBNB, bytes32 _genesisStateRoot) = abi
-      .decode(initializationParameters, (address, address, address, bytes32));
+    (
+      address _governanceAddress,
+      address _verifierAddress,
+      address _additionalZkBNB,
+      address _exodusVerifier,
+      bytes32 _genesisStateRoot
+    ) = abi.decode(initializationParameters, (address, address, address, address, bytes32));
 
     verifier = ZkBNBVerifier(_verifierAddress);
     governance = Governance(_governanceAddress);
     additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
+    exodusVerifier = ExodusVerifier(_exodusVerifier);
 
     StoredBlockInfo memory zeroStoredBlockInfo = StoredBlockInfo(
       0,
@@ -512,29 +517,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @notice Reverts unverified blocks
   function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
     delegateAdditional();
-  }
-
-  /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
-  /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
-  /// @dev of existed priority requests expiration block number.
-  /// @return bool flag that is true if the Exodus mode must be entered.
-  function activateDesertMode() public returns (bool) {
-    // #if EASY_DESERT
-    bool trigger = true;
-    // #else
-    trigger =
-      block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
-      priorityRequests[firstPriorityRequestId].expirationBlock != 0;
-    // #endif
-    if (trigger) {
-      if (!desertMode) {
-        desertMode = true;
-        emit DesertMode();
-      }
-      return true;
-    } else {
-      return false;
-    }
   }
 
   /// @notice Get pending balance that the user can withdraw
