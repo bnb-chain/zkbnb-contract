@@ -1,6 +1,6 @@
 const hardhat = require('hardhat');
 const { getDeployedAddresses } = require('../deploy-keccak256/utils');
-const { getContractFactories, getUpgradeableContractImplement } = require('./utils');
+const { getUpgradeableContractImplement } = require('./utils');
 const { ethers } = hardhat;
 
 const inquirer = require('inquirer');
@@ -68,8 +68,8 @@ function main() {
 }
 
 async function start() {
-  const contractFactories = await getContractFactories();
-  const upgradeGatekeeper = await contractFactories.UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
+  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
 
   const status = await upgradeGatekeeper.upgradeStatus();
   if (status !== 0 /* idle */) {
@@ -99,21 +99,36 @@ async function start() {
       console.log(chalk.green('🚀 Deploy new contract'));
       for (const contract of targetContracts) {
         let deployContract;
+        let Governance, ZkBNBVerifier, ZkBNB, ZNSController, ZNSResolver;
+
+        const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
+        const nftHelperLibrary = await NftHelperLibrary.deploy();
+        await nftHelperLibrary.deployed();
+
         switch (contract) {
           case 'governance':
-            deployContract = await contractFactories.Governance.deploy();
+            Governance = await ethers.getContractFactory('Governance');
+            deployContract = await Governance.deploy();
             break;
           case 'verifier':
-            deployContract = await contractFactories.Verifier.deploy();
+            ZkBNBVerifier = await ethers.getContractFactory('ZkBNBVerifier');
+            deployContract = await ZkBNBVerifier.deploy();
             break;
           case 'zkbnb':
-            deployContract = await contractFactories.ZkBNB.deploy();
+            ZkBNB = await ethers.getContractFactory('ZkBNB', {
+              libraries: {
+                NftHelperLibrary: nftHelperLibrary.address,
+              },
+            });
+            deployContract = await ZkBNB.deploy();
             break;
           case 'znsController':
-            deployContract = await contractFactories.ZNSController.deploy();
+            ZNSController = await ethers.getContractFactory('ZNSController');
+            deployContract = await ZNSController.deploy();
             break;
           case 'znsResolver':
-            deployContract = await contractFactories.ZNSResolver.deploy();
+            ZNSResolver = await ethers.getContractFactory('PublicResolver');
+            deployContract = await ZNSResolver.deploy();
             break;
 
           default:
@@ -208,7 +223,16 @@ async function finish() {
     return;
   }
   console.log(chalk.green('🚀 Finish Upgrade'));
-  const tx = await upgradeGatekeeper.finishUpgrade(['0x00', '0x00', '0x00', '0x00', '0x00']);
+  const tx = await upgradeGatekeeper.finishUpgrade([
+    '0x00',
+    '0x00',
+    '0x00',
+    '0x00',
+    ethers.utils.defaultAbiCoder.encode(
+      ['address', 'address'],
+      [ethers.constants.AddressZero, ethers.constants.AddressZero],
+    ), // must be array
+  ]);
   const receipt = await tx.wait();
   const impls = await getUpgradeableContractImplement();
   console.log('**** New implement Contract ****');
