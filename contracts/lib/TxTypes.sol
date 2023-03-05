@@ -114,19 +114,6 @@ library TxTypes {
   // 968 bits
   uint256 internal constant PACKED_TX_PUBDATA_BYTES = 121;
 
-  /// Serialize change pubkey pubdata
-  function writeChangePubKeyPubDataForPriorityQueue(ChangePubKey memory _tx) internal pure returns (bytes memory buf) {
-    buf = abi.encodePacked(
-      uint8(TxType.ChangePubKey),
-      _tx.accountIndex,
-      _tx.pubKeyHash,
-      _tx.ower, // account nameHash -> owner
-      _tx.nonce,
-      _tx.version,
-      _tx.signature
-    );
-  }
-
   /// Deserialize ChangePubKey pubdata
   function readChangePubKeyPubData(bytes memory _data) internal pure returns (ChangePubKey memory parsed) {
     // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
@@ -134,33 +121,29 @@ library TxTypes {
     // account index
     (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
     // pubkey hash
-    (offset, parsed.pubkeyHash) = Bytes.readBytes20(_data, offset);
+    (offset, parsed.pubKeyHash) = Bytes.readBytes20(_data, offset);
     // owner
-    (offset, parsed.owner) = Bytes.readBytes20(_data, offset);
+    (offset, parsed.owner) = Bytes.readAddress(_data, offset);
     // nonce
-    (offset, parsed.nonce) = Bytes.readBytes32(_data, offset);
+    (offset, parsed.nonce) = Bytes.readUInt32(_data, offset);
     // version
-    (offset, parsed.version) = Bytes.readBytes8(_data, offset);
-    // signature
-    (offset, parsed.signature) = Bytes.readBytes65(_data, offset);
+    (offset, parsed.version) = Bytes.readUInt8(_data, offset);
+    // TODO read signature
+    /* // signature */
+    /* (offset, parsed.signature) = Bytes.readBytes65(_data, offset); */
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "1N");
     return parsed;
   }
 
-  /// @notice Write register zns pubdata for priority queue check.
-  function checkRegisterZNSInPriorityQueue(RegisterZNS memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
-    return Utils.hashBytesToBytes20(writeRegisterZNSPubDataForPriorityQueue(_tx)) == hashedPubData;
-  }
-
-  //    uint256 internal constant PACKED_DEPOSIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
+  // uint256 internal constant PACKED_DEPOSIT_PUBDATA_BYTES = 2 * CHUNK_SIZE;
 
   /// Serialize deposit pubdata
   function writeDepositPubDataForPriorityQueue(Deposit memory _tx) internal pure returns (bytes memory buf) {
     buf = abi.encodePacked(
       uint8(TxType.Deposit),
       uint32(0),
-      _tx.accountNameHash, // account name hash
+      _tx.toAddress, // to address
       _tx.assetId, // asset id
       _tx.amount // state amount
     );
@@ -172,14 +155,16 @@ library TxTypes {
     uint256 offset = TX_TYPE_BYTES;
     // account index
     (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
+    // address
+    (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
     // asset id
     (offset, parsed.assetId) = Bytes.readUInt16(_data, offset);
     // state amount
     (offset, parsed.amount) = Bytes.readUInt128(_data, offset);
-    // account name
-    (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
 
-    offset += 66;
+    // 1 + 4 + 20 + 2 + 16 + x = 121
+    // x = 78
+    offset += 78;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "2N");
     return parsed;
@@ -197,12 +182,13 @@ library TxTypes {
     buf = abi.encodePacked(
       uint8(TxType.DepositNft),
       uint32(0),
-      uint40(_tx.nftIndex),
       _tx.creatorAccountIndex,
       _tx.creatorTreasuryRate,
+      uint40(_tx.nftIndex),
+      _tx.collectionId,
+      _tx.owner,
       _tx.nftContentHash,
-      _tx.toAddress,
-      _tx.collectionId
+      _tx.nftContentType
     );
   }
 
@@ -212,20 +198,24 @@ library TxTypes {
     uint256 offset = TX_TYPE_BYTES;
     // account index
     (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-    // nft index
-    (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
     // creator account index
     (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
     // creator treasury rate
     (offset, parsed.creatorTreasuryRate) = Bytes.readUInt16(_data, offset);
+    // nft index
+    (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
     // collection id
     (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
+    // owner
+    (offset, parsed.owner) = Bytes.readAddress(_data, offset);
     // nft content hash
     (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
-    // account name
-    (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
+    // nft content type
+    (offset, parsed.nftContentType) = Bytes.readUInt8(_data, offset);
 
-    offset += 39;
+    // 1 + 4 + 4 + 2 + 5 + 2 + 20 + 32 + 1 + x = 121
+    // x = 50
+    offset += 50;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "3N");
     return parsed;
@@ -254,7 +244,10 @@ library TxTypes {
     (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
     // gas fee asset amount
     (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
-    offset += 74;
+
+    // 1 + 4 + 20 + 2 + 16 + 2 + 2 + x = 121
+    // x = 76
+    offset += 76;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "4N");
     return parsed;
@@ -267,7 +260,7 @@ library TxTypes {
     // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
     uint256 offset = TX_TYPE_BYTES;
     // account index
-    (offset, parsed.fromAccountIndex) = Bytes.readUInt32(_data, offset);
+    (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
     // creator account index
     (offset, parsed.creatorAccountIndex) = Bytes.readUInt32(_data, offset);
     // creator treasury rate
@@ -275,19 +268,25 @@ library TxTypes {
     // nft index
     (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
     // collection id
-    (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
-    // nft l1 address
-    (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
+    (offset, parsed.collectionId) = Bytes.readUInt32(_data, offset);
+    // gas fee account index
+    (offset, parsed.gasFeeAccountIndex) = Bytes.readUInt32(_data, offset);
     // gas fee asset id
     (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
     // gas fee asset amount
     (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
+    // withdraw to L1 address
+    (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
+    // creator address
+    (offset, parsed.creatorAddress) = Bytes.readAddress(_data, offset);
     // nft content hash
     (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
-    // account name hash
-    (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
+    // nft content type
+    (offset, parsed.nftContentType) = Bytes.readUInt8(_data, offset);
 
-    offset += 15;
+    // 1 + 4 + 4 + 2 + 5 + 4 + 4 + 2 + 2 + 20 + 20 + 4 + 1 + x = 121
+    // x = 48
+    offset += 48;
     require(offset == PACKED_TX_PUBDATA_BYTES, "5N");
     return parsed;
   }
@@ -301,7 +300,7 @@ library TxTypes {
       uint32(0),
       _tx.assetId, // asset id
       uint128(0), // asset amount
-      _tx.accountNameHash // account name
+      _tx.owner // owenr
     );
   }
 
@@ -315,10 +314,12 @@ library TxTypes {
     (offset, parsed.assetId) = Bytes.readUInt16(_data, offset);
     // asset state amount
     (offset, parsed.assetAmount) = Bytes.readUInt128(_data, offset);
-    // account name
-    (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
+    // owner address
+    (offset, parsed.owner) = Bytes.readAddress(_data, offset);
 
-    offset += 66;
+    // 1 + 4 + 2 + 16 + 20 + x = 121
+    // x = 78
+    offset += 78;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "6N");
     return parsed;
@@ -335,14 +336,15 @@ library TxTypes {
   function writeFullExitNftPubDataForPriorityQueue(FullExitNft memory _tx) internal pure returns (bytes memory buf) {
     buf = abi.encodePacked(
       uint8(TxType.FullExitNft),
-      uint32(0),
-      uint32(0),
-      uint16(0),
+      uint32(0), // account index
+      uint32(0), // creator account index
+      uint16(0), // creator treasory rate
       _tx.nftIndex,
       uint16(0), // collection id
-      _tx.accountNameHash, // account name hash
-      bytes32(0), // creator account name hash
-      bytes32(0) // nft content hash
+      _tx.owner, //
+      _tx.creatorAddress, // creator account name hash
+      bytes32(0), // nft content hash
+      uint8(0) // nft content type
     );
   }
 
@@ -360,14 +362,18 @@ library TxTypes {
     (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
     // collection id
     (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
-    // account name hash
-    (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-    // creator account name hash
-    (offset, parsed.creatorAccountNameHash) = Bytes.readBytes32(_data, offset);
+    // owner
+    (offset, parsed.owner) = Bytes.readAddress(_data, offset);
+    // creator address
+    (offset, parsed.creatorAddress) = Bytes.readAddress(_data, offset);
     // nft content hash
     (offset, parsed.nftContentHash) = Bytes.readBytes32(_data, offset);
+    // nft content type
+    (offset, parsed.nftContentType) = Bytes.readUInt8(_data, offset);
 
-    offset += 7;
+    // 1 + 4 + 4 + 2 + 5 + 2 + 20 + 20 + 4 + 1 + x = 121
+    // x = 58
+    offset += 58;
     require(offset == PACKED_TX_PUBDATA_BYTES, "7N");
     return parsed;
   }

@@ -52,7 +52,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     __ReentrancyGuard_init();
 
     (address _governanceAddress, address _verifierAddress, address _additionalZkBNB, bytes32 _genesisStateRoot) = abi
-      .decode(initializationParameters, (address, address, address, address, address, bytes32));
+      .decode(initializationParameters, (address, address, address, bytes32));
 
     verifier = ZkBNBVerifier(_verifierAddress);
     governance = Governance(_governanceAddress);
@@ -121,12 +121,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
       txType: uint8(TxTypes.TxType.DepositNft),
       accountIndex: 0, // unknown at this point
-      nftIndex: nftIndex,
       creatorAccountIndex: creatorAccountIndex,
       creatorTreasuryRate: creatorTreasuryRate,
+      nftIndex: nftIndex,
+      collectionId: collectionId,
+      owner: _to,
       nftContentHash: nftContentHash,
-      toAddress: _to,
-      collectionId: collectionId
+      nftContentType: 0 // unknown at this point
     });
 
     // compact pub data
@@ -300,19 +301,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
       TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
 
-      if (txType == TxTypes.TxType.ChangePubKey) {
-        bytes memory opPubData = Bytes.slice(pubData, pubdataOffset, CHANGE_PUBKEY_BYTES);
-
-        Operations.ChangePubKey memory op = Operations.readChangePubKeyPubdata(opPubData);
-
-        if (onchainOpData.ethWitness.length != 0) {
-          bool valid = verifyChangePubkey(onchainOpData.ethWitness, op);
-          require(valid, "D"); // failed to verify change pubkey hash signature
-        } else {
-          bool valid = authFacts[op.owner][op.nonce] == keccak256(abi.encodePacked(op.pubKeyHash));
-          require(valid, "E"); // new pub key hash is not authenticated properly
-        }
-      } else if (txType == TxTypes.TxType.Deposit) {
+      if (txType == TxTypes.TxType.Deposit) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
         checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
@@ -326,7 +315,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       } else {
         bytes memory txPubData;
 
-        if (txType == TxTypes.TxType.Withdraw) {
+        if (txType == TxTypes.TxType.ChangePubKey) {
+          txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+          TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
+          require(changePubKeyData.signature.length != 0, "signature should not be empty");
+          bool valid = verifyChangePubkey(changePubKeyData);
+          require(valid, "D"); // failed to verify change pubkey hash signature
+        } else if (txType == TxTypes.TxType.Withdraw) {
           txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         } else if (txType == TxTypes.TxType.WithdrawNft) {
           txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
@@ -366,15 +361,15 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Checks that deposit is same as _tx in priority queue
-  /// @param _deposit Deposit data
+  /// @param _depositNft Deposit data
   /// @param _priorityRequestId _tx's id in priority queue
-  function checkPriorityOperation(TxTypes.DepositNft memory _deposit, uint64 _priorityRequestId) internal view {
+  function checkPriorityOperation(TxTypes.DepositNft memory _depositNft, uint64 _priorityRequestId) internal view {
     TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
     // incorrect priority _tx type
     require(priorReqType == TxTypes.TxType.DepositNft, "3H");
 
     bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-    require(TxTypes.checkDepositNftInPriorityQueue(_deposit, hashedPubData), "3K");
+    require(TxTypes.checkDepositNftInPriorityQueue(_depositNft, hashedPubData), "3K");
   }
 
   /// @notice Checks that FullExit is same as _tx in priority queue
@@ -515,10 +510,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
     require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
 
-    // get creator address
-    address _creatorAddress = getAddressByAccountNameHash(op.creatorAccountNameHash);
     // get nft factory
-    address _factoryAddress = governance.getNFTFactory(_creatorAddress, op.collectionId);
+    address _factoryAddress = governance.getNFTFactory(op.creatorAddress, op.collectionId);
     // store into l2 nfts
     bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
     bool alreadyMintedFlag = false;
@@ -539,14 +532,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         // add nft to account at L1
         _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
 
-        emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+        emit WithdrawNft(op.accountIndex, _factoryAddress, op.toAddress, op.nftIndex);
       } catch {
         storePendingNFT(op);
       }
     } else {
       try
         INFTFactory(_factoryAddress).mintFromZkBNB(
-          _creatorAddress,
+          op.creatorAddress,
           op.toAddress,
           op.nftIndex,
           op.nftContentHash,
@@ -556,7 +549,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         // add nft to account at L1
         _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
         // register default collection factory
-        governance.registerDefaultNFTFactory(_creatorAddress, op.collectionId);
+        governance.registerDefaultNFTFactory(op.creatorAddress, op.collectionId);
 
         mintedNfts[nftKey] = L2NftInfo({
           nftIndex: op.nftIndex,
@@ -565,7 +558,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           nftContentHash: op.nftContentHash,
           collectionId: uint16(op.collectionId)
         });
-        emit WithdrawNft(op.fromAccountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+        emit WithdrawNft(op.accountIndex, _factoryAddress, op.toAddress, op.nftIndex);
       } catch {
         storePendingNFT(op);
       }
@@ -602,28 +595,25 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       } else if (txType == TxTypes.TxType.FullExit) {
         TxTypes.FullExit memory _tx = TxTypes.readFullExitPubData(pubData);
         //                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "B");
-        // get layer-1 address by account name hash
-        address creatorAddress = getAddressByAccountNameHash(_tx.accountNameHash);
-        withdrawOrStore(uint16(_tx.assetId), creatorAddress, _tx.assetAmount);
+        withdrawOrStore(uint16(_tx.assetId), _tx.owner, _tx.assetAmount);
       } else if (txType == TxTypes.TxType.FullExitNft) {
         TxTypes.FullExitNft memory _tx = TxTypes.readFullExitNftPubData(pubData);
-        // get address by account name hash
-        address toAddr = getAddressByAccountNameHash(_tx.accountNameHash);
         // withdraw nft
         if (_tx.nftContentHash != bytes32(0)) {
           TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
             txType: uint8(TxTypes.TxType.WithdrawNft),
-            fromAccountIndex: _tx.accountIndex,
+            accountIndex: _tx.accountIndex,
             creatorAccountIndex: _tx.creatorAccountIndex,
             creatorTreasuryRate: _tx.creatorTreasuryRate,
             nftIndex: _tx.nftIndex,
-            toAddress: toAddr,
+            collectionId: _tx.collectionId,
             gasFeeAccountIndex: 0,
             gasFeeAssetId: 0,
             gasFeeAssetAmount: 0,
+            toAddress: _tx.owner,
+            creatorAddress: _tx.creatorAddress,
             nftContentHash: _tx.nftContentHash,
-            creatorAccountNameHash: _tx.accountNameHash,
-            collectionId: _tx.collectionId
+            nftContentType: _tx.nftContentType
           });
           withdrawOrStoreNFT(_withdrawNftTx);
         }
@@ -766,6 +756,28 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
+  }
+
+  /// @notice Checks that signature is valid for pubkey change message
+  /// @param _changePk Parsed change pubkey tx type
+  function verifyChangePubkey(TxTypes.ChangePubKey memory _changePk) internal pure returns (bool) {
+    bytes32 messageHash = keccak256(
+      abi.encodePacked(
+        "\x19Ethereum Signed Message:\n152",
+        "Register ZkBNB pubkey:\n\n",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubKeyHash)),
+        "\n",
+        "nonce: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
+        "\n",
+        "account id: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.accountIndex)),
+        "\n\n",
+        "Only sign this message for a trusted client!"
+      )
+    );
+    address recoveredAddress = Utils.recoverAddressFromEthSignature(_changePk.signature, messageHash);
+    return recoveredAddress == _changePk.owner && recoveredAddress != address(0);
   }
 
   /// @notice Delegates the call to the additional part of the main contract.

@@ -175,7 +175,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
   /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
   /// @param _assetId Asset by id
   /// @param _amount Asset amount
-  /// @param _accountNameHash Receiver Account Name
+  /// @param _to Receiver Account's L1 address
   function registerDeposit(uint16 _assetId, uint128 _amount, address _to) internal {
     // Priority Queue request
     TxTypes.Deposit memory _tx = TxTypes.Deposit({
