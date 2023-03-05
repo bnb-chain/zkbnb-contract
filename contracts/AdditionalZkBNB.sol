@@ -143,56 +143,19 @@ contract AdditionalZkBNB is Storage, Config, Events {
     emit BlocksRevert(totalBlocksVerified, blocksCommitted);
   }
 
-  function registerZNS(
-    string calldata _name,
-    address _owner,
-    bytes32 _zkbnbPubKeyX,
-    bytes32 _zkbnbPubKeyY
-  ) external payable {
-    // Register ZNS
-    (bytes32 node, uint32 accountIndex) = znsController.registerZNS{value: msg.value}(
-      _name,
-      _owner,
-      _zkbnbPubKeyX,
-      _zkbnbPubKeyY,
-      address(znsResolver)
-    );
-
-    // Priority Queue request
-    TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
-      txType: uint8(TxTypes.TxType.RegisterZNS),
-      accountIndex: accountIndex,
-      accountName: Utils.stringToBytes20(_name),
-      accountNameHash: node,
-      pubKeyX: _zkbnbPubKeyX,
-      pubKeyY: _zkbnbPubKeyY
-    });
-    // compact pub data
-    bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
-
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
-
-    emit RegisterZNS(_name, node, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, accountIndex);
-  }
-
   /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
-  /// @param _accountName the receiver account name
-  function depositBNB(string calldata _accountName) external payable onlyActive {
+  /// @param _to the receiver L1 address
+  function depositBNB(address _to) external payable onlyActive {
     require(msg.value != 0, "ia");
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    registerDeposit(0, SafeCast.toUint128(msg.value), accountNameHash);
+    registerDeposit(0, SafeCast.toUint128(msg.value), _to);
   }
 
   /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
-  /// @param _accountName Receiver Layer 2 account name
-  function depositBEP20(IERC20 _token, uint104 _amount, string calldata _accountName) external onlyActive {
+  /// @param _to the receiver L1 address
+  function depositBEP20(IERC20 _token, uint104 _amount, address _to) external onlyActive {
     require(_amount != 0, "I");
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "N");
     // Get asset id by its address
     uint16 assetId = governance.validateAssetAddress(address(_token));
     require(!governance.pausedAssets(assetId), "b");
@@ -206,19 +169,19 @@ contract AdditionalZkBNB is Storage, Config, Events {
     require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
     require(depositAmount > 0, "D");
 
-    registerDeposit(assetId, depositAmount, accountNameHash);
+    registerDeposit(assetId, depositAmount, _to);
   }
 
   /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
   /// @param _assetId Asset by id
   /// @param _amount Asset amount
   /// @param _accountNameHash Receiver Account Name
-  function registerDeposit(uint16 _assetId, uint128 _amount, bytes32 _accountNameHash) internal {
+  function registerDeposit(uint16 _assetId, uint128 _amount, address _to) internal {
     // Priority Queue request
     TxTypes.Deposit memory _tx = TxTypes.Deposit({
       txType: uint8(TxTypes.TxType.Deposit),
       accountIndex: 0, // unknown at the moment
-      accountNameHash: _accountNameHash,
+      toAddress: _to,
       assetId: _assetId,
       amount: _amount
     });
@@ -226,7 +189,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     bytes memory pubData = TxTypes.writeDepositPubDataForPriorityQueue(_tx);
     // add into priority request queue
     addPriorityRequest(TxTypes.TxType.Deposit, pubData);
-    emit Deposit(_assetId, _accountNameHash, _amount);
+    emit Deposit(_assetId, _to, _amount);
   }
 
   /// @notice Saves priority request in storage

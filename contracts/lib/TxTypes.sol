@@ -9,7 +9,7 @@ library TxTypes {
   /// @notice zkbnb circuit op type
   enum TxType {
     EmptyTx,
-    RegisterZNS,
+    ChangePubKey,
     Deposit,
     DepositNft,
     Transfer,
@@ -24,20 +24,21 @@ library TxTypes {
     FullExitNft
   }
 
-  struct RegisterZNS {
+  struct ChangePubKey {
     uint8 txType;
     uint32 accountIndex;
-    bytes20 accountName;
-    bytes32 accountNameHash;
-    bytes32 pubKeyX;
-    bytes32 pubKeyY;
+    bytes20 pubKeyHash;
+    address owner;
+    uint32 nonce;
+    uint8 version;
+    bytes signature; //65 bytes
   }
 
   // Deposit pubdata
   struct Deposit {
     uint8 txType;
     uint32 accountIndex;
-    bytes32 accountNameHash;
+    address toAddress;
     uint16 assetId;
     uint128 amount;
   }
@@ -56,19 +57,18 @@ library TxTypes {
   // Withdraw Nft pubdata
   struct WithdrawNft {
     uint8 txType;
-    uint32 fromAccountIndex;
+    uint32 accountIndex;
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
     uint40 nftIndex;
-    // address nftL1Address;
-    address toAddress;
+    uint32 collectionId;
     uint32 gasFeeAccountIndex;
     uint16 gasFeeAssetId;
     uint16 gasFeeAssetAmount;
+    address toAddress;
+    address creatorAddress; // creatorAccountNameHash => creatorAddress
     bytes32 nftContentHash;
-    // uint256 nftL1TokenId;
-    bytes32 creatorAccountNameHash;
-    uint32 collectionId;
+    uint8 nftContentType; // New added
   }
 
   // full exit pubdata
@@ -77,7 +77,7 @@ library TxTypes {
     uint32 accountIndex;
     uint16 assetId;
     uint128 assetAmount;
-    bytes32 accountNameHash;
+    address owner;
   }
 
   // full exit nft pubdata
@@ -88,24 +88,22 @@ library TxTypes {
     uint16 creatorTreasuryRate;
     uint40 nftIndex;
     uint16 collectionId;
-    // address nftL1Address;
-    bytes32 accountNameHash;
-    bytes32 creatorAccountNameHash;
+    address owner; // accountNameHahsh => owner
+    address creatorAddress; // creatorAccountNameHash => creatorAddress
     bytes32 nftContentHash;
-    // uint256 nftL1TokenId;
+    uint8 nftContentType; // New added
   }
 
   struct DepositNft {
     uint8 txType;
     uint32 accountIndex;
-    uint40 nftIndex;
-    // address nftL1Address;
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
-    bytes32 nftContentHash;
-    // uint256 nftL1TokenId;
-    bytes32 accountNameHash;
+    uint40 nftIndex;
     uint16 collectionId;
+    address owner; // accountNameHahsh => owner
+    bytes32 nftContentHash;
+    uint8 nftContentType; // New added
   }
 
   // Byte lengths
@@ -116,31 +114,35 @@ library TxTypes {
   // 968 bits
   uint256 internal constant PACKED_TX_PUBDATA_BYTES = 121;
 
-  /// Serialize register zns pubdata
-  function writeRegisterZNSPubDataForPriorityQueue(RegisterZNS memory _tx) internal pure returns (bytes memory buf) {
+  /// Serialize change pubkey pubdata
+  function writeChangePubKeyPubDataForPriorityQueue(ChangePubKey memory _tx) internal pure returns (bytes memory buf) {
     buf = abi.encodePacked(
-      uint8(TxType.RegisterZNS),
+      uint8(TxType.ChangePubKey),
       _tx.accountIndex,
-      _tx.accountName,
-      _tx.accountNameHash, // account name hash
-      _tx.pubKeyX,
-      _tx.pubKeyY
+      _tx.pubKeyHash,
+      _tx.ower, // account nameHash -> owner
+      _tx.nonce,
+      _tx.version,
+      _tx.signature
     );
   }
 
-  /// Deserialize register zns pubdata
-  function readRegisterZNSPubData(bytes memory _data) internal pure returns (RegisterZNS memory parsed) {
+  /// Deserialize ChangePubKey pubdata
+  function readChangePubKeyPubData(bytes memory _data) internal pure returns (ChangePubKey memory parsed) {
     // NOTE: there is no check that variable sizes are same as constants (i.e. TOKEN_BYTES), fix if possible.
     uint256 offset = TX_TYPE_BYTES;
     // account index
     (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-    // account name
-    (offset, parsed.accountName) = Bytes.readBytes20(_data, offset);
-    // account name hash
-    (offset, parsed.accountNameHash) = Bytes.readBytes32(_data, offset);
-    // public key
-    (offset, parsed.pubKeyX) = Bytes.readBytes32(_data, offset);
-    (offset, parsed.pubKeyY) = Bytes.readBytes32(_data, offset);
+    // pubkey hash
+    (offset, parsed.pubkeyHash) = Bytes.readBytes20(_data, offset);
+    // owner
+    (offset, parsed.owner) = Bytes.readBytes20(_data, offset);
+    // nonce
+    (offset, parsed.nonce) = Bytes.readBytes32(_data, offset);
+    // version
+    (offset, parsed.version) = Bytes.readBytes8(_data, offset);
+    // signature
+    (offset, parsed.signature) = Bytes.readBytes65(_data, offset);
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "1N");
     return parsed;
@@ -199,7 +201,7 @@ library TxTypes {
       _tx.creatorAccountIndex,
       _tx.creatorTreasuryRate,
       _tx.nftContentHash,
-      _tx.accountNameHash,
+      _tx.toAddress,
       _tx.collectionId
     );
   }

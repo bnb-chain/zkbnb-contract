@@ -16,7 +16,7 @@ interface Events {
   event Withdrawal(uint16 assetId, uint128 amount);
 
   /// @notice Event emitted when user funds are deposited to the zkbnb account
-  event Deposit(uint16 assetId, bytes32 accountName, uint128 amount);
+  event Deposit(uint16 assetId, address to, uint128 amount);
 
   /// @notice Event emitted when blocks are reverted
   event BlocksRevert(uint32 totalBlocksVerified, uint32 totalBlocksCommitted);
@@ -65,7 +65,7 @@ interface Events {
 
   /// @notice NFT deposit event.
   event DepositNft(
-    bytes32 accountNameHash,
+    address to,
     bytes32 nftContentHash,
     address tokenAddress,
     uint256 nftTokenId,

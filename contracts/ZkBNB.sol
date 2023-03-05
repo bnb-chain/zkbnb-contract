@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
-import "./ZNSController.sol";
 import "./Storage.sol";
 import "./lib/NFTHelper.sol";
 
@@ -52,20 +51,12 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function initialize(bytes calldata initializationParameters) external initializer {
     __ReentrancyGuard_init();
 
-    (
-      address _governanceAddress,
-      address _verifierAddress,
-      address _additionalZkBNB,
-      address _znsController,
-      address _znsResolver,
-      bytes32 _genesisStateRoot
-    ) = abi.decode(initializationParameters, (address, address, address, address, address, bytes32));
+    (address _governanceAddress, address _verifierAddress, address _additionalZkBNB, bytes32 _genesisStateRoot) = abi
+      .decode(initializationParameters, (address, address, address, address, address, bytes32));
 
     verifier = ZkBNBVerifier(_verifierAddress);
     governance = Governance(_governanceAddress);
     additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
-    znsController = ZNSController(_znsController);
-    znsResolver = PublicResolver(_znsResolver);
 
     StoredBlockInfo memory zeroStoredBlockInfo = StoredBlockInfo(
       0,
@@ -90,33 +81,22 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  function registerZNS(
-    string calldata _name,
-    address _owner,
-    bytes32 _zkbnbPubKeyX,
-    bytes32 _zkbnbPubKeyY
-  ) external payable {
-    delegateAdditional();
-  }
-
   /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
-  /// @param _accountName the receiver account name
-  function depositBNB(string calldata _accountName) external payable onlyActive {
+  /// @param _to the receiver L1 address
+  function depositBNB(address _to) external payable onlyActive {
     delegateAdditional();
   }
 
   /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
-  /// @param _accountName Receiver Layer 2 account name
-  function depositBEP20(IERC20 _token, uint104 _amount, string calldata _accountName) external onlyActive {
+  /// @param _to the receiver L1 address
+  function depositBEP20(IERC20 _token, uint104 _amount, address _to) external onlyActive {
     delegateAdditional();
   }
 
   /// @notice Deposit NFT to Layer 2, ERC721 is supported
-  function depositNft(string calldata _accountName, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
+  function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
     // check if the nft is mint from layer-2
     bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
     require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
@@ -145,7 +125,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       creatorAccountIndex: creatorAccountIndex,
       creatorTreasuryRate: creatorTreasuryRate,
       nftContentHash: nftContentHash,
-      accountNameHash: accountNameHash,
+      toAddress: _to,
       collectionId: collectionId
     });
 
@@ -158,7 +138,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // delete nft from account at L1
     _removeAccountNft(msg.sender, _nftL1Address, nftIndex);
 
-    emit DepositNft(accountNameHash, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
+    emit DepositNft(_to, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
 
   /// @notice  Withdraws NFT from zkSync contract to the owner
@@ -320,12 +300,18 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
       TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
 
-      if (txType == TxTypes.TxType.RegisterZNS) {
-        bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+      if (txType == TxTypes.TxType.ChangePubKey) {
+        bytes memory opPubData = Bytes.slice(pubData, pubdataOffset, CHANGE_PUBKEY_BYTES);
 
-        TxTypes.RegisterZNS memory registerZNSData = TxTypes.readRegisterZNSPubData(txPubData);
-        checkPriorityOperation(registerZNSData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-        priorityOperationsProcessed++;
+        Operations.ChangePubKey memory op = Operations.readChangePubKeyPubdata(opPubData);
+
+        if (onchainOpData.ethWitness.length != 0) {
+          bool valid = verifyChangePubkey(onchainOpData.ethWitness, op);
+          require(valid, "D"); // failed to verify change pubkey hash signature
+        } else {
+          bool valid = authFacts[op.owner][op.nonce] == keccak256(abi.encodePacked(op.pubKeyHash));
+          require(valid, "E"); // new pub key hash is not authenticated properly
+        }
       } else if (txType == TxTypes.TxType.Deposit) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
@@ -365,18 +351,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         processableOperationsHash = Utils.concatHash(processableOperationsHash, txPubData);
       }
     }
-  }
-
-  /// @notice Checks that register zns is same as _tx in priority queue
-  /// @param _registerZNS register zns
-  /// @param _priorityRequestId _tx's id in priority queue
-  function checkPriorityOperation(TxTypes.RegisterZNS memory _registerZNS, uint64 _priorityRequestId) internal view {
-    TxTypes.TxType priorReqType = priorityRequests[_priorityRequestId].txType;
-    // incorrect priority _tx type
-    require(priorReqType == TxTypes.TxType.RegisterZNS, "1H");
-
-    bytes20 hashedPubData = priorityRequests[_priorityRequestId].hashedPubData;
-    require(TxTypes.checkRegisterZNSInPriorityQueue(_registerZNS, hashedPubData), "1K");
   }
 
   /// @notice Checks that deposit is same as _tx in priority queue
@@ -504,14 +478,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
-  function isRegisteredZNSName(string memory _name) external view returns (bool) {
-    return znsController.isRegisteredZNSName(_name);
-  }
-
-  function getZNSNamePrice(string calldata name) external view returns (uint256) {
-    return znsController.getZNSNamePrice(name);
-  }
-
   /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
   /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
@@ -533,10 +499,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     } else {
       return false;
     }
-  }
-
-  function getAddressByAccountNameHash(bytes32 accountNameHash) public view returns (address) {
-    return znsController.getOwner(accountNameHash);
   }
 
   /// @notice Get pending balance that the user can withdraw
@@ -730,14 +692,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Register full exit request - pack pubdata, add priority request
-  /// @param _accountName account name
+  /// @param _owner asset owner's L1 address
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(string calldata _accountName, address _asset) public onlyActive {
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    // get address by account name hash
-    address creatorAddress = getAddressByAccountNameHash(accountNameHash);
-    require(msg.sender == creatorAddress, "ia");
+  function requestFullExit(address _owner, address _asset) public onlyActive {
+    /* bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName); */
+    /* require(znsController.isRegisteredNameHash(accountNameHash), "nr"); */
+    /* // get address by account name hash */
+    /* address creatorAddress = getAddressByAccountNameHash(accountNameHash); */
+    /* require(msg.sender == creatorAddress, "ia"); */
 
     uint16 assetId;
     if (_asset == address(0)) {
@@ -750,9 +712,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     TxTypes.FullExit memory _tx = TxTypes.FullExit({
       txType: uint8(TxTypes.TxType.FullExit),
       accountIndex: 0, // unknown at this point
-      accountNameHash: accountNameHash,
       assetId: assetId,
-      assetAmount: 0 // unknown at this point
+      assetAmount: 0, // unknown at this point
+      owner: _owner
     });
     bytes memory pubData = TxTypes.writeFullExitPubDataForPriorityQueue(_tx);
     addPriorityRequest(TxTypes.TxType.FullExit, pubData);
@@ -764,15 +726,16 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Register full exit nft request - pack pubdata, add priority request
-  /// @param _accountName account name
+  /// @param _owner owner's L1 address
+  /// @param _creatorAddress creator's L1 address
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(string calldata _accountName, uint32 _nftIndex) public onlyActive {
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    require(_nftIndex < MAX_NFT_INDEX, "T");
-    // get address by account name hash
-    address creatorAddress = getAddressByAccountNameHash(accountNameHash);
-    require(msg.sender == creatorAddress, "ia");
+  function requestFullExitNft(
+    address _owner,
+    address _creatorAddress,
+    uint32 _nftIndex,
+    uint8 _nftContentType
+  ) public onlyActive {
+    require(msg.sender == _creatorAddress, "ia");
 
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
@@ -782,9 +745,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       creatorTreasuryRate: 0,
       nftIndex: _nftIndex,
       collectionId: 0, // unknown
-      accountNameHash: accountNameHash,
-      creatorAccountNameHash: bytes32(0),
-      nftContentHash: bytes32(0x0) // unknown,
+      owner: _owner, // accountNameHahsh => owner
+      creatorAddress: _creatorAddress, // creatorAccountNameHash => creatorAddress
+      nftContentHash: bytes32(0x0), // unknown,
+      nftContentType: _nftContentType // New added
     });
     bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
     addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
