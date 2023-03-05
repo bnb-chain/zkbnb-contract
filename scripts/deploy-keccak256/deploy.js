@@ -218,6 +218,7 @@ async function getContractFactories() {
     ZkBNB: await ethers.getContractFactory('ZkBNB', {
       libraries: {
         NftHelperLibrary: nftHelperLibrary.address,
+        Utils: utils.address,
       },
     }),
     DeployFactory: await ethers.getContractFactory('DeployFactory'),

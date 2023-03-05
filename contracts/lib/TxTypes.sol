@@ -24,6 +24,7 @@ library TxTypes {
     FullExitNft
   }
 
+  // ChangePubKey pubdata
   struct ChangePubKey {
     uint8 txType;
     uint32 accountIndex;
@@ -128,9 +129,12 @@ library TxTypes {
     (offset, parsed.nonce) = Bytes.readUInt32(_data, offset);
     // version
     (offset, parsed.version) = Bytes.readUInt8(_data, offset);
-    // TODO read signature
-    /* // signature */
-    /* (offset, parsed.signature) = Bytes.readBytes65(_data, offset); */
+    // signature - 65 bytes
+    (offset, parsed.signature) = Bytes.read(_data, offset, 65);
+
+    // 1 + 4 + 20 + 20 + 4 + 1 + 65 + x = 121
+    // x = 6
+    offset += 6;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "1N");
     return parsed;

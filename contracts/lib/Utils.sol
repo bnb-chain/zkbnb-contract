@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "./Bytes.sol";
+import "./TxTypes.sol";
 import "../Storage.sol";
 
 library Utils {
@@ -144,5 +145,27 @@ library Utils {
       pubData[i] = uint256(result) % q;
     }
     return pubData;
+  }
+
+  /// @notice Checks that signature is valid for pubkey change message
+  /// @param _changePk Parsed change pubkey tx type
+  function verifyChangePubkey(TxTypes.ChangePubKey memory _changePk) external pure returns (bool) {
+    bytes32 messageHash = keccak256(
+      abi.encodePacked(
+        "\x19Ethereum Signed Message:\n152",
+        "Register ZkBNB pubkey:\n\n",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubKeyHash)),
+        "\n",
+        "nonce: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
+        "\n",
+        "account id: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.accountIndex)),
+        "\n\n",
+        "Only sign this message for a trusted client!"
+      )
+    );
+    address recoveredAddress = Utils.recoverAddressFromEthSignature(_changePk.signature, messageHash);
+    return recoveredAddress == _changePk.owner && recoveredAddress != address(0);
   }
 }

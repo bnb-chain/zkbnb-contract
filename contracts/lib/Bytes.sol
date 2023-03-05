@@ -267,13 +267,6 @@ library Bytes {
     r = bytesToBytes32(_data, _offset);
   }
 
-  // TODO add method to read bytes 65
-  /* // NOTE: theoretically possible overflow of (_offset + 65) */
-  /* function readBytes65(bytes memory _data, uint256 _offset) internal pure returns (uint256 newOffset, bytes65 r) { */
-  /*   newOffset = _offset + 65; */
-  /*   r = bytesToBytes65(_data, _offset); */
-  /* } */
-
   /// Trim bytes into single word
   function trim(bytes memory _data, uint256 _newLength) internal pure returns (uint256 r) {
     require(_newLength <= 0x20, "10");

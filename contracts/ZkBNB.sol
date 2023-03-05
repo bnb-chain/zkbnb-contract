@@ -319,7 +319,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
           TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
           require(changePubKeyData.signature.length != 0, "signature should not be empty");
-          bool valid = verifyChangePubkey(changePubKeyData);
+          bool valid = Utils.verifyChangePubkey(changePubKeyData);
           require(valid, "D"); // failed to verify change pubkey hash signature
         } else if (txType == TxTypes.TxType.Withdraw) {
           txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
@@ -756,28 +756,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
-  }
-
-  /// @notice Checks that signature is valid for pubkey change message
-  /// @param _changePk Parsed change pubkey tx type
-  function verifyChangePubkey(TxTypes.ChangePubKey memory _changePk) internal pure returns (bool) {
-    bytes32 messageHash = keccak256(
-      abi.encodePacked(
-        "\x19Ethereum Signed Message:\n152",
-        "Register ZkBNB pubkey:\n\n",
-        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubKeyHash)),
-        "\n",
-        "nonce: 0x",
-        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
-        "\n",
-        "account id: 0x",
-        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.accountIndex)),
-        "\n\n",
-        "Only sign this message for a trusted client!"
-      )
-    );
-    address recoveredAddress = Utils.recoverAddressFromEthSignature(_changePk.signature, messageHash);
-    return recoveredAddress == _changePk.owner && recoveredAddress != address(0);
   }
 
   /// @notice Delegates the call to the additional part of the main contract.
