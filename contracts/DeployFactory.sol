@@ -19,7 +19,6 @@ contract DeployFactory {
     address validator;
     address governor;
     address listingToken;
-    address priceOracle;
     UpgradeableMaster upgradeableMaster;
   }
 
@@ -27,7 +26,6 @@ contract DeployFactory {
     bytes32 genesisAccountRoot;
     uint256 listingFee;
     uint16 listingCap;
-    bytes32 baseNode;
   }
 
   Proxy governance;
@@ -45,23 +43,16 @@ contract DeployFactory {
 
   /// @dev Doing development in constructor method costs lower gas fee,
   ///      giving us simplicity and atomicity of our deployment.
-  constructor(
-    address[] memory addrs,
-    bytes32 _genesisAccountRoot,
-    uint256 _listingFee,
-    uint16 _listingCap,
-    bytes32 _baseNode
-  ) {
+  constructor(address[] memory addrs, bytes32 _genesisAccountRoot, uint256 _listingFee, uint16 _listingCap) {
     // package all contract address to struct for avoiding StackTooDeep
     DeployedContractAddress memory contracts = DeployedContractAddress({
       governanceTarget: Governance(addrs[0]),
       verifierTarget: ZkBNBVerifier(addrs[1]),
       zkbnbTarget: ZkBNB(addrs[2]),
-      validator: addrs[5],
-      governor: addrs[6],
-      listingToken: addrs[7],
-      priceOracle: addrs[9],
-      upgradeableMaster: UpgradeableMaster(addrs[10])
+      validator: addrs[3],
+      governor: addrs[4],
+      listingToken: addrs[5],
+      upgradeableMaster: UpgradeableMaster(addrs[6])
     });
     require(contracts.validator != address(0), "validator check");
     require(contracts.governor != address(0), "governor check");
@@ -69,8 +60,7 @@ contract DeployFactory {
     AdditionalParams memory params = AdditionalParams({
       genesisAccountRoot: _genesisAccountRoot,
       listingFee: _listingFee,
-      listingCap: _listingCap,
-      baseNode: _baseNode
+      listingCap: _listingCap
     });
 
     deployProxyContracts(contracts, params);
