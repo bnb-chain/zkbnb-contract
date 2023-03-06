@@ -301,7 +301,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
       TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
 
-      if (txType == TxTypes.TxType.Deposit) {
+      if (txType == TxTypes.TxType.ChangePubKey) {
+        bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
+        TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
+        require(changePubKeyData.signature.length != 0, "signature should not be empty");
+        bool valid = Utils.verifyChangePubkey(changePubKeyData);
+        require(valid, "D"); // failed to verify change pubkey hash signature
+      } else if (txType == TxTypes.TxType.Deposit) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
         checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
@@ -315,13 +321,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       } else {
         bytes memory txPubData;
 
-        if (txType == TxTypes.TxType.ChangePubKey) {
-          txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
-          TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
-          require(changePubKeyData.signature.length != 0, "signature should not be empty");
-          bool valid = Utils.verifyChangePubkey(changePubKeyData);
-          require(valid, "D"); // failed to verify change pubkey hash signature
-        } else if (txType == TxTypes.TxType.Withdraw) {
+        if (txType == TxTypes.TxType.Withdraw) {
           txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         } else if (txType == TxTypes.TxType.WithdrawNft) {
           txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
