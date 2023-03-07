@@ -1,11 +1,16 @@
 const hardhat = require('hardhat');
-const namehash = require('eth-ens-namehash');
 const { getDeployedAddresses, getZkBNBProxy } = require('./utils');
 const { ethers } = hardhat;
 
 async function main() {
   const addrs = getDeployedAddresses('info/addresses.json');
   const zkbnb = await getZkBNBProxy(addrs.zkbnbProxy);
+
+  const [owner] = await ethers.getSigners();
+
+  const validators = (process.env.VALIDATORS || owner.address).split(',');
+  const treasuryAccountAddress = process.env.TREASURY_ACCOUNT_ADDRESS || validators[0] || owner.address;
+  const gasAccountAddress = process.env.GAS_ACCOUNT_ADDRESS || validators[1] || owner.address;
 
   // tokens
   const TokenFactory = await ethers.getContractFactory('ZkBNBRelatedERC20');
@@ -15,12 +20,12 @@ async function main() {
 
   // deposit bnb
   console.log('Deposit BNB...');
-  let depositBNBTx = await zkbnb.depositBNB('sher', {
-    value: ethers.utils.parseEther('0.1'),
+  let depositBNBTx = await zkbnb.depositBNB(treasuryAccountAddress, {
+    value: ethers.utils.parseEther('0.01'),
   });
   await depositBNBTx.wait();
-  depositBNBTx = await zkbnb.depositBNB('gavin', {
-    value: ethers.utils.parseEther('0.1'),
+  depositBNBTx = await zkbnb.depositBNB(gasAccountAddress, {
+    value: ethers.utils.parseEther('0.01'),
   });
   await depositBNBTx.wait();
 
@@ -37,11 +42,15 @@ async function main() {
 
   // deposit bep20
   console.log('Deposit BEP20...');
-  let depositBEP20 = await zkbnb.depositBEP20(BUSDToken.address, ethers.utils.parseEther('100'), 'sher');
+  let depositBEP20 = await zkbnb.depositBEP20(
+    BUSDToken.address,
+    ethers.utils.parseEther('100'),
+    treasuryAccountAddress,
+  );
   await depositBEP20.wait();
-  depositBEP20 = await zkbnb.depositBEP20(LEGToken.address, ethers.utils.parseEther('100'), 'sher');
+  depositBEP20 = await zkbnb.depositBEP20(LEGToken.address, ethers.utils.parseEther('100'), treasuryAccountAddress);
   await depositBEP20.wait();
-  depositBEP20 = await zkbnb.depositBEP20(REYToken.address, ethers.utils.parseEther('100'), 'sher');
+  depositBEP20 = await zkbnb.depositBEP20(REYToken.address, ethers.utils.parseEther('100'), treasuryAccountAddress);
   await depositBEP20.wait();
 }
 
