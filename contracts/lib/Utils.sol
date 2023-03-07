@@ -148,8 +148,12 @@ library Utils {
   }
 
   /// @notice Checks that signature is valid for pubkey change message
+  /// @param _signature Signature (65 bytes)
   /// @param _changePk Parsed change pubkey tx type
-  function verifyChangePubkey(TxTypes.ChangePubKey memory _changePk) external pure returns (bool) {
+  function verifyChangePubkey(
+    bytes memory _signature,
+    TxTypes.ChangePubKey memory _changePk
+  ) external pure returns (bool) {
     bytes32 messageHash = keccak256(
       abi.encodePacked(
         "\x19Ethereum Signed Message:\n152",
@@ -165,7 +169,7 @@ library Utils {
         "Only sign this message for a trusted client!"
       )
     );
-    address recoveredAddress = Utils.recoverAddressFromEthSignature(_changePk.signature, messageHash);
+    address recoveredAddress = Utils.recoverAddressFromEthSignature(_signature, messageHash);
     return recoveredAddress == _changePk.owner && recoveredAddress != address(0);
   }
 }
