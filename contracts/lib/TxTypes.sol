@@ -28,11 +28,9 @@ library TxTypes {
   struct ChangePubKey {
     uint8 txType;
     uint32 accountIndex;
-    bytes20 pubKeyHash;
+    bytes pubkey; //64 bytes
     address owner;
     uint32 nonce;
-    uint8 version;
-    /* bytes signature; //65 bytes */
   }
 
   // Deposit pubdata
@@ -121,20 +119,16 @@ library TxTypes {
     uint256 offset = TX_TYPE_BYTES;
     // account index
     (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-    // pubkey hash
-    (offset, parsed.pubKeyHash) = Bytes.readBytes20(_data, offset);
+    // pubkey
+    (offset, parsed.pubkey) = Bytes.read(_data, offset, 64);
     // owner
     (offset, parsed.owner) = Bytes.readAddress(_data, offset);
     // nonce
     (offset, parsed.nonce) = Bytes.readUInt32(_data, offset);
-    // version
-    (offset, parsed.version) = Bytes.readUInt8(_data, offset);
-    /* // signature - 65 bytes */
-    /* (offset, parsed.signature) = Bytes.read(_data, offset, 65); */
 
-    // 1 + 4 + 20 + 20 + 4 + 1 + x = 121
-    // x = 73
-    offset += 73;
+    // 1 + 4 + 64 + 20 + 4 + x = 121
+    // x = 28
+    offset += 28;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "1N");
     return parsed;
