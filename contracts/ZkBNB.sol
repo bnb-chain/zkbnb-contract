@@ -17,11 +17,20 @@ import "./lib/NFTHelper.sol";
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
 contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
+  /// @notice Data needed to process onchain operation from block public data.
+  /// @notice Onchain operations is operations that need some processing on L1: Deposits, Withdrawals, ChangePubKey.
+  /// @param ethWitness Some external data that can be needed for operation processing
+  /// @param publicDataOffset Byte offset in public data for onchain operation
+  struct OnchainOperationData {
+    bytes ethWitness;
+    uint32 publicDataOffset;
+  }
+
   struct CommitBlockInfo {
     bytes32 newStateRoot;
     bytes publicData;
     uint256 timestamp;
-    uint32[] publicDataOffsets;
+    OnchainOperationData[] onchainOperations;
     uint32 blockNumber;
     uint16 blockSize;
   }
@@ -277,7 +286,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         _previousBlock.stateRoot, // old state root
         _newBlockData.newStateRoot, // new state root
         _newBlockData.publicData, // pub data
-        uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
+        uint256(_newBlockData.onchainOperations.length) // on chain ops count
       )
     );
     return converted;
@@ -295,8 +304,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     priorityOperationsProcessed = 0;
     processableOperationsHash = EMPTY_STRING_KECCAK;
 
-    for (uint16 i = 0; i < _newBlockData.publicDataOffsets.length; ++i) {
-      uint32 pubdataOffset = _newBlockData.publicDataOffsets[i];
+    for (uint16 i = 0; i < _newBlockData.onchainOperations.length; ++i) {
+      uint32 pubdataOffset = _newBlockData.onchainOperations[i].publicDataOffset;
       require(pubdataOffset < pubData.length, "B");
 
       TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
@@ -304,8 +313,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       if (txType == TxTypes.TxType.ChangePubKey) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
-        require(changePubKeyData.signature.length != 0, "signature should not be empty");
-        bool valid = Utils.verifyChangePubkey(changePubKeyData);
+        bytes memory signature = _newBlockData.onchainOperations[i].ethWitness;
+        require(signature.length != 0, "signature should not be empty");
+        bool valid = Utils.verifyChangePubkey(signature, changePubKeyData);
         require(valid, "D"); // failed to verify change pubkey hash signature
       } else if (txType == TxTypes.TxType.Deposit) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);

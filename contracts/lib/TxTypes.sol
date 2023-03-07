@@ -32,7 +32,7 @@ library TxTypes {
     address owner;
     uint32 nonce;
     uint8 version;
-    bytes signature; //65 bytes
+    /* bytes signature; //65 bytes */
   }
 
   // Deposit pubdata
@@ -129,12 +129,12 @@ library TxTypes {
     (offset, parsed.nonce) = Bytes.readUInt32(_data, offset);
     // version
     (offset, parsed.version) = Bytes.readUInt8(_data, offset);
-    // signature - 65 bytes
-    (offset, parsed.signature) = Bytes.read(_data, offset, 65);
+    /* // signature - 65 bytes */
+    /* (offset, parsed.signature) = Bytes.read(_data, offset, 65); */
 
-    // 1 + 4 + 20 + 20 + 4 + 1 + 65 + x = 121
-    // x = 6
-    offset += 6;
+    // 1 + 4 + 20 + 20 + 4 + 1 + x = 121
+    // x = 73
+    offset += 73;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "1N");
     return parsed;
