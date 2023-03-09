@@ -694,14 +694,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Register full exit request - pack pubdata, add priority request
-  /// @param _owner asset owner's L1 address
+  /// @param _accountIndex Numerical id of the account
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(address _owner, address _asset) public onlyActive {
-    /* bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName); */
-    /* require(znsController.isRegisteredNameHash(accountNameHash), "nr"); */
-    /* // get address by account name hash */
-    /* address creatorAddress = getAddressByAccountNameHash(accountNameHash); */
-    /* require(msg.sender == creatorAddress, "ia"); */
+  function requestFullExit(uint32 _accountIndex, address _asset) public onlyActive {
+    require(_accountIndex <= MAX_ACCOUNT_INDEX, "e");
 
     uint16 assetId;
     if (_asset == address(0)) {
@@ -713,10 +709,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // Priority Queue request
     TxTypes.FullExit memory _tx = TxTypes.FullExit({
       txType: uint8(TxTypes.TxType.FullExit),
-      accountIndex: 0, // unknown at this point
+      accountIndex: _accountIndex,
       assetId: assetId,
       assetAmount: 0, // unknown at this point
-      owner: _owner
+      owner: msg.sender
     });
     bytes memory pubData = TxTypes.writeFullExitPubDataForPriorityQueue(_tx);
     addPriorityRequest(TxTypes.TxType.FullExit, pubData);
@@ -728,26 +724,25 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Register full exit nft request - pack pubdata, add priority request
-  /// @param _owner owner's L1 address
+  /// @param _accountIndex Numerical id of the account
   /// @param _creatorAddress creator's L1 address
   /// @param _nftIndex account NFT index in zkbnb network
+  /// @param _nftContentType the type of storage protocol
   function requestFullExitNft(
-    address _owner,
+    uint32 _accountIndex,
     address _creatorAddress,
     uint32 _nftIndex,
     uint8 _nftContentType
   ) public onlyActive {
-    require(msg.sender == _creatorAddress, "ia");
-
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
       txType: uint8(TxTypes.TxType.FullExitNft),
-      accountIndex: 0, // unknown
+      accountIndex: _accountIndex,
       creatorAccountIndex: 0, // unknown
       creatorTreasuryRate: 0,
       nftIndex: _nftIndex,
       collectionId: 0, // unknown
-      owner: _owner, // accountNameHahsh => owner
+      owner: msg.sender, // accountNameHahsh => owner
       creatorAddress: _creatorAddress, // creatorAccountNameHash => creatorAddress
       nftContentHash: bytes32(0x0), // unknown,
       nftContentType: _nftContentType // New added

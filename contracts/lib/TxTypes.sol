@@ -295,7 +295,7 @@ library TxTypes {
   function writeFullExitPubDataForPriorityQueue(FullExit memory _tx) internal pure returns (bytes memory buf) {
     buf = abi.encodePacked(
       uint8(TxType.FullExit),
-      uint32(0),
+      uint32(_tx.accountIndex), // account index
       _tx.assetId, // asset id
       uint128(0), // asset amount
       _tx.owner // owenr
@@ -334,7 +334,7 @@ library TxTypes {
   function writeFullExitNftPubDataForPriorityQueue(FullExitNft memory _tx) internal pure returns (bytes memory buf) {
     buf = abi.encodePacked(
       uint8(TxType.FullExitNft),
-      uint32(0), // account index
+      _tx.accountIndex, // account index
       uint32(0), // creator account index
       uint16(0), // creator treasory rate
       _tx.nftIndex,

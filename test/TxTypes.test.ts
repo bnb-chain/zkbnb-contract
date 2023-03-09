@@ -12,9 +12,25 @@ describe('TxTypesTest', function () {
     this.txTypesTest = await TxTypesTest.deploy();
   });
 
-  it('FullExitNft pubdata should be serialized and deserialized correclty', async function () {
+  it('FullExit pubdata should be serialized and deserialized correctly', async function () {
+    const fullExit = {
+      txType: 12,
+      accountIndex: 1,
+      assetId: 0,
+      assetAmount: 100,
+      owner: owner.address,
+    };
+    const encoded = await this.txTypesTest.testWriteFullExitPubData(fullExit);
+    const parsed = await this.txTypesTest.testReadFullExitPubData(encoded);
+
+    expect(parsed['accountIndex']).to.equal(fullExit.accountIndex);
+    expect(parsed['assetId']).to.equal(fullExit.assetId);
+    expect(parsed['owner']).to.equal(fullExit.owner);
+  });
+
+  it('FullExitNft pubdata should be serialized and deserialized correctly', async function () {
     const fullExitNft = {
-      txType: 9,
+      txType: 13,
       accountIndex: 1,
       creatorAccountIndex: 2,
       creatorTreasuryRate: 0,
@@ -29,6 +45,7 @@ describe('TxTypesTest', function () {
     const encoded = await this.txTypesTest.testWriteFullExitNftPubData(fullExitNft);
     const parsed = await this.txTypesTest.testReadFullExitNftPubData(encoded);
 
+    expect(parsed['accountIndex']).to.equal(fullExitNft.accountIndex);
     expect(parsed['nftIndex']).to.equal(fullExitNft.nftIndex);
     expect(parsed['owner']).to.equal(fullExitNft.owner);
     expect(parsed['creatorAddress']).to.equal(fullExitNft.creatorAddress);
