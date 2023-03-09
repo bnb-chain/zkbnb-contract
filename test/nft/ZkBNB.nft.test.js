@@ -12,8 +12,6 @@ const abi = ethers.utils.defaultAbiCoder;
 describe('NFT functionality', function () {
   let governance;
   let mockZkBNBVerifier;
-  let mockZNSController;
-  let mockPublicResolver;
   let mockNftFactory;
 
   let zkBNB; // ZkBNBTest.sol
@@ -42,23 +40,11 @@ describe('NFT functionality', function () {
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
 
-    const MockZNSController = await smock.mock('ZNSController');
-    mockZNSController = await MockZNSController.deploy();
-    await mockZNSController.deployed();
-
-    const MockPublicResolver = await smock.mock('PublicResolver');
-    mockPublicResolver = await MockPublicResolver.deploy();
-    await mockPublicResolver.deployed();
-
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
 
-    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
@@ -67,19 +53,18 @@ describe('NFT functionality', function () {
     const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
       libraries: {
         NftHelperLibrary: nftHelperLibrary.address,
+        Utils: utils.address,
       },
     });
     zkBNB = await ZkBNBTest.deploy();
     await zkBNB.deployed();
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address', 'address', 'address', 'address', 'bytes32'],
+      ['address', 'address', 'address', 'bytes32'],
       [
         governance.address,
         mockZkBNBVerifier.address,
         additionalZkBNB.address,
-        mockZNSController.address,
-        mockPublicResolver.address,
         ethers.utils.formatBytes32String('genesisStateRoot'),
       ],
     );
@@ -124,21 +109,21 @@ describe('NFT functionality', function () {
       const HashZero = ethers.constants.HashZero;
 
       await zkBNB.onERC721Received(owner.address, acc1.address, 0, HashZero);
-      mockZNSController.getOwner.returns(acc1.address);
 
       withdrawOp = {
         txType: 11, // WithdrawNft
-        fromAccountIndex: 1,
+        accountIndex: 1,
         creatorAccountIndex: 0,
         creatorTreasuryRate: 5,
         nftIndex: mockNftIndex,
-        toAddress: acc1.address,
+        collectionId: 0,
         gasFeeAccountIndex: 1,
         gasFeeAssetId: 0, //BNB
         gasFeeAssetAmount: 666,
+        toAddress: acc1.address,
+        creatorAddress: owner.address,
         nftContentHash: mockHash,
-        creatorAccountNameHash: mockHash,
-        collectionId: 0,
+        nftContentType: 0,
       };
     });
 
@@ -178,22 +163,22 @@ describe('NFT functionality', function () {
     let withdrawOp2;
 
     before(async function () {
-      mockZNSController.getOwner.returns(acc1.address);
       mockNftFactory.mintFromZkBNB.reverts();
 
       withdrawOp2 = {
         txType: 11, // WithdrawNft
-        fromAccountIndex: 1,
+        accountIndex: 1,
         creatorAccountIndex: 0,
         creatorTreasuryRate: 5,
         nftIndex,
-        toAddress: acc2.address,
+        collectionId: 0,
         gasFeeAccountIndex: 1,
         gasFeeAssetId: 0, //BNB
         gasFeeAssetAmount: 666,
+        toAddress: acc2.address,
+        creatorAddress: owner.address,
         nftContentHash: mockHash,
-        creatorAccountNameHash: mockHash,
-        collectionId: 0,
+        nftContentType: 0,
       };
     });
 
@@ -206,17 +191,18 @@ describe('NFT functionality', function () {
 
       assert.deepStrictEqual(withdrawOp2, {
         txType: result['txType'],
-        fromAccountIndex: result['fromAccountIndex'],
+        accountIndex: result['accountIndex'],
         creatorAccountIndex: result['creatorAccountIndex'],
         creatorTreasuryRate: result['creatorTreasuryRate'],
         nftIndex: result['nftIndex'],
-        toAddress: result['toAddress'],
+        collectionId: result['collectionId'],
         gasFeeAccountIndex: result['gasFeeAccountIndex'],
         gasFeeAssetId: result['gasFeeAssetId'],
         gasFeeAssetAmount: result['gasFeeAssetAmount'],
+        toAddress: result['toAddress'],
+        creatorAddress: result['creatorAddress'],
         nftContentHash: result['nftContentHash'],
-        creatorAccountNameHash: result['creatorAccountNameHash'],
-        collectionId: result['collectionId'],
+        nftContentType: result['nftContentType'],
       });
     });
 
@@ -265,31 +251,60 @@ describe('NFT functionality', function () {
 
   describe('deposit NFT', async function () {
     const nftL1TokenId = 0;
+    const mockNftIndex = 0;
+    const accountIndex = 0;
+    let withdrawOp;
+
+    before(async () => {
+      withdrawOp = {
+        txType: 11, // WithdrawNft
+        accountIndex,
+        creatorAccountIndex: 0,
+        creatorTreasuryRate: 5,
+        nftIndex: mockNftIndex,
+        collectionId: 0,
+        gasFeeAccountIndex: 1,
+        gasFeeAssetId: 0, //BNB
+        gasFeeAssetAmount: 666,
+        toAddress: acc1.address,
+        creatorAddress: owner.address,
+        nftContentHash: mockHash,
+        nftContentType: 0,
+      };
+
+      await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp))
+        .to.emit(zkBNB, 'WithdrawNft')
+        .withArgs(accountIndex, mockNftFactory.address, acc1.address, mockNftIndex);
+    });
 
     it('deposit the 1st withdrawn NFT', async function () {
-      mockZNSController.getSubnodeNameHash.returns();
-      mockZNSController.isRegisteredNameHash.returns(true);
-
       await mockNftFactory.connect(acc1).setApprovalForAll(zkBNB.address, true);
       await expect(await zkBNB.desertMode()).to.equal(false);
-      await expect(await zkBNB.connect(acc1).depositNft('accountName', mockNftFactory.address, nftL1TokenId))
+      await expect(await zkBNB.connect(acc1).depositNft(acc2.address, mockNftFactory.address, nftL1TokenId))
         .to.emit(zkBNB, 'DepositNft')
-        .withArgs(ethers.constants.HashZero, mockHash, mockNftFactory.address, nftL1TokenId, 0);
+        .withArgs(acc2.address, mockHash, mockNftFactory.address, nftL1TokenId, 0);
     });
 
     it('the deposit priority request should be added', async function () {
       const firstPriorityRequestId = await zkBNB.firstPriorityRequestId();
       const totalOpenPriorityRequests = await zkBNB.totalOpenPriorityRequests();
       const depositRequestId = firstPriorityRequestId + totalOpenPriorityRequests - 1;
-      const {
-        hashedPubData: _hashedPubData,
-        expirationBlock: _expirationBlock,
-        txType: _txType,
-      } = await zkBNB.getPriorityRequest(depositRequestId);
+
+      const { hashedPubData: _hashedPubData, txType: _txType } = await zkBNB.getPriorityRequest(depositRequestId);
 
       const expectPubData = ethers.utils.solidityPack(
-        ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'bytes32', 'bytes32', 'uint16'],
-        [3, 0, nftL1TokenId, 0, 5, mockHash, ethers.constants.HashZero, 0],
+        ['uint8', 'uint32', 'uint32', 'uint16', 'uint40', 'uint16', 'address', 'bytes32', 'uint8'],
+        [
+          3,
+          0,
+          withdrawOp.creatorAccountIndex,
+          withdrawOp.creatorTreasuryRate,
+          withdrawOp.nftIndex,
+          withdrawOp.collectionId,
+          acc2.address,
+          withdrawOp.nftContentHash,
+          0,
+        ],
       );
       const expectHashedPubData = ethers.utils.keccak256(expectPubData);
       assert.equal(_hashedPubData, ethers.utils.hexDataSlice(expectHashedPubData, 12)); // bytes32 -> bytes20
@@ -311,37 +326,56 @@ describe('NFT functionality', function () {
   });
 
   describe('Request full exit NFT', async function () {
-    const accountName = 'accountName';
     const nftIndex = 0; // owned by acc1
+    const mockNftIndex = 0;
+    const accountIndex = 0;
+    let withdrawOp;
+
+    before(async () => {
+      withdrawOp = {
+        txType: 11, // WithdrawNft
+        accountIndex,
+        creatorAccountIndex: 0,
+        creatorTreasuryRate: 5,
+        nftIndex: mockNftIndex,
+        collectionId: 0,
+        gasFeeAccountIndex: 1,
+        gasFeeAssetId: 0, //BNB
+        gasFeeAssetAmount: 666,
+        toAddress: acc1.address,
+        creatorAddress: owner.address,
+        nftContentHash: mockHash,
+        nftContentType: 0,
+      };
+
+      await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp))
+        .to.emit(zkBNB, 'WithdrawNft')
+        .withArgs(accountIndex, mockNftFactory.address, acc1.address, mockNftIndex);
+    });
 
     it('should be able to request full exit Nft', async function () {
-      mockZNSController.getSubnodeNameHash.returns();
-      mockZNSController.isRegisteredNameHash.returns(true);
-      await zkBNB.connect(acc1).requestFullExitNft(accountName, nftIndex);
+      await zkBNB.connect(acc1).requestFullExitNft(acc1.address, acc1.address, nftIndex, 0);
     });
 
     it('check pubdata of full exit request', async function () {
       const firstPriorityRequestId = await zkBNB.firstPriorityRequestId();
       const totalOpenPriorityRequests = await zkBNB.totalOpenPriorityRequests();
       const fullExitRequestId = firstPriorityRequestId + totalOpenPriorityRequests - 1;
-      const {
-        hashedPubData: _hashedPubData,
-        expirationBlock: _expirationBlock,
-        txType: _txType,
-      } = await zkBNB.getPriorityRequest(fullExitRequestId);
+      const { hashedPubData: _hashedPubData, txType: _txType } = await zkBNB.getPriorityRequest(fullExitRequestId);
 
       const expectPubData = ethers.utils.solidityPack(
-        ['uint8', 'uint32', 'uint32', 'uint16', 'uint40', 'uint16', 'bytes32', 'bytes32', 'bytes32'],
+        ['uint8', 'uint32', 'uint32', 'uint16', 'uint40', 'uint16', 'address', 'address', 'bytes32', 'uint8'],
         [
           13, // tx type
           0, // account index
           0, // creator account index
           0, // creator treasury rate
           nftIndex,
-          ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 16), // collection id
-          ethers.constants.HashZero, // account name hash
-          ethers.constants.HashZero, // creator name hash
-          ethers.constants.HashZero, // nft content hash
+          0, // collection id
+          acc1.address, // account name hash
+          acc1.address, // creator name hash
+          ethers.utils.hexZeroPad('0x0'.toLowerCase(), 32), // nft content hash
+          0,
         ],
       );
       const expectHashedPubData = ethers.utils.keccak256(expectPubData);

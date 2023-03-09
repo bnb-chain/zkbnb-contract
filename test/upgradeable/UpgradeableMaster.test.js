@@ -25,6 +25,7 @@ describe('UpgradeableMaster', function () {
     const MockZkBNB = await smock.mock('ZkBNB', {
       libraries: {
         NftHelperLibrary: nftHelperLibrary.address,
+        Utils: utils.address,
       },
     });
     mockZkBNB = await MockZkBNB.deploy();

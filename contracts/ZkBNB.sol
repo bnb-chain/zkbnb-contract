@@ -17,11 +17,20 @@ import "./lib/NFTHelper.sol";
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
 contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
+  /// @notice Data needed to process onchain operation from block public data.
+  /// @notice Onchain operations is operations that need some processing on L1: Deposits, Withdrawals, ChangePubKey.
+  /// @param ethWitness Some external data that can be needed for operation processing
+  /// @param publicDataOffset Byte offset in public data for onchain operation
+  struct OnchainOperationData {
+    bytes ethWitness;
+    uint32 publicDataOffset;
+  }
+
   struct CommitBlockInfo {
     bytes32 newStateRoot;
     bytes publicData;
     uint256 timestamp;
-    uint32[] publicDataOffsets;
+    OnchainOperationData[] onchainOperations;
     uint32 blockNumber;
     uint16 blockSize;
   }
@@ -113,6 +122,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
 
     bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
+    uint8 nftContentType = mintedNfts[nftKey].nftContentType;
     uint16 collectionId = mintedNfts[nftKey].collectionId;
     uint40 nftIndex = mintedNfts[nftKey].nftIndex;
     uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
@@ -127,7 +137,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       collectionId: collectionId,
       owner: _to,
       nftContentHash: nftContentHash,
-      nftContentType: 0 // unknown at this point
+      nftContentType: nftContentType
     });
 
     // compact pub data
@@ -277,7 +287,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         _previousBlock.stateRoot, // old state root
         _newBlockData.newStateRoot, // new state root
         _newBlockData.publicData, // pub data
-        uint256(_newBlockData.publicDataOffsets.length) // on chain ops count
+        uint256(_newBlockData.onchainOperations.length) // on chain ops count
       )
     );
     return converted;
@@ -295,8 +305,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     priorityOperationsProcessed = 0;
     processableOperationsHash = EMPTY_STRING_KECCAK;
 
-    for (uint16 i = 0; i < _newBlockData.publicDataOffsets.length; ++i) {
-      uint32 pubdataOffset = _newBlockData.publicDataOffsets[i];
+    for (uint16 i = 0; i < _newBlockData.onchainOperations.length; ++i) {
+      uint32 pubdataOffset = _newBlockData.onchainOperations[i].publicDataOffset;
       require(pubdataOffset < pubData.length, "B");
 
       TxTypes.TxType txType = TxTypes.TxType(uint8(pubData[pubdataOffset]));
@@ -304,8 +314,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       if (txType == TxTypes.TxType.ChangePubKey) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
-        require(changePubKeyData.signature.length != 0, "signature should not be empty");
-        bool valid = Utils.verifyChangePubkey(changePubKeyData);
+        bytes memory ethWitness = _newBlockData.onchainOperations[i].ethWitness;
+        require(ethWitness.length != 0, "signature should not be empty");
+        bool valid = Utils.verifyChangePubkey(ethWitness, changePubKeyData);
         require(valid, "D"); // failed to verify change pubkey hash signature
       } else if (txType == TxTypes.TxType.Deposit) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
@@ -556,6 +567,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           creatorAccountIndex: op.creatorAccountIndex,
           creatorTreasuryRate: op.creatorTreasuryRate,
           nftContentHash: op.nftContentHash,
+          nftContentType: op.nftContentType,
           collectionId: uint16(op.collectionId)
         });
         emit WithdrawNft(op.accountIndex, _factoryAddress, op.toAddress, op.nftIndex);
@@ -682,14 +694,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Register full exit request - pack pubdata, add priority request
-  /// @param _owner asset owner's L1 address
+  /// @param _accountIndex Numerical id of the account
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(address _owner, address _asset) public onlyActive {
-    /* bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName); */
-    /* require(znsController.isRegisteredNameHash(accountNameHash), "nr"); */
-    /* // get address by account name hash */
-    /* address creatorAddress = getAddressByAccountNameHash(accountNameHash); */
-    /* require(msg.sender == creatorAddress, "ia"); */
+  function requestFullExit(uint32 _accountIndex, address _asset) public onlyActive {
+    require(_accountIndex <= MAX_ACCOUNT_INDEX, "e");
 
     uint16 assetId;
     if (_asset == address(0)) {
@@ -701,10 +709,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // Priority Queue request
     TxTypes.FullExit memory _tx = TxTypes.FullExit({
       txType: uint8(TxTypes.TxType.FullExit),
-      accountIndex: 0, // unknown at this point
+      accountIndex: _accountIndex,
       assetId: assetId,
       assetAmount: 0, // unknown at this point
-      owner: _owner
+      owner: msg.sender
     });
     bytes memory pubData = TxTypes.writeFullExitPubDataForPriorityQueue(_tx);
     addPriorityRequest(TxTypes.TxType.FullExit, pubData);
@@ -716,26 +724,25 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Register full exit nft request - pack pubdata, add priority request
-  /// @param _owner owner's L1 address
+  /// @param _accountIndex Numerical id of the account
   /// @param _creatorAddress creator's L1 address
   /// @param _nftIndex account NFT index in zkbnb network
+  /// @param _nftContentType the type of storage protocol
   function requestFullExitNft(
-    address _owner,
+    uint32 _accountIndex,
     address _creatorAddress,
     uint32 _nftIndex,
     uint8 _nftContentType
   ) public onlyActive {
-    require(msg.sender == _creatorAddress, "ia");
-
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
       txType: uint8(TxTypes.TxType.FullExitNft),
-      accountIndex: 0, // unknown
+      accountIndex: _accountIndex,
       creatorAccountIndex: 0, // unknown
       creatorTreasuryRate: 0,
       nftIndex: _nftIndex,
       collectionId: 0, // unknown
-      owner: _owner, // accountNameHahsh => owner
+      owner: msg.sender, // accountNameHahsh => owner
       creatorAddress: _creatorAddress, // creatorAccountNameHash => creatorAddress
       nftContentHash: bytes32(0x0), // unknown,
       nftContentType: _nftContentType // New added

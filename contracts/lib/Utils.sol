@@ -148,13 +148,19 @@ library Utils {
   }
 
   /// @notice Checks that signature is valid for pubkey change message
+  /// @param _ethWitness Version(1 byte) and signature (65 bytes)
   /// @param _changePk Parsed change pubkey tx type
-  function verifyChangePubkey(TxTypes.ChangePubKey memory _changePk) external pure returns (bool) {
+  function verifyChangePubkey(
+    bytes memory _ethWitness,
+    TxTypes.ChangePubKey memory _changePk
+  ) external pure returns (bool) {
+    (, bytes memory signature) = Bytes.read(_ethWitness, 1, 65); // offset is 1 because we skip type of ChangePubkey
+
     bytes32 messageHash = keccak256(
       abi.encodePacked(
         "\x19Ethereum Signed Message:\n152",
-        "Register ZkBNB pubkey:\n\n",
-        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubKeyHash)),
+        "Register zkBNB pubkey:\n\n",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkey)), //TODO; sha256(pubKey)?
         "\n",
         "nonce: 0x",
         Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
@@ -165,7 +171,7 @@ library Utils {
         "Only sign this message for a trusted client!"
       )
     );
-    address recoveredAddress = Utils.recoverAddressFromEthSignature(_changePk.signature, messageHash);
+    address recoveredAddress = Utils.recoverAddressFromEthSignature(signature, messageHash);
     return recoveredAddress == _changePk.owner && recoveredAddress != address(0);
   }
 }

@@ -30,6 +30,7 @@ exports.getZkBNBProxy = async function (addr) {
   const ZkBNB = await ethers.getContractFactory('ZkBNB', {
     libraries: {
       NftHelperLibrary: nftHelperLibrary.address,
+      Utils: utils.address,
     },
   });
 

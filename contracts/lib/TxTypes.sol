@@ -28,11 +28,9 @@ library TxTypes {
   struct ChangePubKey {
     uint8 txType;
     uint32 accountIndex;
-    bytes20 pubKeyHash;
+    bytes pubkey; //64 bytes
     address owner;
     uint32 nonce;
-    uint8 version;
-    bytes signature; //65 bytes
   }
 
   // Deposit pubdata
@@ -121,20 +119,16 @@ library TxTypes {
     uint256 offset = TX_TYPE_BYTES;
     // account index
     (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-    // pubkey hash
-    (offset, parsed.pubKeyHash) = Bytes.readBytes20(_data, offset);
+    // pubkey
+    (offset, parsed.pubkey) = Bytes.read(_data, offset, 64);
     // owner
     (offset, parsed.owner) = Bytes.readAddress(_data, offset);
     // nonce
     (offset, parsed.nonce) = Bytes.readUInt32(_data, offset);
-    // version
-    (offset, parsed.version) = Bytes.readUInt8(_data, offset);
-    // signature - 65 bytes
-    (offset, parsed.signature) = Bytes.read(_data, offset, 65);
 
-    // 1 + 4 + 20 + 20 + 4 + 1 + 65 + x = 121
-    // x = 6
-    offset += 6;
+    // 1 + 4 + 64 + 20 + 4 + x = 121
+    // x = 28
+    offset += 28;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "1N");
     return parsed;
@@ -301,7 +295,7 @@ library TxTypes {
   function writeFullExitPubDataForPriorityQueue(FullExit memory _tx) internal pure returns (bytes memory buf) {
     buf = abi.encodePacked(
       uint8(TxType.FullExit),
-      uint32(0),
+      uint32(_tx.accountIndex), // account index
       _tx.assetId, // asset id
       uint128(0), // asset amount
       _tx.owner // owenr
@@ -340,7 +334,7 @@ library TxTypes {
   function writeFullExitNftPubDataForPriorityQueue(FullExitNft memory _tx) internal pure returns (bytes memory buf) {
     buf = abi.encodePacked(
       uint8(TxType.FullExitNft),
-      uint32(0), // account index
+      _tx.accountIndex, // account index
       uint32(0), // creator account index
       uint16(0), // creator treasory rate
       _tx.nftIndex,
@@ -375,9 +369,8 @@ library TxTypes {
     // nft content type
     (offset, parsed.nftContentType) = Bytes.readUInt8(_data, offset);
 
-    // 1 + 4 + 4 + 2 + 5 + 2 + 20 + 20 + 4 + 1 + x = 121
-    // x = 58
-    offset += 58;
+    // 1 + 4 + 4 + 2 + 5 + 2 + 20 + 20 + 32 + 1 + x = 121
+    offset += 30;
     require(offset == PACKED_TX_PUBDATA_BYTES, "7N");
     return parsed;
   }
