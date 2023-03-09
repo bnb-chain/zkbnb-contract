@@ -122,6 +122,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
 
     bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
+    uint8 nftContentType = mintedNfts[nftKey].nftContentType;
     uint16 collectionId = mintedNfts[nftKey].collectionId;
     uint40 nftIndex = mintedNfts[nftKey].nftIndex;
     uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
@@ -136,7 +137,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       collectionId: collectionId,
       owner: _to,
       nftContentHash: nftContentHash,
-      nftContentType: 0 // unknown at this point
+      nftContentType: nftContentType
     });
 
     // compact pub data
@@ -566,6 +567,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           creatorAccountIndex: op.creatorAccountIndex,
           creatorTreasuryRate: op.creatorTreasuryRate,
           nftContentHash: op.nftContentHash,
+          nftContentType: op.nftContentType,
           collectionId: uint16(op.collectionId)
         });
         emit WithdrawNft(op.accountIndex, _factoryAddress, op.toAddress, op.nftIndex);
