@@ -12,11 +12,10 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
 import "./Storage.sol";
-import "./lib/NFTHelper.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
-contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver, NFTHelper {
+contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
   /// @notice Data needed to process onchain operation from block public data.
   /// @notice Onchain operations is operations that need some processing on L1: Deposits, Withdrawals, ChangePubKey.
   /// @param ethWitness Some external data that can be needed for operation processing
@@ -145,9 +144,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
     // add into priority request queue
     addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
-
-    // delete nft from account at L1
-    _removeAccountNft(msg.sender, _nftL1Address, nftIndex);
 
     emit DepositNft(_to, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
@@ -540,9 +536,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           op.nftIndex
         )
       {
-        // add nft to account at L1
-        _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
-
         emit WithdrawNft(op.accountIndex, _factoryAddress, op.toAddress, op.nftIndex);
       } catch {
         storePendingNFT(op);
@@ -557,8 +550,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           _emptyExtraData
         )
       {
-        // add nft to account at L1
-        _addAccountNft(op.toAddress, _factoryAddress, op.nftIndex);
         // register default collection factory
         governance.registerDefaultNFTFactory(op.creatorAddress, op.collectionId);
 

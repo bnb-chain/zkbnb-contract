@@ -36,11 +36,8 @@ describe('DeployFactory', function () {
 
     mockGovernanceTarget = await smock.fake('Governance');
     mockVerifierTarget = await smock.fake('ZkBNBVerifier');
-    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-    const nftHelperLibrary = await NftHelperLibrary.deploy();
     const ZkBNB = await ethers.getContractFactory('ZkBNB', {
       libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
         Utils: utils.address,
       },
     });
@@ -60,21 +57,6 @@ describe('DeployFactory', function () {
       mockListingToken.address,
       mockUpgradeableMaster.address,
     ];
-  });
-
-  it('should self destruct', async function () {
-    const deployFactory = await DeployFactory.deploy(deployAddressParams, genesisAccountRoot, listingFee, listingCap);
-
-    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-    const nftHelperLibrary = await NftHelperLibrary.deploy();
-    const TestHelper = await ethers.getContractFactory('TestHelper', {
-      libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
-      },
-    });
-    const testHelper = await TestHelper.deploy();
-    const result = await testHelper.contractExists(deployFactory.address);
-    expect(result).to.be.equal(false);
   });
 
   describe('deploy stuffs', () => {
