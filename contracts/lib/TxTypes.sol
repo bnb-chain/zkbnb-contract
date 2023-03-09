@@ -369,9 +369,8 @@ library TxTypes {
     // nft content type
     (offset, parsed.nftContentType) = Bytes.readUInt8(_data, offset);
 
-    // 1 + 4 + 4 + 2 + 5 + 2 + 20 + 20 + 4 + 1 + x = 121
-    // x = 58
-    offset += 58;
+    // 1 + 4 + 4 + 2 + 5 + 2 + 20 + 20 + 32 + 1 + x = 121
+    offset += 30;
     require(offset == PACKED_TX_PUBDATA_BYTES, "7N");
     return parsed;
   }
