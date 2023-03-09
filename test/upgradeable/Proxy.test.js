@@ -52,6 +52,7 @@ describe('Proxy', function () {
     const MockZkBNB = await smock.mock('ZkBNB', {
       libraries: {
         NftHelperLibrary: nftHelperLibrary.address,
+        Utils: utils.address,
       },
     });
     mockZkBNB = await MockZkBNB.deploy();
@@ -152,6 +153,7 @@ describe('Proxy', function () {
       const MockZkBNB = await smock.mock('ZkBNB', {
         libraries: {
           NftHelperLibrary: nftHelperLibrary.address,
+          Utils: utils.address,
         },
       });
       const mockZkBNBNew = await MockZkBNB.deploy();
