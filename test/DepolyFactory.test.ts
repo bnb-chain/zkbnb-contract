@@ -1,6 +1,6 @@
 import chai, { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { FakeContract, smock } from '@defi-wonderland/smock';
+import { smock } from '@defi-wonderland/smock';
 
 /* eslint-disable */
 const namehash = require('eth-ens-namehash');
@@ -13,17 +13,12 @@ describe('DeployFactory', function () {
   let mockGovernanceTarget;
   let mockVerifierTarget;
   let mockZkbnbTarget;
-  let mockZnsControllerTarget;
-  let mockZnsResolverTarget;
   let mockValidator;
   let mockGovernor;
   let mockListingToken;
-  let mockZns;
-  let mockPriceOracle;
   let mockUpgradeableMaster;
   let owner, addr1, addr2, addr3, addr4;
 
-  const baseNode = namehash.hash('legend');
   const genesisAccountRoot = namehash.hash('genesisAccountRoot');
   const listingFee = ethers.utils.parseEther('100');
   const listingCap = 2 ** 16 - 1;
@@ -37,11 +32,7 @@ describe('DeployFactory', function () {
     utils = await Utils.deploy();
     await utils.deployed();
 
-    DeployFactory = await ethers.getContractFactory('DeployFactory', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
+    DeployFactory = await ethers.getContractFactory('DeployFactory');
 
     mockGovernanceTarget = await smock.fake('Governance');
     mockVerifierTarget = await smock.fake('ZkBNBVerifier');
@@ -50,42 +41,29 @@ describe('DeployFactory', function () {
     const ZkBNB = await ethers.getContractFactory('ZkBNB', {
       libraries: {
         NftHelperLibrary: nftHelperLibrary.address,
+        Utils: utils.address,
       },
     });
     mockZkbnbTarget = await smock.fake(ZkBNB);
 
-    mockZnsControllerTarget = await smock.fake('ZNSController');
-    mockZnsResolverTarget = await smock.fake('PublicResolver');
     mockValidator = addr1;
     mockGovernor = addr2;
     mockListingToken = await smock.fake('ERC20');
-    mockZns = await smock.fake('ZNSRegistry');
-    mockPriceOracle = await smock.fake('StablePriceOracle');
     mockUpgradeableMaster = await smock.fake('UpgradeableMaster');
 
     deployAddressParams = [
       mockGovernanceTarget.address,
       mockVerifierTarget.address,
       mockZkbnbTarget.address,
-      mockZnsControllerTarget.address,
-      mockZnsResolverTarget.address,
       mockValidator.address,
       mockGovernor.address,
       mockListingToken.address,
-      mockZns.address,
-      mockPriceOracle.address,
       mockUpgradeableMaster.address,
     ];
   });
 
   it('should self destruct', async function () {
-    const deployFactory = await DeployFactory.deploy(
-      deployAddressParams,
-      genesisAccountRoot,
-      listingFee,
-      listingCap,
-      baseNode,
-    );
+    const deployFactory = await DeployFactory.deploy(deployAddressParams, genesisAccountRoot, listingFee, listingCap);
 
     const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
     const nftHelperLibrary = await NftHelperLibrary.deploy();
@@ -98,18 +76,13 @@ describe('DeployFactory', function () {
     const result = await testHelper.contractExists(deployFactory.address);
     expect(result).to.be.equal(false);
   });
+
   describe('deploy stuffs', () => {
     let deployFactory;
     let event;
     let deployedContracts;
     beforeEach(async () => {
-      deployFactory = await DeployFactory.deploy(
-        deployAddressParams,
-        genesisAccountRoot,
-        listingFee,
-        listingCap,
-        baseNode,
-      );
+      deployFactory = await DeployFactory.deploy(deployAddressParams, genesisAccountRoot, listingFee, listingCap);
       await deployFactory.deployed();
       const deployFactoryTx = await deployFactory.deployTransaction;
       const receipt = await deployFactoryTx.wait();
@@ -122,14 +95,11 @@ describe('DeployFactory', function () {
     it('should proxy for target contract', async function () {
       expect(event).to.be.length(1);
 
-      const { governance, assetGovernance, verifier, znsController, znsResolver, zkbnb, gatekeeper } =
-        deployedContracts;
+      const { governance, verifier, zkbnb } = deployedContracts;
       const Proxy = await ethers.getContractFactory('Proxy');
 
       await isProxyTarget(governance, mockGovernanceTarget.address);
       await isProxyTarget(verifier, mockVerifierTarget.address);
-      await isProxyTarget(znsController, mockZnsControllerTarget.address);
-      await isProxyTarget(znsResolver, mockZnsResolverTarget.address);
       await isProxyTarget(zkbnb, mockZkbnbTarget.address);
 
       async function isProxyTarget(proxy, target) {
@@ -149,21 +119,16 @@ describe('DeployFactory', function () {
     });
 
     it('should set upgradeable contract into the upgradeable gatekeeper', async () => {
-      const { governance, assetGovernance, verifier, znsController, znsResolver, zkbnb, gatekeeper } =
-        deployedContracts;
+      const { governance, verifier, zkbnb, gatekeeper } = deployedContracts;
       const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
 
       const upgradeGatekeeper = UpgradeGatekeeper.attach(gatekeeper);
       const governanceProxy = await upgradeGatekeeper.managedContracts(0);
       const verifierProxy = await upgradeGatekeeper.managedContracts(1);
-      const znsControllerProxy = await upgradeGatekeeper.managedContracts(2);
-      const znsResolverProxy = await upgradeGatekeeper.managedContracts(3);
-      const zkbnbProxy = await upgradeGatekeeper.managedContracts(4);
+      const zkbnbProxy = await upgradeGatekeeper.managedContracts(2);
 
       expect(governanceProxy).to.be.equal(governance);
       expect(verifierProxy).to.be.equal(verifier);
-      expect(znsControllerProxy).to.be.equal(znsController);
-      expect(znsResolverProxy).to.be.equal(znsResolver);
       expect(zkbnbProxy).to.be.equal(zkbnb);
     });
   });

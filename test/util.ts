@@ -1,4 +1,4 @@
-import { Signer, utils, Bytes } from 'ethers';
+import { Signer, utils } from 'ethers';
 
 import log from '../logger.config';
 import { ethers } from 'hardhat';
@@ -175,11 +175,16 @@ export interface StoredBlockInfo {
   commitment: string;
 }
 
+export interface OnchainOperationData {
+  ethWitness: string;
+  publicDataOffset: number;
+}
+
 export interface CommitBlockInfo {
   newStateRoot: string;
   publicData: string;
   timestamp: number;
-  publicDataOffsets: number[];
+  onchainOperations: OnchainOperationData[];
   blockNumber: number;
   blockSize: number;
 }
@@ -245,7 +250,7 @@ export function padEndBytes121(data: string) {
 
 export const PubDataTypeMap = {
   [PubDataType.RegisterZNS]: ['uint8', 'uint32', 'bytes20', 'bytes32', 'bytes32', 'bytes32'],
-  [PubDataType.Deposit]: ['uint8', 'uint32', 'uint16', 'uint128', 'bytes32'],
+  [PubDataType.Deposit]: ['uint8', 'uint32', 'address', 'uint16', 'uint128'],
   [PubDataType.DepositNft]: ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'uint16', 'bytes32', 'bytes32'],
   [PubDataType.Withdraw]: ['uint8', 'uint32', 'address', 'uint16', 'uint128', 'uint16', 'uint16'],
   [PubDataType.WithdrawNft]: [
