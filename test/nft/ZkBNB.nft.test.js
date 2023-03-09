@@ -71,20 +71,20 @@ describe('NFT functionality', function () {
     await zkBNB.initialize(initParams);
 
     const ZkBNBNFTFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
-    zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', baseURI, zkBNB.address, owner.address);
+    zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', zkBNB.address, owner.address);
     await zkBNBNFTFactory.deployed();
     assert.equal(await zkBNBNFTFactory.name(), 'ZkBNBNft');
     assert.equal(await zkBNBNFTFactory.symbol(), 'Zk');
-    assert.equal(await zkBNBNFTFactory._base(), baseURI);
 
     const MockNftFactory = await smock.mock('ZkBNBNFTFactory');
-    mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', baseURI, zkBNB.address, owner.address);
+    mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', zkBNB.address, owner.address);
     await mockNftFactory.deployed();
 
     const abi = ethers.utils.defaultAbiCoder;
     const byteAddr = abi.encode(['address'], [owner.address]);
     await governance.initialize(byteAddr);
     await governance.setZkBNBAddress(zkBNB.address);
+    await governance.updateBaseURI(0, baseURI);
 
     await expect(await governance.setDefaultNFTFactory(mockNftFactory.address))
       .to.emit(governance, 'SetDefaultNFTFactory')
@@ -398,10 +398,11 @@ describe('NFT functionality', function () {
     const IPFSMultiHashDigest = ethers.utils.hexZeroPad(digestInHexFromCID, 32);
 
     it('mint from ZkBNB using a IPFS CID Hash', async function () {
+      const tokenURI = await governance.getNftTokenURI(0, IPFSMultiHashDigest);
       const extraData = ethers.constants.HashZero;
 
       expect(
-        zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, extraData),
+        zkBNBNFTFactory.mintFromZkBNB(acc1.address, acc2.address, tokenId, tokenURI, extraData),
       ).to.be.revertedWith('only zkbnbAddress');
       await expect(
         await zkBNB.mintNFT(
@@ -409,41 +410,45 @@ describe('NFT functionality', function () {
           acc1.address,
           acc2.address,
           tokenId,
-          IPFSMultiHashDigest,
+          tokenURI,
           ethers.constants.HashZero,
         ),
       )
         .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
-        .withArgs(acc1.address, acc2.address, tokenId, IPFSMultiHashDigest, extraData);
+        .withArgs(acc1.address, acc2.address, tokenId, extraData);
     });
 
-    it('check contentHash, and creator after mint', async function () {
-      await expect(await zkBNBNFTFactory.getContentHash(tokenId)).to.be.equal(IPFSMultiHashDigest);
-      assert(await zkBNBNFTFactory.getCreator(tokenId), acc1.address);
-    });
-    //This test is skipped as it depends on the network. However, individually, this should still work
-    it.skip('should return proper IPFS compatible tokenURI for a NFT', async function () {
-      await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
-      const expectUri = `${baseURI}${mockHash.substring(2)}`;
-      await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
+    // // delete contentHash map
+    // it.skip('check contentHash, and creator after mint', async function () {
+    //   await expect(await zkBNBNFTFactory.getContentHash(tokenId)).to.be.equal(IPFSMultiHashDigest);
+    //   assert(await zkBNBNFTFactory.getCreator(tokenId), acc1.address);
+    // });
 
-      const queryableResource = `${baseURI}`.split('//')[1] + `${mockHash.substring(2)}`;
+    // //This test is skipped as it depends on the network. However, individually, this should still work
+    // it.skip('should return proper IPFS compatible tokenURI for a NFT', async function () {
+    //   await expect(zkBNBNFTFactory.tokenURI(99)).to.be.revertedWith('tokenId not exist');
+    //   const expectUri = `${baseURI}${mockHash.substring(2)}`;
+    //   await expect(await zkBNBNFTFactory.tokenURI(tokenId)).to.be.equal(expectUri);
 
-      //Check if the tokenURI is indeed valid using a IPFS gateway
-      const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'));
-      assert(res.name, '2 nft.storage store test');
-      assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.');
-    });
+    //   const queryableResource = `${baseURI}`.split('//')[1] + `${mockHash.substring(2)}`;
 
-    it('should point base URI to represent URI and encoding of the CID', async function () {
-      const newBase = 'ipfs://dbvKFHFH'; //Change the encoding prefix to a different value
-      await zkBNBNFTFactory.updateBaseUri(newBase);
-      await expect(await zkBNBNFTFactory._base()).to.be.equal(newBase);
-    });
+    //   //Check if the tokenURI is indeed valid using a IPFS gateway
+    //   const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'));
+    //   assert(res.name, '2 nft.storage store test');
+    //   assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.');
+    // });
 
-    it('non-owner should fail to update base URI', async function () {
-      const newBase = 'bar://';
-      await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith('Only callable by owner');
-    });
+    // // change updateBaseURI to governance
+    // it.skip('should point base URI to represent URI and encoding of the CID', async function () {
+    //   const newBase = 'ipfs://dbvKFHFH'; //Change the encoding prefix to a different value
+    //   await zkBNBNFTFactory.updateBaseUri(newBase);
+    //   await expect(await zkBNBNFTFactory._base()).to.be.equal(newBase);
+    // });
+
+    // // change updateBaseURI to governance
+    // it.skip('non-owner should fail to update base URI', async function () {
+    //   const newBase = 'bar://';
+    //   await expect(zkBNBNFTFactory.connect(acc2).updateBaseUri(newBase)).to.be.revertedWith('Only callable by owner');
+    // });
   });
 });

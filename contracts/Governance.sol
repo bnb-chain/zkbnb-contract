@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./Config.sol";
 import "./lib/Utils.sol";
+import "./lib/Bytes.sol";
 import "./AssetGovernance.sol";
 import "./ZkBNBNFTFactory.sol";
 
@@ -34,6 +35,9 @@ contract Governance is Config, Initializable {
 
   /// @notice NFT factory address to creator address mapping
   mapping(address => address) public nftFactoryCreators;
+
+  /// @notice NFT baseURI nftContentType to baseURI mapping
+  mapping(uint8 => string) public nftBaseURIs;
 
   /// @notice Address which will be used if no factories is specified.
   address public defaultNFTFactory;
@@ -185,15 +189,9 @@ contract Governance is Config, Initializable {
   /// @param _collectionId L2 collection id
   /// @param _name NFT factory name
   /// @param _symbol NFT factory symbol
-  /// @param _baseURI NFT baseURI
-  function deployAndRegisterNFTFactory(
-    uint32 _collectionId,
-    string memory _name,
-    string memory _symbol,
-    string memory _baseURI
-  ) external {
+  function deployAndRegisterNFTFactory(uint32 _collectionId, string memory _name, string memory _symbol) external {
     require(zkBNBAddress != address(0), "ZkBNB address does not set");
-    ZkBNBNFTFactory _factory = new ZkBNBNFTFactory(_name, _symbol, _baseURI, zkBNBAddress, msg.sender);
+    ZkBNBNFTFactory _factory = new ZkBNBNFTFactory(_name, _symbol, zkBNBAddress, msg.sender);
     address _factoryAddress = address(_factory);
     nftFactoryCreators[_factoryAddress] = msg.sender;
     emit NFTFactoryDeployed(msg.sender, _factoryAddress);
@@ -232,5 +230,23 @@ contract Governance is Config, Initializable {
     } else {
       return _factory;
     }
+  }
+
+  /// @notice update nftBaseURIs mapping
+  /// @param nftContentType which protocol to store nft content
+  /// @param baseURI nft baseURI, used to generate tokenURI of nft
+  function updateBaseURI(uint8 nftContentType, string memory baseURI) external {
+    requireGovernor(msg.sender);
+    // todo check nftContentType is valid
+    nftBaseURIs[nftContentType] = baseURI;
+  }
+
+  /// @notice uery the tokenURI by nftContentType and nftContentHash
+  /// @param nftContentType which protocol to store nft content
+  /// @param nftContentHash hash of nft content
+  function getNftTokenURI(uint8 nftContentType, bytes32 nftContentHash) external view returns (string memory tokenURI) {
+    // todo check nftContentType is valid
+    require(bytes(nftBaseURIs[nftContentType]).length > 0, "baseURI has not set");
+    tokenURI = string(abi.encodePacked(nftBaseURIs[nftContentType], Bytes.bytes32ToHexString(nftContentHash, false)));
   }
 }

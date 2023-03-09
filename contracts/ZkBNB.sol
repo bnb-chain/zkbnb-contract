@@ -553,7 +553,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           op.creatorAddress,
           op.toAddress,
           op.nftIndex,
-          op.nftContentHash,
+          governance.getNftTokenURI(op.nftContentType, op.nftContentHash),
           _emptyExtraData
         )
       {
