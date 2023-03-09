@@ -108,6 +108,7 @@ contract Storage {
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
     bytes32 nftContentHash;
+    uint8 nftContentType;
     uint16 collectionId;
   }
 
