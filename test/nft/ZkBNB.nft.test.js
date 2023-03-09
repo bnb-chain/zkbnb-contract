@@ -416,6 +416,7 @@ describe('NFT functionality', function () {
       )
         .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
         .withArgs(acc1.address, acc2.address, tokenId, extraData);
+      assert.strictEqual(await zkBNBNFTFactory.tokenURI(tokenId), tokenURI);
     });
 
     // // delete contentHash map
