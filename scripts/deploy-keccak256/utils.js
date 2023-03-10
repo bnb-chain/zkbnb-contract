@@ -21,15 +21,10 @@ exports.getZkBNBProxy = async function (addr) {
   const Utils = await ethers.getContractFactory('Utils');
   const utils = await Utils.deploy();
   await utils.deployed();
-  // TODO: remove in next version
-  const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-  const nftHelperLibrary = await NftHelperLibrary.deploy();
-  await nftHelperLibrary.deployed();
 
   // zkbnb
   const ZkBNB = await ethers.getContractFactory('ZkBNB', {
     libraries: {
-      NftHelperLibrary: nftHelperLibrary.address,
       Utils: utils.address,
     },
   });

@@ -62,12 +62,8 @@ describe('ZkBNB', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy(ethers.constants.AddressZero);
     await additionalZkBNB.deployed();
 
-    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-    const nftHelperLibrary = await NftHelperLibrary.deploy();
-    await nftHelperLibrary.deployed();
     const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
       libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
         Utils: utils.address,
       },
     });
@@ -219,7 +215,7 @@ describe('ZkBNB', function () {
       it('should can commit fullExit operation', async () => {
         // mock user request full exit, and get pubData
 
-        const tx = await zkBNB.requestFullExit(account, ethers.constants.AddressZero);
+        const tx = await zkBNB.requestFullExit(0, ethers.constants.AddressZero);
         const receipt = await tx.wait();
 
         const event = receipt.events.find((event) => {
@@ -297,7 +293,7 @@ describe('ZkBNB', function () {
         it('should can commit fullExitNFT operation', async () => {
           mockNftFactory.ownerOf.returns(zkBNB.address);
 
-          const tx = await zkBNB.requestFullExitNft(account, zkBNB.signer.address, nftL1TokenId, 0);
+          const tx = await zkBNB.requestFullExitNft(0, zkBNB.signer.address, nftL1TokenId, 0);
 
           const receipt = await tx.wait();
           const event = receipt.events.find((event) => {
@@ -336,7 +332,7 @@ describe('ZkBNB', function () {
 
       // Pre-submit a block for every case
       // commit block #1 fullExit nft;
-      let tx = await zkBNB.requestFullExitNft(account, zkBNB.signer.address, nftL1TokenId, 0);
+      let tx = await zkBNB.requestFullExitNft(0, zkBNB.signer.address, nftL1TokenId, 0);
       let receipt = await tx.wait();
       let event = receipt.events.find((event) => {
         return event.event === 'NewPriorityRequest';
@@ -371,7 +367,7 @@ describe('ZkBNB', function () {
         pendingOnchainOpsPubData: [commitBlock.publicData],
       });
       // commit block #2;
-      tx = await zkBNB.requestFullExit(account, ethers.constants.AddressZero);
+      tx = await zkBNB.requestFullExit(0, ethers.constants.AddressZero);
       receipt = await tx.wait();
 
       event = receipt.events.find((event) => {
