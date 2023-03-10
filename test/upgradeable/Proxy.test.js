@@ -9,8 +9,6 @@ const abi = ethers.utils.defaultAbiCoder;
 describe('Proxy', function () {
   let mockGovernance;
   let mockZkBNBVerifier;
-  let mockZNSController;
-  let mockPublicResolver;
   let mockZkBNB;
 
   // `ZkBNB` needs to link to library `Utils` before deployed
@@ -20,8 +18,6 @@ describe('Proxy', function () {
   let proxyZkBNBVerifier;
   let owner, addr1, addr2, addr3, addr4;
 
-  let proxyZNSController;
-  let proxyPublicResolver;
   let proxyZkBNB;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
@@ -34,14 +30,6 @@ describe('Proxy', function () {
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
-
-    const MockZNSController = await smock.mock('ZNSController');
-    mockZNSController = await MockZNSController.deploy();
-    await mockZNSController.deployed();
-
-    const MockPublicResolver = await smock.mock('PublicResolver');
-    mockPublicResolver = await MockPublicResolver.deploy();
-    await mockPublicResolver.deployed();
 
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
@@ -58,19 +46,13 @@ describe('Proxy', function () {
 
     mockGovernance.initialize.returns();
     mockZkBNBVerifier.initialize.returns();
-    mockZNSController.initialize.returns();
-    mockPublicResolver.initialize.returns();
     mockZkBNB.initialize.returns();
 
     proxyGovernance = await Proxy.deploy(mockGovernance.address, owner.address);
     proxyZkBNBVerifier = await Proxy.deploy(mockZkBNBVerifier.address, owner.address);
-    proxyZNSController = await Proxy.deploy(mockZNSController.address, owner.address);
-    proxyPublicResolver = await Proxy.deploy(mockPublicResolver.address, owner.address);
     proxyZkBNB = await Proxy.deploy(mockZkBNB.address, owner.address);
     await proxyGovernance.deployed();
     await proxyZkBNBVerifier.deployed();
-    await proxyZNSController.deployed();
-    await proxyPublicResolver.deployed();
     await proxyZkBNB.deployed();
   });
 
@@ -79,10 +61,6 @@ describe('Proxy', function () {
     expect(mockGovernance.initialize).to.have.been.calledWith(owner.address.toLowerCase());
     expect(mockZkBNBVerifier.initialize).to.be.delegatedFrom(proxyZkBNBVerifier.address);
     expect(mockZkBNBVerifier.initialize).to.have.been.calledWith(owner.address.toLowerCase());
-    expect(mockZNSController.initialize).to.be.delegatedFrom(proxyZNSController.address);
-    expect(mockZNSController.initialize).to.have.been.calledWith(owner.address.toLowerCase());
-    expect(mockPublicResolver.initialize).to.be.delegatedFrom(proxyPublicResolver.address);
-    expect(mockPublicResolver.initialize).to.have.been.calledWith(owner.address.toLowerCase());
     expect(mockZkBNB.initialize).to.be.delegatedFrom(proxyZkBNB.address);
     expect(mockZkBNB.initialize).to.have.been.calledWith(owner.address.toLowerCase());
   });
@@ -90,8 +68,6 @@ describe('Proxy', function () {
   it('Proxy contract should store target address ', async function () {
     expect(await proxyGovernance.getTarget()).to.equal(mockGovernance.address);
     expect(await proxyZkBNBVerifier.getTarget()).to.equal(mockZkBNBVerifier.address);
-    expect(await proxyZNSController.getTarget()).to.equal(mockZNSController.address);
-    expect(await proxyPublicResolver.getTarget()).to.equal(mockPublicResolver.address);
     expect(await proxyZkBNB.getTarget()).to.equal(mockZkBNB.address);
   });
 
@@ -115,31 +91,6 @@ describe('Proxy', function () {
       await proxyZkBNBVerifier.upgradeTarget(mockZkBNBVerifierNew.address, ethers.constants.HashZero);
       expect(mockZkBNBVerifierNew.upgrade).to.be.delegatedFrom(proxyZkBNBVerifier.address);
       expect(mockZkBNBVerifierNew.upgrade).to.have.been.calledWith(ethers.constants.HashZero);
-    });
-
-    it('upgrade new `ZNSController` target', async function () {
-      const MockZNSController = await smock.mock('ZNSController');
-      const mockZNSControllerNew = await MockZNSController.deploy();
-      await mockZNSControllerNew.deployed();
-
-      const parameters = abi.encode(
-        ['address', 'address', 'bytes32'],
-        [addr2.address, addr3.address, ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32)],
-      );
-
-      await proxyZNSController.upgradeTarget(mockZNSControllerNew.address, parameters);
-      expect(mockZNSControllerNew.upgrade).to.be.delegatedFrom(proxyZNSController.address);
-      expect(mockZNSControllerNew.upgrade).to.have.been.calledWith(parameters);
-    });
-
-    it('upgrade new `PublicResolver` target', async function () {
-      const MockPublicResolver = await smock.mock('PublicResolver');
-      const mockPublicResolverNew = await MockPublicResolver.deploy();
-      await mockPublicResolverNew.deployed();
-
-      await proxyPublicResolver.upgradeTarget(mockPublicResolverNew.address, addr4.address);
-      expect(mockPublicResolverNew.upgrade).to.be.delegatedFrom(proxyPublicResolver.address);
-      expect(mockPublicResolverNew.upgrade).to.have.been.calledWith(addr4.address.toLowerCase());
     });
 
     it('upgrade new `ZkBNB` target', async function () {
@@ -180,38 +131,6 @@ describe('Proxy', function () {
       expect(mockZkBNBVerifier.verifyProof).to.have.been.calledWith([], [], 0);
     });
 
-    it('delegate `registerZNS` function', async function () {
-      mockZNSController.registerZNS.returns(0, 0);
-
-      const implement = mockZNSController.attach(proxyZNSController.address);
-      await implement.registerZNS(
-        'znsName',
-        addr1.address,
-        ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32),
-        ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32),
-        addr2.address,
-      );
-
-      expect(mockZNSController.registerZNS).to.be.calledOnce;
-      expect(mockZNSController.registerZNS).to.have.been.calledWith(
-        'znsName',
-        addr1.address,
-        ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32),
-        ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32),
-        addr2.address,
-      );
-    });
-
-    it('delegate `name` function', async function () {
-      mockPublicResolver.name.returns('mockName');
-      const implement = mockPublicResolver.attach(proxyPublicResolver.address);
-      const _mockNode = ethers.utils.hexZeroPad(ethers.utils.hexlify(1), 32);
-      await implement.name(_mockNode);
-
-      expect(mockPublicResolver.name).to.be.calledOnce;
-      expect(mockPublicResolver.name).to.have.been.calledWith(_mockNode);
-    });
-
     it('delegate `commitBlocks` function', async function () {
       mockZkBNB.commitBlocks.returns();
       const blockInfo = {
@@ -244,16 +163,6 @@ describe('Proxy', function () {
     it('intercept `ZkBNBVerifier` upgrade', async function () {
       const zkBNBVerifierImplement = mockZkBNBVerifier.attach(proxyZkBNBVerifier.address);
       expect(zkBNBVerifierImplement.upgrade(addr2.address)).to.be.revertedWith('upg11');
-    });
-
-    it('intercept `ZNSController` upgrade', async function () {
-      const zNSControllerImplement = mockZNSController.attach(proxyZNSController.address);
-      expect(zNSControllerImplement.upgrade(addr2.address)).to.be.revertedWith('upg11');
-    });
-
-    it('intercept `PublicResolver` upgrade', async function () {
-      const publicResolverImplement = mockPublicResolver.attach(proxyPublicResolver.address);
-      expect(publicResolverImplement.upgrade(addr3.address)).to.be.revertedWith('upg11');
     });
 
     it('intercept `ZkBNB` upgrade', async function () {
