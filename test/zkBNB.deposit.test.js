@@ -38,11 +38,8 @@ describe('ZkBNB', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-    const nftHelperLibrary = await NftHelperLibrary.deploy();
     const ZkBNB = await ethers.getContractFactory('ZkBNB', {
       libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
         Utils: utils.address,
       },
     });
@@ -84,9 +81,9 @@ describe('ZkBNB', function () {
         const pubData = encodePubData(PubDataTypeMap[PubDataType.Deposit], [
           PubDataType.Deposit,
           0,
-          0,
+          '0xB4fdA33E65656F9f485438ABd9012eD04a31E006',
+          3,
           10,
-          accountNameHash,
         ]);
 
         await expect(zkBNB.depositBNB(toAddress, { value: 10 }))
@@ -136,9 +133,9 @@ describe('ZkBNB', function () {
         const pubData = encodePubData(PubDataTypeMap[PubDataType.Deposit], [
           PubDataType.Deposit,
           0,
+          '0xB4fdA33E65656F9f485438ABd9012eD04a31E006',
           ASSET_ID,
           10,
-          accountNameHash,
         ]);
         await expect(zkBNB.depositBEP20(mockERC20.address, 10, toAddress))
           .to.emit(zkBNB, 'NewPriorityRequest')

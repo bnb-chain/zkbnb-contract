@@ -46,12 +46,8 @@ describe('Proxy', function () {
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
-    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-    const nftHelperLibrary = await NftHelperLibrary.deploy();
-    await nftHelperLibrary.deployed();
     const MockZkBNB = await smock.mock('ZkBNB', {
       libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
         Utils: utils.address,
       },
     });
@@ -147,12 +143,8 @@ describe('Proxy', function () {
     });
 
     it('upgrade new `ZkBNB` target', async function () {
-      const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-      const nftHelperLibrary = await NftHelperLibrary.deploy();
-      await nftHelperLibrary.deployed();
       const MockZkBNB = await smock.mock('ZkBNB', {
         libraries: {
-          NftHelperLibrary: nftHelperLibrary.address,
           Utils: utils.address,
         },
       });

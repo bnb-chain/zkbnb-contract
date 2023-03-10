@@ -48,11 +48,8 @@ describe('NFT functionality', function () {
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-    const nftHelperLibrary = await NftHelperLibrary.deploy();
     const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
       libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
         Utils: utils.address,
       },
     });
@@ -310,11 +307,6 @@ describe('NFT functionality', function () {
       assert.equal(_hashedPubData, ethers.utils.hexDataSlice(expectHashedPubData, 12)); // bytes32 -> bytes20
 
       assert.equal(_txType, 3);
-    });
-
-    it('the nft should be deleted from L1 account after deposition', async function () {
-      const nfts = await zkBNB.getAccountNfts(acc1.address);
-      expect(nfts).to.be.an('array').that.is.empty;
     });
 
     it('should fail to deposit a NFT which is not created by layer2', async function () {
