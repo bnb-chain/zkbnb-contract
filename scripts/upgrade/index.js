@@ -61,7 +61,26 @@ function main() {
           finish();
           break;
         case 'rollback':
-          rollback();
+          inquirer
+            .prompt([
+              {
+                type: 'input',
+                name: 'target',
+                message:
+                  'Please enter the block number when the contract was deployed \nand the script will query the upgrade history:',
+                validate(answer) {
+                  console.log('🚀 ~ file: index.js:295 ~ validate ~ answer:', answer);
+                  if (answer.length < 1) {
+                    return 'You must input block number.';
+                  }
+
+                  return true;
+                },
+              },
+            ])
+            .then(async (answer) => {
+              rollback(+answer.target);
+            });
           break;
 
         default:
@@ -258,7 +277,7 @@ async function finish() {
   console.log('Current version is %s', receipt.events[1].args.versionId);
 }
 
-async function rollback() {
+async function rollback(startBlockNumber) {
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
   const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
 
@@ -284,9 +303,8 @@ async function rollback() {
       zkbnb: await (await ethers.getContractFactory('Proxy')).attach(addrs.zkbnbProxy).getTarget(),
     };
   } else {
-    const block = 27606041;
     const filter = upgradeGatekeeper.filters.UpgradeComplete(versionId - 1);
-    const event = await upgradeGatekeeper.queryFilter(filter, block, block + 5000);
+    const event = await upgradeGatekeeper.queryFilter(filter, startBlockNumber, startBlockNumber + 5000);
     const targets = event[0].args.newTargets;
     previousVersionTargets = {
       governance: targets[0],
