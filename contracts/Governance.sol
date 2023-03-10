@@ -237,7 +237,6 @@ contract Governance is Config, Initializable {
   /// @param baseURI nft baseURI, used to generate tokenURI of nft
   function updateBaseURI(uint8 nftContentType, string memory baseURI) external {
     requireGovernor(msg.sender);
-    // todo check nftContentType is valid
     nftBaseURIs[nftContentType] = baseURI;
   }
 
@@ -245,8 +244,6 @@ contract Governance is Config, Initializable {
   /// @param nftContentType which protocol to store nft content
   /// @param nftContentHash hash of nft content
   function getNftTokenURI(uint8 nftContentType, bytes32 nftContentHash) external view returns (string memory tokenURI) {
-    // todo check nftContentType is valid
-    require(bytes(nftBaseURIs[nftContentType]).length > 0, "baseURI has not set");
     tokenURI = string(abi.encodePacked(nftBaseURIs[nftContentType], Bytes.bytes32ToHexString(nftContentHash, false)));
   }
 }
