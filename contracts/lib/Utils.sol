@@ -158,14 +158,18 @@ library Utils {
 
     bytes32 messageHash = keccak256(
       abi.encodePacked(
-        "\x19Ethereum Signed Message:\n152",
-        "Register zkBNB pubkey:\n\n",
-        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkey)), //TODO; sha256(pubKey)?
+        "\x19Ethereum Signed Message:\n265",
+        "Register zkBNB Account\n\n",
+        "pubkeyX: 0x",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyX)),
+        "\n",
+        "pubkeyY: 0x",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyY)),
         "\n",
         "nonce: 0x",
         Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
         "\n",
-        "account id: 0x",
+        "account index: 0x",
         Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.accountIndex)),
         "\n\n",
         "Only sign this message for a trusted client!"
