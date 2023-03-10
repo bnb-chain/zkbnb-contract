@@ -224,7 +224,7 @@ async function main() {
 
   // Save contract constructor arguments to JSON for verify
   saveConstructorArgumentsForVerify('info/constructor.json', {
-    proxy: [event[0], [abi.encode(['address'], [deployFactory.address])]],
+    proxy: [event[0], [governance.address, abi.encode(['address'], [deployFactory.address])]],
     governance: [governance.address],
     assetGovernance: [
       event[1],
