@@ -11,9 +11,13 @@ import {
   StoredBlockInfo,
   VerifyAndExecuteBlockInfo,
   encodePackPubData,
+  encodePubData,
+  getChangePubkeyMessage,
   hashStoredBlockInfo,
   padEndBytes121,
 } from './util';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { zeroPad } from '@ethersproject/bytes/src.ts';
 
 chai.use(smock.matchers);
 
@@ -24,7 +28,11 @@ describe('ZkBNB', function () {
   let mockNftFactory;
   let zkBNB;
   let additionalZkBNB;
-  let owner, addr1, addr2, addr3, addr4;
+  let owner: SignerWithAddress,
+    addr1: SignerWithAddress,
+    addr2: SignerWithAddress,
+    addr3: SignerWithAddress,
+    addr4: SignerWithAddress;
   const account = '0xB4fdA33E65656F9f485438ABd9012eD04a31E006';
 
   const genesisStateRoot = ethers.utils.formatBytes32String('genesisStateRoot');
@@ -171,6 +179,60 @@ describe('ZkBNB', function () {
           blockSize: 3,
         };
         await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.reverted;
+      });
+
+      it('should can commit changePubKey operation', async () => {
+        const changePubKey = {
+          txType: PubDataType.ChangePubKey,
+          accountIndex: 0,
+          pubkeyX: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+          pubkeyY: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+          owner: owner.address,
+          nonce: 0,
+        };
+        const message = getChangePubkeyMessage(
+          changePubKey.pubkeyX,
+          changePubKey.pubkeyY,
+          changePubKey.nonce,
+          changePubKey.accountIndex,
+        );
+
+        const signature = await owner.signMessage(message);
+        const address = ethers.utils.verifyMessage(message, signature);
+        expect(address).equal(owner.address);
+        const version = new Uint8Array([0]); // current version is zero
+        const signatureBytes = ethers.utils.arrayify(signature);
+        const ethWitness = ethers.utils.hexlify(ethers.utils.concat([version, signatureBytes]));
+
+        const pubData = encodePubData(PubDataTypeMap[PubDataType.ChangePubKey], [
+          PubDataType.ChangePubKey,
+          changePubKey.accountIndex,
+          changePubKey.pubkeyX,
+          changePubKey.pubkeyY,
+          changePubKey.owner,
+          changePubKey.nonce,
+        ]);
+
+        const onchainOperations: OnchainOperationData[] = [{ ethWitness, publicDataOffset: 0 }];
+
+        const commitBlock: CommitBlockInfo = {
+          newStateRoot,
+          publicData: ethers.utils.hexlify(padEndBytes121(pubData)),
+          timestamp: Date.now(),
+          onchainOperations,
+          blockNumber: 1,
+          blockSize: 2,
+        };
+        onchainOperations[0].ethWitness = '0x';
+        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.revertedWith(
+          'signature should not be empty',
+        );
+        onchainOperations[0].ethWitness = ethers.utils.hexlify(ethers.utils.randomBytes(66));
+        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.revertedWith('D');
+        onchainOperations[0].ethWitness = ethWitness;
+        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock]))
+          .to.emit(zkBNB, 'BlockCommit')
+          .withArgs(1);
       });
 
       it('should can commit deposit operation', async () => {

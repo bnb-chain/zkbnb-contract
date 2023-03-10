@@ -28,7 +28,8 @@ library TxTypes {
   struct ChangePubKey {
     uint8 txType;
     uint32 accountIndex;
-    bytes pubkey; //64 bytes
+    bytes32 pubkeyX;
+    bytes32 pubkeyY;
     address owner;
     uint32 nonce;
   }
@@ -119,8 +120,10 @@ library TxTypes {
     uint256 offset = TX_TYPE_BYTES;
     // account index
     (offset, parsed.accountIndex) = Bytes.readUInt32(_data, offset);
-    // pubkey
-    (offset, parsed.pubkey) = Bytes.read(_data, offset, 64);
+    // pubkeyX
+    (offset, parsed.pubkeyX) = Bytes.readBytes32(_data, offset);
+    // pubkeyY
+    (offset, parsed.pubkeyY) = Bytes.readBytes32(_data, offset);
     // owner
     (offset, parsed.owner) = Bytes.readAddress(_data, offset);
     // nonce
