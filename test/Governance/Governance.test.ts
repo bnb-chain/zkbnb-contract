@@ -7,6 +7,7 @@ import { transferFunds } from '../util';
 import { FakeContract, smock } from '@defi-wonderland/smock';
 import { BUSD_ASSET_ADDRESS, NEW_ASSET_ADDRESS, NULL_ADDRESS, VALIDATOR_ADDRESS } from '../constants';
 import { beforeEach } from 'mocha';
+import request from 'sync-request';
 
 describe('Governance', function () {
   let governance;
@@ -215,6 +216,34 @@ describe('Governance', function () {
         await expect(governance.connect(contractSigner).addAsset(NEW_ASSET_ADDRESS)).to.be.revertedWith('1f');
       });
     });
+
+    it('update baseURI', async function () {
+      const type = 0;
+      const baseURI = 'ipfs://f01701220';
+      // only governerWallet can update baseURI
+      await expect(governance.connect(addr1).updateBaseURI(type, baseURI)).to.be.revertedWith('1g');
+      await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
+      expect((await governance.nftBaseURIs(type)) === baseURI);
+    });
+
+    it('get tokenURI', async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+
+      const type = 0;
+      const baseURI = 'ipfs://f01701220';
+      const contentHash = '3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase();
+      const mockHash = ethers.utils.hexZeroPad(('0x' + contentHash).toLowerCase(), 32);
+
+      const expectUri = `${baseURI}${contentHash}`;
+      await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
+      expect((await governance.getNftTokenURI(type, mockHash)) === expectUri);
+
+      const queryableResource = `${expectUri}`.split('//')[1];
+      //Check if the tokenURI is indeed valid using a IPFS gateway
+      const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'));
+      assert(res.name, '2 nft.storage store test');
+      assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.');
+    });
   });
 
   describe('After default Nft factory is set', function () {
@@ -244,9 +273,7 @@ describe('Governance', function () {
 
     it('Deploy and register NFT factory', async function () {
       const collectionId = 1;
-      await expect(
-        await governance.connect(addr1).deployAndRegisterNFTFactory(collectionId, 'name', 'symbol', 'ipfs://f01701220'),
-      )
+      await expect(await governance.connect(addr1).deployAndRegisterNFTFactory(collectionId, 'name', 'symbol'))
         .to.emit(governance, 'NFTFactoryRegistered')
         .withArgs(addr1.address, await governance.getNFTFactory(addr1.address, collectionId), collectionId);
 

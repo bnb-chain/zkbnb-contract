@@ -7,7 +7,6 @@ interface INFTFactory {
     address indexed _creatorAddress,
     address indexed _toAddress,
     uint256 _nftTokenId,
-    bytes32 _nftContentHash,
     bytes _extraData
   );
 
@@ -15,7 +14,7 @@ interface INFTFactory {
     address _creatorAddress,
     address _toAddress,
     uint256 _nftTokenId,
-    bytes32 _nftContentHash,
+    string memory _nftTokenURI,
     bytes memory _extraData
   ) external;
 }
