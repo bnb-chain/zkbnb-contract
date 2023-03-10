@@ -106,7 +106,16 @@ describe('NFT functionality', function () {
       const HashZero = ethers.constants.HashZero;
 
       await zkBNB.onERC721Received(owner.address, acc1.address, 0, HashZero);
+    });
 
+    it('NFT is not minted before withdrawal', async function () {
+      const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, mockNftIndex]));
+      const _l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
+
+      expect(_l2Nft['nftContentHash']).to.equal(ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 32));
+    });
+
+    it('should perform mint and then withdraw', async function () {
       withdrawOp = {
         txType: 11, // WithdrawNft
         accountIndex: 1,
@@ -122,16 +131,7 @@ describe('NFT functionality', function () {
         nftContentHash: mockHash,
         nftContentType: 0,
       };
-    });
 
-    it('NFT is not minted before withdrawal', async function () {
-      const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, mockNftIndex]));
-      const _l2Nft = await zkBNB.getMintedL2NftInfo(nftKey);
-
-      expect(_l2Nft['nftContentHash']).to.equal(ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 32));
-    });
-
-    it('should perform mint and then withdraw', async function () {
       await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp))
         .to.emit(zkBNB, 'WithdrawNft')
         .withArgs(1, mockNftFactory.address, acc1.address, mockNftIndex);
@@ -161,7 +161,9 @@ describe('NFT functionality', function () {
 
     before(async function () {
       mockNftFactory.mintFromZkBNB.reverts();
+    });
 
+    it('store pending withdrawn NFT on mint failure', async function () {
       withdrawOp2 = {
         txType: 11, // WithdrawNft
         accountIndex: 1,
@@ -177,9 +179,7 @@ describe('NFT functionality', function () {
         nftContentHash: mockHash,
         nftContentType: 0,
       };
-    });
 
-    it('store pending withdrawn NFT on mint failure', async function () {
       await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp2))
         .to.emit(zkBNB, 'WithdrawalNFTPending')
         .withArgs(nftIndex);
@@ -268,10 +268,6 @@ describe('NFT functionality', function () {
         nftContentHash: mockHash,
         nftContentType: 0,
       };
-
-      await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp))
-        .to.emit(zkBNB, 'WithdrawNft')
-        .withArgs(accountIndex, mockNftFactory.address, acc1.address, mockNftIndex);
     });
 
     it('deposit the 1st withdrawn NFT', async function () {
@@ -346,7 +342,7 @@ describe('NFT functionality', function () {
     });
 
     it('should be able to request full exit Nft', async function () {
-      await zkBNB.connect(acc1).requestFullExitNft(acc1.address, acc1.address, nftIndex, 0);
+      await zkBNB.connect(acc1).requestFullExitNft(accountIndex, acc1.address, nftIndex, 0);
     });
 
     it('check pubdata of full exit request', async function () {
