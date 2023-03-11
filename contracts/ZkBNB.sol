@@ -253,6 +253,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
     }
 
+    // padding zero transactions
+    if (_newBlock.publicData.length < _newBlock.blockSize * TxTypes.PACKED_TX_PUBDATA_BYTES) {
+      _newBlock.publicData = bytes.concat(
+        _newBlock.publicData,
+        new bytes(_newBlock.blockSize * TxTypes.PACKED_TX_PUBDATA_BYTES - _newBlock.publicData.length)
+      );
+    }
+
     // Check onchain operations
     (bytes32 pendingOnchainOpsHash, uint64 priorityReqCommitted) = collectOnchainOps(_newBlock);
 
