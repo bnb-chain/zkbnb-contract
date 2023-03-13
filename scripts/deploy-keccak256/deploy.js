@@ -127,6 +127,14 @@ async function main() {
     }
   }
 
+  // Add baseURI into governance
+  console.log(chalk.blue('📥 Add baseURI into governance...'));
+  const baseURIs = [[0, 'ipfs://f01701220']];
+  for (const [type, baseURI] of baseURIs) {
+    await proxyGovernance.updateBaseURI(type, baseURI);
+    console.log(chalk.blue(`\t🔧 Added baseURI ${type}:${baseURI}`));
+  }
+
   // Add tokens into assetGovernance
   // add asset
   console.log(chalk.blue('📥 Add tokens into assetGovernance asset list...'));
