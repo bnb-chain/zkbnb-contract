@@ -107,13 +107,7 @@ async function main() {
   // deploy default nft factory
   console.log(chalk.blue('⚙️ Setting ZkBNB DefaultNftFactory'));
   console.log('\t🚀Deploy DefaultNftFactory...');
-  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy(
-    'ZkBNB',
-    'ZkBNB',
-    'ipfs://f01701220',
-    event[5],
-    owner.address,
-  );
+  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy('ZkBNB', 'ZkBNB', event[5], owner.address);
   await DefaultNftFactory.deployed();
 
   console.log('\t🔧Set default nft factory...');
