@@ -16,4 +16,8 @@ contract BytesTest {
   function concatStringAndBytes32(string calldata prefix, bytes32 hash) external view returns (string memory) {
     return string(abi.encodePacked(prefix, Bytes.bytes32ToHexString(hash, false)));
   }
+
+  function sliceBytes(bytes memory _bytes, uint256 start, uint256 length) external view returns (bytes memory) {
+    return Bytes.slice(_bytes, start, length);
+  }
 }
