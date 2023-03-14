@@ -19,4 +19,8 @@ contract TxTypesTest {
   function testReadFullExitNftPubData(bytes memory _data) external pure returns (TxTypes.FullExitNft memory parsed) {
     return TxTypes.readFullExitNftPubData(_data);
   }
+
+  function testReadChangePubKeyPubData(bytes memory _data) external pure returns (TxTypes.ChangePubKey memory parsed) {
+    return TxTypes.readChangePubKeyPubData(_data);
+  }
 }
