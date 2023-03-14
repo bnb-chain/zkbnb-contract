@@ -26,7 +26,6 @@ library TxTypes {
 
   // ChangePubKey pubdata
   struct ChangePubKey {
-    uint8 txType;
     uint32 accountIndex;
     bytes32 pubkeyX;
     bytes32 pubkeyY;
@@ -36,7 +35,6 @@ library TxTypes {
 
   // Deposit pubdata
   struct Deposit {
-    uint8 txType;
     uint32 accountIndex;
     address toAddress;
     uint16 assetId;
@@ -45,7 +43,6 @@ library TxTypes {
 
   // Withdraw pubdata
   struct Withdraw {
-    uint8 txType;
     uint32 accountIndex;
     address toAddress;
     uint16 assetId;
@@ -56,7 +53,6 @@ library TxTypes {
 
   // Withdraw Nft pubdata
   struct WithdrawNft {
-    uint8 txType;
     uint32 accountIndex;
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
@@ -73,7 +69,6 @@ library TxTypes {
 
   // full exit pubdata
   struct FullExit {
-    uint8 txType;
     uint32 accountIndex;
     uint16 assetId;
     uint128 assetAmount;
@@ -82,7 +77,6 @@ library TxTypes {
 
   // full exit nft pubdata
   struct FullExitNft {
-    uint8 txType;
     uint32 accountIndex;
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
@@ -95,7 +89,6 @@ library TxTypes {
   }
 
   struct DepositNft {
-    uint8 txType;
     uint32 accountIndex;
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;

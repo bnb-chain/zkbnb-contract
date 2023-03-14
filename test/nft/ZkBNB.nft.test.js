@@ -3,7 +3,6 @@ const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 const assert = require('assert');
 const CID = require('cids');
-var request = require('sync-request');
 
 const { expect } = chai;
 chai.use(smock.matchers);
@@ -117,7 +116,6 @@ describe('NFT functionality', function () {
 
     it('should perform mint and then withdraw', async function () {
       withdrawOp = {
-        txType: 11, // WithdrawNft
         accountIndex: 1,
         creatorAccountIndex: 0,
         creatorTreasuryRate: 5,
@@ -165,7 +163,6 @@ describe('NFT functionality', function () {
 
     it('store pending withdrawn NFT on mint failure', async function () {
       withdrawOp2 = {
-        txType: 11, // WithdrawNft
         accountIndex: 1,
         creatorAccountIndex: 0,
         creatorTreasuryRate: 5,
@@ -187,7 +184,6 @@ describe('NFT functionality', function () {
       const result = await zkBNB.getPendingWithdrawnNFT(nftIndex);
 
       assert.deepStrictEqual(withdrawOp2, {
-        txType: result['txType'],
         accountIndex: result['accountIndex'],
         creatorAccountIndex: result['creatorAccountIndex'],
         creatorTreasuryRate: result['creatorTreasuryRate'],
@@ -254,7 +250,6 @@ describe('NFT functionality', function () {
 
     before(async () => {
       withdrawOp = {
-        txType: 11, // WithdrawNft
         accountIndex,
         creatorAccountIndex: 0,
         creatorTreasuryRate: 5,
@@ -321,7 +316,7 @@ describe('NFT functionality', function () {
 
     before(async () => {
       withdrawOp = {
-        txType: 11, // WithdrawNft
+        // WithdrawNft
         accountIndex,
         creatorAccountIndex: 0,
         creatorTreasuryRate: 5,
