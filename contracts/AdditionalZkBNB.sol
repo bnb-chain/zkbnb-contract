@@ -38,6 +38,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
         Nft
     */
   function performDesert(
+    StoredBlockInfo memory _storedBlockInfo,
     uint256 _nftRoot,
     ExodusVerifier.AssetExitData calldata _assetExitData,
     ExodusVerifier.AccountExitData calldata _accountExitData,
@@ -53,6 +54,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     require(!performedDesert[_accountExitData.accountId][_assetExitData.assetId], "t");
     // msg.sender should be asset owner
     require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
+    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u"); // incorrect stored block info
 
     bool proofCorrect = exodusVerifier.verifyExitProofBalance(
       uint256(stateRoot),
@@ -69,6 +71,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
 
   /// @notice perform desert mode for nft
   function performDesertNft(
+    StoredBlockInfo memory _storedBlockInfo,
     uint256 _assetRoot,
     ExodusVerifier.AccountExitData calldata _accountExitData,
     ExodusVerifier.NftExitData[] memory _exitNfts,
@@ -81,6 +84,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     require(_exitNfts.length >= 1, "Z");
     // msg.sender should be nft owner
     require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
+    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u"); // incorrect stored block info
 
     bool proofCorrect = exodusVerifier.verifyExitNftProof(
       uint256(stateRoot),
