@@ -179,7 +179,6 @@ contract AdditionalZkBNB is Storage, Config, Events {
   function registerDeposit(uint16 _assetId, uint128 _amount, address _to) internal {
     // Priority Queue request
     TxTypes.Deposit memory _tx = TxTypes.Deposit({
-      txType: uint8(TxTypes.TxType.Deposit),
       accountIndex: 0, // unknown at the moment
       toAddress: _to,
       assetId: _assetId,

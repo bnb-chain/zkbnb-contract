@@ -128,7 +128,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
 
     TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
-      txType: uint8(TxTypes.TxType.DepositNft),
       accountIndex: 0, // unknown at this point
       creatorAccountIndex: creatorAccountIndex,
       creatorTreasuryRate: creatorTreasuryRate,
@@ -612,7 +611,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         // withdraw nft
         if (_tx.nftContentHash != bytes32(0)) {
           TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
-            txType: uint8(TxTypes.TxType.WithdrawNft),
             accountIndex: _tx.accountIndex,
             creatorAccountIndex: _tx.creatorAccountIndex,
             creatorTreasuryRate: _tx.creatorTreasuryRate,
@@ -707,7 +705,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
     // Priority Queue request
     TxTypes.FullExit memory _tx = TxTypes.FullExit({
-      txType: uint8(TxTypes.TxType.FullExit),
       accountIndex: _accountIndex,
       assetId: assetId,
       assetAmount: 0, // unknown at this point
@@ -728,7 +725,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public onlyActive {
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
-      txType: uint8(TxTypes.TxType.FullExitNft),
       accountIndex: _accountIndex,
       creatorAccountIndex: 0, // unknown
       creatorTreasuryRate: 0,
