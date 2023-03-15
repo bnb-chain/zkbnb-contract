@@ -50,7 +50,6 @@ describe('TxTypesTest', function () {
     expect(parsed['accountIndex']).to.equal(fullExitNft.accountIndex);
     expect(parsed['nftIndex']).to.equal(fullExitNft.nftIndex);
     expect(parsed['owner']).to.equal(fullExitNft.owner);
-    expect(parsed['creatorAddress']).to.equal(fullExitNft.creatorAddress);
   });
 
   it('ChangePubKey pudata should be deserialized correctly', async function () {

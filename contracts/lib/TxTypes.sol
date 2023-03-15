@@ -343,7 +343,7 @@ library TxTypes {
       _tx.nftIndex,
       uint16(0), // collection id
       _tx.owner, //
-      _tx.creatorAddress, // creator account name hash
+      address(0), // creator address
       bytes32(0), // nft content hash
       uint8(0) // nft content type
     );
