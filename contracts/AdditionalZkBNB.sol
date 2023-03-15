@@ -29,7 +29,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
             NftRoot
         Account
             AccountIndex
-            AccountNameHash bytes32
+            L1Address
             PublicKey
             AssetRoot
         Asset
@@ -38,56 +38,57 @@ contract AdditionalZkBNB is Storage, Config, Events {
         Nft
     */
   function performDesert(
-    /* StoredBlockInfo memory _storedBlockInfo, */
     uint256 _nftRoot,
-    ExodusVerifier.ExitData calldata _exitData,
+    ExodusVerifier.AssetExitData calldata _assetExitData,
+    ExodusVerifier.AccountExitData calldata _accountExitData,
     uint256[16] calldata _assetMerkleProof,
     uint256[32] calldata _accountMerkleProof
   ) external {
-    require(_exitData.accountId <= MAX_ACCOUNT_INDEX, "e");
-    require(_exitData.accountId != SPECIAL_ACCOUNT_ID, "v");
+    require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
+    require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
 
     // must be in exodus mode
     require(desertMode, "s");
     // already exited
-    require(!performedDesert[_exitData.accountId][_exitData.assetId], "t");
-
-    /* require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u"); */
-    // incorrect stored block info
+    require(!performedDesert[_accountExitData.accountId][_assetExitData.assetId], "t");
+    // msg.sender should be asset owner
+    require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
 
     bool proofCorrect = exodusVerifier.verifyExitProofBalance(
       uint256(stateRoot),
       _nftRoot,
-      _exitData,
+      _assetExitData,
+      _accountExitData,
       _assetMerkleProof,
       _accountMerkleProof
     );
     require(proofCorrect, "x");
 
-    /* address owner = znsController.getOwner(_exitData.accountNameHash); */
-    /* require(owner == msg.sender, "z"); */
-
-    performedDesert[_exitData.accountId][_exitData.assetId] = true;
+    performedDesert[_accountExitData.accountId][_assetExitData.assetId] = true;
   }
 
   /// @notice perform desert mode for nft
   function performDesertNft(
-    uint _ownerAccountIndex,
-    uint256 _accountRoot,
-    ExodusVerifier.ExitNftData[] memory _exitNfts,
+    uint256 _assetRoot,
+    ExodusVerifier.AccountExitData calldata _accountExitData,
+    ExodusVerifier.NftExitData[] memory _exitNfts,
+    uint256[32] calldata _accountMerkleProof,
     uint256[40][] memory _nftMerkleProofs
   ) external {
-    require(_ownerAccountIndex <= MAX_ACCOUNT_INDEX, "e");
-    require(_ownerAccountIndex != SPECIAL_ACCOUNT_ID, "v");
-
+    // FIXME
+    /* require(_ownerAccountIndex <= MAX_ACCOUNT_INDEX, "e"); */
+    /* require(_ownerAccountIndex != SPECIAL_ACCOUNT_ID, "v"); */
     require(_exitNfts.length >= 1, "Z");
+    // msg.sender should be nft owner
+    require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
 
     bool proofCorrect = exodusVerifier.verifyExitNftProof(
       uint256(stateRoot),
-      _accountRoot,
-      _ownerAccountIndex,
+      _assetRoot,
+      _accountExitData,
       _exitNfts,
-      _nftMerkleProofs
+      _nftMerkleProofs,
+      _accountMerkleProof
     );
     require(proofCorrect, "x");
 
@@ -121,7 +122,6 @@ contract AdditionalZkBNB is Storage, Config, Events {
         ++currentDepositIdx;
 
         TxTypes.Deposit memory _tx = TxTypes.readDepositPubData(depositPubdata);
-        /* address owner = znsController.getOwner(_tx.accountNameHash); */
         bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, uint16(_tx.assetId));
         pendingBalances[packedBalanceKey].balanceToWithdraw += _tx.amount;
       }

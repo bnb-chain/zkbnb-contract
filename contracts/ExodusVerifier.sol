@@ -8,30 +8,30 @@ contract ExodusVerifier {
   IPoseidonT6 poseidonT6;
   IPoseidonT7 poseidonT7;
 
-  struct ExitData {
+  struct AssetExitData {
     uint32 assetId;
-    uint32 accountId;
     uint amount;
     uint offerCanceledOrFinalized;
-    bytes32 accountNameHash;
+  }
+
+  struct AccountExitData {
+    uint32 accountId;
+    address l1Address;
     bytes32 pubKeyX;
     bytes32 pubKeyY;
     uint nonce;
     uint collectionNonce;
   }
 
-  struct ExitNftData {
+  struct NftExitData {
     uint64 nftIndex;
+    uint ownerAccountIndex;
     uint creatorAccountIndex;
     bytes32 nftContentHash;
+    uint8 nftContentType;
     uint creatorTreasuryRate;
     uint collectionId;
   }
-
-  /* struct ExitNftData { */
-  /*   uint ownerAccountIndex; */
-  /*   NftData[] nftData;; // list of NFTs to exit */
-  /* } */
 
   constructor(address _poseidonT3, address _poseidonT6, address _poseidonT7) {
     poseidonT3 = IPoseidonT3(_poseidonT3);
@@ -42,23 +42,24 @@ contract ExodusVerifier {
   function verifyExitProofBalance(
     uint256 stateRoot,
     uint256 nftRoot,
-    ExitData calldata exitData,
+    AssetExitData calldata assetData,
+    AccountExitData calldata accountData,
     uint256[16] memory assetMerkleProof,
     uint256[32] memory accountMerkleProof
   ) external view returns (bool) {
     uint256 assetRoot = getAssetRoot(
-      exitData.assetId,
-      exitData.amount,
-      exitData.offerCanceledOrFinalized,
+      assetData.assetId,
+      assetData.amount,
+      assetData.offerCanceledOrFinalized,
       assetMerkleProof
     );
     uint256 accountRoot = getAccountRoot(
-      exitData.accountId,
-      uint256(exitData.accountNameHash),
-      uint256(exitData.pubKeyX),
-      uint256(exitData.pubKeyY),
-      exitData.nonce,
-      exitData.collectionNonce,
+      accountData.accountId,
+      uint256(uint160(accountData.l1Address)),
+      uint256(accountData.pubKeyX),
+      uint256(accountData.pubKeyY),
+      accountData.nonce,
+      accountData.collectionNonce,
       assetRoot,
       accountMerkleProof
     );
@@ -67,24 +68,37 @@ contract ExodusVerifier {
 
   function verifyExitNftProof(
     uint256 stateRoot,
-    uint256 accountRoot,
-    uint ownerAccountIndex,
-    ExitNftData[] memory exitNfts, // suppose 100 nfts exit at once
-    uint256[40][] memory nftMerkleProofs
+    uint256 assetRoot,
+    AccountExitData memory accountData,
+    NftExitData[] memory exitNfts,
+    uint256[40][] memory nftMerkleProofs,
+    uint256[32] memory accountMerkleProof
   ) public view returns (bool) {
     require(exitNfts.length == nftMerkleProofs.length, "wrong length");
 
+    uint256 accountRoot = getAccountRoot(
+      accountData.accountId,
+      uint256(uint160(accountData.l1Address)),
+      uint256(accountData.pubKeyX),
+      uint256(accountData.pubKeyY),
+      accountData.nonce,
+      accountData.collectionNonce,
+      assetRoot,
+      accountMerkleProof
+    );
+
     for (uint i = 0; i < exitNfts.length; i++) {
-      ExitNftData memory nft = exitNfts[i];
-      uint256[40] memory proofs = nftMerkleProofs[i];
+      NftExitData memory nft = exitNfts[i];
+      require(nft.ownerAccountIndex == accountData.accountId, "given account is not nft owner");
+      /* uint256[40] memory proofs = nftMerkleProofs[i]; */
       uint nftRoot = getNftRoot(
         nft.nftIndex,
         nft.creatorAccountIndex,
-        ownerAccountIndex,
+        nft.ownerAccountIndex,
         uint256(nft.nftContentHash),
         nft.creatorTreasuryRate,
         nft.collectionId,
-        proofs
+        nftMerkleProofs[i]
       );
       if (hashNode(accountRoot, nftRoot) == stateRoot) {
         continue;
@@ -117,7 +131,7 @@ contract ExodusVerifier {
 
   function getAccountRoot(
     uint32 accountId,
-    uint256 accountNameHash,
+    uint256 l1Address,
     uint256 pubKeyX,
     uint256 pubKeyY,
     uint256 nonce,
@@ -126,7 +140,7 @@ contract ExodusVerifier {
     uint256[32] memory accountMerkleProof
   ) internal view returns (uint256) {
     uint256[6] memory inputs;
-    inputs[0] = accountNameHash;
+    inputs[0] = l1Address;
     inputs[1] = pubKeyX;
     inputs[2] = pubKeyY;
     inputs[3] = nonce;
