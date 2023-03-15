@@ -1,10 +1,9 @@
-const chai = require('chai');
-const { ethers } = require('hardhat');
-const { smock } = require('@defi-wonderland/smock');
-const assert = require('assert');
-const CID = require('cids');
+import { ethers } from 'hardhat';
+import chai, { expect } from 'chai';
+import { smock } from '@defi-wonderland/smock';
+import assert from 'assert';
+import CID = require('cids');
 
-const { expect } = chai;
 chai.use(smock.matchers);
 const abi = ethers.utils.defaultAbiCoder;
 
@@ -337,7 +336,7 @@ describe('NFT functionality', function () {
     });
 
     it('should be able to request full exit Nft', async function () {
-      await zkBNB.connect(acc1).requestFullExitNft(accountIndex, acc1.address, nftIndex, 0);
+      await zkBNB.connect(acc1).requestFullExitNft(accountIndex, nftIndex);
     });
 
     it('check pubdata of full exit request', async function () {
@@ -355,8 +354,8 @@ describe('NFT functionality', function () {
           0, // creator treasury rate
           nftIndex,
           0, // collection id
-          acc1.address, // account name hash
-          acc1.address, // creator name hash
+          acc1.address, // owner address
+          ethers.constants.AddressZero, // creator address
           ethers.utils.hexZeroPad('0x0'.toLowerCase(), 32), // nft content hash
           0,
         ],
