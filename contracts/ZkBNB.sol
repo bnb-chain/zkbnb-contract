@@ -724,15 +724,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
-  /// @param _creatorAddress creator's L1 address
   /// @param _nftIndex account NFT index in zkbnb network
-  /// @param _nftContentType the type of storage protocol
-  function requestFullExitNft(
-    uint32 _accountIndex,
-    address _creatorAddress,
-    uint32 _nftIndex,
-    uint8 _nftContentType
-  ) public onlyActive {
+  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public onlyActive {
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
       txType: uint8(TxTypes.TxType.FullExitNft),
@@ -742,9 +735,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       nftIndex: _nftIndex,
       collectionId: 0, // unknown
       owner: msg.sender, // accountNameHahsh => owner
-      creatorAddress: _creatorAddress, // creatorAccountNameHash => creatorAddress
+      creatorAddress: address(0), // unknown
       nftContentHash: bytes32(0x0), // unknown,
-      nftContentType: _nftContentType // New added
+      nftContentType: 0 //unkown
     });
     bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
     addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);

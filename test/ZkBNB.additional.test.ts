@@ -355,7 +355,7 @@ describe('ZkBNB', function () {
         it('should can commit fullExitNFT operation', async () => {
           mockNftFactory.ownerOf.returns(zkBNB.address);
 
-          const tx = await zkBNB.requestFullExitNft(0, zkBNB.signer.address, nftL1TokenId, 0);
+          const tx = await zkBNB.requestFullExitNft(0, nftL1TokenId);
 
           const receipt = await tx.wait();
           const event = receipt.events.find((event) => {
@@ -394,7 +394,7 @@ describe('ZkBNB', function () {
 
       // Pre-submit a block for every case
       // commit block #1 fullExit nft;
-      let tx = await zkBNB.requestFullExitNft(0, zkBNB.signer.address, nftL1TokenId, 0);
+      let tx = await zkBNB.requestFullExitNft(0, nftL1TokenId);
       let receipt = await tx.wait();
       let event = receipt.events.find((event) => {
         return event.event === 'NewPriorityRequest';
