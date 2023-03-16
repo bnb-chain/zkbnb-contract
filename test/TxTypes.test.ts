@@ -66,4 +66,61 @@ describe('TxTypesTest', function () {
     expect(parsed['owner']).to.equal('0xB64d00616958131824B472CC20C3d47Bb5d9926C');
     expect(parsed['nonce']).to.equal(0);
   });
+
+  it('Withdraw pubdata should be read correctly', async function () {
+    const rawPubdata =
+      '05000000038b2c5a5744f42aa9269baabdd05933a96d8ef9110000000000000000000000000000000000640000fa0a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+
+    const bytes = ethers.utils.arrayify('0x' + rawPubdata);
+    const pubdata = await this.bytesTest.sliceBytes(bytes, 0, 121);
+    const parsed = await this.txTypesTest.testReadWithdrawPubData(pubdata);
+
+    expect(parsed['accountIndex']).to.equal(3);
+    expect(parsed['toAddress']).to.equal('0x8b2C5A5744F42AA9269BaabDd05933a96D8EF911');
+    expect(parsed['assetId']).to.equal(0);
+    expect(parsed['assetAmount']).to.equal(ethers.BigNumber.from('100'));
+    expect(parsed['gasFeeAssetId']).to.equal(0);
+    expect(parsed['gasFeeAssetAmount']).to.equal(64010);
+  });
+
+  it('Deposit pubdata should be read correctly', async function () {
+    const deposit = {
+      txType: 2,
+      accountIndex: 1,
+      toAddress: acc1.address,
+      assetId: 6,
+      amount: 50,
+    };
+    const encoded = await this.txTypesTest.testWriteDepositPubData(deposit);
+    const parsed = await this.txTypesTest.testReadDepositPubData(encoded);
+
+    expect(parsed['toAddress']).to.equal(acc1.address);
+    expect(parsed['assetId']).to.equal(deposit.assetId);
+    expect(parsed['amount']).to.equal(deposit.amount);
+  });
+
+  it('DepositNft pubdata should be read correctly', async function () {
+    const depositNft = {
+      txType: 3,
+      accountIndex: 4,
+      creatorAccountIndex: 5,
+      creatorTreasuryRate: 20,
+      nftIndex: 111,
+      collectionId: 222,
+      owner: owner.address,
+      nftContentHash: ethers.utils.randomBytes(32),
+      nftContentType: 1,
+    };
+
+    const encoded = await this.txTypesTest.testWriteDepositNftPubData(depositNft);
+    const parsed = await this.txTypesTest.testReadDepositNftPubData(encoded);
+
+    expect(parsed['creatorAccountIndex']).to.equal(depositNft.creatorAccountIndex);
+    expect(parsed['creatorTreasuryRate']).to.equal(depositNft.creatorTreasuryRate);
+    expect(parsed['nftIndex']).to.equal(depositNft.nftIndex);
+    expect(parsed['collectionId']).to.equal(depositNft.collectionId);
+    expect(parsed['owner']).to.equal(depositNft.owner);
+    expect(parsed['nftContentHash']).to.equal(ethers.utils.hexlify(depositNft.nftContentHash));
+    expect(parsed['nftContentType']).to.equal(depositNft.nftContentType);
+  });
 });

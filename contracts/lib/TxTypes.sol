@@ -240,8 +240,8 @@ library TxTypes {
     (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
 
     // 1 + 4 + 20 + 2 + 16 + 2 + 2 + x = 121
-    // x = 76
-    offset += 76;
+    // x = 74
+    offset += 74;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "4N");
     return parsed;
