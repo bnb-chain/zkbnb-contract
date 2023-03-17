@@ -167,7 +167,6 @@ describe('NFT functionality', function () {
         creatorTreasuryRate: 5,
         nftIndex,
         collectionId: 0,
-        gasFeeAccountIndex: 1,
         gasFeeAssetId: 0, //BNB
         gasFeeAssetAmount: 666,
         toAddress: acc2.address,
@@ -188,7 +187,6 @@ describe('NFT functionality', function () {
         creatorTreasuryRate: result['creatorTreasuryRate'],
         nftIndex: result['nftIndex'],
         collectionId: result['collectionId'],
-        gasFeeAccountIndex: result['gasFeeAccountIndex'],
         gasFeeAssetId: result['gasFeeAssetId'],
         gasFeeAssetAmount: result['gasFeeAssetAmount'],
         toAddress: result['toAddress'],

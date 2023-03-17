@@ -57,8 +57,7 @@ library TxTypes {
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
     uint40 nftIndex;
-    uint32 collectionId;
-    uint32 gasFeeAccountIndex;
+    uint16 collectionId; // uint16
     uint16 gasFeeAssetId;
     uint16 gasFeeAssetAmount;
     address toAddress;
@@ -262,9 +261,7 @@ library TxTypes {
     // nft index
     (offset, parsed.nftIndex) = Bytes.readUInt40(_data, offset);
     // collection id
-    (offset, parsed.collectionId) = Bytes.readUInt32(_data, offset);
-    // gas fee account index
-    (offset, parsed.gasFeeAccountIndex) = Bytes.readUInt32(_data, offset);
+    (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
     // gas fee asset id
     (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
     // gas fee asset amount
@@ -278,9 +275,9 @@ library TxTypes {
     // nft content type
     (offset, parsed.nftContentType) = Bytes.readUInt8(_data, offset);
 
-    // 1 + 4 + 4 + 2 + 5 + 4 + 4 + 2 + 2 + 20 + 20 + 4 + 1 + x = 121
-    // x = 48
-    offset += 48;
+    // 1 + 4 + 4 + 2 + 5 + 2 + 2 + 2 + 20 + 20 + 32 + 1 + x = 121
+    // x = 26
+    offset += 26;
     require(offset == PACKED_TX_PUBDATA_BYTES, "5N");
     return parsed;
   }

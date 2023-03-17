@@ -616,7 +616,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
             creatorTreasuryRate: _tx.creatorTreasuryRate,
             nftIndex: _tx.nftIndex,
             collectionId: _tx.collectionId,
-            gasFeeAccountIndex: 0,
             gasFeeAssetId: 0,
             gasFeeAssetAmount: 0,
             toAddress: _tx.owner,

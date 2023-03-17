@@ -28,6 +28,10 @@ contract TxTypesTest {
     return TxTypes.readWithdrawPubData(_data);
   }
 
+  function testReadWithdrawNftPubData(bytes memory _data) external pure returns (TxTypes.WithdrawNft memory parsed) {
+    return TxTypes.readWithdrawNftPubData(_data);
+  }
+
   function testWriteDepositPubData(TxTypes.Deposit memory _tx) external pure returns (bytes memory buf) {
     return TxTypes.writeDepositPubDataForPriorityQueue(_tx);
   }

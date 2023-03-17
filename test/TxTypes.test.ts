@@ -80,7 +80,28 @@ describe('TxTypesTest', function () {
     expect(parsed['assetId']).to.equal(0);
     expect(parsed['assetAmount']).to.equal(ethers.BigNumber.from('100'));
     expect(parsed['gasFeeAssetId']).to.equal(0);
-    expect(parsed['gasFeeAssetAmount']).to.equal(64010);
+    expect(parsed['gasFeeAssetAmount']).to.equal(64010); // Fix overflow; actual value is 20000000000000 in L2
+  });
+
+  it('WithdrawNft pubdata should be read correctly', async function () {
+    const rawPubdata =
+      '0b00000002000000020000000000000100000000fa0ad757c6bdb5837d721b04de87c155dba72c9b076cb64d00616958131824b472cc20c3d47bb5d9926c26c21ba5c313610ad92bc967d374d7dbd3ce083e38a403b6f58a9498753a0a32000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+
+    const bytes = ethers.utils.arrayify('0x' + rawPubdata);
+    const pubdata = await this.bytesTest.sliceBytes(bytes, 0, 121);
+    const parsed = await this.txTypesTest.testReadWithdrawNftPubData(pubdata);
+
+    expect(parsed['accountIndex']).to.equal(2);
+    expect(parsed['creatorAccountIndex']).to.equal(2);
+    expect(parsed['creatorTreasuryRate']).to.equal(0);
+    expect(parsed['nftIndex']).to.equal(1);
+    expect(parsed['collectionId']).to.equal(0);
+    expect(parsed['gasFeeAssetId']).to.equal(0);
+    expect(parsed['gasFeeAssetAmount']).to.equal(64010); // Fix overflow; actual value is 20000000000000 in L2
+    expect(parsed['toAddress']).to.equal('0xd757C6bDb5837d721B04DE87c155DBa72c9B076C');
+    expect(parsed['creatorAddress']).to.equal('0xB64d00616958131824B472CC20C3d47Bb5d9926C');
+    expect(parsed['nftContentHash']).to.equal('0x26c21ba5c313610ad92bc967d374d7dbd3ce083e38a403b6f58a9498753a0a32');
+    expect(parsed['nftContentType']).to.equal(0);
   });
 
   it('Deposit pubdata should be read correctly', async function () {
