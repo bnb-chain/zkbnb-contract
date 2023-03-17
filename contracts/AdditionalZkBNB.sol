@@ -150,6 +150,50 @@ contract AdditionalZkBNB is Storage, Config, Events {
     registerDeposit(0, SafeCast.toUint128(msg.value), _to);
   }
 
+  /// @notice Deposit NFT to Layer 2, ERC721 is supported
+  function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
+    // check if the nft is mint from layer-2
+    bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
+    require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
+
+    // Transfer the tokens to this contract
+    bool success;
+    try IERC721(_nftL1Address).safeTransferFrom(msg.sender, address(this), _nftL1TokenId) {
+      success = true;
+    } catch {
+      success = false;
+    }
+    require(success, "nft transfer failed");
+    // check if the NFT has arrived
+    require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
+
+    bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
+    uint8 nftContentType = mintedNfts[nftKey].nftContentType;
+    uint16 collectionId = mintedNfts[nftKey].collectionId;
+    uint40 nftIndex = mintedNfts[nftKey].nftIndex;
+    uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
+    uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
+
+    TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
+      accountIndex: 0, // unknown at this point
+      creatorAccountIndex: creatorAccountIndex,
+      creatorTreasuryRate: creatorTreasuryRate,
+      nftIndex: nftIndex,
+      collectionId: collectionId,
+      owner: _to,
+      nftContentHash: nftContentHash,
+      nftContentType: nftContentType
+    });
+
+    // compact pub data
+    bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
+
+    // add into priority request queue
+    addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
+
+    emit DepositNft(_to, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
+  }
+
   /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
@@ -170,6 +214,55 @@ contract AdditionalZkBNB is Storage, Config, Events {
     require(depositAmount > 0, "D");
 
     registerDeposit(assetId, depositAmount, _to);
+  }
+
+  /// @notice Register full exit request - pack pubdata, add priority request
+  /// @param _accountIndex Numerical id of the account
+  /// @param _asset Token address, 0 address for BNB
+  function requestFullExit(uint32 _accountIndex, address _asset) public onlyActive {
+    require(_accountIndex <= MAX_ACCOUNT_INDEX, "e");
+
+    uint16 assetId;
+    if (_asset == address(0)) {
+      assetId = 0;
+    } else {
+      assetId = governance.validateAssetAddress(_asset);
+    }
+
+    // Priority Queue request
+    TxTypes.FullExit memory _tx = TxTypes.FullExit({
+      accountIndex: _accountIndex,
+      assetId: assetId,
+      assetAmount: 0, // unknown at this point
+      owner: msg.sender
+    });
+    bytes memory pubData = TxTypes.writeFullExitPubDataForPriorityQueue(_tx);
+    addPriorityRequest(TxTypes.TxType.FullExit, pubData);
+
+    // User must fill storage slot of balancesToWithdraw(msg.sender, tokenId) with nonzero value
+    // In this case operator should just overwrite this slot during confirming withdrawal
+    bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, assetId);
+    pendingBalances[packedBalanceKey].gasReserveValue = FILLED_GAS_RESERVE_VALUE;
+  }
+
+  /// @notice Register full exit nft request - pack pubdata, add priority request
+  /// @param _accountIndex Numerical id of the account
+  /// @param _nftIndex account NFT index in zkbnb network
+  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public onlyActive {
+    // Priority Queue request
+    TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
+      accountIndex: _accountIndex,
+      creatorAccountIndex: 0, // unknown
+      creatorTreasuryRate: 0,
+      nftIndex: _nftIndex,
+      collectionId: 0, // unknown
+      owner: msg.sender, // accountNameHahsh => owner
+      creatorAddress: address(0), // unknown
+      nftContentHash: bytes32(0x0), // unknown,
+      nftContentType: 0 //unkown
+    });
+    bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
+    addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
   }
 
   /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
