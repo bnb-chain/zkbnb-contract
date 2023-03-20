@@ -13,7 +13,7 @@ import "./interfaces/Events.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
 
-import "./ExodusVerifier.sol";
+import "./DesertVerifier.sol";
 
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
@@ -40,23 +40,25 @@ contract AdditionalZkBNB is Storage, Config, Events {
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _nftRoot,
-    ExodusVerifier.AssetExitData calldata _assetExitData,
-    ExodusVerifier.AccountExitData calldata _accountExitData,
+    DesertVerifier.AssetExitData calldata _assetExitData,
+    DesertVerifier.AccountExitData calldata _accountExitData,
     uint256[16] calldata _assetMerkleProof,
     uint256[32] calldata _accountMerkleProof
   ) external {
     require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
     require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
 
-    // must be in exodus mode
+    // must be in desert mode
     require(desertMode, "s");
     // already exited
     require(!performedDesert[_accountExitData.accountId][_assetExitData.assetId], "t");
+
     // msg.sender should be asset owner
     require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
-    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u"); // incorrect stored block info
+    // stored block info should be consistent
+    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
 
-    bool proofCorrect = exodusVerifier.verifyExitProofBalance(
+    bool proofCorrect = desertVerifier.verifyExitProofBalance(
       uint256(stateRoot),
       _nftRoot,
       _assetExitData,
@@ -73,20 +75,21 @@ contract AdditionalZkBNB is Storage, Config, Events {
   function performDesertNft(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _assetRoot,
-    ExodusVerifier.AccountExitData calldata _accountExitData,
-    ExodusVerifier.NftExitData[] memory _exitNfts,
+    DesertVerifier.AccountExitData calldata _accountExitData,
+    DesertVerifier.NftExitData[] memory _exitNfts,
     uint256[32] calldata _accountMerkleProof,
     uint256[40][] memory _nftMerkleProofs
   ) external {
-    // FIXME
-    /* require(_ownerAccountIndex <= MAX_ACCOUNT_INDEX, "e"); */
-    /* require(_ownerAccountIndex != SPECIAL_ACCOUNT_ID, "v"); */
+    require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
+    require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
     require(_exitNfts.length >= 1, "Z");
+
     // msg.sender should be nft owner
     require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
-    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u"); // incorrect stored block info
+    // stored block info should be consistent
+    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
 
-    bool proofCorrect = exodusVerifier.verifyExitNftProof(
+    bool proofCorrect = desertVerifier.verifyExitNftProof(
       uint256(stateRoot),
       _assetRoot,
       _accountExitData,
@@ -96,20 +99,22 @@ contract AdditionalZkBNB is Storage, Config, Events {
     );
     require(proofCorrect, "x");
 
-    /* TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({ */
-    /*   txType: uint8(TxTypes.TxType.WithdrawNFT), */
-    /*   accountIndex: _exitData.creatorAccountIndex, */
-    /*   toAddress: _nftCreatorAddress, */
-    /*   proxyAddress: _nftCreatorAddress, */
-    /*   nftAssetId: _nftSerialId, */
-    /*   gasFeeAccountIndex: 0, */
-    /*   gasFeeAssetId: 0, */
-    /*   gasFeeAssetAmount: 0 */
-    /* }); */
-    /* pendingWithdrawnNFTs[_tokenId] = withdrawNftOp; */
-    /* emit WithdrawalNFTPending(_tokenId); */
+    for (uint256 i = 0; i < _exitNfts.length; i++) {
+      DesertVerifier.NftExitData memory nft = _exitNfts[i];
 
-    /* performedDesertNft[_exitData.accountId][_exitData.assetId] = true; */
+      TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
+        accountIndex: _accountExitData.accountId,
+        creatorAccountIndex: uint16(nft.creatorAccountIndex),
+        creatorTreasuryRate: uint16(nft.creatorTreasuryRate),
+        nftIndex: uint40(nft.nftIndex),
+        collectionId: uint16(nft.collectionId),
+        toAddress: msg.sender,
+        creatorAddress: address(0),
+        nftContentHash: nft.nftContentHash,
+        nftContentType: nft.nftContentType
+      });
+      pendingWithdrawnNFTs[uint40(nft.nftIndex)] = _withdrawNftTx;
+    }
   }
 
   function cancelOutstandingDepositsForExodusMode(uint64 _n, bytes[] memory _depositsPubData) external {

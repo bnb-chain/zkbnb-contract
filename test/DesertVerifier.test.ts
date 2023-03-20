@@ -5,7 +5,7 @@ import { Scalar } from 'ffjavascript';
 import { getAccountNameHash, randomBN } from './util';
 import exitDataJson from './performDesertAsset.json';
 
-describe('ExodusVerifier', function () {
+describe('DesertVerifier', function () {
   let owner, addr1;
   // poseidon wasm
   let poseidon;
@@ -16,8 +16,8 @@ describe('ExodusVerifier', function () {
   let poseidonT6;
   // poseidon contract with inputs uint256[6]
   let poseidonT7;
-  // contract to verify exodus proof
-  let exodusVerifier;
+  // contract to verify exit proof
+  let desertVerifier;
 
   let assetRoot;
   let accountRoot;
@@ -51,9 +51,9 @@ describe('ExodusVerifier', function () {
     poseidonT7 = await PoseidonT7.deploy();
     await poseidonT7.deployed();
 
-    const ExodusVerifier = await ethers.getContractFactory('ExodusVerifierTest');
-    exodusVerifier = await ExodusVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
-    await exodusVerifier.deployed();
+    const DesertVerifier = await ethers.getContractFactory('DesertVerifierTest');
+    desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
+    await desertVerifier.deployed();
   });
 
   it('should hash asset leaf node correctly', async () => {
@@ -65,7 +65,7 @@ describe('ExodusVerifier', function () {
   });
 
   it('should calculate asset tree root node correctly', async () => {
-    assetRoot = await exodusVerifier.testGetAssetRoot(
+    assetRoot = await desertVerifier.testGetAssetRoot(
       exitDataJson.ExitData.AssetId,
       exitDataJson.ExitData.Amount,
       exitDataJson.ExitData.OfferCanceledOrFinalized,
@@ -90,7 +90,7 @@ describe('ExodusVerifier', function () {
   });
 
   it('should calculate account root correctly', async () => {
-    accountRoot = await exodusVerifier.testGetAccountRoot(
+    accountRoot = await desertVerifier.testGetAccountRoot(
       exitDataJson.ExitData.AccountId,
       ethers.BigNumber.from(exitDataJson.ExitData.AccountNameHash),
       ethers.BigNumber.from(exitDataJson.ExitData.PubKeyX),
@@ -103,7 +103,7 @@ describe('ExodusVerifier', function () {
     console.log('done calculate account root:', accountRoot);
   });
 
-  it.skip('exodus proof verification should pass', async () => {
+  it.skip('desert proof verification should pass', async () => {
     const _stateRoot = poseidon([accountSMT.root, nftSMT.root]);
     const stateRoot = ethers.BigNumber.from(_stateRoot);
 
@@ -120,7 +120,7 @@ describe('ExodusVerifier', function () {
     const accountMerkleProof = toProofParam(accountProof, 31);
     const nftMerkleProof = toProofParam(nftProof, 39);
 
-    const res = await exodusVerifier.verifyExitProof(
+    const res = await desertVerifier.verifyExitProof(
       stateRoot,
       [0, 2, 0, 100, 1, randomBN(), randomBN(), randomBN(), 1, 1, 1, 2, randomBN(), 5, 1],
       assetMerkleProof,

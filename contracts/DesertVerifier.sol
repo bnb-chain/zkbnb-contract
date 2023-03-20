@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IPoseidon.sol";
 
-contract ExodusVerifier {
+contract DesertVerifier {
   IPoseidonT3 poseidonT3;
   IPoseidonT6 poseidonT6;
   IPoseidonT7 poseidonT7;

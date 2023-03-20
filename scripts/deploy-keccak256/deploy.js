@@ -47,9 +47,9 @@ async function main() {
 
   // Step 2: initialize deploy factory and finish deployment
 
-  // deploy Poseidon contracts and ExodusVerifier
-  console.log(chalk.green('\t📦 ExodusVerifier...'));
-  const exodusVerifier = await deployDesertVerifier(owner);
+  // deploy Poseidon contracts and DesertVerifier
+  console.log(chalk.green('\t📦 DesertVerifier...'));
+  const desertVerifier = await deployDesertVerifier(owner);
 
   // prepare deploy params
   // get ERC20s
@@ -91,7 +91,7 @@ async function main() {
       governor,
       governor,
       _listingToken,
-      exodusVerifier.address,
+      desertVerifier.address,
       upgradeableMaster.address,
     ],
     _genesisAccountRoot,
@@ -228,11 +228,11 @@ async function deployDesertVerifier(owner) {
   const poseidonT7 = await PoseidonT7.deploy();
   await poseidonT7.deployed();
 
-  const ExodusVerifier = await ethers.getContractFactory('ExodusVerifierTest');
-  const exodusVerifier = await ExodusVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
-  await exodusVerifier.deployed();
+  const DesertVerifier = await ethers.getContractFactory('DesertVerifierTest');
+  const desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
+  await desertVerifier.deployed();
 
-  return exodusVerifier;
+  return desertVerifier;
 }
 
 async function getContractFactories() {

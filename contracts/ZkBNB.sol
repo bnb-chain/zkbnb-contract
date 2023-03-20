@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
 import "./Storage.sol";
-import "./ExodusVerifier.sol";
+import "./DesertVerifier.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
@@ -52,10 +52,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     return this.onERC721Received.selector;
   }
 
-  /// @notice Checks if Desert mode must be entered. If true - enters exodus mode and emits ExodusMode event.
+  /// @notice Checks if Desert mode must be entered. If true - enters desert mode and emits DesertMode event.
   /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
-  /// @return bool flag that is true if the Exodus mode must be entered.
+  /// @return bool flag that is true if the desert mode must be entered.
   function activateDesertMode() public returns (bool) {
     // #if EASY_DESERT
     bool trigger = true;
@@ -78,8 +78,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _nftRoot,
-    ExodusVerifier.AssetExitData calldata _assetExitData,
-    ExodusVerifier.AccountExitData calldata _accountExitData,
+    DesertVerifier.AssetExitData calldata _assetExitData,
+    DesertVerifier.AccountExitData calldata _accountExitData,
     uint256[16] calldata _assetMerkleProof,
     uint256[32] calldata _accountMerkleProof
   ) external {
@@ -90,8 +90,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function performDesertNft(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _assetRoot,
-    ExodusVerifier.AccountExitData calldata _accountExitData,
-    ExodusVerifier.NftExitData[] memory _exitNfts,
+    DesertVerifier.AccountExitData calldata _accountExitData,
+    DesertVerifier.NftExitData[] memory _exitNfts,
     uint256[32] calldata _accountMerkleProof,
     uint256[40][] memory _nftMerkleProofs
   ) external {
@@ -99,7 +99,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
-  function cancelOutstandingDepositsForExodusMode(uint64 _n, bytes[] memory _depositsPubData) external {
+  function cancelOutstandingDepositsForDesertMode(uint64 _n, bytes[] memory _depositsPubData) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
   }
@@ -116,14 +116,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       address _governanceAddress,
       address _verifierAddress,
       address _additionalZkBNB,
-      address _exodusVerifier,
+      address _desertVerifier,
       bytes32 _genesisStateRoot
     ) = abi.decode(initializationParameters, (address, address, address, address, bytes32));
 
     verifier = ZkBNBVerifier(_verifierAddress);
     governance = Governance(_governanceAddress);
     additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
-    exodusVerifier = ExodusVerifier(_exodusVerifier);
+    desertVerifier = DesertVerifier(_desertVerifier);
 
     StoredBlockInfo memory zeroStoredBlockInfo = StoredBlockInfo(
       0,

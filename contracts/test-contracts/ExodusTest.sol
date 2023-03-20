@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "../ExodusVerifier.sol";
+import "../DesertVerifier.sol";
 
-contract ExodusVerifierTest is ExodusVerifier {
+contract DesertVerifierTest is DesertVerifier {
   constructor(
     address _poseidonT3,
     address _poseidonT6,
     address _poseidonT7
-  ) ExodusVerifier(_poseidonT3, _poseidonT6, _poseidonT7) {}
+  ) DesertVerifier(_poseidonT3, _poseidonT6, _poseidonT7) {}
 
   function testGetAssetRoot(
     uint256 assetId,
