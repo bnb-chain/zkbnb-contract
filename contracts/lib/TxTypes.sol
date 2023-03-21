@@ -47,8 +47,8 @@ library TxTypes {
     address toAddress;
     uint16 assetId;
     uint128 assetAmount;
-    uint16 gasFeeAssetId;
-    uint16 gasFeeAssetAmount;
+    // uint16 gasFeeAssetId; -- present in pubdata, ignored at serialization
+    // uint16 gasFeeAssetAmount; -- present in pubdata, ignored at serialization
   }
 
   // Withdraw Nft pubdata
@@ -57,9 +57,9 @@ library TxTypes {
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
     uint40 nftIndex;
-    uint16 collectionId; // uint16
-    uint16 gasFeeAssetId;
-    uint16 gasFeeAssetAmount;
+    uint16 collectionId;
+    // uint16 gasFeeAssetId; -- present in pubdata, ignored at serialization
+    // uint16 gasFeeAssetAmount; -- present in pubdata, ignored at serialization
     address toAddress;
     address creatorAddress; // creatorAccountNameHash => creatorAddress
     bytes32 nftContentHash;
@@ -234,13 +234,13 @@ library TxTypes {
     // amount
     (offset, parsed.assetAmount) = Bytes.readUInt128(_data, offset);
     // gas fee asset id
-    (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
+    // (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
     // gas fee asset amount
-    (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
+    // (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
 
-    // 1 + 4 + 20 + 2 + 16 + 2 + 2 + x = 121
-    // x = 74
-    offset += 74;
+    // 1 + 4 + 20 + 2 + 16 + x = 121
+    // x = 78
+    offset += 78;
 
     require(offset == PACKED_TX_PUBDATA_BYTES, "4N");
     return parsed;
@@ -263,9 +263,11 @@ library TxTypes {
     // collection id
     (offset, parsed.collectionId) = Bytes.readUInt16(_data, offset);
     // gas fee asset id
-    (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
+    // (offset, parsed.gasFeeAssetId) = Bytes.readUInt16(_data, offset);
     // gas fee asset amount
-    (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
+    // (offset, parsed.gasFeeAssetAmount) = Bytes.readUInt16(_data, offset);
+    offset += 4;
+
     // withdraw to L1 address
     (offset, parsed.toAddress) = Bytes.readAddress(_data, offset);
     // creator address
