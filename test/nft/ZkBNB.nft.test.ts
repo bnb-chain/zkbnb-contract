@@ -121,8 +121,6 @@ describe('NFT functionality', function () {
         nftIndex: mockNftIndex,
         collectionId: 0,
         gasFeeAccountIndex: 1,
-        gasFeeAssetId: 0, //BNB
-        gasFeeAssetAmount: 666,
         toAddress: acc1.address,
         creatorAddress: owner.address,
         nftContentHash: mockHash,
@@ -167,8 +165,6 @@ describe('NFT functionality', function () {
         creatorTreasuryRate: 5,
         nftIndex,
         collectionId: 0,
-        gasFeeAssetId: 0, //BNB
-        gasFeeAssetAmount: 666,
         toAddress: acc2.address,
         creatorAddress: owner.address,
         nftContentHash: mockHash,
@@ -187,8 +183,6 @@ describe('NFT functionality', function () {
         creatorTreasuryRate: result['creatorTreasuryRate'],
         nftIndex: result['nftIndex'],
         collectionId: result['collectionId'],
-        gasFeeAssetId: result['gasFeeAssetId'],
-        gasFeeAssetAmount: result['gasFeeAssetAmount'],
         toAddress: result['toAddress'],
         creatorAddress: result['creatorAddress'],
         nftContentHash: result['nftContentHash'],
@@ -253,8 +247,6 @@ describe('NFT functionality', function () {
         nftIndex: mockNftIndex,
         collectionId: 0,
         gasFeeAccountIndex: 1,
-        gasFeeAssetId: 0, //BNB
-        gasFeeAssetAmount: 666,
         toAddress: acc1.address,
         creatorAddress: owner.address,
         nftContentHash: mockHash,
@@ -320,8 +312,6 @@ describe('NFT functionality', function () {
         nftIndex: mockNftIndex,
         collectionId: 0,
         gasFeeAccountIndex: 1,
-        gasFeeAssetId: 0, //BNB
-        gasFeeAssetAmount: 666,
         toAddress: acc1.address,
         creatorAddress: owner.address,
         nftContentHash: mockHash,
