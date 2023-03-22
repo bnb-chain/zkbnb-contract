@@ -231,6 +231,10 @@ describe('NFT functionality', function () {
       assert.equal(result['nftContentHash'], 0);
       assert.equal(result['nftIndex'], 0);
     });
+
+    it('Input nftIndex should be valid', async function () {
+      expect(zkBNB.withdrawPendingNFTBalance(9999)).to.be.revertedWith('6H');
+    });
   });
 
   describe('deposit NFT', async function () {

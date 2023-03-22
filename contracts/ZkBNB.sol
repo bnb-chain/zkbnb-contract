@@ -126,6 +126,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _nftIndex Id of NFT token
   function withdrawPendingNFTBalance(uint40 _nftIndex) external {
     TxTypes.WithdrawNft memory op = pendingWithdrawnNFTs[_nftIndex];
+    // _nftIndex needs to be valid , check op.nftContentHash in order to check op is not null
+    require(op.nftContentHash != bytes32(0), "6H");
     withdrawOrStoreNFT(op);
     delete pendingWithdrawnNFTs[_nftIndex];
   }
