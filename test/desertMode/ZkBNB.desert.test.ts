@@ -63,11 +63,20 @@ describe('Desert Mode', function () {
   });
 
   it('should be able to cancel outstanding deposits', async () => {
+    const depositTx = await zkBNB.depositBNB(acc1.address, { value: ethers.utils.parseEther('0.001') });
+    const receipt = await depositTx.wait();
+    const prEvent = receipt.events.find((ev) => {
+      return ev.event === 'NewPriorityRequest';
+    });
+    const pubdata = prEvent.args[3];
+
     // activate desert mode first
-    await expect(await zkBNB.depositBNB(acc1.address, { value: 1000 })).to.emit(zkBNB, 'Deposit');
     await hardhat.network.provider.send('hardhat_mine', ['0x1000000']);
     await expect(await zkBNB.activateDesertMode()).to.emit(zkBNB, 'DesertMode');
+    assert.equal(await zkBNB.totalOpenPriorityRequests(), 1);
 
     // cancel outstanding deposit
+    await zkBNB.cancelOutstandingDepositsForDesertMode(5, [pubdata]);
+    assert.equal(await zkBNB.totalOpenPriorityRequests(), 0);
   });
 });

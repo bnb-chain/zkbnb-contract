@@ -11,6 +11,7 @@ describe('NFT functionality', function() {
     let governance;
     let mockZkBNBVerifier;
     let mockNftFactory;
+    let mockDesertVerifier;
 
     let zkBNB; // ZkBNBTest.sol
     let additionalZkBNB; // AdditionalZkBNB.sol
@@ -46,6 +47,8 @@ describe('NFT functionality', function() {
         additionalZkBNB = await AdditionalZkBNB.deploy();
         await additionalZkBNB.deployed();
 
+        mockDesertVerifier = await smock.fake('DesertVerifier');
+
         const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
             libraries: {
                 Utils: utils.address,
@@ -55,11 +58,12 @@ describe('NFT functionality', function() {
         await zkBNB.deployed();
 
         const initParams = ethers.utils.defaultAbiCoder.encode(
-            ['address', 'address', 'address', 'bytes32'],
+            ['address', 'address', 'address', 'address', 'bytes32'],
             [
                 governance.address,
                 mockZkBNBVerifier.address,
                 additionalZkBNB.address,
+                mockDesertVerifier.address,
                 ethers.utils.formatBytes32String('genesisStateRoot'),
             ],
         );

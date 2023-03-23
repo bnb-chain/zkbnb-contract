@@ -15,7 +15,7 @@ contract DesertVerifierTest is DesertVerifier {
     uint256 amount,
     uint256 offerCanceledOrFinalized,
     uint256[16] memory assetMerkleProof
-  ) external returns (uint256) {
+  ) external view returns (uint256) {
     return getAssetRoot(assetId, amount, offerCanceledOrFinalized, assetMerkleProof);
   }
 
@@ -28,7 +28,7 @@ contract DesertVerifierTest is DesertVerifier {
     uint256 collectionNonce,
     uint256 assetRoot,
     uint256[32] memory accountMerkleProof
-  ) external returns (uint256) {
+  ) external view returns (uint256) {
     return
       getAccountRoot(
         accountId,
@@ -39,6 +39,29 @@ contract DesertVerifierTest is DesertVerifier {
         collectionNonce,
         assetRoot,
         accountMerkleProof
+      );
+  }
+
+  function testGetNftRoot(
+    uint40 nftIndex,
+    uint256 creatorAccountIndex,
+    uint256 ownerAccountIndex,
+    uint256 nftContentHash,
+    uint256 creatorTreasuryRate,
+    uint256 collectionId,
+    uint256 nftContentType,
+    uint256[40] memory nftMerkleProof
+  ) external view returns (uint256) {
+    return
+      getNftRoot(
+        nftIndex,
+        creatorAccountIndex,
+        ownerAccountIndex,
+        nftContentHash,
+        creatorTreasuryRate,
+        collectionId,
+        nftContentType,
+        nftMerkleProof
       );
   }
 }
