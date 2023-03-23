@@ -106,14 +106,14 @@ contract AdditionalZkBNB is Storage, Config, Events {
         accountIndex: _accountExitData.accountId,
         creatorAccountIndex: uint16(nft.creatorAccountIndex),
         creatorTreasuryRate: uint16(nft.creatorTreasuryRate),
-        nftIndex: uint40(nft.nftIndex),
+        nftIndex: nft.nftIndex,
         collectionId: uint16(nft.collectionId),
         toAddress: msg.sender,
         creatorAddress: address(0),
         nftContentHash: nft.nftContentHash,
         nftContentType: nft.nftContentType
       });
-      pendingWithdrawnNFTs[uint40(nft.nftIndex)] = _withdrawNftTx;
+      pendingWithdrawnNFTs[nft.nftIndex] = _withdrawNftTx;
     }
   }
 
@@ -131,7 +131,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
         ++currentDepositIdx;
 
         TxTypes.Deposit memory _tx = TxTypes.readDepositPubData(depositPubdata);
-        bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, uint16(_tx.assetId));
+        bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, _tx.assetId);
         pendingBalances[packedBalanceKey].balanceToWithdraw += _tx.amount;
       }
       delete priorityRequests[id];

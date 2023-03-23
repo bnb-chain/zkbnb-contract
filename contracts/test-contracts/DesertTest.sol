@@ -11,7 +11,7 @@ contract DesertVerifierTest is DesertVerifier {
   ) DesertVerifier(_poseidonT3, _poseidonT6, _poseidonT7) {}
 
   function testGetAssetRoot(
-    uint256 assetId,
+    uint16 assetId,
     uint256 amount,
     uint256 offerCanceledOrFinalized,
     uint256[16] memory assetMerkleProof

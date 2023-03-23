@@ -9,7 +9,7 @@ contract DesertVerifier {
   IPoseidonT7 poseidonT7;
 
   struct AssetExitData {
-    uint32 assetId;
+    uint16 assetId;
     uint amount;
     uint offerCanceledOrFinalized;
   }
@@ -24,7 +24,7 @@ contract DesertVerifier {
   }
 
   struct NftExitData {
-    uint64 nftIndex;
+    uint40 nftIndex;
     uint ownerAccountIndex;
     uint creatorAccountIndex;
     bytes32 nftContentHash;
@@ -110,8 +110,9 @@ contract DesertVerifier {
     return true;
   }
 
+  /// assetId - 16 bits
   function getAssetRoot(
-    uint256 assetId,
+    uint16 assetId,
     uint256 amount,
     uint256 offerCanceledOrFinalized,
     uint256[16] memory assetMerkleProof
@@ -119,11 +120,14 @@ contract DesertVerifier {
     uint256 assetLeafHash = hashNode(amount, offerCanceledOrFinalized);
     uint256 rootHash = assetLeafHash;
 
-    for (uint i = 0; i < 16; i++) {
-      if (assetId % 2 == 0) {
-        rootHash = hashNode(rootHash, assetMerkleProof[i]);
+    for (uint16 i = 15; i >= 0; i--) {
+      uint256 siblingProof = assetMerkleProof[15 - i];
+      bool isLeft = (uint8(assetId >> i) & 0x01) == 1;
+
+      if (isLeft) {
+        rootHash = hashNode(siblingProof, rootHash);
       } else {
-        rootHash = hashNode(assetMerkleProof[i], rootHash);
+        rootHash = hashNode(rootHash, siblingProof);
       }
     }
     return rootHash;
@@ -149,18 +153,21 @@ contract DesertVerifier {
     uint256 accountLeafHash = poseidonT7.poseidon(inputs);
     uint256 rootHash = accountLeafHash;
 
-    for (uint i = 0; i < 32; i++) {
-      if (accountId % 2 == 0) {
-        rootHash = hashNode(rootHash, accountMerkleProof[i]);
+    for (uint16 i = 31; i >= 0; i--) {
+      uint256 siblingProof = accountMerkleProof[31 - i];
+      bool isLeft = (uint8(accountId >> i) & 0x01) == 1;
+
+      if (isLeft) {
+        rootHash = hashNode(siblingProof, rootHash);
       } else {
-        rootHash = hashNode(accountMerkleProof[i], rootHash);
+        rootHash = hashNode(rootHash, siblingProof);
       }
     }
     return rootHash;
   }
 
   function getNftRoot(
-    uint64 nftIndex,
+    uint40 nftIndex,
     uint256 creatorAccountIndex,
     uint256 ownerAccountIndex,
     uint256 nftContentHash,
@@ -177,11 +184,14 @@ contract DesertVerifier {
     uint256 nftLeafHash = poseidonT6.poseidon(inputs);
     uint256 rootHash = nftLeafHash;
 
-    for (uint i = 0; i < 40; i++) {
-      if (nftIndex % 2 == 0) {
-        rootHash = hashNode(rootHash, nftMerkleProof[i]);
+    for (uint16 i = 39; i >= 0; i--) {
+      uint256 siblingProof = nftMerkleProof[39 - i];
+      bool isLeft = (uint8(nftIndex >> i) & 0x01) == 1;
+
+      if (isLeft) {
+        rootHash = hashNode(siblingProof, rootHash);
       } else {
-        rootHash = hashNode(nftMerkleProof[i], rootHash);
+        rootHash = hashNode(rootHash, siblingProof);
       }
     }
     return rootHash;
