@@ -206,7 +206,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     // token deposits are paused
 
     uint256 balanceBefore = _token.balanceOf(address(this));
-    require(Utils.transferFromERC20(_token, msg.sender, address(this), SafeCast.toUint128(_amount)), "c");
+    _token.transferFrom(msg.sender, address(this), SafeCast.toUint128(_amount));
     // token transfer failed deposit
     uint256 balanceAfter = _token.balanceOf(address(this));
     uint128 depositAmount = SafeCast.toUint128(balanceAfter - balanceBefore);
