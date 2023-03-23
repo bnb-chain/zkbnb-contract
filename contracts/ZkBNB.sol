@@ -147,7 +147,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint128 balance = pendingBalances[packedBalanceKey].balanceToWithdraw;
     uint128 amount = Utils.minU128(balance, _amount);
     if (_assetId == 0) {
-      (bool success, ) = _owner.call{value: _amount}("");
+      (bool success, ) = _owner.call{value: amount}("");
       // Native Asset withdraw failed
       require(success, "d");
     } else {
@@ -156,8 +156,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       // `value` can be bigger then `_amount` requested if token takes fee from sender in addition to `_amount` requested
       amount = this.transferERC20(IERC20(_token), _owner, amount, balance);
     }
-    pendingBalances[packedBalanceKey].balanceToWithdraw = balance - _amount;
-    emit Withdrawal(_assetId, _amount);
+    pendingBalances[packedBalanceKey].balanceToWithdraw = balance - amount;
+    emit Withdrawal(_assetId, amount);
   }
 
   /// @notice Sends tokens
