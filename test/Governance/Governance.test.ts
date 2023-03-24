@@ -227,14 +227,13 @@ describe('Governance', function () {
     });
 
     it('get tokenURI', async function () {
-      const abi = ethers.utils.defaultAbiCoder;
-
       const type = 0;
       const baseURI = 'ipfs://f01701220';
       const contentHash = '3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase();
       const mockHash = ethers.utils.hexZeroPad(('0x' + contentHash).toLowerCase(), 32);
 
       const expectUri = `${baseURI}${contentHash}`;
+      expect((await governance.getNftTokenURI(type, mockHash)) === contentHash);
       await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
       expect((await governance.getNftTokenURI(type, mockHash)) === expectUri);
 
