@@ -1,7 +1,5 @@
 const hardhat = require('hardhat');
-const namehash = require('eth-ens-namehash');
-const fs = require('fs');
-const { getKeccak256, saveDeployedAddresses, saveConstructorArgumentsForVerify } = require('./utils');
+const { saveDeployedAddresses, saveConstructorArgumentsForVerify } = require('./utils');
 require('dotenv').config();
 const figlet = require('figlet');
 const chalk = require('chalk');
@@ -71,7 +69,7 @@ async function main() {
   }
 
   // get ERC721
-  const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZkBNB', '0');
+  const ERC721 = await contractFactories.ERC721Factory.deploy('zkBNB', 'zkBNB', '0');
   await ERC721.deployed();
   const _genesisAccountRoot = '0x0bd5a138abe7a57e4ad627a074a99d181ba54d95871f4310cf43f7c56a815734';
   const _listingFee = ethers.utils.parseEther('100');
@@ -107,7 +105,7 @@ async function main() {
   // deploy default nft factory
   console.log(chalk.blue('⚙️ Setting ZkBNB DefaultNftFactory'));
   console.log('\t🚀Deploy DefaultNftFactory...');
-  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy('ZkBNB', 'ZkBNB', event[5], owner.address);
+  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy('zkBNB', 'zkBNB', event[3], owner.address);
   await DefaultNftFactory.deployed();
 
   console.log('\t🔧Set default nft factory...');
@@ -115,7 +113,7 @@ async function main() {
   const setDefaultNftFactoryTx = await proxyGovernance.setDefaultNFTFactory(DefaultNftFactory.address);
   await setDefaultNftFactoryTx.wait();
   console.log(chalk.blue('🚀 Set zkBNB address for governance...'));
-  const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(event[5]);
+  const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(event[3]);
   await setZkBNBAddressTx.wait();
   // Add validators into governance
   console.log(chalk.blue('📥 Add validators into governance...'));
