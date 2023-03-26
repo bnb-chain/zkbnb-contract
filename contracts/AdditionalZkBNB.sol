@@ -119,7 +119,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
 
   function cancelOutstandingDepositsForDesertMode(uint64 _n, bytes[] memory _depositsPubData) external {
     require(desertMode, "8");
-    // exodus mode not active
+    // desert mode not active
     uint64 toProcess = Utils.minU64(totalOpenPriorityRequests, _n);
     require(toProcess > 0, "9");
     // no deposits to process

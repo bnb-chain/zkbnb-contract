@@ -91,14 +91,14 @@ contract Storage {
   /// @dev Stored hashed StoredBlockInfo for some block number
   mapping(uint32 => bytes32) public storedBlockHashes;
 
-  /// @dev Flag indicates that exodus (mass exit) mode is triggered
+  /// @dev Flag indicates that desert (mass exit) mode is triggered
   /// @dev Once it was raised, it can not be cleared again, and all users must exit
   bool public desertMode;
 
   /// @dev Flag indicates that a user has exited in the desert mode certain token balance (per account id and tokenId)
   mapping(uint32 => mapping(uint32 => bool)) internal performedDesert;
 
-  /// @notice Checks that current state not is exodus mode
+  /// @notice Checks that current state not is desert mode
   modifier onlyActive() {
     require(!desertMode, "L");
     // desert mode activated

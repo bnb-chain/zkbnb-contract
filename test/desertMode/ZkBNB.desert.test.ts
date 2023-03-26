@@ -79,4 +79,6 @@ describe('Desert Mode', function () {
     await zkBNB.cancelOutstandingDepositsForDesertMode(5, [pubdata]);
     assert.equal(await zkBNB.totalOpenPriorityRequests(), 0);
   });
+
+  // it.skip('should be able to cancel outstanding NFT deposits', async () => { });
 });

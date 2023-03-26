@@ -19,7 +19,7 @@ contract DeployFactory {
     address validator;
     address governor;
     address listingToken;
-    address exodusVerifier;
+    address desertVerifier;
     UpgradeableMaster upgradeableMaster;
   }
 
@@ -53,7 +53,7 @@ contract DeployFactory {
       validator: addrs[3],
       governor: addrs[4],
       listingToken: addrs[5],
-      exodusVerifier: addrs[6],
+      desertVerifier: addrs[6],
       upgradeableMaster: UpgradeableMaster(addrs[7])
     });
     require(contracts.validator != address(0), "validator check");
@@ -93,7 +93,7 @@ contract DeployFactory {
         address(governance),
         address(verifier),
         address(additionalZkBNB),
-        address(_contracts.exodusVerifier),
+        address(_contracts.desertVerifier),
         _additionalParams.genesisAccountRoot
       )
     );

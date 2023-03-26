@@ -63,6 +63,7 @@ contract DesertVerifier {
       assetRoot,
       accountMerkleProof
     );
+
     return (hashNode(accountRoot, nftRoot) == stateRoot);
   }
 
@@ -90,7 +91,6 @@ contract DesertVerifier {
     for (uint i = 0; i < exitNfts.length; i++) {
       NftExitData memory nft = exitNfts[i];
       require(nft.ownerAccountIndex == accountData.accountId, "given account is not nft owner");
-      /* uint256[40] memory proofs = nftMerkleProofs[i]; */
       uint nftRoot = getNftRoot(
         nft.nftIndex,
         nft.creatorAccountIndex,
@@ -125,7 +125,9 @@ contract DesertVerifier {
 
     for (uint16 i = 0; i < 16; i++) {
       uint256 siblingProof = assetMerkleProof[i];
-      bool isLeft = ((assetId >> (15 - i)) & 0x01) == 1;
+      uint remain = assetId >> i;
+
+      bool isLeft = (remain & 0x01) == 1;
 
       if (isLeft) {
         rootHash = hashNode(siblingProof, rootHash);
@@ -137,6 +139,7 @@ contract DesertVerifier {
     return rootHash;
   }
 
+  // accountId - 32 bits
   function getAccountRoot(
     uint32 accountId,
     uint256 l1Address,
@@ -159,7 +162,8 @@ contract DesertVerifier {
 
     for (uint16 i = 0; i < 32; i++) {
       uint256 siblingProof = accountMerkleProof[i];
-      bool isLeft = ((accountId >> (31 - i)) & 0x01) == 1;
+      uint remain = accountId >> i;
+      bool isLeft = (remain & 0x01) == 1;
 
       if (isLeft) {
         rootHash = hashNode(siblingProof, rootHash);
@@ -199,7 +203,9 @@ contract DesertVerifier {
 
     for (uint16 i = 0; i < 40; i++) {
       uint256 siblingProof = nftMerkleProof[i];
-      bool isLeft = ((nftIndex >> (39 - i)) & 0x01) == 1;
+      uint remain = nftIndex >> i;
+
+      bool isLeft = (remain & 0x01) == 1;
 
       if (isLeft) {
         rootHash = hashNode(siblingProof, rootHash);

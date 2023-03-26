@@ -4,7 +4,7 @@ require('dotenv').config();
 const figlet = require('figlet');
 const chalk = require('chalk');
 
-const { poseidonContract } = require('circomlibjs');
+const poseidonContract = require('../../test/desertMode/poseidon_gencontract');
 
 const { ethers } = hardhat;
 const { SECURITY_COUNCIL_MEMBERS_NUMBER_1, SECURITY_COUNCIL_MEMBERS_NUMBER_2, SECURITY_COUNCIL_MEMBERS_NUMBER_3 } =

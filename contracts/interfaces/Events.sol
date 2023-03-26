@@ -21,7 +21,7 @@ interface Events {
   /// @notice Event emitted when blocks are reverted
   event BlocksRevert(uint32 totalBlocksVerified, uint32 totalBlocksCommitted);
 
-  /// @notice Exodus mode entered event
+  /// @notice Desert mode entered event
   event DesertMode();
 
   /// @notice New priority request event. Emitted when a request is placed into mapping
