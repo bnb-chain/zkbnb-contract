@@ -133,6 +133,24 @@ contract AdditionalZkBNB is Storage, Config, Events {
         TxTypes.Deposit memory _tx = TxTypes.readDepositPubData(depositPubdata);
         bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, _tx.assetId);
         pendingBalances[packedBalanceKey].balanceToWithdraw += _tx.amount;
+      } else if (priorityRequests[id].txType == TxTypes.TxType.DepositNft) {
+        bytes memory depositPubdata = _depositsPubData[currentDepositIdx];
+        require(Utils.hashBytesToBytes20(depositPubdata) == priorityRequests[id].hashedPubData, "b");
+        ++currentDepositIdx;
+
+        TxTypes.DepositNft memory _tx = TxTypes.readDepositNftPubData(depositPubdata);
+        TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
+          accountIndex: _tx.accountIndex,
+          creatorAccountIndex: uint16(_tx.creatorAccountIndex),
+          creatorTreasuryRate: _tx.creatorTreasuryRate,
+          nftIndex: _tx.nftIndex,
+          collectionId: _tx.collectionId,
+          toAddress: _tx.owner,
+          creatorAddress: address(0),
+          nftContentHash: _tx.nftContentHash,
+          nftContentType: _tx.nftContentType
+        });
+        pendingWithdrawnNFTs[_tx.nftIndex] = _withdrawNftTx;
       }
       delete priorityRequests[id];
     }
