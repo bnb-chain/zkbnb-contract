@@ -20,68 +20,6 @@ library Utils {
     }
   }
 
-  /// @notice Sends tokens
-  /// @dev NOTE: this function handles tokens that have transfer function not strictly compatible with ERC20 standard
-  /// @dev NOTE: call `transfer` to this token may return (bool) or nothing
-  /// @param _token Token address
-  /// @param _to Address of recipient
-  /// @param _amount Amount of tokens to transfer
-  /// @return bool flag indicating that transfer is successful
-  function sendERC20(IERC20 _token, address _to, uint256 _amount) internal returns (bool) {
-    (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
-      abi.encodeWithSignature("transfer(address,uint256)", _to, _amount)
-    );
-    // `transfer` method may return (bool) or nothing.
-    bool returnedSuccess = callReturnValueEncoded.length == 0 || abi.decode(callReturnValueEncoded, (bool));
-    return callSuccess && returnedSuccess;
-  }
-
-  /// @notice Transfers token from one address to another
-  /// @dev NOTE: this function handles tokens that have transfer function not strictly compatible with ERC20 standard
-  /// @dev NOTE: call `transferFrom` to this token may return (bool) or nothing
-  /// @param _token Token address
-  /// @param _from Address of sender
-  /// @param _to Address of recipient
-  /// @param _amount Amount of tokens to transfer
-  /// @return bool flag indicating that transfer is successful
-  function transferFromERC20(IERC20 _token, address _from, address _to, uint256 _amount) internal returns (bool) {
-    (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
-      abi.encodeWithSignature("transferFrom(address,address,uint256)", _from, _to, _amount)
-    );
-    // `transferFrom` method may return (bool) or nothing.
-    bool returnedSuccess = callReturnValueEncoded.length == 0 || abi.decode(callReturnValueEncoded, (bool));
-    return callSuccess && returnedSuccess;
-  }
-
-  function transferFromNFT(
-    address _from,
-    address _to,
-    address _nftL1Address,
-    uint256 _nftL1TokenId
-  ) internal returns (bool success) {
-    try IERC721(_nftL1Address).safeTransferFrom(_from, _to, _nftL1TokenId) {
-      success = true;
-    } catch {
-      success = false;
-    }
-    return success;
-  }
-
-  // TODO
-  function transferFromERC721(
-    address _from,
-    address _to,
-    address _tokenAddress,
-    uint256 _nftTokenId
-  ) internal returns (bool success) {
-    try IERC721(_tokenAddress).safeTransferFrom(_from, _to, _nftTokenId) {
-      success = true;
-    } catch {
-      success = false;
-    }
-    return success;
-  }
-
   /// @notice Returns lesser of two values
   function minU32(uint32 a, uint32 b) internal pure returns (uint32) {
     return a < b ? a : b;
