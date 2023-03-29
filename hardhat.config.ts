@@ -61,8 +61,10 @@ const config: HardhatUserConfig = {
       gas: 15000000,
     },
     bsc: {
-      url: process.env.BSC_MAINNET_RPC,
-      accounts: (process.env.BSC_MAINNET_PRIVATE_KEY || '').split(','),
+      url: process.env.BSC_MAINNET_RPC || 'https://bsc-dataseed.binance.org',
+      accounts:
+        (process.env.BSC_MAINNET_PRIVATE_KEY || '').split(',') ||
+        '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1',
       timeout: 300000,
       gas: 1500000,
     },
