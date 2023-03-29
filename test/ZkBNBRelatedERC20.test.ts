@@ -1,6 +1,5 @@
 import { ethers } from 'hardhat';
-import { assert, expect } from 'chai';
-import { smock } from '@defi-wonderland/smock';
+import { expect } from 'chai';
 
 describe('ZkBNBRelatedERC20', async function () {
   let zkBNBRelatedERC20;

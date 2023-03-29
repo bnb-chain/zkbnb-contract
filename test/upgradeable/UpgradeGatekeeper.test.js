@@ -25,10 +25,10 @@ describe('UpgradeGatekeeper', function () {
 
   // `ZkBNB` needs to link to library `Utils` before deployed
   let utils;
-  let owner, addr1, addr2;
+  let owner, addr1;
 
   before(async function () {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
 
     // 1. deploy logic contracts
     const MockGovernance = await smock.mock('Governance');
@@ -50,12 +50,9 @@ describe('UpgradeGatekeeper', function () {
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
     await utils.deployed();
-    const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-    const nftHelperLibrary = await NftHelperLibrary.deploy();
-    await nftHelperLibrary.deployed();
     const MockZkBNB = await smock.mock('ZkBNB', {
       libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
+        Utils: utils.address,
       },
     });
     mockZkBNB = await MockZkBNB.deploy();

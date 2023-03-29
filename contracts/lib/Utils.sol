@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "./Bytes.sol";
+import "./TxTypes.sol";
 import "../Storage.sol";
 
 library Utils {
@@ -17,68 +18,6 @@ library Utils {
     assembly {
       result := mload(add(source, 32))
     }
-  }
-
-  /// @notice Sends tokens
-  /// @dev NOTE: this function handles tokens that have transfer function not strictly compatible with ERC20 standard
-  /// @dev NOTE: call `transfer` to this token may return (bool) or nothing
-  /// @param _token Token address
-  /// @param _to Address of recipient
-  /// @param _amount Amount of tokens to transfer
-  /// @return bool flag indicating that transfer is successful
-  function sendERC20(IERC20 _token, address _to, uint256 _amount) internal returns (bool) {
-    (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
-      abi.encodeWithSignature("transfer(address,uint256)", _to, _amount)
-    );
-    // `transfer` method may return (bool) or nothing.
-    bool returnedSuccess = callReturnValueEncoded.length == 0 || abi.decode(callReturnValueEncoded, (bool));
-    return callSuccess && returnedSuccess;
-  }
-
-  /// @notice Transfers token from one address to another
-  /// @dev NOTE: this function handles tokens that have transfer function not strictly compatible with ERC20 standard
-  /// @dev NOTE: call `transferFrom` to this token may return (bool) or nothing
-  /// @param _token Token address
-  /// @param _from Address of sender
-  /// @param _to Address of recipient
-  /// @param _amount Amount of tokens to transfer
-  /// @return bool flag indicating that transfer is successful
-  function transferFromERC20(IERC20 _token, address _from, address _to, uint256 _amount) internal returns (bool) {
-    (bool callSuccess, bytes memory callReturnValueEncoded) = address(_token).call(
-      abi.encodeWithSignature("transferFrom(address,address,uint256)", _from, _to, _amount)
-    );
-    // `transferFrom` method may return (bool) or nothing.
-    bool returnedSuccess = callReturnValueEncoded.length == 0 || abi.decode(callReturnValueEncoded, (bool));
-    return callSuccess && returnedSuccess;
-  }
-
-  function transferFromNFT(
-    address _from,
-    address _to,
-    address _nftL1Address,
-    uint256 _nftL1TokenId
-  ) internal returns (bool success) {
-    try IERC721(_nftL1Address).safeTransferFrom(_from, _to, _nftL1TokenId) {
-      success = true;
-    } catch {
-      success = false;
-    }
-    return success;
-  }
-
-  // TODO
-  function transferFromERC721(
-    address _from,
-    address _to,
-    address _tokenAddress,
-    uint256 _nftTokenId
-  ) internal returns (bool success) {
-    try IERC721(_tokenAddress).safeTransferFrom(_from, _to, _nftTokenId) {
-      success = true;
-    } catch {
-      success = false;
-    }
-    return success;
   }
 
   /// @notice Returns lesser of two values
@@ -144,5 +83,37 @@ library Utils {
       pubData[i] = uint256(result) % q;
     }
     return pubData;
+  }
+
+  /// @notice Checks that signature is valid for pubkey change message
+  /// @param _ethWitness Version(1 byte) and signature (65 bytes)
+  /// @param _changePk Parsed change pubkey tx type
+  function verifyChangePubkey(
+    bytes memory _ethWitness,
+    TxTypes.ChangePubKey memory _changePk
+  ) external pure returns (bool) {
+    (, bytes memory signature) = Bytes.read(_ethWitness, 1, 65); // offset is 1 because we skip type of ChangePubkey
+
+    bytes32 messageHash = keccak256(
+      abi.encodePacked(
+        "\x19Ethereum Signed Message:\n265",
+        "Register zkBNB Account\n\n",
+        "pubkeyX: 0x",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyX)),
+        "\n",
+        "pubkeyY: 0x",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyY)),
+        "\n",
+        "nonce: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
+        "\n",
+        "account index: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.accountIndex)),
+        "\n\n",
+        "Only sign this message for a trusted client!"
+      )
+    );
+    address recoveredAddress = Utils.recoverAddressFromEthSignature(signature, messageHash);
+    return recoveredAddress == _changePk.owner && recoveredAddress != address(0);
   }
 }
