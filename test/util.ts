@@ -1,4 +1,4 @@
-import { Signer, utils, Bytes } from 'ethers';
+import { Signer, utils } from 'ethers';
 
 import log from '../logger.config';
 import { ethers } from 'hardhat';
@@ -175,11 +175,16 @@ export interface StoredBlockInfo {
   commitment: string;
 }
 
+export interface OnchainOperationData {
+  ethWitness: string;
+  publicDataOffset: number;
+}
+
 export interface CommitBlockInfo {
   newStateRoot: string;
   publicData: string;
   timestamp: number;
-  publicDataOffsets: number[];
+  onchainOperations: OnchainOperationData[];
   blockNumber: number;
   blockSize: number;
 }
@@ -206,7 +211,7 @@ export function hashStoredBlockInfo(block: StoredBlockInfo) {
 }
 export enum PubDataType {
   EmptyTx,
-  RegisterZNS,
+  ChangePubKey,
   Deposit,
   DepositNft,
   Transfer,
@@ -244,8 +249,8 @@ export function padEndBytes121(data: string) {
 }
 
 export const PubDataTypeMap = {
-  [PubDataType.RegisterZNS]: ['uint8', 'uint32', 'bytes20', 'bytes32', 'bytes32', 'bytes32'],
-  [PubDataType.Deposit]: ['uint8', 'uint32', 'uint16', 'uint128', 'bytes32'],
+  [PubDataType.ChangePubKey]: ['uint8', 'uint32', 'bytes32', 'bytes32', 'bytes20', 'uint32'],
+  [PubDataType.Deposit]: ['uint8', 'uint32', 'address', 'uint16', 'uint128'],
   [PubDataType.DepositNft]: ['uint8', 'uint32', 'uint40', 'uint32', 'uint16', 'uint16', 'bytes32', 'bytes32'],
   [PubDataType.Withdraw]: ['uint8', 'uint32', 'address', 'uint16', 'uint128', 'uint16', 'uint16'],
   [PubDataType.WithdrawNft]: [
@@ -276,3 +281,40 @@ export const PubDataTypeMap = {
   ],
 };
 export const EMPTY_STRING_KECCAK = '0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470';
+
+export function numberToBytesBE(number: number, bytes: number): Uint8Array {
+  const result = new Uint8Array(bytes);
+  for (let i = bytes - 1; i >= 0; i--) {
+    result[i] = number & 0xff;
+    number >>= 8;
+  }
+  return result;
+}
+
+export function serializeNonce(nonce: number): Uint8Array {
+  return numberToBytesBE(nonce, 4);
+}
+
+export function serializeAccountIndex(accountIndex: number): Uint8Array {
+  return numberToBytesBE(accountIndex, 4);
+}
+
+export function getChangePubkeyMessage(
+  pubKeyX: string,
+  pubKeyY: string,
+  nonce: number,
+  accountIndex: number,
+): Uint8Array {
+  const msgNonce = utils.hexlify(serializeNonce(nonce));
+  const msgAccountIndex = utils.hexlify(serializeAccountIndex(accountIndex));
+  const message =
+    `Register zkBNB Account\n\n` +
+    `pubkeyX: ` +
+    `${pubKeyX}\n` +
+    `pubkeyY: ` +
+    `${pubKeyY}\n` +
+    `nonce: ${msgNonce}\n` +
+    `account index: ${msgAccountIndex}\n\n` +
+    `Only sign this message for a trusted client!`;
+  return utils.toUtf8Bytes(message);
+}

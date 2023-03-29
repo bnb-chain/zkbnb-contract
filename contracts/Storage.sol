@@ -10,8 +10,6 @@ import "./Governance.sol";
 import "./ZkBNBVerifier.sol";
 import "./lib/TxTypes.sol";
 import "./AdditionalZkBNB.sol";
-import "./ZNSController.sol";
-import "./resolvers/PublicResolver.sol";
 import "./interfaces/INFTFactory.sol";
 
 /// @title zkbnb storage contract
@@ -40,9 +38,6 @@ contract Storage {
 
   /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
   Governance internal governance;
-
-  ZNSController internal znsController;
-  PublicResolver internal znsResolver;
 
   uint8 internal constant FILLED_GAS_RESERVE_VALUE = 0xff; // we use it to set gas revert value so slot will not be emptied with 0 balance
   struct PendingBalance {
@@ -113,6 +108,7 @@ contract Storage {
     uint32 creatorAccountIndex;
     uint16 creatorTreasuryRate;
     bytes32 nftContentHash;
+    uint8 nftContentType;
     uint16 collectionId;
   }
 
