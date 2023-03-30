@@ -1,18 +1,18 @@
 {
   "StoredBlockInfo": {
     "BlockSize": 10,
-    "BlockNumber": 5,
+    "BlockNumber": 3,
     "PriorityOperations": 0,
     "PendingOnchainOperationsHash": "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-    "Timestamp": 1679470039549,
-    "StateRoot": "0e732fefcb0a8c88bf3c7402a6f238c658d7350bb725f476424619f5dd96959e",
-    "Commitment": "b0d67969507d0d7028eadb78dee5f9b4e2f7f93c3ebfb82ad118990cb46faaf4"
+    "Timestamp": 1680100497568,
+    "StateRoot": "27f842d817b54608ca87c0be67762912152c93df048e1143e6fa96e15cc94661",
+    "Commitment": "29359ecd70c0407a4fb572bd8cbc93ec64ca6f32c62d5d44c3800da7070ade38"
   },
   "AccountExitData": {
     "AccountId": 2,
-    "L1Address": "0xB64d00616958131824B472CC20C3d47Bb5d9926C",
-    "PubKeyX": "106fee935e03ee211956f7734309c263569ddb921b0dae1f281959ace7d975ce",
-    "PubKeyY": "29ffdf94bc8f84a7838e83efc7c83571e286aa8c355922938da153bff11f5ed7",
+    "L1Address": "0x18c6Cdbd596c51cA253Da0248a95377338942a62",
+    "PubKeyX": "29c95c336682044e0f2c64a8f8ba408ff24f1f79a06086bd84fcddf9809493ee",
+    "PubKeyY": "2e1b0c3525f016dbc473091a18d7561eef58f0626c0f68e22ba487c6129f2d05",
     "Nonce": 3,
     "CollectionNonce": 1
   },
@@ -21,13 +21,13 @@
       "NftIndex": 1,
       "OwnerAccountIndex": 2,
       "CreatorAccountIndex": 2,
-      "NftContentHash": "ef9c2f43924d6fb3c52952fcde82d1af6aa4cda4681125e590b0a8956af618a0",
+      "NftContentHash": "de771c8482b84fd9ce4a706d4b74d8e11809d5117074bda3e8e0fd8781e94424",
       "NftContentType": 0,
       "CreatorTreasuryRate": 0,
       "CollectionId": 0
     }
   ],
-  "AssetRoot": "04be1e0eaa485038ac5466e8d098d2395bb094c6a8226578cad1b57fb6e36e33",
+  "AssetRoot": "05dd7de42196d7db3b96b57c08a143ba503de17b2c7a79548c17db260d25c0f6",
   "NftMerkleProofs": [
     [
       "1daf2eb2b96585a4e910bded493d79c7aea4ebf6f59637c550c18061d1e548e9",
@@ -73,7 +73,7 @@
     ]
   ],
   "AccountMerkleProof": [
-    "07d3cb3d8398698bcb0ff02f342bdd52a8a73d2d3cf07ce57e00be9607561c58",
+    "228565af65ff21b29713587c4bca9c38b28c93cb2491bd92b634759dc6639626",
     "22250eabc7d5afe51215cd1915adb406be9c50066e1d14a95489f3b992be6228",
     "01fd6dd877b1d22d1de57916e6219abef6094588c095ef94a5c95bc4b659b7c0",
     "0842720c95dd25970d96c3410a90d79c4156a55e7f066b5105e2174798ee12bd",

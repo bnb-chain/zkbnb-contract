@@ -14,6 +14,8 @@ import "./Config.sol";
 import "./Storage.sol";
 import "./DesertVerifier.sol";
 
+import "hardhat/console.sol";
+
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
 contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
@@ -205,7 +207,11 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     bytes22 packedBalanceKey = packAddressAndAssetId(_owner, _assetId);
     uint128 balance = pendingBalances[packedBalanceKey].balanceToWithdraw;
     uint128 amount = Utils.minU128(balance, _amount);
+    require(amount > 0, "f1"); // Nothing to withdraw
+
     if (_assetId == 0) {
+      console.log("withdrawing %s ", amount);
+
       (bool success, ) = _owner.call{value: amount}("");
       // Native Asset withdraw failed
       require(success, "d");

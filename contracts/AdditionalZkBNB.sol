@@ -110,7 +110,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
         collectionId: uint16(nft.collectionId),
         toAddress: msg.sender,
         creatorAddress: address(0),
-        nftContentHash: nft.nftContentHash,
+        nftContentHash: bytes32(bytes.concat(nft.nftContentHash1, nft.nftContentHash2)),
         nftContentType: nft.nftContentType
       });
       pendingWithdrawnNFTs[nft.nftIndex] = _withdrawNftTx;
