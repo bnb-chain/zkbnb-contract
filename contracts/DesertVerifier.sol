@@ -10,7 +10,7 @@ contract DesertVerifier {
 
   struct AssetExitData {
     uint16 assetId;
-    uint amount;
+    uint128 amount;
     uint offerCanceledOrFinalized;
   }
 
@@ -50,7 +50,7 @@ contract DesertVerifier {
   ) external view returns (bool) {
     uint256 assetRoot = getAssetRoot(
       assetData.assetId,
-      assetData.amount,
+      uint256(assetData.amount),
       assetData.offerCanceledOrFinalized,
       assetMerkleProof
     );
@@ -198,7 +198,7 @@ contract DesertVerifier {
     inputs[2] = nftContentHash1;
     inputs[3] = nftContentHash2;
     inputs[4] = creatorTreasuryRate;
-    inputs[5] = ownerAccountIndex;
+    inputs[5] = collectionId;
 
     uint256 nftLeafHash = poseidonT7.poseidon(inputs);
 

@@ -68,6 +68,9 @@ contract AdditionalZkBNB is Storage, Config, Events {
     );
     require(proofCorrect, "x");
 
+    bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, _assetExitData.assetId);
+    increaseBalanceToWithdraw(packedBalanceKey, _assetExitData.amount);
+
     performedDesert[_accountExitData.accountId][_assetExitData.assetId] = true;
   }
 
