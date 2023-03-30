@@ -14,8 +14,6 @@ import "./Config.sol";
 import "./Storage.sol";
 import "./DesertVerifier.sol";
 
-import "hardhat/console.sol";
-
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
 contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
@@ -210,8 +208,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     require(amount > 0, "f1"); // Nothing to withdraw
 
     if (_assetId == 0) {
-      console.log("withdrawing %s ", amount);
-
       (bool success, ) = _owner.call{value: amount}("");
       // Native Asset withdraw failed
       require(success, "d");

@@ -5,7 +5,7 @@ import { Scalar } from 'ffjavascript';
 import { BigNumber } from 'ethers';
 
 import exitDataJson from './performDesertAsset5.json';
-import exitNftJson from './performDesertNft2.json';
+import exitNftJson from './performDesertNft3.json';
 
 import buildPoseidon from './poseidon_reference';
 
@@ -172,11 +172,12 @@ describe('DesertVerifier', function () {
         const inputs = [
           nft.CreatorAccountIndex,
           nft.OwnerAccountIndex,
-          BigNumber.from('0x' + nft.NftContentHash),
+          BigNumber.from('0x' + nft.NftContentHash1),
+          BigNumber.from('0x' + nft.NftContentHash2),
           nft.CreatorTreasuryRate,
-          nft.NftContentType,
+          nft.CollectionId,
         ];
-        const actual = await poseidonT6['poseidon(uint256[5])'](inputs);
+        const actual = await poseidonT7['poseidon(uint256[6])'](inputs);
         const expect = poseidon(inputs);
         assert.equal(actual.toString(), poseidon.F.toString(expect));
 
@@ -202,10 +203,11 @@ describe('DesertVerifier', function () {
 
         nftRoot = await desertVerifier.testGetNftRoot(
           nft.NftIndex,
+          nft.NftContentType,
           nft.OwnerAccountIndex,
           nft.CreatorAccountIndex,
-          ethers.utils.arrayify('0x' + nft.NftContentHash),
-          nft.NftContentType,
+          ethers.utils.arrayify('0x' + nft.NftContentHash1),
+          ethers.utils.arrayify('0x' + nft.NftContentHash2),
           nft.CreatorTreasuryRate,
           nft.CollectionId,
           nftMerkleProof.map((el: string) => BigNumber.from('0x' + el)),
