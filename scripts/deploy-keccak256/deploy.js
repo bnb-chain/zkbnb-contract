@@ -4,6 +4,8 @@ require('dotenv').config();
 const figlet = require('figlet');
 const chalk = require('chalk');
 
+const poseidonContract = require('../../test/desertMode/poseidon_gencontract');
+
 const { ethers } = hardhat;
 const { SECURITY_COUNCIL_MEMBERS_NUMBER_1, SECURITY_COUNCIL_MEMBERS_NUMBER_2, SECURITY_COUNCIL_MEMBERS_NUMBER_3 } =
   process.env;
@@ -45,6 +47,10 @@ async function main() {
 
   // Step 2: initialize deploy factory and finish deployment
 
+  // deploy Poseidon contracts and DesertVerifier
+  console.log(chalk.green('\t📦 DesertVerifier...'));
+  const desertVerifier = await deployDesertVerifier(owner);
+
   // prepare deploy params
   // get ERC20s
   console.log(chalk.blue('🔧 prepare deploy params'));
@@ -78,7 +84,16 @@ async function main() {
   // deploy DeployFactory
   console.log(chalk.blue('🚛 Run DeployFactory'));
   const deployFactory = await contractFactories.DeployFactory.deploy(
-    [governance.address, verifier.address, zkbnb.address, governor, governor, _listingToken, upgradeableMaster.address],
+    [
+      governance.address,
+      verifier.address,
+      zkbnb.address,
+      governor,
+      governor,
+      _listingToken,
+      desertVerifier.address,
+      upgradeableMaster.address,
+    ],
     _genesisAccountRoot,
     _listingFee,
     _listingCap,
@@ -176,7 +191,7 @@ async function main() {
 
   // Save contract constructor arguments to JSON for verify
   saveConstructorArgumentsForVerify('info/constructor.json', {
-    proxy: [event[0], [abi.encode(['address'], [deployFactory.address])]],
+    proxy: [event[0], [governance.address, abi.encode(['address'], [deployFactory.address])]],
     governance: [governance.address],
     assetGovernance: [
       event[1],
@@ -198,6 +213,26 @@ async function main() {
     DefaultNftFactory: [],
     upgradeableMaster: [upgradeableMaster.address, upgradeableMasterParams],
   });
+}
+
+async function deployDesertVerifier(owner) {
+  const PoseidonT3 = new ethers.ContractFactory(poseidonContract.generateABI(2), poseidonContract.createCode(2), owner);
+  const poseidonT3 = await PoseidonT3.deploy();
+  await poseidonT3.deployed();
+
+  const PoseidonT6 = new ethers.ContractFactory(poseidonContract.generateABI(5), poseidonContract.createCode(5), owner);
+  const poseidonT6 = await PoseidonT6.deploy();
+  await poseidonT6.deployed();
+
+  const PoseidonT7 = new ethers.ContractFactory(poseidonContract.generateABI(6), poseidonContract.createCode(6), owner);
+  const poseidonT7 = await PoseidonT7.deploy();
+  await poseidonT7.deployed();
+
+  const DesertVerifier = await ethers.getContractFactory('DesertVerifierTest');
+  const desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
+  await desertVerifier.deployed();
+
+  return desertVerifier;
 }
 
 async function getContractFactories() {

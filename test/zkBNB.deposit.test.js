@@ -9,6 +9,7 @@ chai.use(smock.matchers);
 describe('ZkBNB', function () {
   let mockGovernance;
   let mockZkBNBVerifier;
+  let mockDesertVerifier;
   let additionalZkBNB;
   let mockERC20;
   let mockERC721;
@@ -25,6 +26,7 @@ describe('ZkBNB', function () {
 
     mockGovernance = await smock.fake('Governance');
     mockZkBNBVerifier = await smock.fake('ZkBNBVerifier');
+    mockDesertVerifier = await smock.fake('DesertVerifier');
     mockERC20 = await smock.fake('ERC20');
     mockERC721 = await smock.fake('ERC721');
 
@@ -47,11 +49,12 @@ describe('ZkBNB', function () {
     await zkBNB.deployed();
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address', 'address', 'bytes32'],
+      ['address', 'address', 'address', 'address', 'bytes32'],
       [
         mockGovernance.address,
         mockZkBNBVerifier.address,
         additionalZkBNB.address,
+        mockDesertVerifier.address,
         '0x0000000000000000000000000000000000000000000000000000000000000000',
       ],
     );
