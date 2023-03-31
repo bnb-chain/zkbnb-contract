@@ -68,6 +68,9 @@ contract AdditionalZkBNB is Storage, Config, Events {
     );
     require(proofCorrect, "x");
 
+    bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, _assetExitData.assetId);
+    increaseBalanceToWithdraw(packedBalanceKey, _assetExitData.amount);
+
     performedDesert[_accountExitData.accountId][_assetExitData.assetId] = true;
   }
 
@@ -110,7 +113,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
         collectionId: uint16(nft.collectionId),
         toAddress: msg.sender,
         creatorAddress: address(0),
-        nftContentHash: nft.nftContentHash,
+        nftContentHash: bytes32(bytes.concat(nft.nftContentHash1, nft.nftContentHash2)),
         nftContentType: nft.nftContentType
       });
       pendingWithdrawnNFTs[nft.nftIndex] = _withdrawNftTx;
