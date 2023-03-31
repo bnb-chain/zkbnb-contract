@@ -11,6 +11,7 @@ import "./ZkBNBVerifier.sol";
 import "./lib/TxTypes.sol";
 import "./AdditionalZkBNB.sol";
 import "./interfaces/INFTFactory.sol";
+import "./DesertVerifier.sol";
 
 /// @title zkbnb storage contract
 /// @author ZkBNB Labs
@@ -33,8 +34,11 @@ contract Storage {
   /// @dev Numbers are in order of requests receiving
   mapping(uint64 => PriorityTx) internal priorityRequests;
 
-  /// @dev Verifier contract. Used to verify block proof and exit proof
+  /// @dev Verifier contract. Used to verify block proof
   ZkBNBVerifier internal verifier;
+
+  /// @dev Desert verifier contract. Used to verify exit proof
+  DesertVerifier internal desertVerifier;
 
   /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
   Governance internal governance;
@@ -87,14 +91,14 @@ contract Storage {
   /// @dev Stored hashed StoredBlockInfo for some block number
   mapping(uint32 => bytes32) public storedBlockHashes;
 
-  /// @dev Flag indicates that exodus (mass exit) mode is triggered
+  /// @dev Flag indicates that desert (mass exit) mode is triggered
   /// @dev Once it was raised, it can not be cleared again, and all users must exit
   bool public desertMode;
 
-  /// @dev Flag indicates that a user has exited in the exodus mode certain token balance (per account id and tokenId)
+  /// @dev Flag indicates that a user has exited in the desert mode certain token balance (per account id and tokenId)
   mapping(uint32 => mapping(uint32 => bool)) internal performedDesert;
 
-  /// @notice Checks that current state not is exodus mode
+  /// @notice Checks that current state not is desert mode
   modifier onlyActive() {
     require(!desertMode, "L");
     // desert mode activated

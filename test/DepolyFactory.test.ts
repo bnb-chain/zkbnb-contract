@@ -16,6 +16,7 @@ describe('DeployFactory', function () {
   let mockValidator;
   let mockGovernor;
   let mockListingToken;
+  let mockDesertVerifier;
   let mockUpgradeableMaster;
   let owner, addr1, addr2, addr3, addr4;
 
@@ -46,6 +47,7 @@ describe('DeployFactory', function () {
     mockValidator = addr1;
     mockGovernor = addr2;
     mockListingToken = await smock.fake('ERC20');
+    mockDesertVerifier = await smock.fake('DesertVerifier');
     mockUpgradeableMaster = await smock.fake('UpgradeableMaster');
 
     deployAddressParams = [
@@ -55,6 +57,7 @@ describe('DeployFactory', function () {
       mockValidator.address,
       mockGovernor.address,
       mockListingToken.address,
+      mockDesertVerifier.address,
       mockUpgradeableMaster.address,
     ];
   });
