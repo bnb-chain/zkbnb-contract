@@ -19,6 +19,7 @@ contract DeployFactory {
     address validator;
     address governor;
     address listingToken;
+    address desertVerifier;
     UpgradeableMaster upgradeableMaster;
   }
 
@@ -52,7 +53,8 @@ contract DeployFactory {
       validator: addrs[3],
       governor: addrs[4],
       listingToken: addrs[5],
-      upgradeableMaster: UpgradeableMaster(addrs[6])
+      desertVerifier: addrs[6],
+      upgradeableMaster: UpgradeableMaster(addrs[7])
     });
     require(contracts.validator != address(0), "validator check");
     require(contracts.governor != address(0), "governor check");
@@ -87,7 +89,13 @@ contract DeployFactory {
     AdditionalZkBNB additionalZkBNB = new AdditionalZkBNB();
     zkbnb = new Proxy(
       address(_contracts.zkbnbTarget),
-      abi.encode(address(governance), address(verifier), address(additionalZkBNB), _additionalParams.genesisAccountRoot)
+      abi.encode(
+        address(governance),
+        address(verifier),
+        address(additionalZkBNB),
+        address(_contracts.desertVerifier),
+        _additionalParams.genesisAccountRoot
+      )
     );
 
     UpgradeGatekeeper upgradeGatekeeper = new UpgradeGatekeeper(_contracts.upgradeableMaster);
