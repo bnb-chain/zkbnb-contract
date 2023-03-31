@@ -77,7 +77,7 @@ async function main() {
   // get ERC721
   const ERC721 = await contractFactories.ERC721Factory.deploy('zkBNB', 'zkBNB', '0');
   await ERC721.deployed();
-  const _genesisAccountRoot = '0x0bd5a138abe7a57e4ad627a074a99d181ba54d95871f4310cf43f7c56a815734';
+  const _genesisStateRoot = '0x18195ae3b8f5962236067a051c3a5f697a19de8442849677dbbee328107cca81';
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
   const _listingToken = tokens[0]; // tokens[0] is BUSD
@@ -94,7 +94,7 @@ async function main() {
       desertVerifier.address,
       upgradeableMaster.address,
     ],
-    _genesisAccountRoot,
+    _genesisStateRoot,
     _listingFee,
     _listingCap,
     { gasLimit: 13000000 },
