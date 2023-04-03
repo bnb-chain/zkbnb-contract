@@ -106,13 +106,13 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
     // fpu13 - main contract is not ready for upgrade
     masterContract.upgradeFinishes();
 
-    for (uint64 i = 0; i < managedContracts.length; i++) {
+    for (uint64 i = 0; i < managedContracts.length; ++i) {
       address newTarget = nextTargets[i];
       if (newTarget != address(0)) {
         managedContracts[i].upgradeTarget(newTarget, targetsUpgradeParameters[i]);
       }
     }
-    versionId++;
+    ++versionId;
     emit UpgradeComplete(versionId, nextTargets);
 
     upgradeStatus = UpgradeStatus.Idle;

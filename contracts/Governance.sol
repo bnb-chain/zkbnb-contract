@@ -113,7 +113,7 @@ contract Governance is Config, Initializable {
     require(totalAssets < MAX_AMOUNT_OF_REGISTERED_ASSETS, "1f");
     // no free identifiers for tokens
 
-    totalAssets++;
+    ++totalAssets;
     uint16 newAssetId = totalAssets;
     // it is not `totalTokens - 1` because tokenId = 0 is reserved for eth
 

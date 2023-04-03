@@ -99,7 +99,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     );
     require(proofCorrect, "x");
 
-    for (uint256 i = 0; i < _exitNfts.length; i++) {
+    for (uint256 i = 0; i < _exitNfts.length; ++i) {
       DesertVerifier.NftExitData memory nft = _exitNfts[i];
 
       TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
@@ -124,7 +124,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     require(toProcess > 0, "9");
     // no deposits to process
     uint64 currentDepositIdx = 0;
-    for (uint64 id = firstPriorityRequestId; id < firstPriorityRequestId + toProcess; id++) {
+    for (uint64 id = firstPriorityRequestId; id < firstPriorityRequestId + toProcess; ++id) {
       if (priorityRequests[id].txType == TxTypes.TxType.Deposit) {
         bytes memory depositPubdata = _depositsPubData[currentDepositIdx];
         require(Utils.hashBytesToBytes20(depositPubdata) == priorityRequests[id].hashedPubData, "a");
@@ -347,6 +347,6 @@ contract AdditionalZkBNB is Storage, Config, Events {
 
     emit NewPriorityRequest(msg.sender, nextPriorityRequestId, _txType, _pubData, uint256(expirationBlock));
 
-    totalOpenPriorityRequests++;
+    ++totalOpenPriorityRequests;
   }
 }

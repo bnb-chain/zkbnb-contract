@@ -361,13 +361,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         TxTypes.Deposit memory depositData = TxTypes.readDepositPubData(txPubData);
         checkPriorityOperation(depositData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-        priorityOperationsProcessed++;
+        ++priorityOperationsProcessed;
       } else if (txType == TxTypes.TxType.DepositNft) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
         TxTypes.DepositNft memory depositNftData = TxTypes.readDepositNftPubData(txPubData);
         checkPriorityOperation(depositNftData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-        priorityOperationsProcessed++;
+        ++priorityOperationsProcessed;
       } else {
         bytes memory txPubData;
 
@@ -381,14 +381,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(txPubData);
 
           checkPriorityOperation(fullExitData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-          priorityOperationsProcessed++;
+          ++priorityOperationsProcessed;
         } else if (txType == TxTypes.TxType.FullExitNft) {
           txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
 
           TxTypes.FullExitNft memory fullExitNFTData = TxTypes.readFullExitNftPubData(txPubData);
 
           checkPriorityOperation(fullExitNFTData, uncommittedPriorityRequestsOffset + priorityOperationsProcessed);
-          priorityOperationsProcessed++;
+          ++priorityOperationsProcessed;
         } else {
           // unsupported _tx
           revert("F");
@@ -471,7 +471,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     while (numBlocksVerified < nBlocks) {
       // Find all blocks of the same type
       uint256 batchLength = 0;
-      for (uint256 i = 0; i < nBlocks; i++) {
+      for (uint256 i = 0; i < nBlocks; ++i) {
         if (blockVerified[i] == false) {
           if (batchLength == 0) {
             firstBlockSize = _blocks[i].blockHeader.blockSize;
@@ -488,7 +488,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       uint256[] memory proofs = new uint256[](batchLength * 8);
       uint16 block_size = 0;
       uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-      for (uint256 i = 0; i < batchLength; i++) {
+      for (uint256 i = 0; i < batchLength; ++i) {
         uint256 blockIdx = batch[i];
         blockVerified[blockIdx] = true;
         // verify block proof
@@ -497,7 +497,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         // publicInputs must be less than B, otherwise there will be an out-of-bounds.
         // Same issue can be seen from https://github.com/0xPARC/zk-bug-tracker#semaphore-1
         publicInputs[i] = uint256(_block.blockHeader.commitment) % q;
-        for (uint256 j = 0; j < 8; j++) {
+        for (uint256 j = 0; j < 8; ++j) {
           proofs[8 * i + j] = _proofs[8 * blockIdx + j];
         }
         block_size = _block.blockHeader.blockSize;

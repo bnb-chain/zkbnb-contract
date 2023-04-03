@@ -105,7 +105,7 @@ contract UpgradeableMaster is AccessControl {
         require(_upgradeStartTimestamp != 0, "ust");
         require(!_securityCouncilApproves[id], "scf");
         _securityCouncilApproves[id] = true;
-        _numberOfApprovalsFromSecurityCouncil++;
+        ++_numberOfApprovalsFromSecurityCouncil;
         emit SecurityCouncilApproved(_numberOfApprovalsFromSecurityCouncil);
 
         if (_numberOfApprovalsFromSecurityCouncil == SECURITY_COUNCIL_THRESHOLD) {
