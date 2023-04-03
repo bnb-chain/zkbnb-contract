@@ -546,7 +546,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       alreadyMintedFlag = true;
     }
     // get layer-1 address by account name hash
-    bytes memory _emptyExtraData;
     if (alreadyMintedFlag) {
       /// This is a NFT from layer 1, withdraw id directly
       try
@@ -563,11 +562,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     } else {
       try
         INFTFactory(_factoryAddress).mintFromZkBNB(
-          op.creatorAddress,
           op.toAddress,
           op.nftIndex,
-          governance.getNftTokenURI(op.nftContentType, op.nftContentHash),
-          _emptyExtraData
+          governance.getNftTokenURI(op.nftContentType, op.nftContentHash)
         )
       {
         // register default collection factory
