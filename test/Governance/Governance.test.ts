@@ -236,8 +236,6 @@ describe('Governance', function () {
       expect((await governance.getNftTokenURI(type, mockHash)) === contentHash);
       await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
       expect((await governance.getNftTokenURI(type, mockHash)) === expectUri);
-
-      const queryableResource = `${expectUri}`.split('//')[1];
     });
   });
 
