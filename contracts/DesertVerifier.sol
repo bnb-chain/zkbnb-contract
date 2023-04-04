@@ -26,9 +26,9 @@ contract DesertVerifier {
   struct NftExitData {
     uint40 nftIndex;
     uint ownerAccountIndex;
-    uint creatorAccountIndex;
-    uint creatorTreasuryRate;
-    uint collectionId;
+    uint32 creatorAccountIndex;
+    uint16 creatorTreasuryRate;
+    uint16 collectionId;
     bytes16 nftContentHash1;
     bytes16 nftContentHash2;
     uint8 nftContentType;
@@ -40,6 +40,7 @@ contract DesertVerifier {
     poseidonT7 = IPoseidonT7(_poseidonT7);
   }
 
+  /// @notice verify ownership of assets
   function verifyExitProofBalance(
     uint256 stateRoot,
     uint256 nftRoot,
@@ -68,6 +69,8 @@ contract DesertVerifier {
     return (hashNode(accountRoot, nftRoot) == stateRoot);
   }
 
+  /// @notice verify ownership of nfts
+  /// @param accountData the owner of nfts, accountId must match nft's ownerAccountIndex
   function verifyExitNftProof(
     uint256 stateRoot,
     uint256 assetRoot,

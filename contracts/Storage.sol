@@ -95,8 +95,10 @@ contract Storage {
   /// @dev Once it was raised, it can not be cleared again, and all users must exit
   bool public desertMode;
 
-  /// @dev Flag indicates that a user has exited in the desert mode certain token balance (per account id and tokenId)
+  /// @dev Flag indicates that a user has exited certain token balance in the desert mode (per account id and tokenId)
   mapping(uint32 => mapping(uint32 => bool)) internal performedDesert;
+  /// @dev Flag indicates that a nft has been exited in the desert mode
+  mapping(uint40 => bool) internal performedDesertNfts;
 
   /// @notice Checks that current state not is desert mode
   modifier onlyActive() {

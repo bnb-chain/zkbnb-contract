@@ -37,6 +37,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
            Balance
         Nft
     */
+  /// @notice perform desert assets
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _nftRoot,
@@ -53,8 +54,6 @@ contract AdditionalZkBNB is Storage, Config, Events {
     // already exited
     require(!performedDesert[_accountExitData.accountId][_assetExitData.assetId], "t");
 
-    // msg.sender should be asset owner
-    require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
     // stored block info should be consistent
     require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
 
@@ -68,13 +67,14 @@ contract AdditionalZkBNB is Storage, Config, Events {
     );
     require(proofCorrect, "x");
 
-    bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, _assetExitData.assetId);
+    bytes22 packedBalanceKey = packAddressAndAssetId(_accountExitData.l1Address, _assetExitData.assetId);
     increaseBalanceToWithdraw(packedBalanceKey, _assetExitData.amount);
+    emit WithdrawalPending(_assetExitData.assetId, _accountExitData.l1Address, _assetExitData.amount);
 
     performedDesert[_accountExitData.accountId][_assetExitData.assetId] = true;
   }
 
-  /// @notice perform desert mode for nft
+  /// @notice perform desert nfts
   function performDesertNft(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _assetRoot,
@@ -87,8 +87,6 @@ contract AdditionalZkBNB is Storage, Config, Events {
     require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
     require(_exitNfts.length >= 1, "Z");
 
-    // msg.sender should be nft owner
-    require(_accountExitData.l1Address == msg.sender, "only owner can perform desert");
     // stored block info should be consistent
     require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
 
@@ -104,28 +102,37 @@ contract AdditionalZkBNB is Storage, Config, Events {
 
     for (uint256 i = 0; i < _exitNfts.length; i++) {
       DesertVerifier.NftExitData memory nft = _exitNfts[i];
+      // already exited
+      require(!performedDesertNfts[nft.nftIndex], "t");
 
       TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
         accountIndex: _accountExitData.accountId,
-        creatorAccountIndex: uint16(nft.creatorAccountIndex),
-        creatorTreasuryRate: uint16(nft.creatorTreasuryRate),
+        creatorAccountIndex: nft.creatorAccountIndex,
+        creatorTreasuryRate: nft.creatorTreasuryRate,
         nftIndex: nft.nftIndex,
-        collectionId: uint16(nft.collectionId),
-        toAddress: msg.sender,
+        collectionId: nft.collectionId,
+        toAddress: _accountExitData.l1Address,
         creatorAddress: address(0),
         nftContentHash: bytes32(bytes.concat(nft.nftContentHash1, nft.nftContentHash2)),
         nftContentType: nft.nftContentType
       });
       pendingWithdrawnNFTs[nft.nftIndex] = _withdrawNftTx;
+      emit WithdrawalNFTPending(nft.nftIndex);
+
+      performedDesertNfts[nft.nftIndex] = true;
     }
   }
 
+  /// @param _n Supposed number of requests to cancel (if there are fewer requests than the provided number - all of the requests will be canceled); but actual cancelled number could be smaller than _n because there could be `FullExit` request.
+  /// @param _depositsPubData The array of the pubdata for the deposits to be cancelled.
   function cancelOutstandingDepositsForDesertMode(uint64 _n, bytes[] memory _depositsPubData) external {
-    require(desertMode, "8");
     // desert mode not active
+    require(desertMode, "8");
+
     uint64 toProcess = Utils.minU64(totalOpenPriorityRequests, _n);
-    require(toProcess > 0, "9");
-    // no deposits to process
+
+    require(toProcess > 0, "9"); // no deposits to process
+
     uint64 currentDepositIdx = 0;
     for (uint64 id = firstPriorityRequestId; id < firstPriorityRequestId + toProcess; id++) {
       if (priorityRequests[id].txType == TxTypes.TxType.Deposit) {
@@ -134,7 +141,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
         ++currentDepositIdx;
 
         TxTypes.Deposit memory _tx = TxTypes.readDepositPubData(depositPubdata);
-        bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, _tx.assetId);
+        bytes22 packedBalanceKey = packAddressAndAssetId(_tx.toAddress, _tx.assetId);
         pendingBalances[packedBalanceKey].balanceToWithdraw += _tx.amount;
       } else if (priorityRequests[id].txType == TxTypes.TxType.DepositNft) {
         bytes memory depositPubdata = _depositsPubData[currentDepositIdx];
@@ -144,7 +151,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
         TxTypes.DepositNft memory _tx = TxTypes.readDepositNftPubData(depositPubdata);
         TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
           accountIndex: _tx.accountIndex,
-          creatorAccountIndex: uint16(_tx.creatorAccountIndex),
+          creatorAccountIndex: _tx.creatorAccountIndex,
           creatorTreasuryRate: _tx.creatorTreasuryRate,
           nftIndex: _tx.nftIndex,
           collectionId: _tx.collectionId,
