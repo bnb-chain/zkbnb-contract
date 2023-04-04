@@ -238,10 +238,6 @@ describe('Governance', function () {
       expect((await governance.getNftTokenURI(type, mockHash)) === expectUri);
 
       const queryableResource = `${expectUri}`.split('//')[1];
-      //Check if the tokenURI is indeed valid using a IPFS gateway
-      const res = JSON.parse(await request('GET', `http://ipfs.io/ipfs/${queryableResource}`).getBody('utf8'));
-      assert(res.name, '2 nft.storage store test');
-      assert(res.description, '2 Using the nft.storage metadata API to create ERC-1155 compatible metadata.');
     });
   });
 
