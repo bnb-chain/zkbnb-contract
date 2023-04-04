@@ -96,6 +96,7 @@
     "cids": "^1.1.9",
     "ffjavascript": "^0.2.57",
     "husky": "^8.0.2",
+    "inquirer": "^8.0.0",
     "lint-staged": "^13.1.0",
     "mocha": "^10.0.0",
     "sha256": "^0.2.0",

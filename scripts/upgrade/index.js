@@ -1,5 +1,5 @@
 const hardhat = require('hardhat');
-const { getDeployedAddresses } = require('../deploy-keccak256/utils');
+const { getDeployedAddresses, deployDesertVerifier } = require('../deploy-keccak256/utils');
 const { getUpgradeableContractImplement } = require('./utils');
 const { ethers } = hardhat;
 
@@ -15,9 +15,12 @@ const addrs = getDeployedAddresses('info/addresses.json');
 const targetContractsDeployed = {
   governance: AddressZero,
   verifier: AddressZero,
-  znsController: AddressZero,
-  znsResolver: AddressZero,
   zkbnb: AddressZero,
+};
+
+const zkBNBUpgradeParameter = {
+  additionalZkBNB: AddressZero,
+  desertVerifier: AddressZero,
 };
 
 Object.defineProperty(String.prototype, 'capitalize', {
@@ -90,6 +93,8 @@ function main() {
 }
 
 async function start() {
+  const [owner] = await ethers.getSigners();
+
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
   const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
 
@@ -105,7 +110,7 @@ async function start() {
         type: 'checkbox',
         name: 'target',
         message: 'Which contracts do you want to upgrade?',
-        choices: ['governance', 'verifier', 'zkbnb', 'znsController', 'znsResolver'],
+        choices: ['governance', 'verifier', 'zkbnb'],
 
         validate(answer) {
           if (answer.length < 1) {
@@ -120,12 +125,12 @@ async function start() {
       targetContracts = answers.target;
       console.log(chalk.green('🚀 Deploy new contract'));
       for (const contract of targetContracts) {
-        let deployContract;
-        let Governance, ZkBNBVerifier, ZkBNB, ZNSController, ZNSResolver;
+        let deployContract, additionalZkBNB, desertVerifier;
+        let Governance, ZkBNBVerifier, ZkBNB, AdditionalZkBNB;
 
-        const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-        const nftHelperLibrary = await NftHelperLibrary.deploy();
-        await nftHelperLibrary.deployed();
+        const Utils = await ethers.getContractFactory('Utils');
+        const utils = await Utils.deploy();
+        await utils.deployed();
 
         switch (contract) {
           case 'governance':
@@ -139,18 +144,54 @@ async function start() {
           case 'zkbnb':
             ZkBNB = await ethers.getContractFactory('ZkBNB', {
               libraries: {
-                NftHelperLibrary: nftHelperLibrary.address,
+                Utils: utils.address,
               },
             });
             deployContract = await ZkBNB.deploy();
-            break;
-          case 'znsController':
-            ZNSController = await ethers.getContractFactory('ZNSController');
-            deployContract = await ZNSController.deploy();
-            break;
-          case 'znsResolver':
-            ZNSResolver = await ethers.getContractFactory('PublicResolver');
-            deployContract = await ZNSResolver.deploy();
+
+            inquirer
+              .prompt([
+                {
+                  type: 'list',
+                  name: 'zkbnbParams',
+                  message: 'Do you want to update additionalZkBNB and/or desertVerifier addresses?',
+                  choices: ['No', 'Yes only additionalZkBNB', 'Yes only desertVerifier', 'Yes both'],
+                },
+              ])
+              .then(async (answer) => {
+                switch (answer.zkbnbParams) {
+                  case 'No':
+                    break;
+                  case 'Yes only additionalZkBNB':
+                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
+                    additionalZkBNB = await AdditionalZkBNB.deploy();
+                    await additionalZkBNB.deployed();
+
+                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
+                    break;
+                  case 'Yes only desertVerifier':
+                    desertVerifier = await deployDesertVerifier(owner);
+                    await desertVerifier.deployed();
+
+                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
+                    break;
+                  case 'Yes both':
+                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
+                    additionalZkBNB = await AdditionalZkBNB.deploy();
+                    await additionalZkBNB.deployed();
+
+                    desertVerifier = await deployDesertVerifier(owner);
+                    await desertVerifier.deployed();
+
+                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
+                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
+                    break;
+
+                  default:
+                    break;
+                }
+                console.log('zkBNB upgrade parameters: [%s, %s]', additionalZkBNB.address, desertVerifier.address);
+              });
             break;
 
           default:
@@ -178,8 +219,6 @@ async function start() {
           const tx = await upgradeGatekeeper.startUpgrade([
             targetContractsDeployed.governance,
             targetContractsDeployed.verifier,
-            targetContractsDeployed.znsController,
-            targetContractsDeployed.znsResolver,
             targetContractsDeployed.zkbnb,
           ]);
 
@@ -190,6 +229,7 @@ async function start() {
         });
     });
 }
+
 async function preparation() {
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
   const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
@@ -205,6 +245,7 @@ async function preparation() {
   console.log('✅ Prepare upgrade...');
   console.log('Current version is %s', receipt.events[0].args.versionId);
 }
+
 async function cancel() {
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
   const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
@@ -213,6 +254,7 @@ async function cancel() {
   await upgradeGatekeeper.cancelUpgrade();
   console.log(chalk.green('✅ Cancel Upgrade'));
 }
+
 async function cutPeriod() {
   console.log(chalk.red('🚀 Please invoke contract function in BSCScan'));
 
@@ -247,6 +289,7 @@ async function cutPeriod() {
   //   );
   // }
 }
+
 async function finish() {
   /* ------------------------- Check upgrade status ------------------------ */
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
@@ -262,12 +305,10 @@ async function finish() {
   const tx = await upgradeGatekeeper.finishUpgrade([
     '0x00',
     '0x00',
-    '0x00',
-    '0x00',
     ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address'],
-      [ethers.constants.AddressZero, ethers.constants.AddressZero],
-    ), // must be array
+      ['address', 'address'], // newAdditionalZkBNB.addresss, newDesertVerifier.addresss
+      [zkBNBUpgradeParameter['additionalZkBNB'], zkBNBUpgradeParameter['desertVerifier']],
+    ),
   ]);
   const receipt = await tx.wait();
   const impls = await getUpgradeableContractImplement();
@@ -298,8 +339,6 @@ async function rollback(startBlockNumber) {
     previousVersionTargets = {
       governance: await (await ethers.getContractFactory('Proxy')).attach(addrs.governance).getTarget(),
       verifier: await (await ethers.getContractFactory('Proxy')).attach(addrs.verifierProxy).getTarget(),
-      znsController: await (await ethers.getContractFactory('Proxy')).attach(addrs.znsControllerProxy).getTarget(),
-      znsResolver: await (await ethers.getContractFactory('Proxy')).attach(addrs.znsResolverProxy).getTarget(),
       zkbnb: await (await ethers.getContractFactory('Proxy')).attach(addrs.zkbnbProxy).getTarget(),
     };
   } else {
@@ -309,9 +348,7 @@ async function rollback(startBlockNumber) {
     previousVersionTargets = {
       governance: targets[0],
       verifier: targets[1],
-      znsController: targets[2],
-      znsResolver: targets[3],
-      zkbnb: targets[4],
+      zkbnb: targets[2],
     };
   }
 
@@ -337,8 +374,6 @@ async function rollback(startBlockNumber) {
       const tx = await upgradeGatekeeper.startUpgrade([
         previousVersionTargets.governance,
         previousVersionTargets.verifier,
-        previousVersionTargets.znsController,
-        previousVersionTargets.znsResolver,
         previousVersionTargets.zkbnb,
       ]);
 
