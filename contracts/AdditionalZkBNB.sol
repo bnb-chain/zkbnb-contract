@@ -13,6 +13,8 @@ import "./interfaces/Events.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
 
+import "./DesertVerifier.sol";
+
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
 contract AdditionalZkBNB is Storage, Config, Events {
@@ -27,7 +29,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
             NftRoot
         Account
             AccountIndex
-            AccountNameHash bytes32
+            L1Address
             PublicKey
             AssetRoot
         Asset
@@ -35,67 +37,102 @@ contract AdditionalZkBNB is Storage, Config, Events {
            Balance
         Nft
     */
+  /// @notice perform desert assets
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
-    address _owner,
-    uint32 _accountId,
-    uint32 _tokenId,
-    uint128 _amount
+    uint256 _nftRoot,
+    DesertVerifier.AssetExitData calldata _assetExitData,
+    DesertVerifier.AccountExitData calldata _accountExitData,
+    uint256[16] calldata _assetMerkleProof,
+    uint256[32] calldata _accountMerkleProof
   ) external {
-    require(_accountId <= MAX_ACCOUNT_INDEX, "e");
-    require(_accountId != SPECIAL_ACCOUNT_ID, "v");
+    require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
+    require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
 
+    // must be in desert mode
     require(desertMode, "s");
-    // must be in exodus mode
-    require(!performedDesert[_accountId][_tokenId], "t");
     // already exited
+    require(!performedDesert[_accountExitData.accountId][_assetExitData.assetId], "t");
+
+    // stored block info should be consistent
     require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
-    // incorrect stored block info
 
-    // TODO
-    //        bool proofCorrect = verifier.verifyExitProof(
-    //            _storedBlockHeader.accountRoot,
-    //            _accountId,
-    //            _owner,
-    //            _tokenId,
-    //            _amount,
-    //            _nftCreatorAccountId,
-    //            _nftCreatorAddress,
-    //            _nftSerialId,
-    //            _nftContentHash,
-    //            _proof
-    //        );
-    //        require(proofCorrect, "x");
+    bool proofCorrect = desertVerifier.verifyExitProofBalance(
+      uint256(stateRoot),
+      _nftRoot,
+      _assetExitData,
+      _accountExitData,
+      _assetMerkleProof,
+      _accountMerkleProof
+    );
+    require(proofCorrect, "x");
 
-    if (_tokenId <= MAX_FUNGIBLE_ASSET_ID) {
-      bytes22 packedBalanceKey = packAddressAndAssetId(_owner, uint16(_tokenId));
-      increaseBalanceToWithdraw(packedBalanceKey, _amount);
-    } else {
-      // TODO
-      require(_amount != 0, "Z");
-      // Unsupported nft amount
-      //            TxTypes.WithdrawNFT memory withdrawNftOp = TxTypes.WithdrawNFT({
-      //            txType : uint8(TxTypes.TxType.WithdrawNFT),
-      //            accountIndex : _nftCreatorAccountId,
-      //            toAddress : _nftCreatorAddress,
-      //            proxyAddress : _nftCreatorAddress,
-      //            nftAssetId : _nftSerialId,
-      //            gasFeeAccountIndex : 0,
-      //            gasFeeAssetId : 0,
-      //            gasFeeAssetAmount : 0
-      //            });
-      //            pendingWithdrawnNFTs[_tokenId] = withdrawNftOp;
-      //            emit WithdrawalNFTPending(_tokenId);
-    }
-    performedDesert[_accountId][_tokenId] = true;
+    bytes22 packedBalanceKey = packAddressAndAssetId(_accountExitData.l1Address, _assetExitData.assetId);
+    increaseBalanceToWithdraw(packedBalanceKey, _assetExitData.amount);
+    emit WithdrawalPending(_assetExitData.assetId, _accountExitData.l1Address, _assetExitData.amount);
+
+    performedDesert[_accountExitData.accountId][_assetExitData.assetId] = true;
   }
 
-  function cancelOutstandingDepositsForExodusMode(uint64 _n, bytes[] memory _depositsPubData) external {
+  /// @notice perform desert nfts
+  function performDesertNft(
+    StoredBlockInfo memory _storedBlockInfo,
+    uint256 _assetRoot,
+    DesertVerifier.AccountExitData calldata _accountExitData,
+    DesertVerifier.NftExitData[] memory _exitNfts,
+    uint256[32] calldata _accountMerkleProof,
+    uint256[40][] memory _nftMerkleProofs
+  ) external {
+    require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
+    require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
+    require(_exitNfts.length >= 1, "Z");
+
+    // stored block info should be consistent
+    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
+
+    bool proofCorrect = desertVerifier.verifyExitNftProof(
+      uint256(stateRoot),
+      _assetRoot,
+      _accountExitData,
+      _exitNfts,
+      _nftMerkleProofs,
+      _accountMerkleProof
+    );
+    require(proofCorrect, "x");
+
+    for (uint256 i = 0; i < _exitNfts.length; i++) {
+      DesertVerifier.NftExitData memory nft = _exitNfts[i];
+      // already exited
+      require(!performedDesertNfts[nft.nftIndex], "t");
+
+      TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
+        accountIndex: _accountExitData.accountId,
+        creatorAccountIndex: nft.creatorAccountIndex,
+        creatorTreasuryRate: nft.creatorTreasuryRate,
+        nftIndex: nft.nftIndex,
+        collectionId: nft.collectionId,
+        toAddress: _accountExitData.l1Address,
+        creatorAddress: address(0),
+        nftContentHash: bytes32(bytes.concat(nft.nftContentHash1, nft.nftContentHash2)),
+        nftContentType: nft.nftContentType
+      });
+      pendingWithdrawnNFTs[nft.nftIndex] = _withdrawNftTx;
+      emit WithdrawalNFTPending(nft.nftIndex);
+
+      performedDesertNfts[nft.nftIndex] = true;
+    }
+  }
+
+  /// @param _n Supposed number of requests to cancel (if there are fewer requests than the provided number - all of the requests will be canceled); but actual cancelled number could be smaller than _n because there could be `FullExit` request.
+  /// @param _depositsPubData The array of the pubdata for the deposits to be cancelled.
+  function cancelOutstandingDepositsForDesertMode(uint64 _n, bytes[] memory _depositsPubData) external {
+    // desert mode not active
     require(desertMode, "8");
-    // exodus mode not active
+
     uint64 toProcess = Utils.minU64(totalOpenPriorityRequests, _n);
-    require(toProcess > 0, "9");
-    // no deposits to process
+
+    require(toProcess > 0, "9"); // no deposits to process
+
     uint64 currentDepositIdx = 0;
     for (uint64 id = firstPriorityRequestId; id < firstPriorityRequestId + toProcess; id++) {
       if (priorityRequests[id].txType == TxTypes.TxType.Deposit) {
@@ -103,11 +140,27 @@ contract AdditionalZkBNB is Storage, Config, Events {
         require(Utils.hashBytesToBytes20(depositPubdata) == priorityRequests[id].hashedPubData, "a");
         ++currentDepositIdx;
 
-        // TODO get address by account name
-        address owner = address(0x0);
         TxTypes.Deposit memory _tx = TxTypes.readDepositPubData(depositPubdata);
-        bytes22 packedBalanceKey = packAddressAndAssetId(owner, uint16(_tx.assetId));
+        bytes22 packedBalanceKey = packAddressAndAssetId(_tx.toAddress, _tx.assetId);
         pendingBalances[packedBalanceKey].balanceToWithdraw += _tx.amount;
+      } else if (priorityRequests[id].txType == TxTypes.TxType.DepositNft) {
+        bytes memory depositPubdata = _depositsPubData[currentDepositIdx];
+        require(Utils.hashBytesToBytes20(depositPubdata) == priorityRequests[id].hashedPubData, "b");
+        ++currentDepositIdx;
+
+        TxTypes.DepositNft memory _tx = TxTypes.readDepositNftPubData(depositPubdata);
+        TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
+          accountIndex: _tx.accountIndex,
+          creatorAccountIndex: _tx.creatorAccountIndex,
+          creatorTreasuryRate: _tx.creatorTreasuryRate,
+          nftIndex: _tx.nftIndex,
+          collectionId: _tx.collectionId,
+          toAddress: _tx.owner,
+          creatorAddress: address(0),
+          nftContentHash: _tx.nftContentHash,
+          nftContentType: _tx.nftContentType
+        });
+        pendingWithdrawnNFTs[_tx.nftIndex] = _withdrawNftTx;
       }
       delete priorityRequests[id];
     }
@@ -143,82 +196,137 @@ contract AdditionalZkBNB is Storage, Config, Events {
     emit BlocksRevert(totalBlocksVerified, blocksCommitted);
   }
 
-  function registerZNS(
-    string calldata _name,
-    address _owner,
-    bytes32 _zkbnbPubKeyX,
-    bytes32 _zkbnbPubKeyY
-  ) external payable {
-    // Register ZNS
-    (bytes32 node, uint32 accountIndex) = znsController.registerZNS{value: msg.value}(
-      _name,
-      _owner,
-      _zkbnbPubKeyX,
-      _zkbnbPubKeyY,
-      address(znsResolver)
-    );
-
-    // Priority Queue request
-    TxTypes.RegisterZNS memory _tx = TxTypes.RegisterZNS({
-      txType: uint8(TxTypes.TxType.RegisterZNS),
-      accountIndex: accountIndex,
-      accountName: Utils.stringToBytes20(_name),
-      accountNameHash: node,
-      pubKeyX: _zkbnbPubKeyX,
-      pubKeyY: _zkbnbPubKeyY
-    });
-    // compact pub data
-    bytes memory pubData = TxTypes.writeRegisterZNSPubDataForPriorityQueue(_tx);
-
-    // add into priority request queue
-    addPriorityRequest(TxTypes.TxType.RegisterZNS, pubData);
-
-    emit RegisterZNS(_name, node, _owner, _zkbnbPubKeyX, _zkbnbPubKeyY, accountIndex);
+  /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
+  /// @param _to the receiver L1 address
+  function depositBNB(address _to) external payable onlyActive {
+    require(msg.value != 0, "ia");
+    registerDeposit(0, SafeCast.toUint128(msg.value), _to);
   }
 
-  /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
-  /// @param _accountName the receiver account name
-  function depositBNB(string calldata _accountName) external payable onlyActive {
-    require(msg.value != 0, "ia");
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "nr");
-    registerDeposit(0, SafeCast.toUint128(msg.value), accountNameHash);
+  /// @notice Deposit NFT to Layer 2, ERC721 is supported
+  function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
+    // check if the nft is mint from layer-2
+    bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
+    require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
+
+    // Transfer the tokens to this contract
+    bool success;
+    try IERC721(_nftL1Address).safeTransferFrom(msg.sender, address(this), _nftL1TokenId) {
+      success = true;
+    } catch {
+      success = false;
+    }
+    require(success, "nft transfer failed");
+    // check if the NFT has arrived
+    require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
+
+    bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
+    uint8 nftContentType = mintedNfts[nftKey].nftContentType;
+    uint16 collectionId = mintedNfts[nftKey].collectionId;
+    uint40 nftIndex = mintedNfts[nftKey].nftIndex;
+    uint32 creatorAccountIndex = mintedNfts[nftKey].creatorAccountIndex;
+    uint16 creatorTreasuryRate = mintedNfts[nftKey].creatorTreasuryRate;
+
+    TxTypes.DepositNft memory _tx = TxTypes.DepositNft({
+      accountIndex: 0, // unknown at this point
+      creatorAccountIndex: creatorAccountIndex,
+      creatorTreasuryRate: creatorTreasuryRate,
+      nftIndex: nftIndex,
+      collectionId: collectionId,
+      owner: _to,
+      nftContentHash: nftContentHash,
+      nftContentType: nftContentType
+    });
+
+    // compact pub data
+    bytes memory pubData = TxTypes.writeDepositNftPubDataForPriorityQueue(_tx);
+
+    // add into priority request queue
+    addPriorityRequest(TxTypes.TxType.DepositNft, pubData);
+
+    emit DepositNft(_to, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
 
   /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
-  /// @param _accountName Receiver Layer 2 account name
-  function depositBEP20(IERC20 _token, uint104 _amount, string calldata _accountName) external onlyActive {
+  /// @param _to the receiver L1 address
+  function depositBEP20(IERC20 _token, uint104 _amount, address _to) external onlyActive {
     require(_amount != 0, "I");
-    bytes32 accountNameHash = znsController.getSubnodeNameHash(_accountName);
-    require(znsController.isRegisteredNameHash(accountNameHash), "N");
     // Get asset id by its address
     uint16 assetId = governance.validateAssetAddress(address(_token));
     require(!governance.pausedAssets(assetId), "b");
     // token deposits are paused
 
     uint256 balanceBefore = _token.balanceOf(address(this));
-    require(Utils.transferFromERC20(_token, msg.sender, address(this), SafeCast.toUint128(_amount)), "c");
+    _token.transferFrom(msg.sender, address(this), SafeCast.toUint128(_amount));
     // token transfer failed deposit
     uint256 balanceAfter = _token.balanceOf(address(this));
     uint128 depositAmount = SafeCast.toUint128(balanceAfter - balanceBefore);
     require(depositAmount <= MAX_DEPOSIT_AMOUNT, "C");
     require(depositAmount > 0, "D");
 
-    registerDeposit(assetId, depositAmount, accountNameHash);
+    registerDeposit(assetId, depositAmount, _to);
+  }
+
+  /// @notice Register full exit request - pack pubdata, add priority request
+  /// @param _accountIndex Numerical id of the account
+  /// @param _asset Token address, 0 address for BNB
+  function requestFullExit(uint32 _accountIndex, address _asset) public onlyActive {
+    require(_accountIndex <= MAX_ACCOUNT_INDEX, "e");
+
+    uint16 assetId;
+    if (_asset == address(0)) {
+      assetId = 0;
+    } else {
+      assetId = governance.validateAssetAddress(_asset);
+    }
+
+    // Priority Queue request
+    TxTypes.FullExit memory _tx = TxTypes.FullExit({
+      accountIndex: _accountIndex,
+      assetId: assetId,
+      assetAmount: 0, // unknown at this point
+      owner: msg.sender
+    });
+    bytes memory pubData = TxTypes.writeFullExitPubDataForPriorityQueue(_tx);
+    addPriorityRequest(TxTypes.TxType.FullExit, pubData);
+
+    // User must fill storage slot of balancesToWithdraw(msg.sender, tokenId) with nonzero value
+    // In this case operator should just overwrite this slot during confirming withdrawal
+    bytes22 packedBalanceKey = packAddressAndAssetId(msg.sender, assetId);
+    pendingBalances[packedBalanceKey].gasReserveValue = FILLED_GAS_RESERVE_VALUE;
+  }
+
+  /// @notice Register full exit nft request - pack pubdata, add priority request
+  /// @param _accountIndex Numerical id of the account
+  /// @param _nftIndex account NFT index in zkbnb network
+  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public onlyActive {
+    // Priority Queue request
+    TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
+      accountIndex: _accountIndex,
+      creatorAccountIndex: 0, // unknown
+      creatorTreasuryRate: 0,
+      nftIndex: _nftIndex,
+      collectionId: 0, // unknown
+      owner: msg.sender, // accountNameHahsh => owner
+      creatorAddress: address(0), // unknown
+      nftContentHash: bytes32(0x0), // unknown,
+      nftContentType: 0 //unkown
+    });
+    bytes memory pubData = TxTypes.writeFullExitNftPubDataForPriorityQueue(_tx);
+    addPriorityRequest(TxTypes.TxType.FullExitNft, pubData);
   }
 
   /// @notice Register deposit request - pack pubdata, add into onchainOpsCheck and emit OnchainDeposit event
   /// @param _assetId Asset by id
   /// @param _amount Asset amount
-  /// @param _accountNameHash Receiver Account Name
-  function registerDeposit(uint16 _assetId, uint128 _amount, bytes32 _accountNameHash) internal {
+  /// @param _to Receiver Account's L1 address
+  function registerDeposit(uint16 _assetId, uint128 _amount, address _to) internal {
     // Priority Queue request
     TxTypes.Deposit memory _tx = TxTypes.Deposit({
-      txType: uint8(TxTypes.TxType.Deposit),
       accountIndex: 0, // unknown at the moment
-      accountNameHash: _accountNameHash,
+      toAddress: _to,
       assetId: _assetId,
       amount: _amount
     });
@@ -226,7 +334,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     bytes memory pubData = TxTypes.writeDepositPubDataForPriorityQueue(_tx);
     // add into priority request queue
     addPriorityRequest(TxTypes.TxType.Deposit, pubData);
-    emit Deposit(_assetId, _accountNameHash, _amount);
+    emit Deposit(_assetId, _to, _amount);
   }
 
   /// @notice Saves priority request in storage

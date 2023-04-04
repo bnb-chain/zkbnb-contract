@@ -95,6 +95,7 @@
     "@openzeppelin/contracts": "^4.8.0",
     "@openzeppelin/contracts-upgradeable": "^4.8.0",
     "cids": "^1.1.9",
+    "ffjavascript": "^0.2.57",
     "husky": "^8.0.2",
     "lint-staged": "^13.1.0",
     "mocha": "^10.0.0",

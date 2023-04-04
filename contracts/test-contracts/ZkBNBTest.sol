@@ -59,6 +59,11 @@ contract ZkBNBTest is ZkBNB {
     return withdrawOrStoreNFT(op);
   }
 
+  function testIncreasePendingBalance(uint16 _assetId, address _recipient, uint128 _amount) external {
+    bytes22 packedBalanceKey = packAddressAndAssetId(_recipient, _assetId);
+    increaseBalanceToWithdraw(packedBalanceKey, _amount);
+  }
+
   function getLastCommittedBlockData(
     StoredBlockInfo memory _previousBlock,
     CommitBlockInfo memory _newBlock
@@ -71,16 +76,10 @@ contract ZkBNBTest is ZkBNB {
     address _creatorAddress,
     address _toAddress,
     uint256 _nftTokenId,
-    bytes32 _nftContentHash,
+    string memory _nftTokenURI,
     bytes memory _extraData
   ) external {
     return
-      INFTFactory(defaultNFTFactory).mintFromZkBNB(
-        _creatorAddress,
-        _toAddress,
-        _nftTokenId,
-        _nftContentHash,
-        _extraData
-      );
+      INFTFactory(defaultNFTFactory).mintFromZkBNB(_creatorAddress, _toAddress, _nftTokenId, _nftTokenURI, _extraData);
   }
 }

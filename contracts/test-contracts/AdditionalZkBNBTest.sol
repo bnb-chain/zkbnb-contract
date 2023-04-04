@@ -5,8 +5,7 @@ import "../interfaces/INFTFactory.sol";
 import "../AdditionalZkBNB.sol";
 
 contract AdditionalZkBNBTest is AdditionalZkBNB {
-  constructor(address _znsController, address _governanceAddress) {
-    znsController = ZNSController(_znsController);
+  constructor(address _governanceAddress) {
     governance = Governance(_governanceAddress);
   }
 }

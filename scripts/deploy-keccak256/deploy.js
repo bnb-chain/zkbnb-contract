@@ -1,10 +1,10 @@
 const hardhat = require('hardhat');
-const namehash = require('eth-ens-namehash');
-const fs = require('fs');
-const { getKeccak256, saveDeployedAddresses, saveConstructorArgumentsForVerify } = require('./utils');
+const { saveDeployedAddresses, saveConstructorArgumentsForVerify } = require('./utils');
 require('dotenv').config();
 const figlet = require('figlet');
 const chalk = require('chalk');
+
+const poseidonContract = require('../../test/desertMode/poseidon_gencontract');
 
 const { ethers } = hardhat;
 const { SECURITY_COUNCIL_MEMBERS_NUMBER_1, SECURITY_COUNCIL_MEMBERS_NUMBER_2, SECURITY_COUNCIL_MEMBERS_NUMBER_3 } =
@@ -20,13 +20,10 @@ async function main() {
   const governor = owner.address;
 
   const contractFactories = await getContractFactories();
-  //  Step 1: deploy zns registry
   console.log(chalk.blue('🚀 Deploy Contracts:'));
-  console.log(chalk.green('\t📦 ZNS registry...'));
-  const znsRegistry = await contractFactories.ZNSRegistry.deploy();
-  await znsRegistry.deployed();
 
-  // Step 2: deploy proxy contract
+  // Step 1: deploy proxy contract
+
   // governance
   console.log(chalk.green('\t📦 Governance...'));
   const governance = await contractFactories.Governance.deploy();
@@ -39,14 +36,6 @@ async function main() {
   console.log(chalk.green('\t📦 ZkBNB...'));
   const zkbnb = await contractFactories.ZkBNB.deploy();
   await zkbnb.deployed();
-  // ZNS controller
-  console.log(chalk.green('\t📦 ZNSController...'));
-  const znsController = await contractFactories.ZNSController.deploy();
-  await znsController.deployed();
-  // ZNS resolver
-  console.log(chalk.green('\t📦 ZNSResolver...'));
-  const znsResolver = await contractFactories.ZNSResolver.deploy();
-  await znsResolver.deployed();
   // UpgradeableMaster
   console.log(chalk.green('\t📦 UpgradeableMaster...'));
   const upgradeableMasterParams = [
@@ -56,11 +45,11 @@ async function main() {
   const upgradeableMaster = await contractFactories.UpgradeableMaster.deploy(...upgradeableMasterParams);
   await upgradeableMaster.deployed();
 
-  // Step 3: initialize deploy factory and finish deployment
-  // deploy price oracle
-  console.log(chalk.green('\t📦 Deploy PriceOracleV1...'));
-  const priceOracle = await contractFactories.ZNSPriceOracle.deploy(ethers.utils.parseEther('0.05'));
-  await priceOracle.deployed();
+  // Step 2: initialize deploy factory and finish deployment
+
+  // deploy Poseidon contracts and DesertVerifier
+  console.log(chalk.green('\t📦 DesertVerifier...'));
+  const desertVerifier = await deployDesertVerifier(owner);
 
   // prepare deploy params
   // get ERC20s
@@ -86,13 +75,12 @@ async function main() {
   }
 
   // get ERC721
-  const ERC721 = await contractFactories.ERC721Factory.deploy('ZkBNB', 'ZkBNB', '0');
+  const ERC721 = await contractFactories.ERC721Factory.deploy('zkBNB', 'zkBNB', '0');
   await ERC721.deployed();
-  const _genesisAccountRoot = '0x18195ae3b8f5962236067a051c3a5f697a19de8442849677dbbee328107cca81';
+  const _genesisStateRoot = '0x18195ae3b8f5962236067a051c3a5f697a19de8442849677dbbee328107cca81';
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
   const _listingToken = tokens[0]; // tokens[0] is BUSD
-  const baseNode = namehash.hash('zkbnb');
   // deploy DeployFactory
   console.log(chalk.blue('🚛 Run DeployFactory'));
   const deployFactory = await contractFactories.DeployFactory.deploy(
@@ -100,19 +88,15 @@ async function main() {
       governance.address,
       verifier.address,
       zkbnb.address,
-      znsController.address,
-      znsResolver.address,
       governor,
       governor,
       _listingToken,
-      znsRegistry.address,
-      priceOracle.address,
+      desertVerifier.address,
       upgradeableMaster.address,
     ],
-    _genesisAccountRoot,
+    _genesisStateRoot,
     _listingFee,
     _listingCap,
-    baseNode,
     { gasLimit: 13000000 },
   );
   await deployFactory.deployed();
@@ -122,30 +106,21 @@ async function main() {
   const deployFactoryTx = await deployFactory.deployTransaction;
   const deployFactoryTxReceipt = await deployFactoryTx.wait();
   const AddressesInterface = new ethers.utils.Interface([
-    'event Addresses(address governance, address assetGovernance, address verifier, address znsController, address znsResolver, address zkbnb, address gatekeeper, address additionalZkBNB)',
+    'event Addresses(address governance, address assetGovernance, address verifier, address zkbnb, address gatekeeper, address additionalZkBNB)',
   ]);
   // The specified index is the required event.
-  // console.log(deployFactoryTxReceipt.logs)
+  // console.log(deployFactoryTxReceipt.logs);
   const event = AddressesInterface.decodeEventLog(
     'Addresses',
-    deployFactoryTxReceipt.logs[11].data,
-    deployFactoryTxReceipt.logs[11].topics,
+    deployFactoryTxReceipt.logs[6].data,
+    deployFactoryTxReceipt.logs[6].topics,
   );
-  // Get inner contract proxy address
-  // console.log(event)
-  const znsControllerProxy = contractFactories.ZNSController.attach(event[3]);
   const assetGovernance = contractFactories.AssetGovernance.attach(event[1]);
 
   // deploy default nft factory
   console.log(chalk.blue('⚙️ Setting ZkBNB DefaultNftFactory'));
   console.log('\t🚀Deploy DefaultNftFactory...');
-  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy(
-    'ZkBNB',
-    'ZkBNB',
-    'ipfs://f01701220',
-    event[5],
-    owner.address,
-  );
+  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy('zkBNB', 'zkBNB', event[3], owner.address);
   await DefaultNftFactory.deployed();
 
   console.log('\t🔧Set default nft factory...');
@@ -153,7 +128,7 @@ async function main() {
   const setDefaultNftFactoryTx = await proxyGovernance.setDefaultNFTFactory(DefaultNftFactory.address);
   await setDefaultNftFactoryTx.wait();
   console.log(chalk.blue('🚀 Set zkBNB address for governance...'));
-  const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(event[5]);
+  const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(event[3]);
   await setZkBNBAddressTx.wait();
   // Add validators into governance
   console.log(chalk.blue('📥 Add validators into governance...'));
@@ -165,6 +140,14 @@ async function main() {
     }
   }
 
+  // Add baseURI into governance
+  console.log(chalk.blue('📥 Add baseURI into governance...'));
+  const baseURIs = [[0, 'ipfs://f01701220']];
+  for (const [type, baseURI] of baseURIs) {
+    await proxyGovernance.updateBaseURI(type, baseURI);
+    console.log(chalk.blue(`\t🔧 Added baseURI ${type}:${baseURI}`));
+  }
+
   // Add tokens into assetGovernance
   // add asset
   console.log(chalk.blue('📥 Add tokens into assetGovernance asset list...'));
@@ -173,23 +156,10 @@ async function main() {
     await addAssetTx.wait();
   }
 
-  // Step 4: register zns base node
-  console.log(chalk.blue('📋 Register ZNS base node...'));
-  const rootNode = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const baseNodeLabel = getKeccak256('zkbnb'); // keccak256('zkbnb');
-  const setBaseNodeTx = await znsRegistry.setSubnodeOwner(
-    rootNode,
-    baseNodeLabel,
-    znsControllerProxy.address,
-    ethers.constants.HashZero,
-    ethers.constants.HashZero,
-  );
-  await setBaseNodeTx.wait();
-
   console.log(chalk.blue('🔐 Granted permission...'));
   const UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
-  await upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, event[6] /* upgradeGateKeeper.address */);
-  await upgradeableMaster.changeZkBNBAddress(event[5] /* zkbnb.address */);
+  await upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, event[4] /* upgradeGateKeeper.address */);
+  await upgradeableMaster.changeZkBNBAddress(event[3] /* zkbnb.address */);
 
   // Save addresses into JSON
   console.log(chalk.blue('📥 Save deployed contract addresses and arguments'));
@@ -207,13 +177,10 @@ async function main() {
         governance: event[0],
         assetGovernance: event[1],
         verifierProxy: event[2],
-        znsControllerProxy: event[3],
-        znsResolverProxy: event[4],
-        zkbnbProxy: event[5],
-        upgradeGateKeeper: event[6],
-        additionalZkBNB: event[7],
+        zkbnbProxy: event[3],
+        upgradeGateKeeper: event[4],
+        additionalZkBNB: event[5],
         ERC721: ERC721.address,
-        znsPriceOracle: priceOracle.address,
         DefaultNftFactory: DefaultNftFactory.address,
         upgradeableMaster: upgradeableMaster.address,
         utils: contractFactories.Utils.address,
@@ -224,7 +191,7 @@ async function main() {
 
   // Save contract constructor arguments to JSON for verify
   saveConstructorArgumentsForVerify('info/constructor.json', {
-    proxy: [event[0], [abi.encode(['address'], [deployFactory.address])]],
+    proxy: [event[0], [governance.address, abi.encode(['address'], [deployFactory.address])]],
     governance: [governance.address],
     assetGovernance: [
       event[1],
@@ -239,47 +206,52 @@ async function main() {
     ],
     utils: [contractFactories.Utils.address],
     verifier: [verifier.address],
-    znsController: [znsController.address],
-    znsResolver: [znsResolver.address],
     zkbnb: [zkbnb.address],
     upgradeGateKeeper: [upgradeableMaster.address],
-    additionalZkBNB: [event[7]],
+    additionalZkBNB: [event[5]],
     ERC721: [],
-    znsPriceOracle: [],
     DefaultNftFactory: [],
     upgradeableMaster: [upgradeableMaster.address, upgradeableMasterParams],
   });
+}
+
+async function deployDesertVerifier(owner) {
+  const PoseidonT3 = new ethers.ContractFactory(poseidonContract.generateABI(2), poseidonContract.createCode(2), owner);
+  const poseidonT3 = await PoseidonT3.deploy();
+  await poseidonT3.deployed();
+
+  const PoseidonT6 = new ethers.ContractFactory(poseidonContract.generateABI(5), poseidonContract.createCode(5), owner);
+  const poseidonT6 = await PoseidonT6.deploy();
+  await poseidonT6.deployed();
+
+  const PoseidonT7 = new ethers.ContractFactory(poseidonContract.generateABI(6), poseidonContract.createCode(6), owner);
+  const poseidonT7 = await PoseidonT7.deploy();
+  await poseidonT7.deployed();
+
+  const DesertVerifier = await ethers.getContractFactory('DesertVerifier');
+  const desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
+  await desertVerifier.deployed();
+
+  return desertVerifier;
 }
 
 async function getContractFactories() {
   const Utils = await ethers.getContractFactory('Utils');
   const utils = await Utils.deploy();
   await utils.deployed();
-  // TODO: remove in next version
-  const NftHelperLibrary = await ethers.getContractFactory('NftHelperLibrary');
-  const nftHelperLibrary = await NftHelperLibrary.deploy();
-  await nftHelperLibrary.deployed();
 
   return {
     TokenFactory: await ethers.getContractFactory('ZkBNBRelatedERC20'),
     ERC721Factory: await ethers.getContractFactory('ZkBNBRelatedERC721'),
-    ZNSRegistry: await ethers.getContractFactory('ZNSRegistry'),
-    ZNSResolver: await ethers.getContractFactory('PublicResolver'),
-    ZNSPriceOracle: await ethers.getContractFactory('PriceOracleV1'),
-    ZNSController: await ethers.getContractFactory('ZNSController'),
     Governance: await ethers.getContractFactory('Governance'),
     AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
     Verifier: await ethers.getContractFactory('ZkBNBVerifier'),
     ZkBNB: await ethers.getContractFactory('ZkBNB', {
       libraries: {
-        NftHelperLibrary: nftHelperLibrary.address,
-      },
-    }),
-    DeployFactory: await ethers.getContractFactory('DeployFactory', {
-      libraries: {
         Utils: utils.address,
       },
     }),
+    DeployFactory: await ethers.getContractFactory('DeployFactory'),
     DefaultNftFactory: await ethers.getContractFactory('ZkBNBNFTFactory'),
     UpgradeableMaster: await ethers.getContractFactory('UpgradeableMaster'),
     Utils: utils,
