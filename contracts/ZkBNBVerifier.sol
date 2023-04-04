@@ -28,7 +28,7 @@ contract ZkBNBVerifier {
     uint256[] memory entropy = new uint256[](num_proofs);
     inputAccumulators = new uint256[](numPublicInputs + 1);
 
-    for (uint256 proofNumber = 0; proofNumber < num_proofs; proofNumber++) {
+    for (uint256 proofNumber = 0; proofNumber < num_proofs; ++proofNumber) {
       if (proofNumber == 0) {
         entropy[proofNumber] = 1;
       } else {
@@ -38,7 +38,7 @@ contract ZkBNBVerifier {
       require(entropy[proofNumber] != 0, "Entropy should not be zero");
       // here multiplication by 1 is for a sake of clarity only
       inputAccumulators[0] = addmod(inputAccumulators[0], mulmod(1, entropy[proofNumber], q), q);
-      for (uint256 i = 0; i < numPublicInputs; i++) {
+      for (uint256 i = 0; i < numPublicInputs; ++i) {
         // TODO
         // require(proof_inputs[proofNumber * numPublicInputs + i] < q, "INVALID_INPUT");
         // accumulate the exponent with extra entropy mod q
@@ -63,7 +63,7 @@ contract ZkBNBVerifier {
     proofsAandC[0] = in_proof[0];
     proofsAandC[1] = in_proof[1];
 
-    for (uint256 proofNumber = 1; proofNumber < num_proofs; proofNumber++) {
+    for (uint256 proofNumber = 1; proofNumber < num_proofs; ++proofNumber) {
       require(entropy[proofNumber] < q, "INVALID_INPUT");
       mul_input[0] = in_proof[proofNumber * 8];
       mul_input[1] = in_proof[proofNumber * 8 + 1];
@@ -85,7 +85,7 @@ contract ZkBNBVerifier {
     add_input[0] = in_proof[6];
     add_input[1] = in_proof[7];
 
-    for (uint256 proofNumber = 1; proofNumber < num_proofs; proofNumber++) {
+    for (uint256 proofNumber = 1; proofNumber < num_proofs; ++proofNumber) {
       mul_input[0] = in_proof[proofNumber * 8 + 6];
       mul_input[1] = in_proof[proofNumber * 8 + 7];
       mul_input[2] = entropy[proofNumber];
@@ -118,7 +118,7 @@ contract ZkBNBVerifier {
     bool success;
 
     // Performs a sum(gammaABC[i] * inputAccumulator[i])
-    for (uint256 i = 0; i < inputAccumulators.length; i++) {
+    for (uint256 i = 0; i < inputAccumulators.length; ++i) {
       mul_input[0] = vk_gammaABC[2 * i];
       mul_input[1] = vk_gammaABC[2 * i + 1];
       mul_input[2] = inputAccumulators[i];
@@ -273,7 +273,7 @@ contract ZkBNBVerifier {
 
     uint256[] memory inputs = new uint256[](6 * num_proofs + 18);
     // first num_proofs pairings e(ProofA, ProofB)
-    for (uint256 proofNumber = 0; proofNumber < num_proofs; proofNumber++) {
+    for (uint256 proofNumber = 0; proofNumber < num_proofs; ++proofNumber) {
       inputs[proofNumber * 6] = proofsAandC[proofNumber * 2];
       inputs[proofNumber * 6 + 1] = proofsAandC[proofNumber * 2 + 1];
       inputs[proofNumber * 6 + 2] = in_proof[proofNumber * 8 + 2];
@@ -339,7 +339,7 @@ contract ZkBNBVerifier {
 
     // uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     // Performs a sum of gammaABC[0] + sum[ gammaABC[i+1]^proof_inputs[i] ]
-    for (uint256 i = 0; i < proof_inputs.length; i++) {
+    for (uint256 i = 0; i < proof_inputs.length; ++i) {
       // @dev only for qa test
       //  require(proof_inputs[i] < q, "INVALID_INPUT");
       mul_input[0] = vk_gammaABC[m++];

@@ -88,7 +88,7 @@ contract DesertVerifier {
       accountMerkleProof
     );
 
-    for (uint i = 0; i < exitNfts.length; i++) {
+    for (uint i = 0; i < exitNfts.length; ++i) {
       NftExitData memory nft = exitNfts[i];
       require(nft.ownerAccountIndex == accountData.accountId, "given account is not nft owner");
       uint nftRoot = getNftRoot(
@@ -123,7 +123,7 @@ contract DesertVerifier {
     uint256 assetLeafHash = hashNode(amount, offerCanceledOrFinalized);
     uint256 rootHash = assetLeafHash;
 
-    for (uint16 i = 0; i < 16; i++) {
+    for (uint16 i = 0; i < 16; ++i) {
       uint256 siblingProof = assetMerkleProof[i];
       uint remain = assetId >> i;
 
@@ -160,7 +160,7 @@ contract DesertVerifier {
     uint256 accountLeafHash = poseidonT7.poseidon(inputs);
     uint256 rootHash = accountLeafHash;
 
-    for (uint16 i = 0; i < 32; i++) {
+    for (uint16 i = 0; i < 32; ++i) {
       uint256 siblingProof = accountMerkleProof[i];
       uint remain = accountId >> i;
       bool isLeft = (remain & 0x01) == 1;
@@ -201,7 +201,7 @@ contract DesertVerifier {
     uint256 nftLeafHash = poseidonT7.poseidon(inputs);
     uint256 rootHash = nftLeafHash;
 
-    for (uint16 i = 0; i < 40; i++) {
+    for (uint16 i = 0; i < 40; ++i) {
       uint256 siblingProof = nftMerkleProof[i];
       uint remain = nftIndex >> i;
 

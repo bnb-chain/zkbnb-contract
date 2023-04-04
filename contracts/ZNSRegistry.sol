@@ -63,7 +63,7 @@ contract ZNSRegistry is IZNS {
     bytes32 subnode = setSubnodeOwner(_node, _label, _owner, _pubKeyX, _pubKeyY);
     _setResolver(subnode, _resolver);
     records[subnode].accountIndex = count;
-    count++;
+    ++count;
     return (subnode, records[subnode].accountIndex);
   }
 
