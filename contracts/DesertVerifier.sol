@@ -10,7 +10,7 @@ contract DesertVerifier {
 
   struct AssetExitData {
     uint16 assetId;
-    uint amount;
+    uint128 amount;
     uint offerCanceledOrFinalized;
   }
 
@@ -26,11 +26,12 @@ contract DesertVerifier {
   struct NftExitData {
     uint40 nftIndex;
     uint ownerAccountIndex;
-    uint creatorAccountIndex;
-    bytes32 nftContentHash;
+    uint32 creatorAccountIndex;
+    uint16 creatorTreasuryRate;
+    uint16 collectionId;
+    bytes16 nftContentHash1;
+    bytes16 nftContentHash2;
     uint8 nftContentType;
-    uint creatorTreasuryRate;
-    uint collectionId;
   }
 
   constructor(address _poseidonT3, address _poseidonT6, address _poseidonT7) {
@@ -39,6 +40,7 @@ contract DesertVerifier {
     poseidonT7 = IPoseidonT7(_poseidonT7);
   }
 
+  /// @notice verify ownership of assets
   function verifyExitProofBalance(
     uint256 stateRoot,
     uint256 nftRoot,
@@ -49,7 +51,7 @@ contract DesertVerifier {
   ) external view returns (bool) {
     uint256 assetRoot = getAssetRoot(
       assetData.assetId,
-      assetData.amount,
+      uint256(assetData.amount),
       assetData.offerCanceledOrFinalized,
       assetMerkleProof
     );
@@ -67,6 +69,8 @@ contract DesertVerifier {
     return (hashNode(accountRoot, nftRoot) == stateRoot);
   }
 
+  /// @notice verify ownership of nfts
+  /// @param accountData the owner of nfts, accountId must match nft's ownerAccountIndex
   function verifyExitNftProof(
     uint256 stateRoot,
     uint256 assetRoot,
@@ -95,10 +99,10 @@ contract DesertVerifier {
         nft.nftIndex,
         nft.creatorAccountIndex,
         nft.ownerAccountIndex,
-        uint256(nft.nftContentHash),
+        uint256(uint128(nft.nftContentHash1)),
+        uint256(uint128(nft.nftContentHash2)),
         nft.creatorTreasuryRate,
         nft.collectionId,
-        uint256(nft.nftContentType),
         nftMerkleProofs[i]
       );
       if (hashNode(accountRoot, nftRoot) == stateRoot) {
@@ -177,28 +181,30 @@ contract DesertVerifier {
 
   /* creatorAccountIndex */
   /* ownerAccountIndex */
-  /* nftContentHash */
+  /* nftContentHash1 */
+  /* nftContentHash2 */
   /* creatorTreasuryRate */
   /* collectionId */
-  /* nftContentType */
   function getNftRoot(
     uint40 nftIndex,
     uint256 creatorAccountIndex,
     uint256 ownerAccountIndex,
-    uint256 nftContentHash,
+    uint256 nftContentHash1,
+    uint256 nftContentHash2,
     uint256 creatorTreasuryRate,
     uint256 collectionId,
-    uint256 nftContentType,
     uint256[40] memory nftMerkleProof
   ) internal view returns (uint256) {
     uint256[6] memory inputs;
     inputs[0] = creatorAccountIndex;
     inputs[1] = ownerAccountIndex;
-    inputs[2] = nftContentHash;
-    inputs[3] = creatorTreasuryRate;
-    inputs[4] = collectionId;
-    inputs[5] = nftContentType;
+    inputs[2] = nftContentHash1;
+    inputs[3] = nftContentHash2;
+    inputs[4] = creatorTreasuryRate;
+    inputs[5] = collectionId;
+
     uint256 nftLeafHash = poseidonT7.poseidon(inputs);
+
     uint256 rootHash = nftLeafHash;
 
     for (uint16 i = 0; i < 40; ++i) {

@@ -15,6 +15,9 @@ interface Events {
   /// @notice Event emitted when user funds are withdrawn from the ZkBNB state and contract
   event Withdrawal(uint16 assetId, uint128 amount);
 
+  /// @notice Event emitted when user funds are withdrawn from the ZkBNB state but not from contract
+  event WithdrawalPending(uint16 indexed assetId, address indexed recepient, uint128 amount);
+
   /// @notice Event emitted when user funds are deposited to the zkbnb account
   event Deposit(uint16 assetId, address to, uint128 amount);
 
@@ -75,7 +78,7 @@ interface Events {
   /// @notice NFT withdraw event.
   event WithdrawNft(uint32 accountIndex, address nftL1Address, address toAddress, uint256 nftL1TokenId);
 
-  /// @notice Event emitted when user NFT is withdrawn from the zkSync state but not from contract
+  /// @notice Event emitted when user NFT is withdrawn from the zkBNB state but not from contract
   event WithdrawalNFTPending(uint40 indexed nftIndex);
 }
 

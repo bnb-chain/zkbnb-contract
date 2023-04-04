@@ -21,9 +21,9 @@ contract DesertVerifierTest is DesertVerifier {
 
   function testGetAccountRoot(
     uint32 accountId,
-    uint256 accountNameHash,
-    uint256 pubKeyX,
-    uint256 pubKeyY,
+    address l1Address,
+    bytes32 pubKeyX,
+    bytes32 pubKeyY,
     uint256 nonce,
     uint256 collectionNonce,
     uint256 assetRoot,
@@ -32,9 +32,9 @@ contract DesertVerifierTest is DesertVerifier {
     return
       getAccountRoot(
         accountId,
-        accountNameHash,
-        pubKeyX,
-        pubKeyY,
+        uint256(uint160(l1Address)),
+        uint256(pubKeyX),
+        uint256(pubKeyY),
         nonce,
         collectionNonce,
         assetRoot,
@@ -44,12 +44,13 @@ contract DesertVerifierTest is DesertVerifier {
 
   function testGetNftRoot(
     uint40 nftIndex,
-    uint256 creatorAccountIndex,
+    uint8 _nftContentType,
     uint256 ownerAccountIndex,
-    uint256 nftContentHash,
+    uint256 creatorAccountIndex,
+    bytes16 nftContentHash1,
+    bytes16 nftContentHash2,
     uint256 creatorTreasuryRate,
     uint256 collectionId,
-    uint256 nftContentType,
     uint256[40] memory nftMerkleProof
   ) external view returns (uint256) {
     return
@@ -57,10 +58,10 @@ contract DesertVerifierTest is DesertVerifier {
         nftIndex,
         creatorAccountIndex,
         ownerAccountIndex,
-        nftContentHash,
+        uint256(uint128(nftContentHash1)),
+        uint256(uint128(nftContentHash2)),
         creatorTreasuryRate,
         collectionId,
-        nftContentType,
         nftMerkleProof
       );
   }

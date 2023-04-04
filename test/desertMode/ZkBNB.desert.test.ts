@@ -81,4 +81,25 @@ describe('Desert Mode', function () {
   });
 
   // it.skip('should be able to cancel outstanding NFT deposits', async () => { });
+
+  it('should be able to withdraw pending balance', async () => {
+    const _depositTx = await zkBNB.depositBNB(owner.address, { value: ethers.utils.parseEther('2000') });
+
+    const token = ethers.constants.AddressZero;
+    const amount = 55_000_000_000;
+    const assetId = 0;
+
+    const _ = await zkBNB.testIncreasePendingBalance(assetId, owner.address, amount);
+
+    const balance = await zkBNB.getPendingBalance(owner.address, token);
+    assert.equal(balance, amount);
+
+    // const before = await ethers.provider.getBalance(owner.address);
+    await expect(await zkBNB.withdrawPendingBalance(owner.address, token, amount))
+      .to.emit(zkBNB, 'Withdrawal')
+      .withArgs(assetId, amount);
+    // const after = await ethers.provider.getBalance(owner.address);
+
+    // console.log(before, after);
+  });
 });

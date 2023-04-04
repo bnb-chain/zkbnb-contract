@@ -205,6 +205,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     bytes22 packedBalanceKey = packAddressAndAssetId(_owner, _assetId);
     uint128 balance = pendingBalances[packedBalanceKey].balanceToWithdraw;
     uint128 amount = Utils.minU128(balance, _amount);
+    require(amount > 0, "f1"); // Nothing to withdraw
+
     if (_assetId == 0) {
       (bool success, ) = _owner.call{value: amount}("");
       // Native Asset withdraw failed

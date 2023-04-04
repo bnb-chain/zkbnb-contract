@@ -31,7 +31,7 @@ contract Governance is Config, Initializable {
 
   /// @notice NFT Creator account to factory address mapping
   /// @dev creator address => CollectionId => NFTFactory
-  mapping(address => mapping(uint32 => address)) public nftFactories;
+  mapping(address => mapping(uint16 => address)) public nftFactories;
 
   /// @notice NFT factory address to creator address mapping
   mapping(address => address) public nftFactoryCreators;
@@ -62,7 +62,7 @@ contract Governance is Config, Initializable {
   event NFTFactoryDeployed(address indexed creator, address indexed factory);
 
   /// @notice New NFT factory registered
-  event NFTFactoryRegistered(address indexed creator, address indexed factory, uint32 indexed collectionId);
+  event NFTFactoryRegistered(address indexed creator, address indexed factory, uint16 indexed collectionId);
 
   /// @notice Default nft factory has set
   event SetDefaultNFTFactory(address indexed factory);
@@ -168,7 +168,7 @@ contract Governance is Config, Initializable {
   /// @notice Register collection corresponding to the default factory
   /// @param _creatorAddress L2 collection creator address
   /// @param _collectionId L2 collection id
-  function registerDefaultNFTFactory(address _creatorAddress, uint32 _collectionId) external {
+  function registerDefaultNFTFactory(address _creatorAddress, uint16 _collectionId) external {
     require(msg.sender == zkBNBAddress, "No access");
     if (nftFactories[_creatorAddress][_collectionId] == address(0)) {
       nftFactories[_creatorAddress][_collectionId] = defaultNFTFactory;
@@ -178,7 +178,7 @@ contract Governance is Config, Initializable {
   /// @notice Register collection corresponding to the factory
   /// @param _collectionId L2 collection id
   /// @param _factoryAddress NFT factor address
-  function registerNFTFactory(uint32 _collectionId, address _factoryAddress) public {
+  function registerNFTFactory(uint16 _collectionId, address _factoryAddress) public {
     require(nftFactories[msg.sender][_collectionId] == address(0), "Q");
     require(nftFactoryCreators[_factoryAddress] == msg.sender, "ws");
     nftFactories[msg.sender][_collectionId] = _factoryAddress;
@@ -189,7 +189,7 @@ contract Governance is Config, Initializable {
   /// @param _collectionId L2 collection id
   /// @param _name NFT factory name
   /// @param _symbol NFT factory symbol
-  function deployAndRegisterNFTFactory(uint32 _collectionId, string memory _name, string memory _symbol) external {
+  function deployAndRegisterNFTFactory(uint16 _collectionId, string memory _name, string memory _symbol) external {
     require(zkBNBAddress != address(0), "ZkBNB address does not set");
     ZkBNBNFTFactory _factory = new ZkBNBNFTFactory(_name, _symbol, zkBNBAddress, msg.sender);
     address _factoryAddress = address(_factory);
@@ -221,7 +221,7 @@ contract Governance is Config, Initializable {
   /// @notice Get a registered NFTFactory according to the creator address and the collectionId
   /// @param _creatorAddress creator account address
   /// @param _collectionId collection id of the nft collection related to this creator
-  function getNFTFactory(address _creatorAddress, uint32 _collectionId) external view returns (address) {
+  function getNFTFactory(address _creatorAddress, uint16 _collectionId) external view returns (address) {
     address _factory = nftFactories[_creatorAddress][_collectionId];
     // Use the default factory when the collection is not bound a factory
     if (_factory == address(0)) {
