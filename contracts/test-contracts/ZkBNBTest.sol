@@ -74,9 +74,10 @@ contract ZkBNBTest is ZkBNB {
   function mintNFT(
     address defaultNFTFactory,
     address _toAddress,
+    uint8 _nftContentType,
     uint256 _nftTokenId,
-    string memory _nftTokenURI
+    bytes32 _nftContentHash
   ) external {
-    return INFTFactory(defaultNFTFactory).mintFromZkBNB(_toAddress, _nftTokenId, _nftTokenURI);
+    return INFTFactory(defaultNFTFactory).mintFromZkBNB(_toAddress, _nftContentType, _nftTokenId, _nftContentHash);
   }
 }

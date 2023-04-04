@@ -379,8 +379,10 @@ describe('NFT functionality', function () {
       const tokenURI = await governance.getNftTokenURI(0, IPFSMultiHashDigest);
       // const extraData = ethers.constants.HashZero;
 
-      expect(zkBNBNFTFactory.mintFromZkBNB(acc2.address, tokenId, tokenURI)).to.be.revertedWith('only zkbnbAddress');
-      await expect(await zkBNB.mintNFT(zkBNBNFTFactory.address, acc2.address, tokenId, tokenURI));
+      expect(zkBNBNFTFactory.mintFromZkBNB(acc2.address, 0, tokenId, IPFSMultiHashDigest)).to.be.revertedWith(
+        'only zkbnbAddress',
+      );
+      await expect(await zkBNB.mintNFT(zkBNBNFTFactory.address, acc2.address, 0, tokenId, IPFSMultiHashDigest));
       // remove emit event of MintNFTFromZkBNB
       // .to.emit(zkBNBNFTFactory, 'MintNFTFromZkBNB')
       // .withArgs(acc1.address, acc2.address, tokenId, extraData);
