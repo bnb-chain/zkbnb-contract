@@ -88,7 +88,7 @@ library Pairing {
     uint256 elements = p1.length;
     uint256 inputSize = elements * 6;
     uint256[] memory input = new uint256[](inputSize);
-    for (uint256 i = 0; i < elements; i++) {
+    for (uint256 i = 0; i < elements; ++i) {
       input[i * 6 + 0] = p1[i].X;
       input[i * 6 + 1] = p1[i].Y;
       input[i * 6 + 2] = p2[i].X[0];
