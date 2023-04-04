@@ -228,7 +228,7 @@ async function deployDesertVerifier(owner) {
   const poseidonT7 = await PoseidonT7.deploy();
   await poseidonT7.deployed();
 
-  const DesertVerifier = await ethers.getContractFactory('DesertVerifierTest');
+  const DesertVerifier = await ethers.getContractFactory('DesertVerifier');
   const desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
   await desertVerifier.deployed();
 
