@@ -62,7 +62,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // #else
     trigger =
       block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
-      priorityRequests[firstPriorityRequestId].expirationBlock != 0;
+      priorityRequests[firstPriorityRequestId].expirationBlock != 0 &&
+      totalOpenPriorityRequests != 0;
     // #endif
     if (trigger) {
       if (!desertMode) {
