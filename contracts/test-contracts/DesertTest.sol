@@ -8,7 +8,7 @@ contract DesertVerifierTest is DesertVerifier {
 
   function testGetAssetRoot(
     uint16 assetId,
-    uint256 amount,
+    uint128 amount,
     uint256 offerCanceledOrFinalized,
     uint256[16] memory assetMerkleProof
   ) external view returns (uint256) {
@@ -42,11 +42,11 @@ contract DesertVerifierTest is DesertVerifier {
     uint40 nftIndex,
     uint8 _nftContentType,
     uint256 ownerAccountIndex,
-    uint256 creatorAccountIndex,
+    uint32 creatorAccountIndex,
     bytes16 nftContentHash1,
     bytes16 nftContentHash2,
-    uint256 creatorTreasuryRate,
-    uint256 collectionId,
+    uint16 creatorTreasuryRate,
+    uint16 collectionId,
     uint256[40] memory nftMerkleProof
   ) external view returns (uint256) {
     return
