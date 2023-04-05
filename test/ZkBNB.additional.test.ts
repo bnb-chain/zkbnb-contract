@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import hardhat, { ethers } from 'hardhat';
 import chai, { expect } from 'chai';
 import { smock } from '@defi-wonderland/smock';
 
@@ -244,6 +244,10 @@ describe('ZkBNB', function () {
         const bnbEvent = bnbReceipt.events.find((event) => {
           return event.event === 'NewPriorityRequest';
         });
+
+        expect(await zkBNB.totalOpenPriorityRequests()).to.equal(1);
+        expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
         const bnbPubData = bnbEvent.args[3];
 
         mockERC20.transferFrom.returns(true);
@@ -403,6 +407,9 @@ describe('ZkBNB', function () {
         return event.event === 'NewPriorityRequest';
       });
 
+      expect(await zkBNB.totalOpenPriorityRequests()).to.equal(1);
+      expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
       const pubData = event.args[3];
 
       const onchainOperations: OnchainOperationData[] = [
@@ -438,6 +445,10 @@ describe('ZkBNB', function () {
       event = receipt.events.find((event) => {
         return event.event === 'NewPriorityRequest';
       });
+
+      expect(await zkBNB.totalOpenPriorityRequests()).to.equal(2);
+      expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
       const pubDataFullExit = event.args[3];
       const commitBlock2: CommitBlockInfo = {
         newStateRoot,
@@ -490,6 +501,12 @@ describe('ZkBNB', function () {
       expect(totalOpenPriorityRequests).to.equal(0);
       expect(totalBlocksVerified).to.equal(2);
       expect(firstPriorityRequestId).to.equal(2);
+
+      const oldesetPriorityReqest = await zkBNB.getPriorityRequest(firstPriorityRequestId);
+      expect(oldesetPriorityReqest['expirationBlock']).to.equal(0);
+      // should not be able to activate desert mode if there is no unprocessed priority request
+      await hardhat.network.provider.send('hardhat_mine', ['0x1000000']);
+      await expect(await zkBNB.activateDesertMode()).not.to.emit(zkBNB, 'DesertMode');
     });
 
     it('Should be verified in order', async () => {
