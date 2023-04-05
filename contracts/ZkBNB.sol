@@ -181,7 +181,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
-  /// @notice  Withdraws NFT from zkSync contract to the owner
+  /// @notice  Withdraws NFT from zkBNB contract to the owner
   /// @param _nftIndex Id of NFT token
   function withdrawPendingNFTBalance(uint40 _nftIndex) external {
     TxTypes.WithdrawNft memory op = pendingWithdrawnNFTs[_nftIndex];
@@ -223,7 +223,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice Sends tokens
   /// @dev NOTE: will revert if transfer call fails or rollup balance difference (before and after transfer) is bigger than _maxAmount
-  /// @dev This function is used to allow tokens to spend zkSync contract balance up to amount that is requested
+  /// @dev This function is used to allow tokens to spend zkBNB contract balance up to amount that is requested
   /// @param _token Token address
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
