@@ -17,7 +17,6 @@ import {
   padEndBytes121,
 } from './util';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { zeroPad } from '@ethersproject/bytes/src.ts';
 
 chai.use(smock.matchers);
 
@@ -29,11 +28,7 @@ describe('ZkBNB', function () {
   let mockNftFactory;
   let zkBNB;
   let additionalZkBNB;
-  let owner: SignerWithAddress,
-    addr1: SignerWithAddress,
-    addr2: SignerWithAddress,
-    addr3: SignerWithAddress,
-    addr4: SignerWithAddress;
+  let owner: SignerWithAddress;
   const account = '0xB4fdA33E65656F9f485438ABd9012eD04a31E006';
 
   const genesisStateRoot = ethers.utils.formatBytes32String('genesisStateRoot');
@@ -55,7 +50,7 @@ describe('ZkBNB', function () {
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     mockGovernance = await smock.fake('Governance');
     mockZkBNBVerifier = await smock.fake('ZkBNBVerifier');

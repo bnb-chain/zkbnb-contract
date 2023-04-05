@@ -1,7 +1,6 @@
-import { assert, chai } from 'chai';
+import { assert } from 'chai';
 import { ethers } from 'hardhat';
 import * as poseidonContract from './poseidon_gencontract';
-import { Scalar } from 'ffjavascript';
 import { BigNumber } from 'ethers';
 
 import exitDataJson from './performDesertAsset5.json';
@@ -10,7 +9,7 @@ import exitNftJson from './performDesertNft3.json';
 import buildPoseidon from './poseidon_reference';
 
 describe('DesertVerifier', function () {
-  let owner, addr1;
+  let owner;
   // poseidon wasm
   let poseidon;
 
@@ -24,7 +23,7 @@ describe('DesertVerifier', function () {
   let desertVerifier;
 
   before(async function () {
-    [owner, addr1] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     poseidon = await buildPoseidon();
 
@@ -59,7 +58,6 @@ describe('DesertVerifier', function () {
 
   describe('desert asset', function () {
     let assetRoot;
-    let accountLeafHash;
     let accountRoot;
     let stateHash;
 
@@ -108,7 +106,6 @@ describe('DesertVerifier', function () {
       const expectLog = '0x8d177d83a2bcfc59091b802531712ae222bb78b586ac1a5099b02d92104b84';
       assert.equal(actual.toHexString(), expectLog);
       console.log('account Leaf: ', actual.toHexString());
-      accountLeafHash = actual;
     });
 
     it('check account root', async () => {

@@ -1,12 +1,13 @@
 import { utils } from 'ethers';
 
 import { ethers } from 'hardhat';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export const getKeccak256 = (name) => {
   return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name));
 };
 
-export const transferFunds = async (signer: any, to: string, amount: string) => {
+export const transferFunds = async (signer: SignerWithAddress, to: string, amount: string) => {
   const tx = await signer.sendTransaction({
     from: await signer.getAddress(),
     to,
@@ -76,11 +77,11 @@ export enum PubDataType {
   FullExitNft,
 }
 
-export function encodePubData(pubDataType: string[], pubData: any[]) {
+export function encodePubData(pubDataType: string[], pubData: ReadonlyArray<any>) {
   return ethers.utils.solidityPack(pubDataType, pubData);
 }
 
-export function encodePackPubData(pubDataType: string[], pubData: any[]) {
+export function encodePackPubData(pubDataType: string[], pubData: ReadonlyArray<any>) {
   let data = ethers.utils.solidityPack(pubDataType, pubData);
 
   while (data.length < 121 * 2 + 2) {

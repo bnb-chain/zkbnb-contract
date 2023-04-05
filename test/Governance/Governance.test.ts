@@ -7,24 +7,20 @@ import { transferFunds } from '../util';
 import { FakeContract, smock } from '@defi-wonderland/smock';
 import { BUSD_ASSET_ADDRESS, NEW_ASSET_ADDRESS, NULL_ADDRESS, VALIDATOR_ADDRESS } from '../constants';
 import { beforeEach } from 'mocha';
-import request from 'sync-request';
 
 describe('Governance', function () {
   let governance;
   let owner;
   let addr1;
   let addr2;
-  let addr3;
   let governerWallet: Wallet;
   let mockAssetGovernance: FakeContract;
-  let mockZkBNB: FakeContract;
 
   beforeEach('init Wallets', async function () {
     const signers: SignerWithAddress[] = await ethers.getSigners();
     owner = signers[0];
     addr1 = signers[1];
     addr2 = signers[2];
-    addr3 = signers[3];
     governerWallet = ethers.Wallet.createRandom().connect(owner.provider);
     await transferFunds(owner, await governerWallet.getAddress(), '1000000');
 
@@ -33,7 +29,6 @@ describe('Governance', function () {
     await governance.deployed();
 
     mockAssetGovernance = await smock.fake('AssetGovernance');
-    mockZkBNB = await smock.fake('ZkBNB');
   });
 
   it('should be able to initialize with a EOA Governer', async function () {
@@ -168,7 +163,7 @@ describe('Governance', function () {
         const tx = await governance.connect(contractSigner).addAsset(NEW_ASSET_ADDRESS);
         const rc = await tx.wait();
         const event = rc.events.find((event) => event.event === 'NewAsset');
-        const [newAssetAddress, newAssetId] = event.args;
+        const [newAssetAddress] = event.args;
 
         assert(newAssetAddress === NEW_ASSET_ADDRESS);
         expect(await governance.totalAssets()).to.equal(2);
@@ -184,7 +179,7 @@ describe('Governance', function () {
         const tx = await governance.connect(contractSigner).addAsset(NEW_ASSET_ADDRESS);
         const rc = await tx.wait();
         const event = rc.events.find((event) => event.event === 'NewAsset');
-        const [newAssetAddress, newAssetId] = event.args;
+        const [newAssetAddress] = event.args;
 
         assert(newAssetAddress === NEW_ASSET_ADDRESS);
         expect(await governance.totalAssets()).to.equal(2);

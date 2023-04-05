@@ -1,5 +1,4 @@
 const hardhat = require('hardhat');
-const namehash = require('eth-ens-namehash');
 const { getDeployedAddresses, getZkBNBProxy } = require('./utils');
 const { ethers } = hardhat;
 
