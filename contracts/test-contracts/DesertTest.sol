@@ -4,11 +4,7 @@ pragma solidity ^0.8.0;
 import "../DesertVerifier.sol";
 
 contract DesertVerifierTest is DesertVerifier {
-  constructor(
-    address _poseidonT3,
-    address _poseidonT6,
-    address _poseidonT7
-  ) DesertVerifier(_poseidonT3, _poseidonT6, _poseidonT7) {}
+  constructor(address _poseidonT3, address _poseidonT7) DesertVerifier(_poseidonT3, _poseidonT7) {}
 
   function testGetAssetRoot(
     uint16 assetId,
