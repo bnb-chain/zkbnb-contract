@@ -12,9 +12,8 @@ describe('ZkBNB', function () {
   let mockDesertVerifier;
   let additionalZkBNB;
   let mockERC20;
-  let mockERC721;
   let zkBNB;
-  let owner, addr1, addr2, addr3, addr4;
+  let owner;
 
   // `ZkBNB` needs to link to library `Utils` before deployed
   let utils;
@@ -22,13 +21,12 @@ describe('ZkBNB', function () {
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     mockGovernance = await smock.fake('Governance');
     mockZkBNBVerifier = await smock.fake('ZkBNBVerifier');
     mockDesertVerifier = await smock.fake('DesertVerifier');
     mockERC20 = await smock.fake('ERC20');
-    mockERC721 = await smock.fake('ERC721');
 
     const Utils = await ethers.getContractFactory('Utils');
     utils = await Utils.deploy();
@@ -62,7 +60,6 @@ describe('ZkBNB', function () {
   });
 
   describe('Deposit', function () {
-    const accountNameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('accountNameHash'));
     const toAddress = '0xB4fdA33E65656F9f485438ABd9012eD04a31E006';
 
     describe('deposit BNB', async function () {

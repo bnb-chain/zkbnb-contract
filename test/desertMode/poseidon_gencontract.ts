@@ -94,7 +94,7 @@ export function createCode(nInputs) {
     }
     C.push(0);
     C.mload();
-    C.jmp();
+    C.jmp(undefined);
   }
 
   // Check selector

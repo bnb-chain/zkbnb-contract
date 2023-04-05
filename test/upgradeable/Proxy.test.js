@@ -4,7 +4,6 @@ const { smock } = require('@defi-wonderland/smock');
 
 const { expect } = chai;
 chai.use(smock.matchers);
-const abi = ethers.utils.defaultAbiCoder;
 
 describe('Proxy', function () {
   let mockGovernance;
@@ -16,13 +15,13 @@ describe('Proxy', function () {
 
   let proxyGovernance;
   let proxyZkBNBVerifier;
-  let owner, addr1, addr2, addr3, addr4;
+  let owner, addr1, addr2, addr3;
 
   let proxyZkBNB;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3] = await ethers.getSigners();
     const MockGovernance = await smock.mock('Governance');
     mockGovernance = await MockGovernance.deploy();
     await mockGovernance.deployed();
@@ -167,7 +166,7 @@ describe('Proxy', function () {
 
     it('intercept `ZkBNB` upgrade', async function () {
       const zkBNBImplement = mockZkBNB.attach(proxyZkBNB.address);
-      expect(zkBNBImplement.upgrade(addr4.address)).to.be.revertedWith('upg11');
+      expect(zkBNBImplement.upgrade(addr3.address)).to.be.revertedWith('upg11');
     });
   });
 });
