@@ -60,6 +60,8 @@
     "@types/node": "^12.20.55",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
+    "@commitlint/cli": "^17.0.3",
+    "@commitlint/config-conventional": "^17.0.3",
     "chai": "^4.3.7",
     "dotenv": "^16.0.2",
     "eslint": "8.27.0",
