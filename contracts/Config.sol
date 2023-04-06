@@ -31,9 +31,6 @@ contract Config {
   uint256 internal constant PRIORITY_EXPIRATION = PRIORITY_EXPIRATION_PERIOD / BLOCK_PERIOD;
 
   uint32 public constant SPECIAL_ACCOUNT_ID = 0;
-  address public constant SPECIAL_ACCOUNT_ADDRESS = address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF);
-
-  uint32 public constant MAX_FUNGIBLE_ASSET_ID = (2 ** 32) - 2;
 
   uint40 public constant MAX_NFT_INDEX = (2 ** 40) - 2;
 }
