@@ -28,7 +28,7 @@
       "prettier --write"
     ],
     "*.sol": [
-      "eslint --fix",
+      "solhint --fix",
       "prettier --write"
     ]
   },
