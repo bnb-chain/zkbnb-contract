@@ -46,16 +46,12 @@ exports.deployDesertVerifier = async function (owner) {
   const poseidonT3 = await PoseidonT3.deploy();
   await poseidonT3.deployed();
 
-  const PoseidonT6 = new ethers.ContractFactory(poseidonContract.generateABI(5), poseidonContract.createCode(5), owner);
-  const poseidonT6 = await PoseidonT6.deploy();
-  await poseidonT6.deployed();
-
   const PoseidonT7 = new ethers.ContractFactory(poseidonContract.generateABI(6), poseidonContract.createCode(6), owner);
   const poseidonT7 = await PoseidonT7.deploy();
   await poseidonT7.deployed();
 
   const DesertVerifier = await ethers.getContractFactory('DesertVerifier');
-  const desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
+  const desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT7.address);
   await desertVerifier.deployed();
 
   return desertVerifier;

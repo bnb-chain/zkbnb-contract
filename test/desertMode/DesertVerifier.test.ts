@@ -15,8 +15,6 @@ describe('DesertVerifier', function () {
 
   // poseidon contract with inputs uint256[2]
   let poseidonT3;
-  // poseidon contract with inputs uint256[5]
-  let poseidonT6;
   // poseidon contract with inputs uint256[6]
   let poseidonT7;
   // contract to verify exit proof
@@ -35,14 +33,6 @@ describe('DesertVerifier', function () {
     poseidonT3 = await PoseidonT3.deploy();
     await poseidonT3.deployed();
 
-    const PoseidonT6 = new ethers.ContractFactory(
-      poseidonContract.generateABI(5),
-      poseidonContract.createCode(5),
-      owner,
-    );
-    poseidonT6 = await PoseidonT6.deploy();
-    await poseidonT6.deployed();
-
     const PoseidonT7 = new ethers.ContractFactory(
       poseidonContract.generateABI(6),
       poseidonContract.createCode(6),
@@ -52,7 +42,7 @@ describe('DesertVerifier', function () {
     await poseidonT7.deployed();
 
     const DesertVerifier = await ethers.getContractFactory('DesertVerifierTest');
-    desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
+    desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT7.address);
     await desertVerifier.deployed();
   });
 
