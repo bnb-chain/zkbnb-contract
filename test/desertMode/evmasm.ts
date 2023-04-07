@@ -6,6 +6,10 @@ import { ethers } from 'ethers';
 import { Scalar } from 'ffjavascript';
 
 export default class Contract {
+  code: number[];
+  labels;
+  pendingLabels;
+
   constructor() {
     this.code = [];
     this.labels = {};
@@ -277,7 +281,6 @@ export default class Contract {
     if (d.length == 0 || d.length > 32) {
       throw new Error('Assertion failed');
     }
-    const a = [];
     this.code.push(0x5f + d.length);
     for (let i = 0; i < d.length; i++) {
       this.code.push(d[i]);

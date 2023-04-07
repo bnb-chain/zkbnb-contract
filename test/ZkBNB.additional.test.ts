@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import hardhat, { ethers } from 'hardhat';
 import chai, { expect } from 'chai';
 import { smock } from '@defi-wonderland/smock';
 
@@ -17,7 +17,6 @@ import {
   padEndBytes121,
 } from './util';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { zeroPad } from '@ethersproject/bytes/src.ts';
 
 chai.use(smock.matchers);
 
@@ -29,11 +28,7 @@ describe('ZkBNB', function () {
   let mockNftFactory;
   let zkBNB;
   let additionalZkBNB;
-  let owner: SignerWithAddress,
-    addr1: SignerWithAddress,
-    addr2: SignerWithAddress,
-    addr3: SignerWithAddress,
-    addr4: SignerWithAddress;
+  let owner: SignerWithAddress;
   const account = '0xB4fdA33E65656F9f485438ABd9012eD04a31E006';
 
   const genesisStateRoot = ethers.utils.formatBytes32String('genesisStateRoot');
@@ -55,7 +50,7 @@ describe('ZkBNB', function () {
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     mockGovernance = await smock.fake('Governance');
     mockZkBNBVerifier = await smock.fake('ZkBNBVerifier');
@@ -249,6 +244,10 @@ describe('ZkBNB', function () {
         const bnbEvent = bnbReceipt.events.find((event) => {
           return event.event === 'NewPriorityRequest';
         });
+
+        expect(await zkBNB.totalOpenPriorityRequests()).to.equal(1);
+        expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
         const bnbPubData = bnbEvent.args[3];
 
         mockERC20.transferFrom.returns(true);
@@ -408,6 +407,9 @@ describe('ZkBNB', function () {
         return event.event === 'NewPriorityRequest';
       });
 
+      expect(await zkBNB.totalOpenPriorityRequests()).to.equal(1);
+      expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
       const pubData = event.args[3];
 
       const onchainOperations: OnchainOperationData[] = [
@@ -443,6 +445,10 @@ describe('ZkBNB', function () {
       event = receipt.events.find((event) => {
         return event.event === 'NewPriorityRequest';
       });
+
+      expect(await zkBNB.totalOpenPriorityRequests()).to.equal(2);
+      expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
       const pubDataFullExit = event.args[3];
       const commitBlock2: CommitBlockInfo = {
         newStateRoot,
@@ -495,6 +501,12 @@ describe('ZkBNB', function () {
       expect(totalOpenPriorityRequests).to.equal(0);
       expect(totalBlocksVerified).to.equal(2);
       expect(firstPriorityRequestId).to.equal(2);
+
+      const oldesetPriorityReqest = await zkBNB.getPriorityRequest(firstPriorityRequestId);
+      expect(oldesetPriorityReqest['expirationBlock']).to.equal(0);
+      // should not be able to activate desert mode if there is no unprocessed priority request
+      await hardhat.network.provider.send('hardhat_mine', ['0x1000000']);
+      await expect(await zkBNB.activateDesertMode()).not.to.emit(zkBNB, 'DesertMode');
     });
 
     it('Should be verified in order', async () => {

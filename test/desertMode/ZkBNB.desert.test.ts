@@ -6,11 +6,11 @@ import assert from 'assert';
 chai.use(smock.matchers);
 
 describe('Desert Mode', function () {
-  let owner, acc1, acc2;
+  let owner, acc1;
   let zkBNB;
 
   this.beforeEach(async function () {
-    [owner, acc1, acc2] = await ethers.getSigners();
+    [owner, acc1] = await ethers.getSigners();
     this.mockDesertVerifier = await smock.fake('DesertVerifier');
 
     const Governance = await ethers.getContractFactory('Governance');
@@ -83,13 +83,13 @@ describe('Desert Mode', function () {
   // it.skip('should be able to cancel outstanding NFT deposits', async () => { });
 
   it('should be able to withdraw pending balance', async () => {
-    const _depositTx = await zkBNB.depositBNB(owner.address, { value: ethers.utils.parseEther('2000') });
+    await zkBNB.depositBNB(owner.address, { value: ethers.utils.parseEther('2000') });
 
     const token = ethers.constants.AddressZero;
     const amount = 55_000_000_000;
     const assetId = 0;
 
-    const _ = await zkBNB.testIncreasePendingBalance(assetId, owner.address, amount);
+    await zkBNB.testIncreasePendingBalance(assetId, owner.address, amount);
 
     const balance = await zkBNB.getPendingBalance(owner.address, token);
     assert.equal(balance, amount);

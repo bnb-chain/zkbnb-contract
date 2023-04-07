@@ -24,7 +24,6 @@ contract Governance is Config, Initializable {
 
   mapping(address => uint16) public assetsList;
   mapping(uint16 => address) public assetAddresses;
-  mapping(address => bool) public isAddressExists;
 
   /// @notice Address that is authorized to add tokens to the Governance.
   AssetGovernance public assetGovernance;

@@ -1,7 +1,6 @@
-import { assert, chai } from 'chai';
+import { assert } from 'chai';
 import { ethers } from 'hardhat';
 import * as poseidonContract from './poseidon_gencontract';
-import { Scalar } from 'ffjavascript';
 import { BigNumber } from 'ethers';
 
 import exitDataJson from './performDesertAsset5.json';
@@ -10,21 +9,19 @@ import exitNftJson from './performDesertNft3.json';
 import buildPoseidon from './poseidon_reference';
 
 describe('DesertVerifier', function () {
-  let owner, addr1;
+  let owner;
   // poseidon wasm
   let poseidon;
 
   // poseidon contract with inputs uint256[2]
   let poseidonT3;
-  // poseidon contract with inputs uint256[5]
-  let poseidonT6;
   // poseidon contract with inputs uint256[6]
   let poseidonT7;
   // contract to verify exit proof
   let desertVerifier;
 
   before(async function () {
-    [owner, addr1] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     poseidon = await buildPoseidon();
 
@@ -36,14 +33,6 @@ describe('DesertVerifier', function () {
     poseidonT3 = await PoseidonT3.deploy();
     await poseidonT3.deployed();
 
-    const PoseidonT6 = new ethers.ContractFactory(
-      poseidonContract.generateABI(5),
-      poseidonContract.createCode(5),
-      owner,
-    );
-    poseidonT6 = await PoseidonT6.deploy();
-    await poseidonT6.deployed();
-
     const PoseidonT7 = new ethers.ContractFactory(
       poseidonContract.generateABI(6),
       poseidonContract.createCode(6),
@@ -53,13 +42,12 @@ describe('DesertVerifier', function () {
     await poseidonT7.deployed();
 
     const DesertVerifier = await ethers.getContractFactory('DesertVerifierTest');
-    desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT6.address, poseidonT7.address);
+    desertVerifier = await DesertVerifier.deploy(poseidonT3.address, poseidonT7.address);
     await desertVerifier.deployed();
   });
 
   describe('desert asset', function () {
     let assetRoot;
-    let accountLeafHash;
     let accountRoot;
     let stateHash;
 
@@ -108,7 +96,6 @@ describe('DesertVerifier', function () {
       const expectLog = '0x8d177d83a2bcfc59091b802531712ae222bb78b586ac1a5099b02d92104b84';
       assert.equal(actual.toHexString(), expectLog);
       console.log('account Leaf: ', actual.toHexString());
-      accountLeafHash = actual;
     });
 
     it('check account root', async () => {

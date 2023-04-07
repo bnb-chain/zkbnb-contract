@@ -61,8 +61,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     bool trigger = true;
     // #else
     trigger =
+      totalOpenPriorityRequests != 0 &&
       block.number >= priorityRequests[firstPriorityRequestId].expirationBlock &&
       priorityRequests[firstPriorityRequestId].expirationBlock != 0;
+
     // #endif
     if (trigger) {
       if (!desertMode) {
@@ -142,9 +144,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external {
-    address _additionalZkBNB = abi.decode(upgradeParameters, (address));
+    (address _additionalZkBNB, address _desertVerifier) = abi.decode(upgradeParameters, (address, address));
+
     if (_additionalZkBNB != address(0)) {
       additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
+    }
+
+    if (_desertVerifier != address(0)) {
+      desertVerifier = DesertVerifier(_desertVerifier);
     }
   }
 
@@ -181,7 +188,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
-  /// @notice  Withdraws NFT from zkSync contract to the owner
+  /// @notice  Withdraws NFT from zkBNB contract to the owner
   /// @param _nftIndex Id of NFT token
   function withdrawPendingNFTBalance(uint40 _nftIndex) external {
     TxTypes.WithdrawNft memory op = pendingWithdrawnNFTs[_nftIndex];
@@ -223,7 +230,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice Sends tokens
   /// @dev NOTE: will revert if transfer call fails or rollup balance difference (before and after transfer) is bigger than _maxAmount
-  /// @dev This function is used to allow tokens to spend zkSync contract balance up to amount that is requested
+  /// @dev This function is used to allow tokens to spend zkBNB contract balance up to amount that is requested
   /// @param _token Token address
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
@@ -536,6 +543,10 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     return pendingBalances[packAddressAndAssetId(_address, assetId)].balanceToWithdraw;
   }
 
+  function getNftTokenURI(uint8 nftContentType, bytes32 nftContentHash) external view returns (string memory tokenURI) {
+    return governance.getNftTokenURI(nftContentType, nftContentHash);
+  }
+
   function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
     require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
 
@@ -562,13 +573,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
         storePendingNFT(op);
       }
     } else {
-      try
-        INFTFactory(_factoryAddress).mintFromZkBNB(
-          op.toAddress,
-          op.nftIndex,
-          governance.getNftTokenURI(op.nftContentType, op.nftContentHash)
-        )
-      {
+      try INFTFactory(_factoryAddress).mintFromZkBNB(op.toAddress, op.nftContentType, op.nftIndex, op.nftContentHash) {
         // register default collection factory
         governance.registerDefaultNFTFactory(op.creatorAddress, op.collectionId);
 

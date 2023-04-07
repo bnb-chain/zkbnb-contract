@@ -28,7 +28,7 @@
       "prettier --write"
     ],
     "*.sol": [
-      "eslint --fix",
+      "solhint --fix",
       "prettier --write"
     ]
   },
@@ -60,6 +60,8 @@
     "@types/node": "^12.20.55",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
+    "@commitlint/cli": "^17.0.3",
+    "@commitlint/config-conventional": "^17.0.3",
     "chai": "^4.3.7",
     "dotenv": "^16.0.2",
     "eslint": "8.27.0",
@@ -96,6 +98,7 @@
     "cids": "^1.1.9",
     "ffjavascript": "^0.2.57",
     "husky": "^8.0.2",
+    "inquirer": "^8.0.0",
     "lint-staged": "^13.1.0",
     "mocha": "^10.0.0",
     "sha256": "^0.2.0",

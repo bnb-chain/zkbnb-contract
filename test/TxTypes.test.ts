@@ -1,6 +1,5 @@
-import chai, { expect } from 'chai';
+import { expect } from 'chai';
 import { ethers } from 'hardhat';
-import { FakeContract, smock } from '@defi-wonderland/smock';
 
 describe('TxTypesTest', function () {
   let owner, acc1;

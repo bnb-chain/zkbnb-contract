@@ -5,7 +5,6 @@ import "./interfaces/IPoseidon.sol";
 
 contract DesertVerifier {
   IPoseidonT3 poseidonT3;
-  IPoseidonT6 poseidonT6;
   IPoseidonT7 poseidonT7;
 
   struct AssetExitData {
@@ -34,9 +33,8 @@ contract DesertVerifier {
     uint8 nftContentType;
   }
 
-  constructor(address _poseidonT3, address _poseidonT6, address _poseidonT7) {
+  constructor(address _poseidonT3, address _poseidonT7) {
     poseidonT3 = IPoseidonT3(_poseidonT3);
-    poseidonT6 = IPoseidonT6(_poseidonT6);
     poseidonT7 = IPoseidonT7(_poseidonT7);
   }
 

@@ -1,6 +1,5 @@
 const hardhat = require('hardhat');
 const { getDeployedAddresses } = require('./deploy-keccak256/utils');
-const { ethers } = hardhat;
 
 const figlet = require('figlet');
 const chalk = require('chalk');
