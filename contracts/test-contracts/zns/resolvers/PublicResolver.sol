@@ -71,7 +71,9 @@ contract PublicResolver is
     return owner == msg.sender || isApprovedForAll(owner, msg.sender);
   }
 
-  function supportsInterface(bytes4 interfaceID)
+  function supportsInterface(
+    bytes4 interfaceID
+  )
     public
     pure
     override(Multicallable, ABIResolver, AddrResolver, NameResolver, PubKeyResolver, ZkBNBPubKeyResolver)

@@ -1,17 +1,10 @@
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
 describe('Price Oracle V1', function () {
   let oracle;
-  let owner;
-  let addr1;
-  let addr2;
-  let addr3;
 
   beforeEach(async function () {
-    const signers: SignerWithAddress[] = await ethers.getSigners();
-    owner = signers[0];
     const PriceOracleV1 = await ethers.getContractFactory('PriceOracleV1');
     oracle = await PriceOracleV1.deploy(ethers.utils.parseEther('0.05'));
     await oracle.deployed();

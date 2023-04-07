@@ -4,12 +4,6 @@ pragma solidity ^0.8.0;
 import "./interfaces/IZNS.sol";
 
 contract ZNSRegistry is IZNS {
-  // @dev Require the msg.sender is the owner of this node
-  modifier authorized(bytes32 node) {
-    require(records[node].owner == msg.sender, "unauthorized");
-    _;
-  }
-
   // @dev A Record is a record of node
   struct Record {
     // The owner of a record may:
@@ -25,41 +19,26 @@ contract ZNSRegistry is IZNS {
     // string slot1;
     // string slot2;
   }
-
+  uint256 immutable q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
   mapping(bytes32 => Record) records; // nameHash of node => Record
   uint32 count = 0;
+
+  // @dev Top level domains allowed in the registry such as ".zkbnb"
+  mapping(bytes32 => bool) public topLevelDomains;
 
   /**
    * @dev Constructs a new registry.
    */
   constructor() {
     records[0x0].owner = msg.sender;
+    topLevelDomains[0x0] = true;
   }
 
-  /**
-   * @dev Set the record for a node.
-   * @param _node The node to update.
-   * @param _owner The address of the new owner.
-   * @param _resolver The address of the resolver.
-   * @param _pubKeyX The pub key of the node
-   * @param _pubKeyY The pub key of the node
-   */
-  function setRecord(
-    bytes32 _node,
-    address _owner,
-    bytes32 _pubKeyX,
-    bytes32 _pubKeyY,
-    address _resolver
-  ) external override {
-    _setOwner(_node, _owner);
-    _setPubKey(_node, _pubKeyX, _pubKeyY);
-    _setResolver(_node, _resolver);
-  }
-
-  function setSubnodeAccountIndex(bytes32 _node) external override returns (uint32) {
-    records[_node].accountIndex = count;
-    count++;
-    return records[_node].accountIndex;
+  // @dev Require the msg.sender is the owner of this node
+  modifier authorized(bytes32 node) {
+    require(records[node].owner == msg.sender, "unauthorized");
+    require(topLevelDomains[node], "node not allowed");
+    _;
   }
 
   /**
@@ -70,6 +49,8 @@ contract ZNSRegistry is IZNS {
    * @param _resolver The address of the resolver.
    * @param _pubKeyX The layer-2 public key
    * @param _pubKeyY The layer-2 public key
+   * @return subnode The name hash of the newly created label
+   * @return accountIndex The index of the created account name
    */
   function setSubnodeRecord(
     bytes32 _node,
@@ -78,10 +59,12 @@ contract ZNSRegistry is IZNS {
     bytes32 _pubKeyX,
     bytes32 _pubKeyY,
     address _resolver
-  ) external override returns (bytes32) {
+  ) external override returns (bytes32, uint32) {
     bytes32 subnode = setSubnodeOwner(_node, _label, _owner, _pubKeyX, _pubKeyY);
     _setResolver(subnode, _resolver);
-    return subnode;
+    records[subnode].accountIndex = count;
+    ++count;
+    return (subnode, records[subnode].accountIndex);
   }
 
   /**
@@ -99,11 +82,15 @@ contract ZNSRegistry is IZNS {
     bytes32 _pubKeyX,
     bytes32 _pubKeyY
   ) public override authorized(_node) returns (bytes32) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(_node, _label));
     subnode = bytes32(uint256(subnode) % q);
+    require(!_exists(subnode), "sub node exists");
     _setOwner(subnode, _owner);
     _setPubKey(subnode, _pubKeyX, _pubKeyY);
+    if (_node == 0x0) {
+      topLevelDomains[subnode] = true;
+      emit TLDAdded(subnode);
+    }
     return subnode;
   }
 
@@ -112,7 +99,8 @@ contract ZNSRegistry is IZNS {
    * @param _node The node to update.
    * @param _resolver The address of the resolver.
    */
-  function setResolver(bytes32 _node, address _resolver) public override authorized(_node) {
+  function setResolver(bytes32 _node, address _resolver) public override {
+    require(records[_node].owner == msg.sender, "unauthorized");
     _setResolver(_node, _resolver);
   }
 
@@ -126,7 +114,6 @@ contract ZNSRegistry is IZNS {
     if (addr == address(this)) {
       return address(0x0);
     }
-
     return addr;
   }
 
@@ -149,6 +136,15 @@ contract ZNSRegistry is IZNS {
   }
 
   /**
+   * @dev Returns the account Index of the node in the L2
+   * @param node The specified node.
+   * @return The account index of the specified node
+   */
+  function accountIndex(bytes32 node) public view override returns (uint32) {
+    return records[node].accountIndex;
+  }
+
+  /**
    * @dev Returns whether a record has been imported to the registry.
    * @param node The specified node
    * @return bool If record exists
@@ -164,10 +160,13 @@ contract ZNSRegistry is IZNS {
    * @return bool If record exists
    */
   function subNodeRecordExists(bytes32 node, bytes32 label) public view override returns (bool) {
-    uint256 q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
     bytes32 subnode = keccak256Hash(abi.encodePacked(node, label));
     subnode = bytes32(uint256(subnode) % q);
     return _exists(subnode);
+  }
+
+  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
+    result = keccak256(input);
   }
 
   function _setResolver(bytes32 _node, address _resolver) internal {
@@ -194,9 +193,5 @@ contract ZNSRegistry is IZNS {
 
   function _exists(bytes32 node) internal view returns (bool) {
     return records[node].owner != address(0x0);
-  }
-
-  function keccak256Hash(bytes memory input) public pure returns (bytes32 result) {
-    result = keccak256(input);
   }
 }

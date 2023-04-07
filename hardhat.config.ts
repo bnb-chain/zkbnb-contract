@@ -8,13 +8,20 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+import 'hardhat-gas-reporter';
+import 'hardhat-contract-sizer';
+
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 const config: HardhatUserConfig = {
   etherscan: {
-    apiKey: 'HHHQV1FM9HVSK82JMPEEBG44PR24CM3B5U',
+    // Your API key for BSC. Obtain one at https://bscscan.com/
+    apiKey: {
+      bscTestnet: process.env.BSCSCAN_APIKEY || '',
+      bsc: process.env.BSCSCAN_API_KEY || '',
+    },
   },
   solidity: {
     version: '0.8.17',
@@ -51,7 +58,15 @@ const config: HardhatUserConfig = {
         process.env.BSC_TESTNET_PRIVATE_KEY || '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1'
       ).split(','),
       timeout: 300000,
-      gas: 15000000,
+      gas: 1500000,
+    },
+    bsc: {
+      url: process.env.BSC_MAINNET_RPC || 'https://bsc-dataseed.binance.org',
+      accounts: (
+        process.env.BSC_MAINNET_PRIVATE_KEY || '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1'
+      ).split(','),
+      timeout: 300000,
+      gas: 1500000,
     },
   },
   abiExporter: {

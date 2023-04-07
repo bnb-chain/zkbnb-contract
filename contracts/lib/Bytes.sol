@@ -52,22 +52,6 @@ library Bytes {
     return toBytesFromUIntTruncated(uint256(self), 16);
   }
 
-  // Copies 'len' lower bytes from 'self' into a new 'bytes memory'.
-  // Returns the newly created 'bytes memory'. The returned bytes will be of length 'len'.
-  function toBytesFromUIntTruncated(uint256 self, uint8 byteLength) private pure returns (bytes memory bts) {
-    require(byteLength <= 32, "Q");
-    bts = new bytes(byteLength);
-    // Even though the bytes will allocate a full word, we don't want
-    // any potential garbage bytes in there.
-    uint256 data = self << ((32 - byteLength) * 8);
-    assembly {
-      mstore(
-        add(bts, 32), // BYTES_HEADER_SIZE
-        data
-      )
-    }
-  }
-
   // Copies 'self' into a new 'bytes memory'.
   // Returns the newly created 'bytes memory'. The returned bytes will be of length '20'.
   function toBytesFromAddress(address self) internal pure returns (bytes memory bts) {
@@ -174,8 +158,8 @@ library Bytes {
   // Returns the newly created 'bytes memory'
   // NOTE: theoretically possible overflow of (_start + _length)
   function slice(bytes memory _bytes, uint256 _start, uint256 _length) internal pure returns (bytes memory) {
+    // bytes length should be larger than start byte + length bytes
     require(_bytes.length >= (_start + _length), "Z");
-    // bytes length is less then start byte + length bytes
 
     bytes memory tempBytes = new bytes(_length);
 
@@ -339,5 +323,21 @@ library Bytes {
       }
     }
     return outStringBytes;
+  }
+
+  // Copies 'len' lower bytes from 'self' into a new 'bytes memory'.
+  // Returns the newly created 'bytes memory'. The returned bytes will be of length 'len'.
+  function toBytesFromUIntTruncated(uint256 self, uint8 byteLength) private pure returns (bytes memory bts) {
+    require(byteLength <= 32, "Q");
+    bts = new bytes(byteLength);
+    // Even though the bytes will allocate a full word, we don't want
+    // any potential garbage bytes in there.
+    uint256 data = self << ((32 - byteLength) * 8);
+    assembly {
+      mstore(
+        add(bts, 32), // BYTES_HEADER_SIZE
+        data
+      )
+    }
   }
 }

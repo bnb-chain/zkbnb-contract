@@ -7,7 +7,8 @@
     "prebuild": "rimraf ./artifacts/ ./cache/",
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile --show-stack-traces",
-    "test": "npx hardhat test test/*.{ts,js} --network hardhat",
+    "coverage": "npx hardhat coverage",
+    "test": "npx hardhat test --network hardhat --parallel",
     "test-upgradeable": "npx hardhat test test/upgradeable/**.test.js",
     "lint:check:format": "prettier --check **.{sol,js}",
     "lint:check:solhint": "solhint contracts/**/*.sol",
@@ -27,7 +28,7 @@
       "prettier --write"
     ],
     "*.sol": [
-      "eslint --fix",
+      "solhint --fix",
       "prettier --write"
     ]
   },
@@ -59,6 +60,8 @@
     "@types/node": "^12.20.55",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
+    "@commitlint/cli": "^17.0.3",
+    "@commitlint/config-conventional": "^17.0.3",
     "chai": "^4.3.7",
     "dotenv": "^16.0.2",
     "eslint": "8.27.0",
@@ -79,7 +82,6 @@
     "hardhat-gas-reporter": "^1.0.9",
     "hardhat-tracer": "^1.0.0-alpha.6",
     "hardhat-watcher": "^2.3.0",
-    "husky": "^8.0.0",
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0",
     "solc": "^0.8.17",
@@ -91,11 +93,12 @@
     "web3": "^1.6.1"
   },
   "dependencies": {
-    "@bnb-chain/zkbnb-js-sdk": "^4.0.0",
     "@openzeppelin/contracts": "^4.8.0",
     "@openzeppelin/contracts-upgradeable": "^4.8.0",
     "cids": "^1.1.9",
+    "ffjavascript": "^0.2.57",
     "husky": "^8.0.2",
+    "inquirer": "^8.0.0",
     "lint-staged": "^13.1.0",
     "mocha": "^10.0.0",
     "sha256": "^0.2.0",

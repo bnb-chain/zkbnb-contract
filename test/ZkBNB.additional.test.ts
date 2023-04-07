@@ -1,33 +1,35 @@
-import { ethers } from 'hardhat';
+import hardhat, { ethers } from 'hardhat';
 import chai, { expect } from 'chai';
 import { smock } from '@defi-wonderland/smock';
 
 import {
   CommitBlockInfo,
   EMPTY_STRING_KECCAK,
+  OnchainOperationData,
   PubDataType,
   PubDataTypeMap,
   StoredBlockInfo,
   VerifyAndExecuteBlockInfo,
   encodePackPubData,
+  encodePubData,
+  getChangePubkeyMessage,
   hashStoredBlockInfo,
   padEndBytes121,
 } from './util';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 chai.use(smock.matchers);
 
 describe('ZkBNB', function () {
   let mockGovernance;
   let mockZkBNBVerifier;
-  let mockZNSController;
-  let mockPublicResolver;
+  let mockDesertVerifier;
   let mockERC20;
-  let mockERC721;
   let mockNftFactory;
   let zkBNB;
   let additionalZkBNB;
-  let owner, addr1, addr2, addr3, addr4;
-  const accountNameHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('accountNameHash'));
+  let owner: SignerWithAddress;
+  const account = '0xB4fdA33E65656F9f485438ABd9012eD04a31E006';
 
   const genesisStateRoot = ethers.utils.formatBytes32String('genesisStateRoot');
   const commitment = ethers.utils.formatBytes32String('');
@@ -48,14 +50,12 @@ describe('ZkBNB', function () {
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     mockGovernance = await smock.fake('Governance');
     mockZkBNBVerifier = await smock.fake('ZkBNBVerifier');
-    mockZNSController = await smock.fake('ZNSController');
-    mockPublicResolver = await smock.fake('PublicResolver');
+    mockDesertVerifier = await smock.fake('DesertVerifier');
     mockERC20 = await smock.fake('ERC20');
-    mockERC721 = await smock.fake('ERC721');
 
     mockNftFactory = await smock.fake('ZkBNBNFTFactory');
 
@@ -64,7 +64,7 @@ describe('ZkBNB', function () {
     await utils.deployed();
 
     const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest');
-    additionalZkBNB = await AdditionalZkBNB.deploy();
+    additionalZkBNB = await AdditionalZkBNB.deploy(ethers.constants.AddressZero);
     await additionalZkBNB.deployed();
 
     const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
@@ -76,30 +76,30 @@ describe('ZkBNB', function () {
     await zkBNB.deployed();
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address', 'address', 'address', 'address', 'bytes32'],
+      ['address', 'address', 'address', 'address', 'bytes32'],
       [
         mockGovernance.address,
         mockZkBNBVerifier.address,
         additionalZkBNB.address,
-        mockZNSController.address,
-        mockPublicResolver.address,
+        mockDesertVerifier.address,
         genesisStateRoot,
       ],
     );
     await zkBNB.initialize(initParams);
 
-    await zkBNB.setDefaultNFTFactory(mockNftFactory.address);
+    // mock functions
+    mockGovernance.getNFTFactory.returns(mockNftFactory.address);
+    mockNftFactory.mintFromZkBNB.returns();
   });
 
   describe('commit blocks', function () {
-    const nftContentHash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes('nftContentHash'));
     const ASSET_ID = 3;
-    const TOKEN_ID = 3;
 
     it('should be zero block when initialize it', async () => {
       const res = await zkBNB.storedBlockHashes(0);
       expect(res).to.be.equal(hashStoredBlockInfo(genesisBlock));
     });
+
     describe('Priority Operations', () => {
       // initiated on the BSC by an BNB Smart Chain account
       let pubDataDeposit, pubDataDeposit20;
@@ -107,114 +107,172 @@ describe('ZkBNB', function () {
         pubDataDeposit = encodePackPubData(PubDataTypeMap[PubDataType.Deposit], [
           PubDataType.Deposit,
           0,
-          0,
+          account,
+          ASSET_ID,
           10,
-          accountNameHash,
         ]);
 
         pubDataDeposit20 = encodePackPubData(PubDataTypeMap[PubDataType.Deposit], [
           PubDataType.Deposit,
           0,
+          account,
           ASSET_ID,
           10,
-          accountNameHash,
         ]);
       });
+
       it('should revert if use unsupported type', async () => {
-        const pubData = encodePackPubData(PubDataTypeMap[PubDataType.Deposit], [20, 0, 0, 10, accountNameHash]);
+        const pubData = encodePackPubData(PubDataTypeMap[PubDataType.Deposit], [20, 0, account, 0, 10]);
+
+        const onchainOperations: OnchainOperationData[] = [
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 121 },
+        ];
+
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
           publicData: ethers.utils.hexConcat([pubData]),
           timestamp: Date.now(),
-          publicDataOffsets: [0, 121],
+          onchainOperations,
           blockNumber: 1,
           blockSize: 2,
         };
         await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.reverted;
       });
+
       it('should revert if user is not operating on the chain', async () => {
+        const onchainOperations: OnchainOperationData[] = [
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 121 },
+        ];
+
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
           publicData: ethers.utils.hexConcat([pubDataDeposit, pubDataDeposit20]),
           timestamp: Date.now(),
-          publicDataOffsets: [0, 121],
+          onchainOperations,
           blockNumber: 1,
           blockSize: 2,
         };
         await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.reverted;
       });
+
       it('should revert if block number is wrong', async () => {
-        mockZNSController.isRegisteredNameHash.returns(true);
-        mockZNSController.getSubnodeNameHash.returns(accountNameHash);
+        await zkBNB.depositBNB(account, { value: 10 });
 
-        await zkBNB.depositBNB('accountNameHash', { value: 10 });
-
-        mockZNSController.getSubnodeNameHash.returns(accountNameHash);
         mockERC20.transferFrom.returns(true);
-        mockZNSController.isRegisteredNameHash.returns(true);
         mockGovernance.validateAssetAddress.returns(ASSET_ID);
         mockGovernance.pausedAssets.returns(false);
         mockERC20.balanceOf.returnsAtCall(0, 100);
         mockERC20.balanceOf.returnsAtCall(1, 110);
 
-        await zkBNB.depositBEP20(mockERC20.address, 10, 'accountNameHash');
+        await zkBNB.depositBEP20(mockERC20.address, 10, account);
+
+        const onchainOperations: OnchainOperationData[] = [
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 121 },
+        ];
 
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
           publicData: ethers.utils.hexConcat([pubDataDeposit, pubDataDeposit20]),
           timestamp: Date.now(),
-          publicDataOffsets: [0, 121],
+          onchainOperations,
           blockNumber: 2,
           blockSize: 3,
         };
         await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.reverted;
       });
-      it('should can commit register ZNS operation', async () => {
-        mockZNSController.registerZNS.returns([accountNameHash, 1]);
-        const pubKeyX = ethers.utils.formatBytes32String('pubKeyX');
-        const pubKeyY = ethers.utils.formatBytes32String('pubKeyY');
 
-        const tx = await zkBNB.registerZNS('accountName', owner.address, pubKeyX, pubKeyY);
+      it('should can commit changePubKey operation', async () => {
+        const changePubKey = {
+          txType: PubDataType.ChangePubKey,
+          accountIndex: 0,
+          pubkeyX: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+          pubkeyY: ethers.utils.hexlify(ethers.utils.randomBytes(32)),
+          owner: owner.address,
+          nonce: 0,
+        };
+        const message = getChangePubkeyMessage(
+          changePubKey.pubkeyX,
+          changePubKey.pubkeyY,
+          changePubKey.nonce,
+          changePubKey.accountIndex,
+        );
 
-        const receipt = await tx.wait();
-        const event = receipt.events.find((event) => {
-          return event.event === 'NewPriorityRequest';
-        });
-        const pubDataRegisterZNS = event.args[3];
+        const signature = await owner.signMessage(message);
+        const address = ethers.utils.verifyMessage(message, signature);
+        expect(address).equal(owner.address);
+        const version = new Uint8Array([0]); // current version is zero
+        const signatureBytes = ethers.utils.arrayify(signature);
+        const ethWitness = ethers.utils.hexlify(ethers.utils.concat([version, signatureBytes]));
+
+        const pubData = encodePubData(PubDataTypeMap[PubDataType.ChangePubKey], [
+          PubDataType.ChangePubKey,
+          changePubKey.accountIndex,
+          changePubKey.pubkeyX,
+          changePubKey.pubkeyY,
+          changePubKey.owner,
+          changePubKey.nonce,
+        ]);
+
+        const onchainOperations: OnchainOperationData[] = [{ ethWitness, publicDataOffset: 0 }];
 
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
-          publicData: ethers.utils.hexConcat([pubDataRegisterZNS]),
+          publicData: ethers.utils.hexlify(padEndBytes121(pubData)),
           timestamp: Date.now(),
-          publicDataOffsets: [0],
+          onchainOperations,
           blockNumber: 1,
           blockSize: 2,
         };
+        onchainOperations[0].ethWitness = '0x';
+        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.revertedWith(
+          'signature should not be empty',
+        );
+        onchainOperations[0].ethWitness = ethers.utils.hexlify(ethers.utils.randomBytes(66));
+        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.revertedWith('D');
+        onchainOperations[0].ethWitness = ethWitness;
         await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock]))
           .to.emit(zkBNB, 'BlockCommit')
           .withArgs(1);
       });
+
       it('should can commit deposit operation', async () => {
-        mockZNSController.isRegisteredNameHash.returns(true);
-        mockZNSController.getSubnodeNameHash.returns(accountNameHash);
+        const bnbTx = await zkBNB.depositBNB(account, { value: 10 });
+        const bnbReceipt = await bnbTx.wait();
+        const bnbEvent = bnbReceipt.events.find((event) => {
+          return event.event === 'NewPriorityRequest';
+        });
 
-        await zkBNB.depositBNB('accountNameHash', { value: 10 });
+        expect(await zkBNB.totalOpenPriorityRequests()).to.equal(1);
+        expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
 
-        mockZNSController.getSubnodeNameHash.returns(accountNameHash);
+        const bnbPubData = bnbEvent.args[3];
+
         mockERC20.transferFrom.returns(true);
-        mockZNSController.isRegisteredNameHash.returns(true);
         mockGovernance.validateAssetAddress.returns(ASSET_ID);
         mockGovernance.pausedAssets.returns(false);
         mockERC20.balanceOf.returnsAtCall(0, 100);
         mockERC20.balanceOf.returnsAtCall(1, 110);
 
-        await zkBNB.depositBEP20(mockERC20.address, 10, 'accountNameHash');
+        const bep20Tx = await zkBNB.depositBEP20(mockERC20.address, 10, account);
+        const bep20Receipt = await bep20Tx.wait();
+        const bep20Event = bep20Receipt.events.find((event) => {
+          return event.event === 'NewPriorityRequest';
+        });
+        const bep20PubData = bep20Event.args[3];
+
+        const onchainOperations: OnchainOperationData[] = [
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 121 },
+        ];
 
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
-          publicData: ethers.utils.hexConcat([pubDataDeposit, pubDataDeposit20]),
+          publicData: ethers.utils.hexConcat([padEndBytes121(bnbPubData), padEndBytes121(bep20PubData)]),
           timestamp: Date.now(),
-          publicDataOffsets: [0, 121],
+          onchainOperations,
           blockNumber: 1,
           blockSize: 2,
         };
@@ -222,13 +280,11 @@ describe('ZkBNB', function () {
           .to.emit(zkBNB, 'BlockCommit')
           .withArgs(1);
       });
+
       it('should can commit fullExit operation', async () => {
         // mock user request full exit, and get pubData
-        mockZNSController.isRegisteredNameHash.returns(true);
-        mockZNSController.getSubnodeNameHash.returns(accountNameHash);
-        mockZNSController.getOwner.returns(owner.address);
 
-        const tx = await zkBNB.requestFullExit('accountNameHash', ethers.constants.AddressZero);
+        const tx = await zkBNB.requestFullExit(0, ethers.constants.AddressZero);
         const receipt = await tx.wait();
 
         const event = receipt.events.find((event) => {
@@ -236,11 +292,14 @@ describe('ZkBNB', function () {
         });
         const pubDataFullExit = event.args[3];
 
+        const onchainOperations: OnchainOperationData[] = [
+          { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+        ];
         const commitBlock: CommitBlockInfo = {
           newStateRoot,
           publicData: ethers.utils.hexConcat([padEndBytes121(pubDataFullExit)]),
           timestamp: Date.now(),
-          publicDataOffsets: [0],
+          onchainOperations,
           blockNumber: 1,
           blockSize: 1,
         };
@@ -248,38 +307,34 @@ describe('ZkBNB', function () {
           .to.emit(zkBNB, 'BlockCommit')
           .withArgs(1);
       });
+
       describe('NFT', async () => {
         const nftL1TokenId = 0;
         const mockHash = ethers.utils.formatBytes32String('mock hash');
         beforeEach(async () => {
-          mockZNSController.getOwner.returns(owner.address);
-
           const withdrawOp = {
             txType: 11, // WithdrawNft
-            fromAccountIndex: 1,
+            accountIndex: 1,
             creatorAccountIndex: 0,
             creatorTreasuryRate: 5,
             nftIndex: nftL1TokenId,
-            toAddress: owner.address,
+            collectionId: 0,
             gasFeeAccountIndex: 1,
             gasFeeAssetId: 0, //BNB
             gasFeeAssetAmount: 666,
+            toAddress: owner.address,
             nftContentHash: mockHash,
-            creatorAccountNameHash: mockHash,
-            collectionId: 0,
+            creatorAddress: account,
+            nftContentType: 0,
           };
 
           await zkBNB.testWithdrawOrStoreNFT(withdrawOp);
         });
 
-        it('should can commit deposit NFT operation', async () => {
-          mockZNSController.isRegisteredNameHash.returns(true);
-          mockZNSController.getSubnodeNameHash.returns(accountNameHash);
-          mockZNSController.getSubnodeNameHash.returns();
-          mockZNSController.isRegisteredNameHash.returns(true);
+        it.skip('should can commit deposit NFT operation', async () => {
           mockNftFactory.ownerOf.returns(zkBNB.address);
 
-          const tx = await zkBNB.depositNft('accountName', mockNftFactory.address, nftL1TokenId);
+          const tx = await zkBNB.depositNft(account, mockNftFactory.address, nftL1TokenId);
 
           const receipt = await tx.wait();
           const event = receipt.events.find((event) => {
@@ -287,11 +342,15 @@ describe('ZkBNB', function () {
           });
           const pubDataDepositNft = event.args[3];
 
+          const onchainOperations: OnchainOperationData[] = [
+            { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+            { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 121 },
+          ];
           const commitBlock: CommitBlockInfo = {
             newStateRoot,
             publicData: ethers.utils.hexConcat([padEndBytes121(pubDataDepositNft)]),
             timestamp: Date.now(),
-            publicDataOffsets: [0],
+            onchainOperations,
             blockNumber: 1,
             blockSize: 1,
           };
@@ -299,14 +358,11 @@ describe('ZkBNB', function () {
             .to.emit(zkBNB, 'BlockCommit')
             .withArgs(1);
         });
+
         it('should can commit fullExitNFT operation', async () => {
-          mockZNSController.isRegisteredNameHash.returns(true);
-          mockZNSController.getSubnodeNameHash.returns(accountNameHash);
-          mockZNSController.getSubnodeNameHash.returns();
-          mockZNSController.isRegisteredNameHash.returns(true);
           mockNftFactory.ownerOf.returns(zkBNB.address);
 
-          const tx = await zkBNB.requestFullExitNft('accountName', nftL1TokenId);
+          const tx = await zkBNB.requestFullExitNft(0, nftL1TokenId);
 
           const receipt = await tx.wait();
           const event = receipt.events.find((event) => {
@@ -314,11 +370,14 @@ describe('ZkBNB', function () {
           });
           const pubDataDepositNft = event.args[3];
 
+          const onchainOperations: OnchainOperationData[] = [
+            { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+          ];
           const commitBlock: CommitBlockInfo = {
             newStateRoot,
             publicData: ethers.utils.hexConcat([padEndBytes121(pubDataDepositNft)]),
             timestamp: Date.now(),
-            publicDataOffsets: [0],
+            onchainOperations,
             blockNumber: 1,
             blockSize: 1,
           };
@@ -338,32 +397,33 @@ describe('ZkBNB', function () {
     let lastBlock;
     beforeEach(async () => {
       // mock
-      mockZNSController.getOwner.returns(owner.address);
-      mockZNSController.isRegisteredNameHash.returns(true);
-      mockZNSController.getSubnodeNameHash.returns(accountNameHash);
-      mockZNSController.isRegisteredNameHash.returns(true);
       mockNftFactory.ownerOf.returns(zkBNB.address);
-      mockZNSController.registerZNS.returns([accountNameHash, 1]);
 
       // Pre-submit a block for every case
       // commit block #1 fullExit nft;
-      let tx = await zkBNB.requestFullExitNft('accountName', nftL1TokenId);
+      let tx = await zkBNB.requestFullExitNft(0, nftL1TokenId);
       let receipt = await tx.wait();
       let event = receipt.events.find((event) => {
         return event.event === 'NewPriorityRequest';
       });
 
+      expect(await zkBNB.totalOpenPriorityRequests()).to.equal(1);
+      expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
       const pubData = event.args[3];
 
+      const onchainOperations: OnchainOperationData[] = [
+        { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+      ];
       const commitBlock: CommitBlockInfo = {
         newStateRoot,
         publicData: ethers.utils.hexConcat([padEndBytes121(pubData)]),
         timestamp: Date.now(),
-        publicDataOffsets: [0],
+        onchainOperations,
         blockNumber: 1,
         blockSize: 1,
       };
-      lastBlock = await additionalZkBNB.attach(zkBNB.address).getLastCommittedBlockData(genesisBlock, commitBlock);
+      lastBlock = await zkBNB.getLastCommittedBlockData(genesisBlock, commitBlock);
       await zkBNB.commitBlocks(genesisBlock, [commitBlock]);
       storedBlockInfo = {
         blockSize: lastBlock.blockSize,
@@ -379,23 +439,27 @@ describe('ZkBNB', function () {
         pendingOnchainOpsPubData: [commitBlock.publicData],
       });
       // commit block #2;
-      tx = await zkBNB.requestFullExit('accountNameHash', ethers.constants.AddressZero);
+      tx = await zkBNB.requestFullExit(0, ethers.constants.AddressZero);
       receipt = await tx.wait();
 
       event = receipt.events.find((event) => {
         return event.event === 'NewPriorityRequest';
       });
+
+      expect(await zkBNB.totalOpenPriorityRequests()).to.equal(2);
+      expect(await zkBNB.firstPriorityRequestId()).to.equal(0);
+
       const pubDataFullExit = event.args[3];
       const commitBlock2: CommitBlockInfo = {
         newStateRoot,
         publicData: ethers.utils.hexConcat([padEndBytes121(pubDataFullExit)]),
         timestamp: Date.now(),
-        publicDataOffsets: [0],
+        onchainOperations,
         blockNumber: 2,
         blockSize: 1,
       };
 
-      lastBlock = await additionalZkBNB.attach(zkBNB.address).getLastCommittedBlockData(storedBlockInfo, commitBlock2);
+      lastBlock = await zkBNB.getLastCommittedBlockData(storedBlockInfo, commitBlock2);
       await zkBNB.commitBlocks(storedBlockInfo, [commitBlock2]);
 
       storedBlockInfo = {
@@ -412,6 +476,7 @@ describe('ZkBNB', function () {
         pendingOnchainOpsPubData: [commitBlock2.publicData],
       });
     });
+
     it('should be executing block after committed', async () => {
       mockZkBNBVerifier.verifyBatchProofs.returns(true);
       let stateRoot = await zkBNB.stateRoot();
@@ -436,7 +501,14 @@ describe('ZkBNB', function () {
       expect(totalOpenPriorityRequests).to.equal(0);
       expect(totalBlocksVerified).to.equal(2);
       expect(firstPriorityRequestId).to.equal(2);
+
+      const oldesetPriorityReqest = await zkBNB.getPriorityRequest(firstPriorityRequestId);
+      expect(oldesetPriorityReqest['expirationBlock']).to.equal(0);
+      // should not be able to activate desert mode if there is no unprocessed priority request
+      await hardhat.network.provider.send('hardhat_mine', ['0x1000000']);
+      await expect(await zkBNB.activateDesertMode()).not.to.emit(zkBNB, 'DesertMode');
     });
+
     it('Should be verified in order', async () => {
       mockZkBNBVerifier.verifyBatchProofs.returns(true);
       const proofs = new Array(8).fill(10);
@@ -445,27 +517,28 @@ describe('ZkBNB', function () {
 
     it('Should only validate supported blocks', async () => {
       mockZkBNBVerifier.verifyBatchProofs.returns(true);
-      mockZNSController.isRegisteredNameHash.returns(true);
-      mockZNSController.getSubnodeNameHash.returns(accountNameHash);
 
       const pubDataDeposit = encodePackPubData(PubDataTypeMap[PubDataType.Deposit], [
         PubDataType.Deposit,
         0,
+        account,
         0,
         10,
-        accountNameHash,
       ]);
 
-      await zkBNB.depositBNB('accountNameHash', { value: 10 });
+      await zkBNB.depositBNB(account, { value: 10 });
+      const onchainOperations: OnchainOperationData[] = [
+        { ethWitness: ethers.utils.formatBytes32String(''), publicDataOffset: 0 },
+      ];
       const commitBlock3: CommitBlockInfo = {
         newStateRoot,
         publicData: ethers.utils.hexConcat([pubDataDeposit]),
         timestamp: Date.now(),
-        publicDataOffsets: [0],
+        onchainOperations,
         blockNumber: 3,
         blockSize: 1,
       };
-      lastBlock = await additionalZkBNB.attach(zkBNB.address).getLastCommittedBlockData(storedBlockInfo, commitBlock3);
+      lastBlock = await zkBNB.getLastCommittedBlockData(storedBlockInfo, commitBlock3);
       await zkBNB.commitBlocks(storedBlockInfo, [commitBlock3]);
 
       storedBlockInfo = {

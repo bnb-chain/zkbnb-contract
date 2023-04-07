@@ -7,41 +7,9 @@ import "../ZkBNB.sol";
 import "../Storage.sol";
 
 contract ZkBNBTest is ZkBNB {
-  function getMintedL2NftInfo(bytes32 nftKey) external view returns (L2NftInfo memory) {
-    return mintedNfts[nftKey];
-  }
-
-  function getPriorityRequest(uint64 priorityRequestId) external view returns (PriorityTx memory) {
-    return priorityRequests[priorityRequestId];
-  }
-
-  function getPendingWithdrawnNFT(uint40 nftIndex) external view returns (TxTypes.WithdrawNft memory) {
-    return pendingWithdrawnNFTs[nftIndex];
-  }
-
-  function testWithdrawOrStoreNFT(TxTypes.WithdrawNft memory op) external {
-    return withdrawOrStoreNFT(op);
-  }
-
-  function testSetDefaultNFTFactory(INFTFactory _factory) external {
-    defaultNFTFactory = address(_factory);
-  }
-
-  function mintNFT(
-    address _creatorAddress,
-    address _toAddress,
-    uint256 _nftTokenId,
-    bytes32 _nftContentHash,
-    bytes memory _extraData
-  ) external {
-    return
-      INFTFactory(defaultNFTFactory).mintFromZkBNB(
-        _creatorAddress,
-        _toAddress,
-        _nftTokenId,
-        _nftContentHash,
-        _extraData
-      );
+  /// @notice Same as fallback but called when calldata is empty
+  receive() external payable {
+    _fallback();
   }
 
   function _fallback() internal {
@@ -75,8 +43,41 @@ contract ZkBNBTest is ZkBNB {
     _fallback();
   }
 
-  /// @notice Same as fallback but called when calldata is empty
-  receive() external payable {
-    _fallback();
+  function getMintedL2NftInfo(bytes32 nftKey) external view returns (L2NftInfo memory) {
+    return mintedNfts[nftKey];
+  }
+
+  function getPriorityRequest(uint64 priorityRequestId) external view returns (PriorityTx memory) {
+    return priorityRequests[priorityRequestId];
+  }
+
+  function getPendingWithdrawnNFT(uint40 nftIndex) external view returns (TxTypes.WithdrawNft memory) {
+    return pendingWithdrawnNFTs[nftIndex];
+  }
+
+  function testWithdrawOrStoreNFT(TxTypes.WithdrawNft memory op) external {
+    return withdrawOrStoreNFT(op);
+  }
+
+  function testIncreasePendingBalance(uint16 _assetId, address _recipient, uint128 _amount) external {
+    bytes22 packedBalanceKey = packAddressAndAssetId(_recipient, _assetId);
+    increaseBalanceToWithdraw(packedBalanceKey, _amount);
+  }
+
+  function getLastCommittedBlockData(
+    StoredBlockInfo memory _previousBlock,
+    CommitBlockInfo memory _newBlock
+  ) external view returns (StoredBlockInfo memory storedNewBlock) {
+    return commitOneBlock(_previousBlock, _newBlock);
+  }
+
+  function mintNFT(
+    address defaultNFTFactory,
+    address _toAddress,
+    uint8 _nftContentType,
+    uint256 _nftTokenId,
+    bytes32 _nftContentHash
+  ) external {
+    return INFTFactory(defaultNFTFactory).mintFromZkBNB(_toAddress, _nftContentType, _nftTokenId, _nftContentHash);
   }
 }

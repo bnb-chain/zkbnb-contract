@@ -6,14 +6,11 @@ chai.use(smock.matchers);
 
 describe('StablePriceOracle', function () {
   let stablePriceOracle;
-  let owner, addr1, addr2, addr3, addr4;
   let event;
 
   const priceLetter = [ethers.utils.parseEther('1'), ethers.utils.parseEther('2'), ethers.utils.parseEther('3')];
 
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
-
     const StablePriceOracle = await ethers.getContractFactory('StablePriceOracle');
     stablePriceOracle = await StablePriceOracle.deploy(priceLetter);
 

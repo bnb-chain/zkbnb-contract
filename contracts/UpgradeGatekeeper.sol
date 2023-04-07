@@ -10,15 +10,15 @@ import "./UpgradeableMaster.sol";
 /// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
 /// @author ZkBNB Team
 contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
-  /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
-  Upgradeable[] public managedContracts;
-
   /// @notice Upgrade mode statuses
   enum UpgradeStatus {
     Idle,
     NoticePeriod,
     Preparation
   }
+
+  /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
+  Upgradeable[] public managedContracts;
 
   UpgradeStatus public upgradeStatus;
 
@@ -106,13 +106,13 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
     // fpu13 - main contract is not ready for upgrade
     masterContract.upgradeFinishes();
 
-    for (uint64 i = 0; i < managedContracts.length; i++) {
+    for (uint64 i = 0; i < managedContracts.length; ++i) {
       address newTarget = nextTargets[i];
       if (newTarget != address(0)) {
         managedContracts[i].upgradeTarget(newTarget, targetsUpgradeParameters[i]);
       }
     }
-    versionId++;
+    ++versionId;
     emit UpgradeComplete(versionId, nextTargets);
 
     upgradeStatus = UpgradeStatus.Idle;
