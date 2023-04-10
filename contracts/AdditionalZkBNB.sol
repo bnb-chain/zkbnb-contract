@@ -87,6 +87,8 @@ contract AdditionalZkBNB is Storage, Config, Events {
     require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
     require(_exitNfts.length >= 1, "Z");
 
+    // must be in desert mode
+    require(desertMode, "s");
     // stored block info should be consistent
     require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
 
