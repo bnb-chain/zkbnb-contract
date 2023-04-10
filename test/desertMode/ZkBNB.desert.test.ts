@@ -2,6 +2,10 @@ import chai, { expect } from 'chai';
 import hardhat, { ethers } from 'hardhat';
 import { smock } from '@defi-wonderland/smock';
 import assert from 'assert';
+import { BigNumber } from 'ethers';
+
+import exitAssetData from './performDesertAsset5.json';
+import exitNftData from './performDesertNft3.json';
 
 chai.use(smock.matchers);
 
@@ -48,6 +52,89 @@ describe('Desert Mode', function () {
       ],
     );
     await zkBNB.initialize(initParams);
+  });
+
+  it('shoud revert if perform desert is not executed in desert mode', async () => {
+    const blockInfo = exitAssetData.StoredBlockInfo;
+    const assetData = exitAssetData.AssetExitData;
+    const accountData = exitAssetData.AccountExitData;
+
+    const tx = zkBNB.performDesert(
+      [
+        blockInfo.BlockSize,
+        blockInfo.BlockNumber,
+        blockInfo.PriorityOperations,
+        ethers.utils.arrayify('0x' + blockInfo.PendingOnchainOperationsHash),
+        blockInfo.Timestamp,
+        ethers.utils.arrayify('0x' + blockInfo.StateRoot),
+        ethers.utils.arrayify('0x' + blockInfo.Commitment),
+      ],
+      '0x' + exitAssetData.NftRoot,
+      [assetData.AssetId, BigNumber.from(assetData.Amount.toString()), assetData.OfferCanceledOrFinalized],
+      [
+        accountData.AccountId,
+        accountData.L1Address,
+        ethers.utils.hexZeroPad(BigNumber.from(accountData.PubKeyX).toHexString(), 32),
+        ethers.utils.hexZeroPad(BigNumber.from(accountData.PubKeyY).toHexString(), 32),
+        accountData.Nonce,
+        accountData.CollectionNonce,
+      ],
+      exitAssetData.AssetMerkleProof.map((el: string) => BigNumber.from('0x' + el)),
+      exitAssetData.AccountMerkleProof.map((el: string) => BigNumber.from('0x' + el)),
+    );
+
+    await expect(tx).to.revertedWith('s');
+  });
+
+  it('should revert if perform desert NFT is not executed in desert mode', async () => {
+    const blockInfo = exitNftData.StoredBlockInfo;
+    const accountData = exitNftData.AccountExitData;
+    const nftData = exitNftData.ExitNfts[0];
+
+    const nftProof = new Array<BigNumber>(40).fill(BigNumber.from(0));
+    const nftProofs = [nftProof];
+
+    for (const [i, proof] of exitNftData.NftMerkleProofs.entries()) {
+      nftProofs[i] = proof.map((el: string) => BigNumber.from('0x' + el));
+    }
+
+    const tx = zkBNB.performDesertNft(
+      [
+        blockInfo.BlockSize,
+        blockInfo.BlockNumber,
+        blockInfo.PriorityOperations,
+        ethers.utils.arrayify('0x' + blockInfo.PendingOnchainOperationsHash),
+        blockInfo.Timestamp,
+        ethers.utils.arrayify('0x' + blockInfo.StateRoot),
+        ethers.utils.arrayify('0x' + blockInfo.Commitment),
+      ],
+
+      '0x' + exitNftData.AssetRoot,
+      [
+        accountData.AccountId,
+        accountData.L1Address,
+        ethers.utils.arrayify('0x' + accountData.PubKeyX),
+        ethers.utils.arrayify('0x' + accountData.PubKeyY),
+        accountData.Nonce,
+        accountData.CollectionNonce,
+      ],
+      [
+        [
+          nftData.NftIndex,
+          nftData.OwnerAccountIndex,
+          nftData.CreatorAccountIndex,
+          nftData.CreatorTreasuryRate,
+          nftData.CollectionId,
+          ethers.utils.arrayify('0x' + nftData.NftContentHash1),
+          ethers.utils.arrayify('0x' + nftData.NftContentHash2),
+          nftData.NftContentType,
+        ],
+      ],
+      exitNftData.AccountMerkleProof.map((el: string) => BigNumber.from('0x' + el)),
+      nftProofs,
+    );
+
+    await expect(tx).to.revertedWith('s');
   });
 
   it('should be abole to activate desert mode', async () => {
