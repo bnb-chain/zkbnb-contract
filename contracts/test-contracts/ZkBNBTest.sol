@@ -59,6 +59,10 @@ contract ZkBNBTest is ZkBNB {
     return withdrawOrStoreNFT(op);
   }
 
+  function testWithdrawOrStore(uint16 _assetId, address _recipient, uint128 _amount) external {
+    return withdrawOrStore(_assetId, _recipient, _amount);
+  }
+
   function testIncreasePendingBalance(uint16 _assetId, address _recipient, uint128 _amount) external {
     bytes22 packedBalanceKey = packAddressAndAssetId(_recipient, _assetId);
     increaseBalanceToWithdraw(packedBalanceKey, _amount);
