@@ -326,7 +326,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     CommitBlockInfo memory _newBlockData
   ) internal pure returns (bytes32) {
     // uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
-    bytes32 converted = keccak256(
+    bytes32 converted = sha256(
       abi.encodePacked(
         uint256(_newBlockData.blockNumber), // block number
         uint256(_newBlockData.timestamp), // time stamp
