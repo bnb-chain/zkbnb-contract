@@ -114,20 +114,34 @@ async function main() {
     deployFactoryTxReceipt.logs[6].data,
     deployFactoryTxReceipt.logs[6].topics,
   );
-  const assetGovernance = contractFactories.AssetGovernance.attach(event[1]);
+  const [
+    governanceEntryAddress,
+    assetGovernanceEntryAddress,
+    verifierEntryAddress,
+    zkbnbEntryAddress,
+    upgradeGatekeeperEntryAddress,
+    additionalZkBNBEntryAddress,
+  ] = event;
+
+  const assetGovernance = contractFactories.AssetGovernance.attach(assetGovernanceEntryAddress);
 
   // deploy default nft factory
   console.log(chalk.blue('⚙️ Setting ZkBNB DefaultNftFactory'));
   console.log('\t🚀Deploy DefaultNftFactory...');
-  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy('zkBNB', 'zkBNB', event[3], owner.address);
+  const DefaultNftFactory = await contractFactories.DefaultNftFactory.deploy(
+    'zkBNB',
+    'zkBNB',
+    zkbnbEntryAddress,
+    owner.address,
+  );
   await DefaultNftFactory.deployed();
 
   console.log('\t🔧Set default nft factory...');
-  const proxyGovernance = contractFactories.Governance.attach(event[0]);
+  const proxyGovernance = contractFactories.Governance.attach(governanceEntryAddress);
   const setDefaultNftFactoryTx = await proxyGovernance.setDefaultNFTFactory(DefaultNftFactory.address);
   await setDefaultNftFactoryTx.wait();
   console.log(chalk.blue('🚀 Set zkBNB address for governance...'));
-  const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(event[3]);
+  const setZkBNBAddressTx = await proxyGovernance.setZkBNBAddress(zkbnbEntryAddress);
   await setZkBNBAddressTx.wait();
   // Add validators into governance
   console.log(chalk.blue('📥 Add validators into governance...'));
@@ -157,8 +171,11 @@ async function main() {
 
   console.log(chalk.blue('🔐 Granted permission...'));
   const UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
-  await upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, event[4] /* upgradeGateKeeper.address */);
-  await upgradeableMaster.changeZkBNBAddress(event[3] /* zkbnb.address */);
+  await upgradeableMaster.grantRole(
+    UPGRADE_GATEKEEPER_ROLE,
+    upgradeGatekeeperEntryAddress /* upgradeGateKeeper.address */,
+  );
+  await upgradeableMaster.changeZkBNBAddress(zkbnbEntryAddress /* zkbnb.address */);
 
   // Save addresses into JSON
   console.log(chalk.blue('📥 Save deployed contract addresses and arguments'));
@@ -173,12 +190,12 @@ async function main() {
     'info/addresses.json',
     Object.assign(
       {
-        governance: event[0],
-        assetGovernance: event[1],
-        verifierProxy: event[2],
-        zkbnbProxy: event[3],
-        upgradeGateKeeper: event[4],
-        additionalZkBNB: event[5],
+        governance: governanceEntryAddress,
+        assetGovernance: assetGovernanceEntryAddress,
+        verifierProxy: verifierEntryAddress,
+        zkbnbProxy: zkbnbEntryAddress,
+        upgradeGateKeeper: upgradeGatekeeperEntryAddress,
+        additionalZkBNB: additionalZkBNBEntryAddress,
         ERC721: ERC721.address,
         DefaultNftFactory: DefaultNftFactory.address,
         upgradeableMaster: upgradeableMaster.address,
@@ -190,12 +207,11 @@ async function main() {
 
   // Save contract constructor arguments to JSON for verify
   saveConstructorArgumentsForVerify('info/constructor.json', {
-    proxy: [event[0], [governance.address, abi.encode(['address'], [deployFactory.address])]],
-    governance: [governance.address],
+    governanceLogic: [governance.address],
     assetGovernance: [
-      event[1],
+      assetGovernanceEntryAddress,
       [
-        governance.address, // governace
+        governanceEntryAddress, // governace
         _listingToken,
         _listingFee.toString(),
         _listingCap,
@@ -204,13 +220,16 @@ async function main() {
       ],
     ],
     utils: [contractFactories.Utils.address],
-    verifier: [verifier.address],
-    zkbnb: [zkbnb.address],
-    upgradeGateKeeper: [upgradeableMaster.address],
-    additionalZkBNB: [event[5]],
-    ERC721: [],
-    DefaultNftFactory: [],
+    verifierLogic: [verifier.address],
+    zkbnbLogic: [zkbnb.address],
+    upgradeGateKeeper: [upgradeGatekeeperEntryAddress, [upgradeableMaster.address]],
+    additionalZkBNB: [additionalZkBNBEntryAddress],
+    ERC721: [ERC721.address, ['zkBNB', 'zkBNB', 0]],
+    DefaultNftFactory: [DefaultNftFactory.address, ['zkBNB', 'zkBNB', zkbnbEntryAddress, owner.address]],
     upgradeableMaster: [upgradeableMaster.address, upgradeableMasterParams],
+    governanceProxy: [governanceEntryAddress, [governance.address, abi.encode(['address'], [deployFactory.address])]],
+    verifierProxy: [verifierEntryAddress],
+    zkbnbProxy: [zkbnbEntryAddress],
   });
 }
 
