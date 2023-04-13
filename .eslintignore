@@ -3,5 +3,4 @@ cache
 **/node_modules/**
 **/dist/**
 **/artifacts/**
-contracts/
 sdk/

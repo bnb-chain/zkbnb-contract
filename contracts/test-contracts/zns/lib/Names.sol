@@ -11,7 +11,7 @@ library Names {
     uint len;
     uint i = 0;
     uint bytelength = bytes(s).length;
-    for (len = 0; i < bytelength; len++) {
+    for (len = 0; i < bytelength; ++len) {
       bytes1 b = bytes(s)[i];
       if (b <= 0x80) {
         i += 1;
@@ -37,7 +37,7 @@ library Names {
    */
   function charsetValid(string memory s) internal pure returns (bool) {
     uint bytelength = bytes(s).length;
-    for (uint i = 0; i < bytelength; i++) {
+    for (uint i = 0; i < bytelength; ++i) {
       bytes1 b = bytes(s)[i];
       if (!isValidCharacter(b)) {
         return false;

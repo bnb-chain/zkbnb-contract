@@ -1,6 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { assert, expect } from 'chai';
-import { BaseContract, Signer, Wallet } from 'ethers';
+import { Wallet } from 'ethers';
 
 import { ethers } from 'hardhat';
 import { transferFunds } from '../util';
@@ -13,7 +13,6 @@ describe('Governance', function () {
   let owner;
   let addr1;
   let addr2;
-  let addr3;
   let governerWallet: Wallet;
   let mockAssetGovernance: FakeContract;
 
@@ -22,7 +21,6 @@ describe('Governance', function () {
     owner = signers[0];
     addr1 = signers[1];
     addr2 = signers[2];
-    addr3 = signers[3];
     governerWallet = ethers.Wallet.createRandom().connect(owner.provider);
     await transferFunds(owner, await governerWallet.getAddress(), '1000000');
 
@@ -100,7 +98,9 @@ describe('Governance', function () {
       await transferFunds(owner, mockAssetGovernance.address, '1');
       await governance.connect(contractSigner).addAsset(BUSD_ASSET_ADDRESS);
       await governance.connect(governerWallet).setAssetPaused(BUSD_ASSET_ADDRESS, true);
-      await expect(governance.connect(governerWallet).validateAssetAddress(BUSD_ASSET_ADDRESS)).to.be.revertedWith('2i');
+      await expect(governance.connect(governerWallet).validateAssetAddress(BUSD_ASSET_ADDRESS)).to.be.revertedWith(
+        '2i',
+      );
 
       const tx = await governance.connect(governerWallet).setAssetPaused(BUSD_ASSET_ADDRESS, false);
       const rc = await tx.wait();
@@ -123,7 +123,7 @@ describe('Governance', function () {
 
     it('should revert if is not validator ', async function () {
       await governance.connect(governerWallet).setValidator(VALIDATOR_ADDRESS, true);
-      await expect(governance.isActiveValidator(owner.address)).to.be.revertedWith('invalid validator')
+      await expect(governance.isActiveValidator(owner.address)).to.be.revertedWith('invalid validator');
     });
 
     describe('After a new Asset Governance contract is set', function () {
@@ -163,7 +163,7 @@ describe('Governance', function () {
         const tx = await governance.connect(contractSigner).addAsset(NEW_ASSET_ADDRESS);
         const rc = await tx.wait();
         const event = rc.events.find((event) => event.event === 'NewAsset');
-        const [newAssetAddress, newAssetId] = event.args;
+        const [newAssetAddress] = event.args;
 
         assert(newAssetAddress === NEW_ASSET_ADDRESS);
         expect(await governance.totalAssets()).to.equal(2);
@@ -179,7 +179,7 @@ describe('Governance', function () {
         const tx = await governance.connect(contractSigner).addAsset(NEW_ASSET_ADDRESS);
         const rc = await tx.wait();
         const event = rc.events.find((event) => event.event === 'NewAsset');
-        const [newAssetAddress, newAssetId] = event.args;
+        const [newAssetAddress] = event.args;
 
         assert(newAssetAddress === NEW_ASSET_ADDRESS);
         expect(await governance.totalAssets()).to.equal(2);
@@ -210,6 +210,83 @@ describe('Governance', function () {
         }
         await expect(governance.connect(contractSigner).addAsset(NEW_ASSET_ADDRESS)).to.be.revertedWith('1f');
       });
+    });
+
+    it('update baseURI', async function () {
+      const type = 0;
+      const baseURI = 'ipfs://f01701220';
+      // only governerWallet can update baseURI
+      await expect(governance.connect(addr1).updateBaseURI(type, baseURI)).to.be.revertedWith('1g');
+      await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
+      expect((await governance.nftBaseURIs(type)) === baseURI);
+    });
+
+    it('get tokenURI', async function () {
+      const type = 0;
+      const baseURI = 'ipfs://f01701220';
+      const contentHash = '3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase();
+      const mockHash = ethers.utils.hexZeroPad(('0x' + contentHash).toLowerCase(), 32);
+
+      const expectUri = `${baseURI}${contentHash}`;
+      expect((await governance.getNftTokenURI(type, mockHash)) === contentHash);
+      await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
+      expect((await governance.getNftTokenURI(type, mockHash)) === expectUri);
+    });
+  });
+
+  describe('After default Nft factory is set', function () {
+    let mockNftFactory;
+
+    beforeEach('initialize Governer', async function () {
+      const abi = ethers.utils.defaultAbiCoder;
+      const byteAddr = abi.encode(['address'], [owner.address]);
+      await governance.initialize(byteAddr);
+      mockNftFactory = await smock.fake('ZkBNBNFTFactory');
+      await expect(await governance.setDefaultNFTFactory(mockNftFactory.address))
+        .to.emit(governance, 'SetDefaultNFTFactory')
+        .withArgs(mockNftFactory.address);
+
+      // set zkbnb address
+      await expect(governance.connect(addr1).setZkBNBAddress(addr2.address)).to.be.revertedWith('1g');
+      await expect(governance.setZkBNBAddress(addr2.address)).to.emit(governance, 'SetZkBNB').withArgs(addr2.address);
+    });
+
+    it('register NFT factory without deploying NFT Factory', async function () {
+      const mockNftFactory = await smock.fake('ZkBNBNFTFactory');
+      const collectionId = 0;
+      await expect(
+        governance.connect(addr1).registerNFTFactory(collectionId, mockNftFactory.address),
+      ).to.be.revertedWith('ws');
+    });
+
+    it('Deploy and register NFT factory', async function () {
+      const collectionId = 1;
+      await expect(await governance.connect(addr1).deployAndRegisterNFTFactory(collectionId, 'name', 'symbol'))
+        .to.emit(governance, 'NFTFactoryRegistered')
+        .withArgs(addr1.address, await governance.getNFTFactory(addr1.address, collectionId), collectionId);
+
+      const factoryAddress = await governance.getNFTFactory(addr1.address, collectionId);
+      expect(factoryAddress !== mockNftFactory);
+      expect((await governance.nftFactories(addr1.address, collectionId)) === factoryAddress);
+
+      const collectionId2 = 2;
+      await expect(await governance.connect(addr1).registerNFTFactory(collectionId2, factoryAddress))
+        .to.emit(governance, 'NFTFactoryRegistered')
+        .withArgs(addr1.address, factoryAddress, collectionId2);
+    });
+
+    it('Register Default NFT factory', async function () {
+      const collectionId = 1;
+      expect((await governance.nftFactories(addr1.address, collectionId)) === ethers.constants.AddressZero);
+
+      await expect(governance.connect(addr1).registerDefaultNFTFactory(addr1.address, collectionId)).to.be.revertedWith(
+        'No access',
+      );
+
+      await expect(await governance.connect(addr2).registerDefaultNFTFactory(addr1.address, collectionId));
+
+      expect((await governance.nftFactories(addr1.address, collectionId)) === mockNftFactory.address);
+      expect((await governance.getNFTFactory(addr1.address, collectionId)) === mockNftFactory.address);
     });
   });
 });

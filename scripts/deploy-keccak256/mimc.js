@@ -33,11 +33,7 @@ async function getContractFactories() {
     Governance: await ethers.getContractFactory('Governance'),
     AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
     Verifier: await ethers.getContractFactory('ZkBNBVerifier'),
-    ZkBNB: await ethers.getContractFactory('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    }),
+    ZkBNB: await ethers.getContractFactory('ZkBNB'),
     DeployFactory: await ethers.getContractFactory('DeployFactory'),
   };
 }

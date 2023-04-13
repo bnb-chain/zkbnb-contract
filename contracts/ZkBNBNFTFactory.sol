@@ -2,64 +2,50 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/INFTFactory.sol";
 import "./lib/Bytes.sol";
+import "./lib/Ownable2Step.sol";
 
-contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable, ReentrancyGuard {
-  // Optional mapping from token ID to token content hash
-  mapping(uint256 => bytes32) private _contentHashes;
+interface IZkBNB {
+  function getNftTokenURI(uint8 nftContentType, bytes32 nftContentHash) external view returns (string memory tokenURI);
+}
 
-  // tokenId => creator
-  mapping(uint256 => address) private _nftCreators;
-
-  string public _base;
-
+contract ZkBNBNFTFactory is ERC721, INFTFactory, Ownable2Step, ReentrancyGuard {
   address private _zkbnbAddress;
 
-  constructor(string memory name, string memory symbol, string memory base, address zkbnbAddress) ERC721(name, symbol) {
+  struct NftContentURI {
+    uint8 nftContentType;
+    bytes32 nftContentHash;
+  }
+
+  mapping(uint256 => NftContentURI) private _uris;
+
+  constructor(
+    string memory name,
+    string memory symbol,
+    address zkbnbAddress,
+    address owner
+  ) ERC721(name, symbol) Ownable2Step(owner) {
     _zkbnbAddress = zkbnbAddress;
-    _base = base;
   }
 
   function mintFromZkBNB(
-    address _creatorAddress,
     address _toAddress,
+    uint8 _nftContentType,
     uint256 _nftTokenId,
-    bytes32 _nftContentHash,
-    bytes memory _extraData
-  ) external override nonReentrant {
+    bytes32 _nftContentHash
+  ) external nonReentrant {
     require(_msgSender() == _zkbnbAddress, "only zkbnbAddress");
     // Minting allowed only from zkbnb
-    _safeMint(_toAddress, _nftTokenId);
-    _contentHashes[_nftTokenId] = _nftContentHash;
-    _nftCreators[_nftTokenId] = _creatorAddress;
-    emit MintNFTFromZkBNB(_creatorAddress, _toAddress, _nftTokenId, _nftContentHash, _extraData);
+    _safeMint(_toAddress, _nftTokenId, "");
+    // set tokenURI
+    _uris[_nftTokenId] = NftContentURI({nftContentType: _nftContentType, nftContentHash: _nftContentHash});
   }
 
-  function _beforeTokenTransfer(address, address to, uint256 tokenId) internal virtual {
-    // Sending to address `0` means that the token is getting burned.
-    if (to == address(0)) {
-      delete _contentHashes[tokenId];
-      delete _nftCreators[tokenId];
-    }
-  }
-
-  function getContentHash(uint256 _tokenId) external view returns (bytes32) {
-    return _contentHashes[_tokenId];
-  }
-
-  function getCreator(uint256 _tokenId) external view returns (address) {
-    return _nftCreators[_tokenId];
-  }
-
-  function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-    require(_exists(tokenId), "tokenId not exist");
-    return string(abi.encodePacked(_base, Bytes.bytes32ToHexString(_contentHashes[tokenId], false)));
-  }
-
-  function updateBaseUri(string memory base) external onlyOwner {
-    _base = base;
+  function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    _requireMinted(tokenId);
+    NftContentURI memory uri = _uris[tokenId];
+    return IZkBNB(_zkbnbAddress).getNftTokenURI(uri.nftContentType, uri.nftContentHash);
   }
 }

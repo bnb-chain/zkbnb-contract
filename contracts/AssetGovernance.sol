@@ -10,21 +10,6 @@ import "./lib/Utils.sol";
 /// @author ZkBNB Team
 /// @notice Contract is used to allow anyone to add new ERC20 tokens to ZkBNB given sufficient payment
 contract AssetGovernance is ReentrancyGuard {
-  /// @notice Token lister added or removed (see `tokenLister`)
-  event TokenListerUpdate(address indexed tokenLister, bool isActive);
-
-  /// @notice Listing fee token set
-  event ListingFeeTokenUpdate(IERC20 indexed newListingFeeToken, uint256 newListingFee);
-
-  /// @notice Listing fee set
-  event ListingFeeUpdate(uint256 newListingFee);
-
-  /// @notice Maximum number of listed tokens updated
-  event ListingCapUpdate(uint16 newListingCap);
-
-  /// @notice The treasury (the account which will receive the fee) was updated
-  event TreasuryUpdate(address newTreasury);
-
   /// @notice ZkBNB governance contract
   Governance public governance;
 
@@ -43,10 +28,20 @@ contract AssetGovernance is ReentrancyGuard {
   /// @notice Address that collects listing payments
   address public treasury;
 
-  modifier onlyGovernor() {
-    governance.requireGovernor(msg.sender);
-    _;
-  }
+  /// @notice Token lister added or removed (see `tokenLister`)
+  event TokenListerUpdate(address indexed tokenLister, bool isActive);
+
+  /// @notice Listing fee token set
+  event ListingFeeTokenUpdate(IERC20 indexed newListingFeeToken, uint256 newListingFee);
+
+  /// @notice Listing fee set
+  event ListingFeeUpdate(uint256 newListingFee);
+
+  /// @notice Maximum number of listed tokens updated
+  event ListingCapUpdate(uint16 newListingCap);
+
+  /// @notice The treasury (the account which will receive the fee) was updated
+  event TreasuryUpdate(address newTreasury);
 
   constructor(
     address _governance,
@@ -66,6 +61,11 @@ contract AssetGovernance is ReentrancyGuard {
     emit TokenListerUpdate(treasury, true);
   }
 
+  modifier onlyGovernor() {
+    governance.requireGovernor(msg.sender);
+    _;
+  }
+
   /// @notice Adds new ERC20 token to ZkBNB network.
   /// @notice If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
   /// @notice NOTE: before calling this function make sure to approve `listingFeeToken` transfer for this contract.
@@ -76,9 +76,7 @@ contract AssetGovernance is ReentrancyGuard {
       // Check access: if address zero is a lister, any address can add asset
       require(tokenLister[address(0)], "no access");
       // Collect fees
-      bool feeTransferOk = Utils.transferFromERC20(listingFeeToken, msg.sender, treasury, listingFee);
-      require(feeTransferOk, "fee transfer failed");
-      // Failed to receive payment for token addition.
+      listingFeeToken.transferFrom(msg.sender, treasury, listingFee);
     }
     governance.addAsset(_assetAddress);
   }

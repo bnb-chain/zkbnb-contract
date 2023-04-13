@@ -15,13 +15,16 @@ interface Events {
   /// @notice Event emitted when user funds are withdrawn from the ZkBNB state and contract
   event Withdrawal(uint16 assetId, uint128 amount);
 
+  /// @notice Event emitted when user funds are withdrawn from the ZkBNB state but not from contract
+  event WithdrawalPending(uint16 indexed assetId, address indexed recepient, uint128 amount);
+
   /// @notice Event emitted when user funds are deposited to the zkbnb account
-  event Deposit(uint16 assetId, bytes32 accountName, uint128 amount);
+  event Deposit(uint16 assetId, address to, uint128 amount);
 
   /// @notice Event emitted when blocks are reverted
   event BlocksRevert(uint32 totalBlocksVerified, uint32 totalBlocksCommitted);
 
-  /// @notice Exodus mode entered event
+  /// @notice Desert mode entered event
   event DesertMode();
 
   /// @notice New priority request event. Emitted when a request is placed into mapping
@@ -65,7 +68,7 @@ interface Events {
 
   /// @notice NFT deposit event.
   event DepositNft(
-    bytes32 accountNameHash,
+    address to,
     bytes32 nftContentHash,
     address tokenAddress,
     uint256 nftTokenId,
@@ -75,14 +78,8 @@ interface Events {
   /// @notice NFT withdraw event.
   event WithdrawNft(uint32 accountIndex, address nftL1Address, address toAddress, uint256 nftL1TokenId);
 
-  /// @notice Event emitted when user NFT is withdrawn from the zkSync state but not from contract
+  /// @notice Event emitted when user NFT is withdrawn from the zkBNB state but not from contract
   event WithdrawalNFTPending(uint40 indexed nftIndex);
-
-  /// @notice Default NFTFactory changed
-  event NewDefaultNFTFactory(address indexed factory);
-
-  /// @notice New NFT Factory
-  event NewNFTFactory(bytes32 indexed _creatorAccountNameHash, uint32 _collectionId, address _factoryAddress);
 }
 
 /// @title Upgrade events

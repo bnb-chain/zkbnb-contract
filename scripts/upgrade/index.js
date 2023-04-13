@@ -1,6 +1,6 @@
 const hardhat = require('hardhat');
-const { getDeployedAddresses } = require('../deploy-keccak256/utils');
-const { getContractFactories, getUpgradeableContractImplement } = require('./utils');
+const { getDeployedAddresses, deployDesertVerifier } = require('../deploy-keccak256/utils');
+const { getUpgradeableContractImplement } = require('./utils');
 const { ethers } = hardhat;
 
 const inquirer = require('inquirer');
@@ -15,9 +15,12 @@ const addrs = getDeployedAddresses('info/addresses.json');
 const targetContractsDeployed = {
   governance: AddressZero,
   verifier: AddressZero,
-  znsController: AddressZero,
-  znsResolver: AddressZero,
   zkbnb: AddressZero,
+};
+
+const zkBNBUpgradeParameter = {
+  additionalZkBNB: AddressZero,
+  desertVerifier: AddressZero,
 };
 
 Object.defineProperty(String.prototype, 'capitalize', {
@@ -40,7 +43,7 @@ function main() {
         type: 'list',
         name: 'operator',
         message: 'What do you want?',
-        choices: ['start', 'preparation', 'cut period', 'cancel', 'finish'],
+        choices: ['start', 'preparation', 'cut period(only local)', 'cancel', 'finish', 'rollback'],
       },
     ])
     .then(async (answers) => {
@@ -60,6 +63,28 @@ function main() {
         case 'finish':
           finish();
           break;
+        case 'rollback':
+          inquirer
+            .prompt([
+              {
+                type: 'input',
+                name: 'target',
+                message:
+                  'Please enter the block number when the contract was deployed \nand the script will query the upgrade history:',
+                validate(answer) {
+                  console.log('🚀 ~ file: index.js:295 ~ validate ~ answer:', answer);
+                  if (answer.length < 1) {
+                    return 'You must input block number.';
+                  }
+
+                  return true;
+                },
+              },
+            ])
+            .then(async (answer) => {
+              rollback(+answer.target);
+            });
+          break;
 
         default:
           break;
@@ -68,8 +93,10 @@ function main() {
 }
 
 async function start() {
-  const contractFactories = await getContractFactories();
-  const upgradeGatekeeper = await contractFactories.UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const [owner] = await ethers.getSigners();
+
+  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
+  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
 
   const status = await upgradeGatekeeper.upgradeStatus();
   if (status !== 0 /* idle */) {
@@ -83,7 +110,7 @@ async function start() {
         type: 'checkbox',
         name: 'target',
         message: 'Which contracts do you want to upgrade?',
-        choices: ['governance', 'verifier', 'zkbnb', 'znsController', 'znsResolver'],
+        choices: ['governance', 'verifier', 'zkbnb'],
 
         validate(answer) {
           if (answer.length < 1) {
@@ -98,22 +125,73 @@ async function start() {
       targetContracts = answers.target;
       console.log(chalk.green('🚀 Deploy new contract'));
       for (const contract of targetContracts) {
-        let deployContract;
+        let deployContract, additionalZkBNB, desertVerifier;
+        let Governance, ZkBNBVerifier, ZkBNB, AdditionalZkBNB;
+
+        const Utils = await ethers.getContractFactory('Utils');
+        const utils = await Utils.deploy();
+        await utils.deployed();
+
         switch (contract) {
           case 'governance':
-            deployContract = await contractFactories.Governance.deploy();
+            Governance = await ethers.getContractFactory('Governance');
+            deployContract = await Governance.deploy();
             break;
           case 'verifier':
-            deployContract = await contractFactories.Verifier.deploy();
+            ZkBNBVerifier = await ethers.getContractFactory('ZkBNBVerifier');
+            deployContract = await ZkBNBVerifier.deploy();
             break;
           case 'zkbnb':
-            deployContract = await contractFactories.ZkBNB.deploy();
-            break;
-          case 'znsController':
-            deployContract = await contractFactories.ZNSController.deploy();
-            break;
-          case 'znsResolver':
-            deployContract = await contractFactories.ZNSResolver.deploy();
+            ZkBNB = await ethers.getContractFactory('ZkBNB', {
+              libraries: {
+                Utils: utils.address,
+              },
+            });
+            deployContract = await ZkBNB.deploy();
+
+            inquirer
+              .prompt([
+                {
+                  type: 'list',
+                  name: 'zkbnbParams',
+                  message: 'Do you want to update additionalZkBNB and/or desertVerifier addresses?',
+                  choices: ['No', 'Yes only additionalZkBNB', 'Yes only desertVerifier', 'Yes both'],
+                },
+              ])
+              .then(async (answer) => {
+                switch (answer.zkbnbParams) {
+                  case 'No':
+                    break;
+                  case 'Yes only additionalZkBNB':
+                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
+                    additionalZkBNB = await AdditionalZkBNB.deploy();
+                    await additionalZkBNB.deployed();
+
+                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
+                    break;
+                  case 'Yes only desertVerifier':
+                    desertVerifier = await deployDesertVerifier(owner);
+                    await desertVerifier.deployed();
+
+                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
+                    break;
+                  case 'Yes both':
+                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
+                    additionalZkBNB = await AdditionalZkBNB.deploy();
+                    await additionalZkBNB.deployed();
+
+                    desertVerifier = await deployDesertVerifier(owner);
+                    await desertVerifier.deployed();
+
+                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
+                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
+                    break;
+
+                  default:
+                    break;
+                }
+                console.log('zkBNB upgrade parameters: [%s, %s]', additionalZkBNB.address, desertVerifier.address);
+              });
             break;
 
           default:
@@ -124,21 +202,34 @@ async function start() {
         console.log('%s deployed \t in %s', contract.capitalize(), deployContract.address);
       }
 
-      console.log(chalk.green('🚚 Start Upgrade'));
-      const tx = await upgradeGatekeeper.startUpgrade([
-        targetContractsDeployed.governance,
-        targetContractsDeployed.verifier,
-        targetContractsDeployed.znsController,
-        targetContractsDeployed.znsResolver,
-        targetContractsDeployed.zkbnb,
-      ]);
+      inquirer
+        .prompt([
+          {
+            type: 'confirm',
+            name: 'confirm',
+            message: 'Above contract will be upgrade. \n Do you want continue?',
+          },
+        ])
+        .then(async (answers) => {
+          if (!answers.confirm) {
+            return;
+          }
 
-      const receipt = await tx.wait();
-      console.log(chalk.green('✅ Upgrade process started'));
+          console.log(chalk.green('🚚 Start Upgrade'));
+          const tx = await upgradeGatekeeper.startUpgrade([
+            targetContractsDeployed.governance,
+            targetContractsDeployed.verifier,
+            targetContractsDeployed.zkbnb,
+          ]);
 
-      console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+          const receipt = await tx.wait();
+          console.log(chalk.green('✅ Upgrade process started'));
+
+          console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+        });
     });
 }
+
 async function preparation() {
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
   const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
@@ -154,6 +245,7 @@ async function preparation() {
   console.log('✅ Prepare upgrade...');
   console.log('Current version is %s', receipt.events[0].args.versionId);
 }
+
 async function cancel() {
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
   const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
@@ -162,6 +254,7 @@ async function cancel() {
   await upgradeGatekeeper.cancelUpgrade();
   console.log(chalk.green('✅ Cancel Upgrade'));
 }
+
 async function cutPeriod() {
   console.log(chalk.red('🚀 Please invoke contract function in BSCScan'));
 
@@ -196,6 +289,7 @@ async function cutPeriod() {
   //   );
   // }
 }
+
 async function finish() {
   /* ------------------------- Check upgrade status ------------------------ */
   const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
@@ -208,13 +302,85 @@ async function finish() {
     return;
   }
   console.log(chalk.green('🚀 Finish Upgrade'));
-  const tx = await upgradeGatekeeper.finishUpgrade(['0x00', '0x00', '0x00', '0x00', '0x00']);
+  const tx = await upgradeGatekeeper.finishUpgrade([
+    '0x00',
+    '0x00',
+    ethers.utils.defaultAbiCoder.encode(
+      ['address', 'address'], // newAdditionalZkBNB.addresss, newDesertVerifier.addresss
+      [zkBNBUpgradeParameter['additionalZkBNB'], zkBNBUpgradeParameter['desertVerifier']],
+    ),
+  ]);
   const receipt = await tx.wait();
   const impls = await getUpgradeableContractImplement();
   console.log('**** New implement Contract ****');
   console.table(impls);
   console.log(chalk.green('✅ Finished'));
   console.log('Current version is %s', receipt.events[1].args.versionId);
+}
+
+async function rollback(startBlockNumber) {
+  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
+  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+
+  const status = await upgradeGatekeeper.upgradeStatus();
+  if (status !== 0 /* idle */) {
+    console.log(chalk.red(`🙃 Update flow is in progress`));
+    return;
+  }
+
+  console.log(chalk.green('🚀 Rollback'));
+  const versionId = await upgradeGatekeeper.versionId();
+  console.log(`current version is ${chalk.red(versionId)}`);
+
+  console.log(chalk.green('🔍 search old version...'));
+  let previousVersionTargets;
+  // If it is the first version, should get the implementation contract address directly from the proxy contract
+  if (versionId == 0) {
+    previousVersionTargets = {
+      governance: await (await ethers.getContractFactory('Proxy')).attach(addrs.governance).getTarget(),
+      verifier: await (await ethers.getContractFactory('Proxy')).attach(addrs.verifierProxy).getTarget(),
+      zkbnb: await (await ethers.getContractFactory('Proxy')).attach(addrs.zkbnbProxy).getTarget(),
+    };
+  } else {
+    const filter = upgradeGatekeeper.filters.UpgradeComplete(versionId - 1);
+    const event = await upgradeGatekeeper.queryFilter(filter, startBlockNumber, startBlockNumber + 5000);
+    const targets = event[0].args.newTargets;
+    previousVersionTargets = {
+      governance: targets[0],
+      verifier: targets[1],
+      zkbnb: targets[2],
+    };
+  }
+
+  console.log(chalk.green('🚚 Start rollback'));
+
+  console.log('**** Old implement Contract ****');
+  console.table(previousVersionTargets);
+  console.log('********************************');
+
+  inquirer
+    .prompt([
+      {
+        type: 'confirm',
+        name: 'confirm',
+        message: 'The contract will be rolled back to the previous version. \n Do you want continue?',
+      },
+    ])
+    .then(async (answers) => {
+      if (!answers.confirm) {
+        return;
+      }
+
+      const tx = await upgradeGatekeeper.startUpgrade([
+        previousVersionTargets.governance,
+        previousVersionTargets.verifier,
+        previousVersionTargets.zkbnb,
+      ]);
+
+      const receipt = await tx.wait();
+      console.log(chalk.green('✅ rollback process started'));
+      console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+    });
 }
 
 main();

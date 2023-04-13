@@ -68,9 +68,9 @@ describe('ZNSController', function () {
 
   it('should pause and unpause registrations when called by owner', async function () {
     assert((await znsController.isPaused()) == false);
-    await znsController.pauseRegistration();
+    await expect(await znsController.pauseRegistration()).to.emit(znsController, 'RegistrationPaused');
     assert((await znsController.isPaused()) == true);
-    await znsController.unPauseRegistration();
+    await expect(await znsController.unPauseRegistration()).to.emit(znsController, 'RegistrationResumed');
     assert((await znsController.isPaused()) == false);
   });
 
@@ -148,7 +148,7 @@ describe('ZNSController', function () {
       ).to.be.revertedWith('pub key existed');
     });
 
-    it('should allow withdrawing collected contract funds when called by owner', async function () {
+    it('should allow withdrawing collected contract funds to EOA when called by owner', async function () {
       //Send money to the contract first by registering a name
       priceOracle.price.returns(ethers.utils.parseEther('1'));
       await znsController.addController(addr1.getAddress());
@@ -156,13 +156,32 @@ describe('ZNSController', function () {
         .connect(addr1)
         .registerZNS('chan', addr1.getAddress(), pubX, pubY, NULL_ADDRESS, { value: ethers.utils.parseEther('10') }); //Send a lot
 
-      //Should be able to precisely withdraw all the funds
+      //EOA should be able to precisely withdraw all the funds
       const wallet = ethers.Wallet.createRandom();
       await expect(znsController.withdraw(await wallet.getAddress(), ethers.utils.parseEther('1')))
         .to.emit(znsController, 'Withdraw')
         .withArgs(await wallet.getAddress(), ethers.utils.parseEther('1'));
 
       const balanceAfter = await ethers.provider.getBalance(await wallet.getAddress());
+      expect(balanceAfter).to.equal(ethers.utils.parseEther('1'));
+    });
+
+    it('should allow withdrawing collected contract funds to another contract when called by owner', async function () {
+      //Send money to the contract first by registering a name
+      priceOracle.price.returns(ethers.utils.parseEther('1'));
+      await znsController.addController(addr1.getAddress());
+      await znsController
+        .connect(addr1)
+        .registerZNS('chan', addr1.getAddress(), pubX, pubY, NULL_ADDRESS, { value: ethers.utils.parseEther('10') }); //Send a lot
+
+      const RECEIVING_CONTRACT = await ethers.getContractFactory('BNBReceivable');
+      const toContract = await RECEIVING_CONTRACT.deploy();
+      await toContract.deployed();
+      await expect(znsController.withdraw(toContract.address, ethers.utils.parseEther('1')))
+        .to.emit(znsController, 'Withdraw')
+        .withArgs(toContract.address, ethers.utils.parseEther('1'));
+
+      const balanceAfter = await ethers.provider.getBalance(toContract.address);
       expect(balanceAfter).to.equal(ethers.utils.parseEther('1'));
     });
   });

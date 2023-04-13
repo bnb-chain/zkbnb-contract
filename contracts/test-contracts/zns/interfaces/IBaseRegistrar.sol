@@ -17,15 +17,6 @@ interface IBaseRegistrar {
     uint256 price
   );
 
-  // Authorizes a controller, who can control this registrar.
-  function addController(address controller) external;
-
-  // Revoke controller permission for an address.
-  function removeController(address controller) external;
-
-  // Set resolver for the node this registrar manages.
-  function setThisResolver(address resolver) external;
-
   // Register a node under the base node.
   function registerZNS(
     string calldata _name,
@@ -34,6 +25,15 @@ interface IBaseRegistrar {
     bytes32 zkbnbPubKeyY,
     address _resolver
   ) external payable returns (bytes32, uint32);
+
+  // Authorizes a controller, who can control this registrar.
+  function addController(address controller) external;
+
+  // Revoke controller permission for an address.
+  function removeController(address controller) external;
+
+  // Set resolver for the node this registrar manages.
+  function setThisResolver(address resolver) external;
 
   function pauseRegistration() external;
 
