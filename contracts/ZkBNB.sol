@@ -248,8 +248,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     _token.transfer(_to, _amount);
     uint256 balanceAfter = _token.balanceOf(address(this));
     uint256 balanceDiff = balanceBefore - balanceAfter;
-    //        require(balanceDiff > 0, "C");
-    // transfer is considered successful only if the balance of the contract decreased after transfer
     require(balanceDiff <= _maxAmount, "7");
     // rollup balance difference (before and after transfer) is bigger than `_maxAmount`
 
@@ -328,7 +326,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     CommitBlockInfo memory _newBlockData
   ) internal pure returns (bytes32) {
     // uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
-    bytes32 converted = keccak256(
+    bytes32 converted = sha256(
       abi.encodePacked(
         uint256(_newBlockData.blockNumber), // block number
         uint256(_newBlockData.timestamp), // time stamp
@@ -666,7 +664,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     } else {
       address tokenAddr = governance.assetAddresses(_assetId);
       // We use `_transferERC20` here to check that `ERC20` token indeed transferred `_amount`
-      // and fail if token subtracted from ZkBNB balance more then `_amount` that was requested.
+      // and fail if token subtracted from ZkBNB balance more than `_amount` that was requested.
       // This can happen if token subtracts fee from sender while transferring `_amount` that was requested to transfer.
       try this.transferERC20{gas: WITHDRAWAL_GAS_LIMIT}(IERC20(tokenAddr), _recipient, _amount, _amount) {
         sent = true;

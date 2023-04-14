@@ -75,7 +75,6 @@ describe('DesertVerifier', function () {
       const expectAssetRoot = '11d6f9a8ef166dd57b9809e47c679658b8eb3c5d237f912acce178342ce07d49'; // taken from L2's log
 
       assert.equal(assetRoot.toHexString(), '0x' + expectAssetRoot);
-      console.log('asset root: ', assetRoot.toHexString());
     });
 
     it('check account leaf hash', async () => {
@@ -95,7 +94,6 @@ describe('DesertVerifier', function () {
 
       const expectLog = '0x8d177d83a2bcfc59091b802531712ae222bb78b586ac1a5099b02d92104b84';
       assert.equal(actual.toHexString(), expectLog);
-      console.log('account Leaf: ', actual.toHexString());
     });
 
     it('check account root', async () => {
@@ -112,7 +110,6 @@ describe('DesertVerifier', function () {
 
       const expectAccountRoot = '2a754f8b0b683bd08de6425b8b36be15a7f29d32bb4ee37873e43a5721b3d32c';
       assert.equal(accountRoot.toHexString(), '0x' + expectAccountRoot);
-      console.log('account root:', accountRoot.toHexString());
     });
 
     it('check state hash', async () => {
@@ -121,7 +118,6 @@ describe('DesertVerifier', function () {
       const expectStateHash = '24f44b2a9149d4c5618369b5b4f4214f081330907c0f7deaa4d68f8e670bbe75';
 
       assert.equal(_stateHash.toHexString(), '0x' + expectStateHash);
-      console.log('state hash: ', _stateHash.toHexString());
       stateHash = _stateHash;
     });
 
@@ -151,8 +147,8 @@ describe('DesertVerifier', function () {
   });
 
   describe('desert nfts', function () {
-    let nftRoot;
-    let stateRoot;
+    let nftRoot: BigNumber;
+    let stateRoot: BigNumber;
 
     it('check nft leaf node', async () => {
       for (const nft of exitNftJson.ExitNfts) {
@@ -166,9 +162,8 @@ describe('DesertVerifier', function () {
         ];
         const actual = await poseidonT7['poseidon(uint256[6])'](inputs);
         const expect = poseidon(inputs);
-        assert.equal(actual.toString(), poseidon.F.toString(expect));
 
-        console.log('desert nft - nft leaf: ', actual.toHexString());
+        assert.equal(actual.toString(), poseidon.F.toString(expect));
       }
     });
 
@@ -176,14 +171,17 @@ describe('DesertVerifier', function () {
       const accountRoot = await desertVerifier.testGetAccountRoot(
         exitNftJson.AccountExitData.AccountId,
         exitNftJson.AccountExitData.L1Address,
-        ethers.utils.arrayify('0x' + exitDataJson.AccountExitData.PubKeyX),
-        ethers.utils.arrayify('0x' + exitDataJson.AccountExitData.PubKeyY),
+        ethers.utils.arrayify('0x' + exitNftJson.AccountExitData.PubKeyX),
+        ethers.utils.arrayify('0x' + exitNftJson.AccountExitData.PubKeyY),
         exitNftJson.AccountExitData.Nonce,
         exitNftJson.AccountExitData.CollectionNonce,
         '0x' + exitNftJson.AssetRoot,
         exitNftJson.AccountMerkleProof.map((el: string) => BigNumber.from('0x' + el)),
       );
-      console.log('desert nft - account root: ', accountRoot.toHexString());
+      assert.equal(
+        accountRoot.toString(),
+        '12595822472651301667075947699693502617967676867936922398730089118953186130170',
+      );
 
       for (const [i, nft] of exitNftJson.ExitNfts.entries()) {
         const nftMerkleProof = exitNftJson.NftMerkleProofs[i];
@@ -200,12 +198,58 @@ describe('DesertVerifier', function () {
           nftMerkleProof.map((el: string) => BigNumber.from('0x' + el)),
         );
 
-        console.log('desert nft - nft root: ', nftRoot.toHexString());
+        assert.equal(
+          nftRoot.toString(),
+          '5257726459013007500408506418284221508847824135721624095602603351497287749960',
+        );
+
         stateRoot = await poseidonT3['poseidon(uint256[2])']([accountRoot, nftRoot]);
-        console.log('desert nft - state hash: ', stateRoot.toHexString());
+
+        assert.equal(
+          stateRoot.toString(),
+          '10591573734374619365752166390356942902402176266422195095146487009777481713142',
+        );
       }
     });
 
-    // it('should be able to perform desert nfts', async () => { });
+    it('desert nft proof verification should pass', async () => {
+      const nftProof = new Array<BigNumber>(40).fill(BigNumber.from(0));
+      const nftProofs = [nftProof];
+
+      for (const [i, proof] of exitNftJson.NftMerkleProofs.entries()) {
+        nftProofs[i] = proof.map((el: string) => BigNumber.from('0x' + el));
+      }
+      // There is only 1 NFT in the JSON
+      const nftData = exitNftJson.ExitNfts[0];
+
+      const res = await desertVerifier.verifyExitNftProof(
+        stateRoot,
+        '0x' + exitNftJson.AssetRoot,
+        [
+          exitNftJson.AccountExitData.AccountId,
+          exitNftJson.AccountExitData.L1Address,
+          ethers.utils.arrayify('0x' + exitNftJson.AccountExitData.PubKeyX),
+          ethers.utils.arrayify('0x' + exitNftJson.AccountExitData.PubKeyY),
+          exitNftJson.AccountExitData.Nonce,
+          exitNftJson.AccountExitData.CollectionNonce,
+        ],
+        [
+          [
+            nftData.NftIndex,
+            nftData.OwnerAccountIndex,
+            nftData.CreatorAccountIndex,
+            nftData.CreatorTreasuryRate,
+            nftData.CollectionId,
+            ethers.utils.arrayify('0x' + nftData.NftContentHash1),
+            ethers.utils.arrayify('0x' + nftData.NftContentHash2),
+            nftData.NftContentType,
+          ],
+        ],
+        nftProofs,
+        exitNftJson.AccountMerkleProof.map((el: string) => BigNumber.from('0x' + el)),
+      );
+
+      assert(res);
+    });
   });
 });
