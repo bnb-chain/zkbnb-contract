@@ -18,4 +18,15 @@ describe('BytesTest', function () {
     const result = await this.bytesTest.concatStringAndBytes32(prefix, hash);
     expect(result).to.equal(`${prefix}${hash.substring(2)}`);
   });
+
+  it('padding gas test', async function () {
+    const rawPubdata =
+      '04000000038b2c5a5744f42aa9269baabdd05933a96d8ef911000000000000000000000000000000000640000fa0a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000';
+
+    const pubdata = ethers.utils.arrayify('0x' + rawPubdata.repeat(9));
+    const blockSize = 16;
+
+    // block size 16, tx 9
+    const result = await this.bytesTest.bytesConcate(pubdata, blockSize);
+  });
 });
