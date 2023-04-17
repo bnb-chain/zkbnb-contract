@@ -46,6 +46,8 @@
   },
   "homepage": "https://github.com/bnb-chain/zkbnb-contract#readme",
   "devDependencies": {
+    "@commitlint/cli": "^17.0.3",
+    "@commitlint/config-conventional": "^17.0.3",
     "@defi-wonderland/smock": "^2.3.4",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.1.4",
@@ -60,8 +62,6 @@
     "@types/node": "^12.20.55",
     "@typescript-eslint/eslint-plugin": "^5.43.0",
     "@typescript-eslint/parser": "^5.43.0",
-    "@commitlint/cli": "^17.0.3",
-    "@commitlint/config-conventional": "^17.0.3",
     "chai": "^4.3.7",
     "dotenv": "^16.0.2",
     "eslint": "8.27.0",
@@ -95,6 +95,9 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.0",
     "@openzeppelin/contracts-upgradeable": "^4.8.0",
+    "@safe-global/protocol-kit": "^0.1.1",
+    "@safe-global/safe-core-sdk": "^3.3.2",
+    "@safe-global/safe-ethers-adapters": "^0.1.0-alpha.16",
     "cids": "^1.1.9",
     "ffjavascript": "^0.2.57",
     "husky": "^8.0.2",
