@@ -14,10 +14,10 @@ contract Ownable2Step is IOwnable2Step {
   event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  constructor(address owner) {
-    require(owner != address(0), "Cannot set owner to zero");
+  constructor(address __owner) {
+    require(__owner != address(0), "Cannot set owner to zero");
 
-    _owner = owner;
+    _owner = __owner;
   }
 
   /**
