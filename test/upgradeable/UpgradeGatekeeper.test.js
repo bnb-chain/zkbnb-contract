@@ -31,7 +31,15 @@ describe('UpgradeGatekeeper', function () {
     [owner, addr1] = await ethers.getSigners();
 
     // 1. deploy logic contracts
-    const MockGovernance = await smock.mock('Governance');
+    const Utils = await ethers.getContractFactory('Utils');
+    utils = await Utils.deploy();
+    await utils.deployed();
+
+    const MockGovernance = await smock.mock('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     mockGovernance = await MockGovernance.deploy();
     await mockGovernance.deployed();
 
@@ -47,9 +55,6 @@ describe('UpgradeGatekeeper', function () {
     mockPublicResolver = await MockPublicResolver.deploy();
     await mockPublicResolver.deployed();
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
     const MockZkBNB = await smock.mock('ZkBNB', {
       libraries: {
         Utils: utils.address,

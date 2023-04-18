@@ -31,17 +31,22 @@ describe('NFT functionality', function () {
 
   before(async function () {
     [owner, acc1, acc2] = await ethers.getSigners();
-    const Governance = await ethers.getContractFactory('Governance');
+
+    const Utils = await ethers.getContractFactory('Utils');
+    utils = await Utils.deploy();
+    await utils.deployed();
+
+    const Governance = await ethers.getContractFactory('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     governance = await Governance.deploy();
     await governance.deployed();
 
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
-
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
 
     const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
     additionalZkBNB = await AdditionalZkBNB.deploy();

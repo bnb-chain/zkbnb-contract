@@ -153,14 +153,6 @@ async function main() {
     }
   }
 
-  // Add baseURI into governance
-  console.log(chalk.blue('📥 Add baseURI into governance...'));
-  const baseURIs = [[0, 'ipfs://f01701220']];
-  for (const [type, baseURI] of baseURIs) {
-    await proxyGovernance.updateBaseURI(type, baseURI);
-    console.log(chalk.blue(`\t🔧 Added baseURI ${type}:${baseURI}`));
-  }
-
   // Add tokens into assetGovernance
   // add asset
   console.log(chalk.blue('📥 Add tokens into assetGovernance asset list...'));
@@ -241,7 +233,11 @@ async function getContractFactories() {
   return {
     TokenFactory: await ethers.getContractFactory('ZkBNBRelatedERC20'),
     ERC721Factory: await ethers.getContractFactory('ZkBNBRelatedERC721'),
-    Governance: await ethers.getContractFactory('Governance'),
+    Governance: await ethers.getContractFactory('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    }),
     AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
     Verifier: await ethers.getContractFactory('ZkBNBVerifier'),
     ZkBNB: await ethers.getContractFactory('ZkBNB', {
