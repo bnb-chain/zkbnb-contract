@@ -48,8 +48,7 @@ contract AssetGovernance is ReentrancyGuard {
     address _listingFeeToken,
     uint256 _listingFee,
     uint16 _listingCap,
-    address _treasury,
-    uint32 _treasuryAccountIndex
+    address _treasury
   ) {
     governance = Governance(_governance);
     listingFeeToken = IERC20(_listingFeeToken);

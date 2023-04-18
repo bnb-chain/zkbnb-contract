@@ -216,7 +216,6 @@ async function main() {
         _listingFee.toString(),
         _listingCap,
         governor,
-        0,
       ],
     ],
     utils: [contractFactories.Utils.address],
