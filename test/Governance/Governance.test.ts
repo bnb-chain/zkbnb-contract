@@ -24,7 +24,14 @@ describe('Governance', function () {
     governerWallet = ethers.Wallet.createRandom().connect(owner.provider);
     await transferFunds(owner, await governerWallet.getAddress(), '1000000');
 
-    const GOVERNANCE = await ethers.getContractFactory('Governance');
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+    await utils.deployed();
+    const GOVERNANCE = await ethers.getContractFactory('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     governance = await GOVERNANCE.deploy();
     await governance.deployed();
 
@@ -227,10 +234,13 @@ describe('Governance', function () {
       const contentHash = '3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase();
       const mockHash = ethers.utils.hexZeroPad(('0x' + contentHash).toLowerCase(), 32);
 
-      const expectUri = `${baseURI}${contentHash}`;
-      expect((await governance.getNftTokenURI(type, mockHash)) === contentHash);
-      await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
-      expect((await governance.getNftTokenURI(type, mockHash)) === expectUri);
+      // const expectUri = `${baseURI}${contentHash}`;
+      // change format to base58
+      // ipfs://QmRwPwcyZxH8H6cqNFeEvZgDsRMMs9RsFipR2YX4bhiSfh = ipfs://f017012203579b1273f940172febe72b0bfb51c15f49f23e558ca7f03dfba2d97d8287a30
+      const expectUri = 'ipfs://QmRwPwcyZxH8H6cqNFeEvZgDsRMMs9RsFipR2YX4bhiSfh';
+      expect(await governance.nftBaseURIs(0)).to.equal(baseURI);
+      // await expect(governance.connect(governerWallet).updateBaseURI(type, baseURI)).to.be.not.reverted;
+      expect(await governance.getNftTokenURI(type, mockHash)).to.equal(expectUri, 'tokenURI wrong');
     });
   });
 

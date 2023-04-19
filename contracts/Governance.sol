@@ -78,6 +78,9 @@ contract Governance is Config, Initializable {
     networkGovernor = _networkGovernor;
 
     // TODO： initialize assets（0 => BNB, 1 => BUSD)
+
+    // initialize nftBaseURIs
+    nftBaseURIs[0] = "ipfs://f01701220";
   }
 
   /// @notice Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
@@ -243,6 +246,10 @@ contract Governance is Config, Initializable {
   /// @param nftContentType which protocol to store nft content
   /// @param nftContentHash hash of nft content
   function getNftTokenURI(uint8 nftContentType, bytes32 nftContentHash) external view returns (string memory tokenURI) {
-    tokenURI = string(abi.encodePacked(nftBaseURIs[nftContentType], Bytes.bytes32ToHexString(nftContentHash, false)));
+    if (nftContentType == 0) {
+      tokenURI = string(abi.encodePacked("ipfs://", Utils.ipfsCID(nftContentHash)));
+    } else {
+      tokenURI = string(abi.encodePacked(nftBaseURIs[nftContentType], Bytes.bytes32ToHexString(nftContentHash, false)));
+    }
   }
 }

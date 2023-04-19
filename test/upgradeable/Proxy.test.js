@@ -22,7 +22,16 @@ describe('Proxy', function () {
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
-    const MockGovernance = await smock.mock('Governance');
+
+    const Utils = await ethers.getContractFactory('Utils');
+    utils = await Utils.deploy();
+    await utils.deployed();
+
+    const MockGovernance = await smock.mock('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     mockGovernance = await MockGovernance.deploy();
     await mockGovernance.deployed();
 
@@ -30,9 +39,6 @@ describe('Proxy', function () {
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
     const MockZkBNB = await smock.mock('ZkBNB', {
       libraries: {
         Utils: utils.address,
@@ -72,7 +78,11 @@ describe('Proxy', function () {
 
   describe('Proxy contract should upgrade new target', function () {
     it('upgrade new `Governance` target', async function () {
-      const MockGovernance = await smock.mock('Governance');
+      const MockGovernance = await smock.mock('Governance', {
+        libraries: {
+          Utils: utils.address,
+        },
+      });
       const mockGovernanceNew = await MockGovernance.deploy();
       await mockGovernanceNew.deployed();
 
