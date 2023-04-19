@@ -4,6 +4,7 @@ const { ethers } = hardhat;
 const { EthersAdapter } = require('@safe-global/protocol-kit');
 const Safe = require('@safe-global/safe-core-sdk').default;
 const { SafeEthersSigner, SafeService } = require('@safe-global/safe-ethers-adapters');
+require('dotenv').config();
 
 const inquirer = require('inquirer');
 const figlet = require('figlet');
@@ -127,11 +128,18 @@ async function start() {
       for (const contract of targetContracts) {
         let deployContract, additionalZkBNB, desertVerifier;
         let Governance, ZkBNBVerifier, ZkBNB, AdditionalZkBNB;
-        let Utils, utils;
+
+        const Utils = await ethers.getContractFactory('Utils');
+        const utils = await Utils.deploy();
+        await utils.deployed();
 
         switch (contract) {
           case 'governance':
-            Governance = await ethers.getContractFactory('Governance');
+            Governance = await ethers.getContractFactory('Governance', {
+              libraries: {
+                Utils: utils.address,
+              },
+            });
             deployContract = await Governance.deploy();
             break;
           case 'verifier':
@@ -139,9 +147,6 @@ async function start() {
             deployContract = await ZkBNBVerifier.deploy();
             break;
           case 'zkbnb':
-            Utils = await ethers.getContractFactory('Utils');
-            utils = await Utils.deploy();
-            await utils.deployed();
             ZkBNB = await ethers.getContractFactory('ZkBNB', {
               libraries: {
                 Utils: utils.address,
@@ -382,7 +387,7 @@ async function getGnosisupgradeGatekeeper() {
   });
 
   // https://docs.safe.global/learn/safe-core/safe-core-api/available-services
-  const safeService = new SafeService('https://safe-transaction-gnosis-chain.safe.global/');
+  const safeService = new SafeService(process.env.GNOSIS_SERVICE);
 
   const gnosisSigner = new SafeEthersSigner(safe, safeService, signerOrProvider);
   const gnosisUpgradeGatekeeper = upgradeGatekeeper.connect(gnosisSigner);

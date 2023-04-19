@@ -134,7 +134,11 @@ async function start() {
 
         switch (contract) {
           case 'governance':
-            Governance = await ethers.getContractFactory('Governance');
+            Governance = await ethers.getContractFactory('Governance', {
+              libraries: {
+                Utils: utils.address,
+              },
+            });
             deployContract = await Governance.deploy();
             break;
           case 'verifier':

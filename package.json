@@ -19,6 +19,7 @@
     "fix": "yarn lint:fix:format && yarn lint:fix:eslint",
     "abi": "npx hardhat export-abi",
     "deploy": "npx hardhat run ./scripts/deploy-keccak256/deploy.js",
+    "verify": "npx hardhat run ./scripts/verify.js",
     "upgrade": "npx hardhat run ./scripts/upgrade/index.js",
     "prepare": "husky install"
   },

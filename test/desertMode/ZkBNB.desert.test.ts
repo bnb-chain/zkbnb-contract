@@ -17,17 +17,21 @@ describe('Desert Mode', function () {
     [owner, acc1] = await ethers.getSigners();
     this.mockDesertVerifier = await smock.fake('DesertVerifier');
 
-    const Governance = await ethers.getContractFactory('Governance');
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+    await utils.deployed();
+
+    const Governance = await ethers.getContractFactory('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     const governance = await Governance.deploy();
     await governance.deployed();
 
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     const mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
-
-    const Utils = await ethers.getContractFactory('Utils');
-    const utils = await Utils.deploy();
-    await utils.deployed();
 
     const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
     const additionalZkBNB = await AdditionalZkBNB.deploy();
