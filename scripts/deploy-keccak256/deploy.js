@@ -50,36 +50,15 @@ async function main() {
   console.log(chalk.green('\t📦 DesertVerifier...'));
   const desertVerifier = await deployDesertVerifier(owner);
 
-  // prepare deploy params
-  // get ERC20s
-  console.log(chalk.blue('🔧 prepare deploy params'));
-  let tokens;
-  if (isMainnet) {
-    tokens = [
-      '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', // BUSD mainnet
-      '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c', //BTC
-      '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', // ETH
-    ];
-  } else {
-    console.log(chalk.green('\t🚀 Deploy Mock Tokens for Testnet'));
-    const totalSupply = ethers.utils.parseEther('100000000');
-    const BUSDToken = await contractFactories.TokenFactory.deploy(totalSupply, 'BUSD', 'BUSD');
-    await BUSDToken.deployed();
-    const LEGToken = await contractFactories.TokenFactory.deploy(totalSupply, 'LEG', 'LEG');
-    await LEGToken.deployed();
-    const REYToken = await contractFactories.TokenFactory.deploy(totalSupply, 'REY', 'REY');
-    await REYToken.deployed();
-
-    tokens = [BUSDToken.address, LEGToken.address, REYToken.address];
-  }
-
   // get ERC721
   const ERC721 = await contractFactories.ERC721Factory.deploy('zkBNB', 'zkBNB', '0');
   await ERC721.deployed();
   const _genesisStateRoot = '0x1bb54bd4586b34192cd80ca2b19d3579b68509c2a9302405fa8758ba905765c4';
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
-  const _listingToken = tokens[0]; // tokens[0] is BUSD
+  const _listingToken = isMainnet
+    ? '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+    : '0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee'; // Listing fee should be BUSD
   // deploy DeployFactory
   console.log(chalk.blue('🚛 Run DeployFactory'));
   const deployFactory = await contractFactories.DeployFactory.deploy(
@@ -153,14 +132,6 @@ async function main() {
     }
   }
 
-  // Add tokens into assetGovernance
-  // add asset
-  console.log(chalk.blue('📥 Add tokens into assetGovernance asset list...'));
-  for (const token of tokens) {
-    const addAssetTx = await assetGovernance.addAsset(token);
-    await addAssetTx.wait();
-  }
-
   console.log(chalk.blue('🔐 Granted permission...'));
   const UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
   await upgradeableMaster.grantRole(
@@ -174,27 +145,24 @@ async function main() {
   const ERC20ForTestnet = isMainnet
     ? {}
     : {
-        BUSDToken: tokens[0],
-        LEGToken: tokens[1],
-        REYToken: tokens[2],
+        BUSDToken: isMainnet
+          ? '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+          : '0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee',
       };
   saveDeployedAddresses(
     'info/addresses.json',
-    Object.assign(
-      {
-        governance: governanceEntryAddress,
-        assetGovernance: assetGovernanceEntryAddress,
-        verifierProxy: verifierEntryAddress,
-        zkbnbProxy: zkbnbEntryAddress,
-        upgradeGateKeeper: upgradeGatekeeperEntryAddress,
-        additionalZkBNB: additionalZkBNBEntryAddress,
-        ERC721: ERC721.address,
-        DefaultNftFactory: DefaultNftFactory.address,
-        upgradeableMaster: upgradeableMaster.address,
-        utils: contractFactories.Utils.address,
-      },
-      ERC20ForTestnet,
-    ),
+    Object.assign({
+      governance: governanceEntryAddress,
+      assetGovernance: assetGovernanceEntryAddress,
+      verifierProxy: verifierEntryAddress,
+      zkbnbProxy: zkbnbEntryAddress,
+      upgradeGateKeeper: upgradeGatekeeperEntryAddress,
+      additionalZkBNB: additionalZkBNBEntryAddress,
+      ERC721: ERC721.address,
+      DefaultNftFactory: DefaultNftFactory.address,
+      upgradeableMaster: upgradeableMaster.address,
+      utils: contractFactories.Utils.address,
+    }),
   );
 
   // Save contract constructor arguments to JSON for verify
