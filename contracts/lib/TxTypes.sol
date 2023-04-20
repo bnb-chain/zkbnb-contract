@@ -53,17 +53,17 @@ library TxTypes {
 
   // Withdraw Nft pubdata
   struct WithdrawNft {
+    uint8 nftContentType; // New added
+    uint16 creatorTreasuryRate;
+    uint16 collectionId;
     uint32 accountIndex;
     uint32 creatorAccountIndex;
-    uint16 creatorTreasuryRate;
     uint40 nftIndex;
-    uint16 collectionId;
     // uint16 gasFeeAssetId; -- present in pubdata, ignored at serialization
     // uint16 gasFeeAssetAmount; -- present in pubdata, ignored at serialization
     address toAddress;
     address creatorAddress; // creatorAccountNameHash => creatorAddress
     bytes32 nftContentHash;
-    uint8 nftContentType; // New added
   }
 
   // full exit pubdata
