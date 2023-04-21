@@ -76,14 +76,12 @@ contract DeployFactory {
   ) internal {
     governance = new Proxy(address(_contracts.governanceTarget), abi.encode(this));
     // Here temporarily give this contract the governor right.
-    // TODO treasury rate
     AssetGovernance assetGovernance = new AssetGovernance(
       address(governance),
       _contracts.listingToken,
       _additionalParams.listingFee,
       _additionalParams.listingCap,
-      _contracts.governor,
-      0
+      _contracts.governor
     );
     verifier = new Proxy(address(_contracts.verifierTarget), abi.encode());
     AdditionalZkBNB additionalZkBNB = new AdditionalZkBNB();

@@ -53,7 +53,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Checks if Desert mode must be entered. If true - enters desert mode and emits DesertMode event.
-  /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
+  /// @dev Desert mode must be entered in case of current L1 block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
   /// @return bool flag that is true if the desert mode must be entered.
   function activateDesertMode() public returns (bool) {
@@ -82,8 +82,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint256 _nftRoot,
     DesertVerifier.AssetExitData calldata _assetExitData,
     DesertVerifier.AccountExitData calldata _accountExitData,
-    uint256[16] calldata _assetMerkleProof,
-    uint256[32] calldata _accountMerkleProof
+    uint256[] memory _proofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
@@ -94,8 +93,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint256 _assetRoot,
     DesertVerifier.AccountExitData calldata _accountExitData,
     DesertVerifier.NftExitData[] memory _exitNfts,
-    uint256[32] calldata _accountMerkleProof,
-    uint256[40][] memory _nftMerkleProofs
+    uint256[] memory _proofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
@@ -155,13 +153,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
+  /// @notice Deposit Native Assets to Layer 2 - transfer BNB from user into contract, validate it, register deposit
   /// @param _to the receiver L1 address
   function depositBNB(address _to) external payable onlyActive {
     delegateAdditional();
   }
 
-  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
+  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer BEP20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
   /// @param _to the receiver L1 address
@@ -169,7 +167,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
-  /// @notice Deposit NFT to Layer 2, ERC721 is supported
+  /// @notice Deposit NFT to Layer 2, BEP721 is supported
   function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
     delegateAdditional();
   }
@@ -202,7 +200,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _owner Address of the tokens owner
   /// @param _token Address of tokens, zero address is used for Native Asset
   /// @param _amount Amount to withdraw to request.
-  ///         NOTE: We will call ERC20.transfer(.., _amount), but if according to internal logic of ERC20 token ZkBNB contract
+  ///         NOTE: We will call BEP20.transfer(.., _amount), but if according to internal logic of BEP20 token ZkBNB contract
   ///         balance will be decreased by value more then _amount we will try to subtract this value from user pending balance
   function withdrawPendingBalance(address payable _owner, address _token, uint128 _amount) external {
     uint16 _assetId = 0;
@@ -655,7 +653,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       sent = sendBNBNoRevert(payable(_recipient), _amount);
     } else {
       address tokenAddr = governance.assetAddresses(_assetId);
-      // We use `_transferERC20` here to check that `ERC20` token indeed transferred `_amount`
+      // We use `_transferERC20` here to check that `BEP20` token indeed transferred `_amount`
       // and fail if token subtracted from ZkBNB balance more than `_amount` that was requested.
       // This can happen if token subtracts fee from sender while transferring `_amount` that was requested to transfer.
       try this.transferERC20{gas: WITHDRAWAL_GAS_LIMIT}(IERC20(tokenAddr), _recipient, _amount, _amount) {
@@ -671,7 +669,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  /// @notice Sends ETH
+  /// @notice Sends BNB
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
   /// @return bool flag indicating that transfer is successful
