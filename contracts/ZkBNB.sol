@@ -82,8 +82,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint256 _nftRoot,
     DesertVerifier.AssetExitData calldata _assetExitData,
     DesertVerifier.AccountExitData calldata _accountExitData,
-    uint256[16] calldata _assetMerkleProof,
-    uint256[32] calldata _accountMerkleProof
+    uint256[] memory _proofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
@@ -94,8 +93,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint256 _assetRoot,
     DesertVerifier.AccountExitData calldata _accountExitData,
     DesertVerifier.NftExitData[] memory _exitNfts,
-    uint256[32] calldata _accountMerkleProof,
-    uint256[40][] memory _nftMerkleProofs
+    uint256[] memory _proofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
