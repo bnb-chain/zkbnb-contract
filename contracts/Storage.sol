@@ -21,7 +21,7 @@ contract Storage {
 
   /// @notice Priority Operation container
   /// @member hashedPubData Hashed priority operation public data
-  /// @member expirationBlock Expiration block number (ETH block) for this request (must be satisfied before)
+  /// @member expirationBlock Expiration block number (L1 block) for this request (must be satisfied before)
   /// @member opType Priority operation type
   struct PriorityTx {
     bytes20 hashedPubData;
