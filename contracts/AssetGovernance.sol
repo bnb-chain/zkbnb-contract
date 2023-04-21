@@ -8,7 +8,7 @@ import "./lib/Utils.sol";
 
 /// @title Asset Governance Contract
 /// @author ZkBNB Team
-/// @notice Contract is used to allow anyone to add new ERC20 tokens to ZkBNB given sufficient payment
+/// @notice Contract is used to allow anyone to add new BEP20 tokens to ZkBNB given sufficient payment
 contract AssetGovernance is ReentrancyGuard {
   /// @notice ZkBNB governance contract
   Governance public governance;
@@ -65,7 +65,7 @@ contract AssetGovernance is ReentrancyGuard {
     _;
   }
 
-  /// @notice Adds new ERC20 token to ZkBNB network.
+  /// @notice Adds new BEP20 token to ZkBNB network.
   /// @notice If caller is not present in the `tokenLister` map, payment of `listingFee` in `listingFeeToken` should be made.
   /// @notice NOTE: before calling this function make sure to approve `listingFeeToken` transfer for this contract.
   function addAsset(address _assetAddress) external nonReentrant {
