@@ -76,7 +76,6 @@ contract DeployFactory {
   ) internal {
     governance = new Proxy(address(_contracts.governanceTarget), abi.encode(this));
     // Here temporarily give this contract the governor right.
-    // TODO treasury rate
     AssetGovernance assetGovernance = new AssetGovernance(
       address(governance),
       _contracts.listingToken,

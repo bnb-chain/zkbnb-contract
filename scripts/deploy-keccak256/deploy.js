@@ -46,7 +46,7 @@ async function main() {
 
   // Step 2: initialize deploy factory and finish deployment
 
-  // deploy Poseidon contracts and DesertVerifier
+  // deploy DesertVerifier
   console.log(chalk.green('\t📦 DesertVerifier...'));
   const desertVerifier = await deployDesertVerifier(owner);
 
