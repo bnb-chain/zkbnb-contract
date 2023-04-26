@@ -225,7 +225,7 @@ describe('Governance', function () {
       // only governerWallet can update baseURI
       await expect(governance.connect(addr1).updateBaseURI(type, baseURI)).to.be.revertedWith('1g');
       await expect(await governance.connect(governerWallet).updateBaseURI(type, baseURI));
-      expect((await governance.nftBaseURIs(type)) === baseURI);
+      expect(await governance.nftBaseURIs(type)).to.equal(baseURI);
     });
 
     it('get tokenURI', async function () {
@@ -277,7 +277,7 @@ describe('Governance', function () {
 
       const factoryAddress = await governance.getNFTFactory(addr1.address, collectionId);
       expect(factoryAddress !== mockNftFactory);
-      expect((await governance.nftFactories(addr1.address, collectionId)) === factoryAddress);
+      expect(await governance.nftFactories(addr1.address, collectionId)).to.equal(factoryAddress);
 
       const collectionId2 = 2;
       await expect(await governance.connect(addr1).registerNFTFactory(collectionId2, factoryAddress))
@@ -287,7 +287,7 @@ describe('Governance', function () {
 
     it('Register Default NFT factory', async function () {
       const collectionId = 1;
-      expect((await governance.nftFactories(addr1.address, collectionId)) === ethers.constants.AddressZero);
+      expect(await governance.nftFactories(addr1.address, collectionId)).to.equal(ethers.constants.AddressZero);
 
       await expect(governance.connect(addr1).registerDefaultNFTFactory(addr1.address, collectionId)).to.be.revertedWith(
         'No access',
@@ -295,8 +295,8 @@ describe('Governance', function () {
 
       await expect(await governance.connect(addr2).registerDefaultNFTFactory(addr1.address, collectionId));
 
-      expect((await governance.nftFactories(addr1.address, collectionId)) === mockNftFactory.address);
-      expect((await governance.getNFTFactory(addr1.address, collectionId)) === mockNftFactory.address);
+      expect(await governance.nftFactories(addr1.address, collectionId)).to.equal(mockNftFactory.address);
+      expect(await governance.getNFTFactory(addr1.address, collectionId)).to.equal(mockNftFactory.address);
     });
   });
 });
