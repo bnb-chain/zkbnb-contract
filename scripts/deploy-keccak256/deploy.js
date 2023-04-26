@@ -61,6 +61,8 @@ async function main() {
     : '0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee'; // Listing fee should be BUSD
   // deploy DeployFactory
   console.log(chalk.blue('🚛 Run DeployFactory'));
+
+  // TODO The upgradeableMaster.address parameter is the master of the xxxProxy contract that will be created, so consider whether it needs to be converted to a gnosis owner here
   const deployFactory = await contractFactories.DeployFactory.deploy(
     [
       governance.address,
