@@ -21,6 +21,7 @@
     "deploy": "npx hardhat run ./scripts/deploy-keccak256/deploy.js",
     "verify": "npx hardhat run ./scripts/verify.js",
     "upgrade": "npx hardhat run ./scripts/upgrade/index.js",
+    "smtchecker": "pushd smtchecker-config && npx hardhat compile",
     "prepare": "husky install"
   },
   "lint-staged": {
