@@ -14,7 +14,7 @@ contract Governance is Config, Initializable {
   /// @notice Address which will exercise governance over the network i.e. add tokens, change validator set, conduct upgrades
   address public networkGovernor;
 
-  /// @notice Total number of ERC20 tokens registered in the network (excluding BNB, which is hardcoded as assetId = 0)
+  /// @notice Total number of BEP20 tokens registered in the network (excluding BNB, which is hardcoded as assetId = 0)
   uint16 public totalAssets;
 
   mapping(address => bool) public validators;
@@ -77,8 +77,6 @@ contract Governance is Config, Initializable {
 
     networkGovernor = _networkGovernor;
 
-    // TODO： initialize assets（0 => BNB, 1 => BUSD)
-
     // initialize nftBaseURIs
     nftBaseURIs[0] = "ipfs://f01701220";
   }
@@ -117,12 +115,11 @@ contract Governance is Config, Initializable {
 
     ++totalAssets;
     uint16 newAssetId = totalAssets;
-    // it is not `totalTokens - 1` because tokenId = 0 is reserved for eth
+    // it is not `totalTokens - 1` because tokenId = 0 is reserved for BNB
 
     assetAddresses[newAssetId] = _asset;
     assetsList[_asset] = newAssetId;
 
-    // TODO: BUSD should be initialize
     if (newAssetId > 1) {
       // 0 => BNB,  1 => BUSD
       emit NewAsset(_asset, newAssetId);

@@ -23,28 +23,13 @@ contract AdditionalZkBNB is Storage, Config, Events {
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
   }
 
-  /*
-        StateRoot
-            AccountRoot
-            NftRoot
-        Account
-            AccountIndex
-            L1Address
-            PublicKey
-            AssetRoot
-        Asset
-           AssetId
-           Balance
-        Nft
-    */
   /// @notice perform desert assets
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _nftRoot,
     DesertVerifier.AssetExitData calldata _assetExitData,
     DesertVerifier.AccountExitData calldata _accountExitData,
-    uint256[16] calldata _assetMerkleProof,
-    uint256[32] calldata _accountMerkleProof
+    uint256[] memory _proofs
   ) external {
     require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
     require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
@@ -62,8 +47,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
       _nftRoot,
       _assetExitData,
       _accountExitData,
-      _assetMerkleProof,
-      _accountMerkleProof
+      _proofs
     );
     require(proofCorrect, "x");
 
@@ -80,8 +64,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     uint256 _assetRoot,
     DesertVerifier.AccountExitData calldata _accountExitData,
     DesertVerifier.NftExitData[] memory _exitNfts,
-    uint256[32] calldata _accountMerkleProof,
-    uint256[40][] memory _nftMerkleProofs
+    uint256[] memory _proofs
   ) external {
     require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
     require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
@@ -97,8 +80,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
       _assetRoot,
       _accountExitData,
       _exitNfts,
-      _nftMerkleProofs,
-      _accountMerkleProof
+      _proofs
     );
     require(proofCorrect, "x");
 
@@ -198,14 +180,14 @@ contract AdditionalZkBNB is Storage, Config, Events {
     emit BlocksRevert(totalBlocksVerified, blocksCommitted);
   }
 
-  /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
+  /// @notice Deposit Native Assets to Layer 2 - transfer BNB from user into contract, validate it, register deposit
   /// @param _to the receiver L1 address
   function depositBNB(address _to) external payable onlyActive {
     require(msg.value != 0, "ia");
     registerDeposit(0, SafeCast.toUint128(msg.value), _to);
   }
 
-  /// @notice Deposit NFT to Layer 2, ERC721 is supported
+  /// @notice Deposit NFT to Layer 2, BEP721 is supported
   function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
     // check if the nft is mint from layer-2
     bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
@@ -249,7 +231,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     emit DepositNft(_to, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
 
-  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
+  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer BEP20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
   /// @param _to the receiver L1 address

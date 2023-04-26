@@ -33,7 +33,6 @@ describe('AssetGovernance', function () {
       listingFee,
       listingCap,
       treasury,
-      0,
     );
     await assetGovernance.deployed();
 
