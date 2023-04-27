@@ -236,7 +236,8 @@ contract Governance is Config, Initializable {
   /// @param _creatorAddress creator account address
   function addNFTFactory(address _factoryAddress, address _creatorAddress) external {
     requireGovernor(msg.sender);
-    // TODO 这里是否需要判断原来 nftFactoryCreators[_factoryAddress] 是否为 0 地址
+    require(_factoryAddress != address(0), "Invalid address");
+    require(nftFactoryCreators[_factoryAddress] == address(0), "Factory address does not add");
     nftFactoryCreators[_factoryAddress] = _creatorAddress;
   }
 
