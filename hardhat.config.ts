@@ -19,8 +19,8 @@ const config: HardhatUserConfig = {
   etherscan: {
     // Your API key for BSC. Obtain one at https://bscscan.com/
     apiKey: {
-      bscTestnet: process.env.BSCSCAN_APIKEY || '',
-      bsc: process.env.BSCSCAN_API_KEY || '',
+      bscTestnet: process.env.BSCSCAN_APIKEY || '00000000000000000000000000000000000000000',
+      bsc: process.env.BSCSCAN_API_KEY || '00000000000000000000000000000000000000000',
     },
   },
   solidity: {

@@ -98,8 +98,8 @@ library TxTypes {
     uint8 nftContentType; // New added
   }
 
-  // Byte lengths
-  uint8 internal constant CHUNK_SIZE = 32;
+  //  Byte lengths
+  //  uint8 internal constant CHUNK_SIZE = 32;
   // operation type bytes
   uint8 internal constant TX_TYPE_BYTES = 1;
 
