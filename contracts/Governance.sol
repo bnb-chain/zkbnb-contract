@@ -88,16 +88,14 @@ contract Governance is Config, Initializable {
 
   /// @notice Change current governor
   /// @param _newGovernor Address of the new governor
-  function changeGovernor(address _newGovernor) external {
-    requireGovernor(msg.sender);
+  function changeGovernor(address _newGovernor) external onlyGovernor(msg.sender) {
     if (networkGovernor != _newGovernor) {
       networkGovernor = _newGovernor;
       emit NewGovernor(_newGovernor);
     }
   }
 
-  function changeAssetGovernance(AssetGovernance _newAssetGovernance) external {
-    requireGovernor(msg.sender);
+  function changeAssetGovernance(AssetGovernance _newAssetGovernance) external onlyGovernor(msg.sender) {
     if (assetGovernance != _newAssetGovernance) {
       assetGovernance = _newAssetGovernance;
       emit NewAssetGovernance(_newAssetGovernance);
@@ -126,9 +124,7 @@ contract Governance is Config, Initializable {
     }
   }
 
-  function setAssetPaused(address _assetAddress, bool _assetPaused) external {
-    requireGovernor(msg.sender);
-
+  function setAssetPaused(address _assetAddress, bool _assetPaused) external onlyGovernor(msg.sender) {
     uint16 assetId = assetsList[_assetAddress];
     require(assetId != 0, "1i");
 
@@ -138,8 +134,7 @@ contract Governance is Config, Initializable {
     }
   }
 
-  function setValidator(address _validator, bool _active) external {
-    requireGovernor(msg.sender);
+  function setValidator(address _validator, bool _active) external onlyGovernor(msg.sender) {
     if (validators[_validator] != _active) {
       validators[_validator] = _active;
       emit ValidatorStatusUpdate(_validator, _active);
@@ -162,6 +157,12 @@ contract Governance is Config, Initializable {
   function requireGovernor(address _address) public view {
     require(_address == networkGovernor, "1g");
     // only by governor
+  }
+
+  /// @notice Check if specified address is governor
+  modifier onlyGovernor(address _address) {
+    require(_address == networkGovernor, "1g");
+    _;
   }
 
   /// @notice Register collection corresponding to the default factory
@@ -199,8 +200,7 @@ contract Governance is Config, Initializable {
 
   /// @notice Set ZkBNB address
   /// @param _zkBNBAddress ZkBNB address
-  function setZkBNBAddress(address _zkBNBAddress) external {
-    requireGovernor(msg.sender);
+  function setZkBNBAddress(address _zkBNBAddress) external onlyGovernor(msg.sender) {
     require(_zkBNBAddress != address(0), "Invalid address");
     require(zkBNBAddress != _zkBNBAddress, "Unchanged");
     zkBNBAddress = _zkBNBAddress;
@@ -209,8 +209,7 @@ contract Governance is Config, Initializable {
 
   /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
   /// @param _factoryAddress Address of NFT factory
-  function setDefaultNFTFactory(address _factoryAddress) external {
-    requireGovernor(msg.sender);
+  function setDefaultNFTFactory(address _factoryAddress) external onlyGovernor(msg.sender) {
     require(_factoryAddress != address(0), "mb1"); // Factory should be non zero
     require(defaultNFTFactory == address(0), "mb2"); // NFTFactory is already set
     defaultNFTFactory = _factoryAddress;
@@ -234,8 +233,7 @@ contract Governance is Config, Initializable {
   /// @notice update nftBaseURIs mapping
   /// @param nftContentType which protocol to store nft content
   /// @param baseURI nft baseURI, used to generate tokenURI of nft
-  function updateBaseURI(uint8 nftContentType, string memory baseURI) external {
-    requireGovernor(msg.sender);
+  function updateBaseURI(uint8 nftContentType, string memory baseURI) external onlyGovernor(msg.sender) {
     nftBaseURIs[nftContentType] = baseURI;
   }
 
