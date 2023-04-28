@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Governance.sol";
 import "./lib/Utils.sol";
 
@@ -75,8 +76,7 @@ contract AssetGovernance is ReentrancyGuard {
       // Check access: if address zero is a lister, any address can add asset
       require(tokenLister[address(0)], "no access");
       // Collect fees
-      bool success = listingFeeToken.transferFrom(msg.sender, treasury, listingFee);
-      require(success, "fail to collect fee");
+      SafeERC20.safeTransferFrom(listingFeeToken, msg.sender, treasury, listingFee);
     }
     governance.addAsset(_assetAddress);
   }

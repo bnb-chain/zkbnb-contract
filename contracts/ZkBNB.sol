@@ -13,6 +13,7 @@ import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
 import "./Storage.sol";
 import "./DesertVerifier.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
@@ -243,8 +244,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // can be called only from this contract as one "external" call (to revert all this function state changes if it is needed)
 
     uint256 balanceBefore = _token.balanceOf(address(this));
-    bool success = _token.transfer(_to, _amount);
-    require(success, "transferERC20 did not succeed");
+    SafeERC20.safeTransfer(_token, _to, _amount);
     uint256 balanceAfter = _token.balanceOf(address(this));
     uint256 balanceDiff = balanceBefore - balanceAfter;
     require(balanceDiff <= _maxAmount, "7");

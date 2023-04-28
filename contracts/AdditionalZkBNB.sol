@@ -4,15 +4,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./lib/Utils.sol";
-
 import "./Storage.sol";
 import "./Config.sol";
 import "./interfaces/Events.sol";
-
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
-
 import "./DesertVerifier.sol";
 
 /// @title ZkBNB additional main contract
@@ -243,7 +241,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
     // token deposits are paused
 
     uint256 balanceBefore = _token.balanceOf(address(this));
-    _token.transferFrom(msg.sender, address(this), SafeCast.toUint128(_amount));
+    SafeERC20.safeTransferFrom(_token, msg.sender, address(this), SafeCast.toUint128(_amount));
     // TODO check success of transferFrom , but we check depositAmount > 0 , maybe do not need
     // token transfer failed deposit
     uint256 balanceAfter = _token.balanceOf(address(this));
