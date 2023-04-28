@@ -43,7 +43,7 @@ contract Storage {
   /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
   Governance internal governance;
 
-  uint8 internal constant FILLED_GAS_RESERVE_VALUE = 0xff; // we use it to set gas revert value so slot will not be emptied with 0 balance
+  uint8 internal constant FILLED_GAS_RESERVE_VALUE = 0xff; // we use it to set gas reserve value so slot will not be emptied with 0 balance
   struct PendingBalance {
     uint128 balanceToWithdraw;
     uint8 gasReserveValue; // gives user opportunity to fill storage slot with nonzero value

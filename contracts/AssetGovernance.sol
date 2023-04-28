@@ -75,7 +75,8 @@ contract AssetGovernance is ReentrancyGuard {
       // Check access: if address zero is a lister, any address can add asset
       require(tokenLister[address(0)], "no access");
       // Collect fees
-      listingFeeToken.transferFrom(msg.sender, treasury, listingFee);
+      bool success = listingFeeToken.transferFrom(msg.sender, treasury, listingFee);
+      require(success, "fail to collect fee");
     }
     governance.addAsset(_assetAddress);
   }

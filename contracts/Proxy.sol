@@ -72,6 +72,7 @@ contract Proxy is Upgradeable, ZkBNBOwnable {
     );
     require(upgradeSuccess, "ufu11");
     // ufu11 - target upgrade failed
+    emit Upgraded(newTarget);
   }
 
   /// @notice Intercepts upgrade calls, upgrade function only call by upgradeTarget
@@ -92,6 +93,7 @@ contract Proxy is Upgradeable, ZkBNBOwnable {
   /// @notice Sets new target of contract
   /// @param _newTarget New actual implementation address
   function setTarget(address _newTarget) internal {
+    require(_newTarget.code.length > 0, "target invalid");
     bytes32 position = TARGET_POSITION;
     assembly {
       sstore(position, _newTarget)
