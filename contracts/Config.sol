@@ -9,7 +9,7 @@ contract Config {
   /// @dev NFT withdrawals gas limit, used only for complete withdrawals
   uint256 internal constant WITHDRAWAL_NFT_GAS_LIMIT = 300000;
   /// @dev Pending NFT withdrawals gas limit, used only for user to call for pending NFT withdrawals
-  uint256 internal constant WITHDRAWAL_PENDING_NFT_GAS_LIMIT = 1000000;
+  uint256 internal constant WITHDRAWAL_PENDING_NFT_GAS_LIMIT = 2000000;
   /// @dev Max amount of tokens registered in the network (excluding BNB, which is hardcoded as tokenId = 0)
   uint16 public constant MAX_AMOUNT_OF_REGISTERED_ASSETS = 2 ** 16 - 2;
 
