@@ -88,11 +88,12 @@ async function main() {
   ]);
   // The specified index is the required event.
   // console.log(deployFactoryTxReceipt.logs);
-  const event = AddressesInterface.decodeEventLog(
-    'Addresses',
-    deployFactoryTxReceipt.logs[6].data,
-    deployFactoryTxReceipt.logs[6].topics,
-  );
+  let event;
+  for (const _log of deployFactoryTxReceipt.logs) {
+    if (_log.topics[0] == '0xa6713bbaa2d52898013d0b2731295761eeb112eeb1805178987e2490c1a99998') {
+      event = AddressesInterface.decodeEventLog('Addresses', _log.data, _log.topics);
+    }
+  }
   const [
     governanceEntryAddress,
     assetGovernanceEntryAddress,
