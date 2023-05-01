@@ -116,5 +116,23 @@ describe('DeployFactory', function () {
       expect(verifierProxy).to.be.equal(verifier);
       expect(zkbnbProxy).to.be.equal(zkbnb);
     });
+
+    it('should get AdminChanged event', async () => {
+      // Although the proxy contract proxies more than one,
+      // but here the test events only need to test a contract-related can, the other similar
+      const Proxy = await ethers.getContractFactory('Proxy');
+      let proxyGovernance = await Proxy.deploy(mockGovernanceTarget.address, mockDesertVerifier.address);
+
+      const transferMastership = await proxyGovernance.transferMastership(addr2.address);
+      const receipt = await transferMastership.wait();
+      const event = receipt.events?.filter(({ event }) => {
+        return event == 'AdminChanged';
+      });
+
+      const args = event[0].args;
+      // (oldMaster, newMaster)
+      expect(args[0]).to.be.eq(owner.address);
+      expect(args[1]).to.be.eq(addr2.address);
+    });
   });
 });
