@@ -67,6 +67,10 @@ describe('ZkBNB', function () {
         await expect(zkBNB.depositBNB(toAddress, { value: 0 })).to.be.revertedWith('ia');
       });
 
+      it('should reverted if toAddress is zero address', async () => {
+        await expect(zkBNB.depositBNB(ethers.constants.AddressZero, { value: 100 })).to.be.revertedWith('ib');
+      });
+
       it('should increase totalOpenPriorityRequests', async () => {
         const totalBefore = await zkBNB.totalOpenPriorityRequests();
         await zkBNB.depositBNB(toAddress, { value: 10 });
@@ -110,6 +114,9 @@ describe('ZkBNB', function () {
         mockERC20.balanceOf.returnsAtCall(1, 100);
 
         await expect(zkBNB.depositBEP20(mockERC20.address, 10, toAddress)).to.be.revertedWith('D');
+
+        // toAddress should not be zero address
+        await expect(zkBNB.depositBEP20(mockERC20.address, 10, ethers.constants.AddressZero)).to.be.revertedWith('ib');
       });
 
       it('should transfer erc20', async () => {

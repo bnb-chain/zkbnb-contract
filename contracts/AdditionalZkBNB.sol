@@ -182,11 +182,15 @@ contract AdditionalZkBNB is Storage, Config, Events {
   /// @param _to the receiver L1 address
   function depositBNB(address _to) external payable {
     require(msg.value != 0, "ia");
+    require(_to != address(0), "ib");
+
     registerDeposit(0, SafeCast.toUint128(msg.value), _to);
   }
 
   /// @notice Deposit NFT to Layer 2, BEP721 is supported
   function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external {
+    require(_to != address(0), "ib");
+
     // check if the nft is mint from layer-2
     bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
     require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
@@ -234,6 +238,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
   /// @param _amount Token amount
   /// @param _to the receiver L1 address
   function depositBEP20(IERC20 _token, uint104 _amount, address _to) external {
+    require(_to != address(0), "ib");
     require(_amount != 0, "I");
     // Get asset id by its address
     uint16 assetId = governance.validateAssetAddress(address(_token));
