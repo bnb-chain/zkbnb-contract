@@ -221,10 +221,6 @@ describe('NFT functionality', function () {
     });
 
     it('the NFT should be minted after withdrawal', async function () {
-      mockNftFactory.mintFromZkBNB.returns();
-      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
-      await zkBNB.withdrawPendingNFTBalance(nftIndex);
-
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, nftIndex]));
       const result = await zkBNB.getMintedL2NftInfo(nftKey);
 
@@ -233,9 +229,6 @@ describe('NFT functionality', function () {
     });
 
     it('the NFT should not be pending after withdrawal', async function () {
-      mockNftFactory.mintFromZkBNB.returns();
-      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
-      await zkBNB.withdrawPendingNFTBalance(nftIndex);
       const result = await zkBNB.getPendingWithdrawnNFT(nftIndex);
       assert.equal(result['nftContentHash'], 0);
       assert.equal(result['nftIndex'], 0);

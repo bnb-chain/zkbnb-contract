@@ -5,6 +5,7 @@ import "../lib/TxTypes.sol";
 import "../interfaces/INFTFactory.sol";
 import "../ZkBNB.sol";
 import "../Storage.sol";
+import "../Config.sol";
 
 contract ZkBNBTest is ZkBNB {
   /// @notice Same as fallback but called when calldata is empty
@@ -55,8 +56,8 @@ contract ZkBNBTest is ZkBNB {
     return pendingWithdrawnNFTs[nftIndex];
   }
 
-  function testWithdrawOrStoreNFT(TxTypes.WithdrawNft memory op) external {
-    return withdrawOrStoreNFT(op);
+  function testWithdrawOrStoreNFT(TxTypes.WithdrawNft memory op) external returns (bool) {
+    return withdrawOrStoreNFT(op, WITHDRAWAL_NFT_GAS_LIMIT);
   }
 
   function testWithdrawOrStore(uint16 _assetId, address _recipient, uint128 _amount) external {

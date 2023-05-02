@@ -7,6 +7,11 @@ contract ZkBNBOwnable {
   /// @dev Storage position of the masters address (keccak256('eip1967.proxy.admin') - 1)
   bytes32 private constant MASTER_POSITION = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
+  /**
+   * @dev Emitted when the admin account has changed.
+   */
+  event AdminChanged(address previousAdmin, address newAdmin);
+
   /// @notice Contract constructor
   /// @dev Sets msg sender address as masters address
   /// @param masterAddress Master address
@@ -24,8 +29,13 @@ contract ZkBNBOwnable {
   /// @param _newMaster New masters address
   function transferMastership(address _newMaster) external onlyMaster {
     require(_newMaster != address(0), "1d");
+
+    address _oldMaster = getMaster();
+
     // otp11 - new masters address can't be zero address
     setMaster(_newMaster);
+
+    emit AdminChanged(_oldMaster, _newMaster);
   }
 
   /// @notice Returns contract masters address
