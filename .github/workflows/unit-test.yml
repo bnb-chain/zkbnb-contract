@@ -24,3 +24,7 @@ jobs:
         run: npm install
       - name: Compile and Unit test contracts
         run: npm run test
+      - name: Local deployment
+        run: |
+          cp .env.example .env
+          yarn deploy
