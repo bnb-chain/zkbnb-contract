@@ -295,6 +295,13 @@ describe('NFT functionality', function () {
       assert.equal(_txType, 3);
     });
 
+    it('should revert if deposit a NFT to zero address', async function () {
+      const mock721 = await smock.fake('ZkBNBRelatedERC721');
+      mock721.ownerOf.returns(zkBNB.address);
+
+      expect(zkBNB.depositNft('_accountName', ethers.constants.AddressZero, '2')).to.be.revertedWith('ib');
+    });
+
     it('should fail to deposit a NFT which is not created by layer2', async function () {
       const mock721 = await smock.fake('ZkBNBRelatedERC721');
       mock721.ownerOf.returns(zkBNB.address);
