@@ -230,6 +230,16 @@ contract Governance is Config, Initializable {
     }
   }
 
+  /// @notice Add new factoryAddress for creatorAddress
+  /// @param _factoryAddress factory contract address
+  /// @param _creatorAddress creator account address
+  function addNFTFactory(address _factoryAddress, address _creatorAddress) external {
+    requireGovernor(msg.sender);
+    require(_factoryAddress != address(0), "Invalid address");
+    require(nftFactoryCreators[_factoryAddress] == address(0), "Factory address already exists");
+    nftFactoryCreators[_factoryAddress] = _creatorAddress;
+  }
+
   /// @notice update nftBaseURIs mapping
   /// @param nftContentType which protocol to store nft content
   /// @param baseURI nft baseURI, used to generate tokenURI of nft
