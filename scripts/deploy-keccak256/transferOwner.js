@@ -23,9 +23,7 @@ async function main() {
   const defaultFactoryContract = zkBNBNftFactory.attach(DefaultNftFactory);
 
   // DefaultNFTFactory
-  const transferOwnershipTx = await defaultFactoryContract.transferOwnership(gnosisOwner, {
-    gasLimit: 6721975,
-  });
+  const transferOwnershipTx = await defaultFactoryContract.transferOwnership(gnosisOwner);
   await transferOwnershipTx.wait();
 
   // Governance
@@ -35,9 +33,7 @@ async function main() {
     },
   });
   const governanceContract = governanceFactory.attach(governance);
-  await governanceContract.changeGovernor(gnosisOwner, {
-    gasLimit: 6721975,
-  });
+  await governanceContract.changeGovernor(gnosisOwner);
 }
 
 main()
