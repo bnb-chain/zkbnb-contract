@@ -17,12 +17,10 @@ async function main() {
   }
 
   const addrs = getDeployedAddresses('info/addresses.json');
-  const { DefaultNftFactory, governance } = addrs;
+  const { DefaultNftFactory, governance, utils } = addrs;
 
-  // const [owner] = await ethers.getSigners();
-
-  const contractFactories = await getContractFactories();
-  const defaultFactoryContract = contractFactories.DefaultNftFactory.attach(DefaultNftFactory);
+  const zkBNBNftFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
+  const defaultFactoryContract = zkBNBNftFactory.attach(DefaultNftFactory);
 
   // DefaultNFTFactory
   const transferOwnershipTx = await defaultFactoryContract.transferOwnership(gnosisOwner, {
@@ -31,7 +29,12 @@ async function main() {
   await transferOwnershipTx.wait();
 
   // Governance
-  const governanceContract = contractFactories.Governance.attach(governance);
+  const governanceFactory = await ethers.getContractFactory('Governance', {
+    libraries: {
+      Utils: utils,
+    },
+  });
+  const governanceContract = governanceFactory.attach(governance);
   await governanceContract.changeGovernor(gnosisOwner, {
     gasLimit: 6721975,
   });
@@ -50,33 +53,6 @@ async function main() {
   // await zkbnbProxy.transferMastership(gnosisOwner, {
   //   gasLimit: 6721975,
   // });
-}
-
-async function getContractFactories() {
-  const Utils = await ethers.getContractFactory('Utils');
-  const utils = await Utils.deploy();
-  await utils.deployed();
-
-  return {
-    TokenFactory: await ethers.getContractFactory('ZkBNBRelatedERC20'),
-    ERC721Factory: await ethers.getContractFactory('ZkBNBRelatedERC721'),
-    Governance: await ethers.getContractFactory('Governance', {
-      libraries: {
-        Utils: utils.address,
-      },
-    }),
-    AssetGovernance: await ethers.getContractFactory('AssetGovernance'),
-    Verifier: await ethers.getContractFactory('ZkBNBVerifier'),
-    ZkBNB: await ethers.getContractFactory('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    }),
-    DeployFactory: await ethers.getContractFactory('DeployFactory'),
-    DefaultNftFactory: await ethers.getContractFactory('ZkBNBNFTFactory'),
-    UpgradeableMaster: await ethers.getContractFactory('UpgradeableMaster'),
-    Utils: utils,
-  };
 }
 
 main()
