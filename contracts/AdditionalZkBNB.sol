@@ -4,15 +4,13 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./lib/Utils.sol";
-
 import "./Storage.sol";
 import "./Config.sol";
 import "./interfaces/Events.sol";
-
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
-
 import "./DesertVerifier.sol";
 
 /// @title ZkBNB additional main contract
@@ -23,28 +21,13 @@ contract AdditionalZkBNB is Storage, Config, Events {
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
   }
 
-  /*
-        StateRoot
-            AccountRoot
-            NftRoot
-        Account
-            AccountIndex
-            L1Address
-            PublicKey
-            AssetRoot
-        Asset
-           AssetId
-           Balance
-        Nft
-    */
   /// @notice perform desert assets
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
     uint256 _nftRoot,
     DesertVerifier.AssetExitData calldata _assetExitData,
     DesertVerifier.AccountExitData calldata _accountExitData,
-    uint256[16] calldata _assetMerkleProof,
-    uint256[32] calldata _accountMerkleProof
+    uint256[] memory _proofs
   ) external {
     require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
     require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
@@ -62,8 +45,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
       _nftRoot,
       _assetExitData,
       _accountExitData,
-      _assetMerkleProof,
-      _accountMerkleProof
+      _proofs
     );
     require(proofCorrect, "x");
 
@@ -80,13 +62,14 @@ contract AdditionalZkBNB is Storage, Config, Events {
     uint256 _assetRoot,
     DesertVerifier.AccountExitData calldata _accountExitData,
     DesertVerifier.NftExitData[] memory _exitNfts,
-    uint256[32] calldata _accountMerkleProof,
-    uint256[40][] memory _nftMerkleProofs
+    uint256[] memory _proofs
   ) external {
     require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
     require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
     require(_exitNfts.length >= 1, "Z");
 
+    // must be in desert mode
+    require(desertMode, "s");
     // stored block info should be consistent
     require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
 
@@ -95,8 +78,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
       _assetRoot,
       _accountExitData,
       _exitNfts,
-      _nftMerkleProofs,
-      _accountMerkleProof
+      _proofs
     );
     require(proofCorrect, "x");
 
@@ -169,7 +151,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
   }
 
   /// @notice Reverts unverified blocks
-  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external onlyActive {
+  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
     governance.isActiveValidator(msg.sender);
 
     uint32 blocksCommitted = totalBlocksCommitted;
@@ -196,15 +178,19 @@ contract AdditionalZkBNB is Storage, Config, Events {
     emit BlocksRevert(totalBlocksVerified, blocksCommitted);
   }
 
-  /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
+  /// @notice Deposit Native Assets to Layer 2 - transfer BNB from user into contract, validate it, register deposit
   /// @param _to the receiver L1 address
-  function depositBNB(address _to) external payable onlyActive {
+  function depositBNB(address _to) external payable {
     require(msg.value != 0, "ia");
+    require(_to != address(0), "ib");
+
     registerDeposit(0, SafeCast.toUint128(msg.value), _to);
   }
 
-  /// @notice Deposit NFT to Layer 2, ERC721 is supported
-  function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
+  /// @notice Deposit NFT to Layer 2, BEP721 is supported
+  function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external {
+    require(_to != address(0), "ib");
+
     // check if the nft is mint from layer-2
     bytes32 nftKey = keccak256(abi.encode(_nftL1Address, _nftL1TokenId));
     require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
@@ -247,11 +233,12 @@ contract AdditionalZkBNB is Storage, Config, Events {
     emit DepositNft(_to, nftContentHash, _nftL1Address, _nftL1TokenId, collectionId);
   }
 
-  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
+  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer BEP20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
   /// @param _to the receiver L1 address
-  function depositBEP20(IERC20 _token, uint104 _amount, address _to) external onlyActive {
+  function depositBEP20(IERC20 _token, uint104 _amount, address _to) external {
+    require(_to != address(0), "ib");
     require(_amount != 0, "I");
     // Get asset id by its address
     uint16 assetId = governance.validateAssetAddress(address(_token));
@@ -259,7 +246,8 @@ contract AdditionalZkBNB is Storage, Config, Events {
     // token deposits are paused
 
     uint256 balanceBefore = _token.balanceOf(address(this));
-    _token.transferFrom(msg.sender, address(this), SafeCast.toUint128(_amount));
+    SafeERC20.safeTransferFrom(_token, msg.sender, address(this), SafeCast.toUint128(_amount));
+    // TODO check success of transferFrom , but we check depositAmount > 0 , maybe do not need
     // token transfer failed deposit
     uint256 balanceAfter = _token.balanceOf(address(this));
     uint128 depositAmount = SafeCast.toUint128(balanceAfter - balanceBefore);
@@ -272,7 +260,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
   /// @notice Register full exit request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(uint32 _accountIndex, address _asset) public onlyActive {
+  function requestFullExit(uint32 _accountIndex, address _asset) public {
     require(_accountIndex <= MAX_ACCOUNT_INDEX, "e");
 
     uint16 assetId;
@@ -301,7 +289,7 @@ contract AdditionalZkBNB is Storage, Config, Events {
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public onlyActive {
+  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public {
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
       accountIndex: _accountIndex,

@@ -14,7 +14,7 @@ contract Governance is Config, Initializable {
   /// @notice Address which will exercise governance over the network i.e. add tokens, change validator set, conduct upgrades
   address public networkGovernor;
 
-  /// @notice Total number of ERC20 tokens registered in the network (excluding BNB, which is hardcoded as assetId = 0)
+  /// @notice Total number of BEP20 tokens registered in the network (excluding BNB, which is hardcoded as assetId = 0)
   uint16 public totalAssets;
 
   mapping(address => bool) public validators;
@@ -77,7 +77,8 @@ contract Governance is Config, Initializable {
 
     networkGovernor = _networkGovernor;
 
-    // TODO： initialize assets（0 => BNB, 1 => BUSD)
+    // initialize nftBaseURIs
+    nftBaseURIs[0] = "ipfs://f01701220";
   }
 
   /// @notice Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
@@ -87,16 +88,14 @@ contract Governance is Config, Initializable {
 
   /// @notice Change current governor
   /// @param _newGovernor Address of the new governor
-  function changeGovernor(address _newGovernor) external {
-    requireGovernor(msg.sender);
+  function changeGovernor(address _newGovernor) external onlyGovernor {
     if (networkGovernor != _newGovernor) {
       networkGovernor = _newGovernor;
       emit NewGovernor(_newGovernor);
     }
   }
 
-  function changeAssetGovernance(AssetGovernance _newAssetGovernance) external {
-    requireGovernor(msg.sender);
+  function changeAssetGovernance(AssetGovernance _newAssetGovernance) external onlyGovernor {
     if (assetGovernance != _newAssetGovernance) {
       assetGovernance = _newAssetGovernance;
       emit NewAssetGovernance(_newAssetGovernance);
@@ -114,21 +113,18 @@ contract Governance is Config, Initializable {
 
     ++totalAssets;
     uint16 newAssetId = totalAssets;
-    // it is not `totalTokens - 1` because tokenId = 0 is reserved for eth
+    // it is not `totalTokens - 1` because tokenId = 0 is reserved for BNB
 
     assetAddresses[newAssetId] = _asset;
     assetsList[_asset] = newAssetId;
 
-    // TODO: BUSD should be initialize
     if (newAssetId > 1) {
       // 0 => BNB,  1 => BUSD
       emit NewAsset(_asset, newAssetId);
     }
   }
 
-  function setAssetPaused(address _assetAddress, bool _assetPaused) external {
-    requireGovernor(msg.sender);
-
+  function setAssetPaused(address _assetAddress, bool _assetPaused) external onlyGovernor {
     uint16 assetId = assetsList[_assetAddress];
     require(assetId != 0, "1i");
 
@@ -138,8 +134,7 @@ contract Governance is Config, Initializable {
     }
   }
 
-  function setValidator(address _validator, bool _active) external {
-    requireGovernor(msg.sender);
+  function setValidator(address _validator, bool _active) external onlyGovernor {
     if (validators[_validator] != _active) {
       validators[_validator] = _active;
       emit ValidatorStatusUpdate(_validator, _active);
@@ -162,6 +157,12 @@ contract Governance is Config, Initializable {
   function requireGovernor(address _address) public view {
     require(_address == networkGovernor, "1g");
     // only by governor
+  }
+
+  /// @notice Check if specified address is governor
+  modifier onlyGovernor() {
+    require(msg.sender == networkGovernor, "1g");
+    _;
   }
 
   /// @notice Register collection corresponding to the default factory
@@ -199,8 +200,7 @@ contract Governance is Config, Initializable {
 
   /// @notice Set ZkBNB address
   /// @param _zkBNBAddress ZkBNB address
-  function setZkBNBAddress(address _zkBNBAddress) external {
-    requireGovernor(msg.sender);
+  function setZkBNBAddress(address _zkBNBAddress) external onlyGovernor {
     require(_zkBNBAddress != address(0), "Invalid address");
     require(zkBNBAddress != _zkBNBAddress, "Unchanged");
     zkBNBAddress = _zkBNBAddress;
@@ -209,8 +209,7 @@ contract Governance is Config, Initializable {
 
   /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
   /// @param _factoryAddress Address of NFT factory
-  function setDefaultNFTFactory(address _factoryAddress) external {
-    requireGovernor(msg.sender);
+  function setDefaultNFTFactory(address _factoryAddress) external onlyGovernor {
     require(_factoryAddress != address(0), "mb1"); // Factory should be non zero
     require(defaultNFTFactory == address(0), "mb2"); // NFTFactory is already set
     defaultNFTFactory = _factoryAddress;
@@ -231,11 +230,20 @@ contract Governance is Config, Initializable {
     }
   }
 
+  /// @notice Add new factoryAddress for creatorAddress
+  /// @param _factoryAddress factory contract address
+  /// @param _creatorAddress creator account address
+  function addNFTFactory(address _factoryAddress, address _creatorAddress) external {
+    requireGovernor(msg.sender);
+    require(_factoryAddress != address(0), "Invalid address");
+    require(nftFactoryCreators[_factoryAddress] == address(0), "Factory address already exists");
+    nftFactoryCreators[_factoryAddress] = _creatorAddress;
+  }
+
   /// @notice update nftBaseURIs mapping
   /// @param nftContentType which protocol to store nft content
   /// @param baseURI nft baseURI, used to generate tokenURI of nft
-  function updateBaseURI(uint8 nftContentType, string memory baseURI) external {
-    requireGovernor(msg.sender);
+  function updateBaseURI(uint8 nftContentType, string memory baseURI) external onlyGovernor {
     nftBaseURIs[nftContentType] = baseURI;
   }
 
@@ -243,6 +251,10 @@ contract Governance is Config, Initializable {
   /// @param nftContentType which protocol to store nft content
   /// @param nftContentHash hash of nft content
   function getNftTokenURI(uint8 nftContentType, bytes32 nftContentHash) external view returns (string memory tokenURI) {
-    tokenURI = string(abi.encodePacked(nftBaseURIs[nftContentType], Bytes.bytes32ToHexString(nftContentHash, false)));
+    if (nftContentType == 0) {
+      tokenURI = string(abi.encodePacked("ipfs://", Utils.ipfsCID(nftContentHash)));
+    } else {
+      tokenURI = string(abi.encodePacked(nftBaseURIs[nftContentType], Bytes.bytes32ToHexString(nftContentHash, false)));
+    }
   }
 }

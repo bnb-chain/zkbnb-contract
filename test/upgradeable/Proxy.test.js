@@ -22,7 +22,16 @@ describe('Proxy', function () {
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
-    const MockGovernance = await smock.mock('Governance');
+
+    const Utils = await ethers.getContractFactory('Utils');
+    utils = await Utils.deploy();
+    await utils.deployed();
+
+    const MockGovernance = await smock.mock('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     mockGovernance = await MockGovernance.deploy();
     await mockGovernance.deployed();
 
@@ -30,9 +39,6 @@ describe('Proxy', function () {
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
     const MockZkBNB = await smock.mock('ZkBNB', {
       libraries: {
         Utils: utils.address,
@@ -72,14 +78,35 @@ describe('Proxy', function () {
 
   describe('Proxy contract should upgrade new target', function () {
     it('upgrade new `Governance` target', async function () {
-      const MockGovernance = await smock.mock('Governance');
+      const MockGovernance = await smock.mock('Governance', {
+        libraries: {
+          Utils: utils.address,
+        },
+      });
       const mockGovernanceNew = await MockGovernance.deploy();
       await mockGovernanceNew.deployed();
 
-      await proxyGovernance.upgradeTarget(mockGovernanceNew.address, addr1.address);
-
+      await proxyGovernance.upgradeTarget(mockGovernanceNew.address, ethers.constants.HashZero);
       expect(mockGovernanceNew.upgrade).to.be.delegatedFrom(proxyGovernance.address);
-      expect(mockGovernanceNew.upgrade).to.have.been.calledWith(addr1.address.toLowerCase());
+      expect(mockGovernanceNew.upgrade).to.have.been.calledWith(ethers.constants.HashZero);
+    });
+
+    it('upgradeTarget event', async function () {
+      const MockGovernance = await smock.mock('Governance', {
+        libraries: {
+          Utils: utils.address,
+        },
+      });
+      const mockGovernanceNew = await MockGovernance.deploy();
+      await mockGovernanceNew.deployed();
+
+      const upgrade = await proxyGovernance.upgradeTarget(mockGovernanceNew.address, addr1.address);
+      const receipt = await upgrade.wait();
+      const event = receipt.events.filter(({ event }) => {
+        return event === 'Upgraded';
+      });
+
+      expect(event[0]).to.be.not.null;
     });
 
     it('upgrade new `ZkBNBVerifier` target', async function () {

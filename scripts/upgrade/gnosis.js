@@ -1,7 +1,10 @@
 const hardhat = require('hardhat');
 const { getDeployedAddresses, deployDesertVerifier } = require('../deploy-keccak256/utils');
-const { getUpgradeableContractImplement } = require('./utils');
 const { ethers } = hardhat;
+const { EthersAdapter } = require('@safe-global/protocol-kit');
+const Safe = require('@safe-global/safe-core-sdk').default;
+const { SafeEthersSigner, SafeService } = require('@safe-global/safe-ethers-adapters');
+require('dotenv').config();
 
 const inquirer = require('inquirer');
 const figlet = require('figlet');
@@ -93,10 +96,8 @@ function main() {
 }
 
 async function start() {
-  const [owner] = await ethers.getSigners();
-
-  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
-  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
+  const owner = await upgradeGatekeeper.getMaster();
 
   const status = await upgradeGatekeeper.upgradeStatus();
   if (status !== 0 /* idle */) {
@@ -153,7 +154,7 @@ async function start() {
             });
             deployContract = await ZkBNB.deploy();
 
-            inquirer
+            await inquirer
               .prompt([
                 {
                   type: 'list',
@@ -194,7 +195,11 @@ async function start() {
                   default:
                     break;
                 }
-                console.log('zkBNB upgrade parameters: [%s, %s]', additionalZkBNB.address, desertVerifier.address);
+                console.log(
+                  'zkBNB upgrade parameters: [%s, %s]',
+                  additionalZkBNB ? additionalZkBNB.address : AddressZero,
+                  desertVerifier ? desertVerifier.address : AddressZero,
+                );
               });
             break;
 
@@ -206,7 +211,7 @@ async function start() {
         console.log('%s deployed \t in %s', contract.capitalize(), deployContract.address);
       }
 
-      inquirer
+      await inquirer
         .prompt([
           {
             type: 'confirm',
@@ -220,43 +225,34 @@ async function start() {
           }
 
           console.log(chalk.green('🚚 Start Upgrade'));
-          const tx = await upgradeGatekeeper.startUpgrade([
+          await gnosisUpgradeGatekeeper.startUpgrade([
             targetContractsDeployed.governance,
             targetContractsDeployed.verifier,
             targetContractsDeployed.zkbnb,
           ]);
-
-          const receipt = await tx.wait();
-          console.log(chalk.green('✅ Upgrade process started'));
-
-          console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+          console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
         });
     });
 }
 
 async function preparation() {
-  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
-  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
 
   const upgradeStatus = await upgradeGatekeeper.upgradeStatus();
-
   if (upgradeStatus !== 1) {
     console.log(chalk.red('🙃 Not ready for prepare'));
     return;
   }
-  const tx = await upgradeGatekeeper.startPreparation();
-  const receipt = await tx.wait();
-  console.log('✅ Prepare upgrade...');
-  console.log('Current version is %s', receipt.events[0].args.versionId);
+  await gnosisUpgradeGatekeeper.startPreparation();
+  console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
 }
 
 async function cancel() {
-  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
-  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const { gnosisUpgradeGatekeeper } = await getGnosisupgradeGatekeeper();
 
   console.log(chalk.green('🚀 Cancel Upgrade'));
-  await upgradeGatekeeper.cancelUpgrade();
-  console.log(chalk.green('✅ Cancel Upgrade'));
+  await gnosisUpgradeGatekeeper.cancelUpgrade();
+  console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
 }
 
 async function cutPeriod() {
@@ -295,18 +291,15 @@ async function cutPeriod() {
 }
 
 async function finish() {
-  /* ------------------------- Check upgrade status ------------------------ */
-  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
-  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
 
   const upgradeStatus = await upgradeGatekeeper.upgradeStatus();
-
   if (upgradeStatus !== 2) {
     console.log(chalk.red('🙃 Already in the preparation stage'));
     return;
   }
   console.log(chalk.green('🚀 Finish Upgrade'));
-  const tx = await upgradeGatekeeper.finishUpgrade([
+  await gnosisUpgradeGatekeeper.finishUpgrade([
     '0x00',
     '0x00',
     ethers.utils.defaultAbiCoder.encode(
@@ -314,17 +307,11 @@ async function finish() {
       [zkBNBUpgradeParameter['additionalZkBNB'], zkBNBUpgradeParameter['desertVerifier']],
     ),
   ]);
-  const receipt = await tx.wait();
-  const impls = await getUpgradeableContractImplement();
-  console.log('**** New implement Contract ****');
-  console.table(impls);
-  console.log(chalk.green('✅ Finished'));
-  console.log('Current version is %s', receipt.events[1].args.versionId);
+  console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
 }
 
 async function rollback(startBlockNumber) {
-  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
-  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
 
   const status = await upgradeGatekeeper.upgradeStatus();
   if (status !== 0 /* idle */) {
@@ -347,7 +334,7 @@ async function rollback(startBlockNumber) {
     };
   } else {
     const filter = upgradeGatekeeper.filters.UpgradeComplete(versionId - 1);
-    const event = await upgradeGatekeeper.queryFilter(filter, startBlockNumber, startBlockNumber + 5000);
+    const event = await upgradeGatekeeper.queryFilter(filter, startBlockNumber - 1, startBlockNumber + 100);
     const targets = event[0].args.newTargets;
     previousVersionTargets = {
       governance: targets[0],
@@ -375,16 +362,40 @@ async function rollback(startBlockNumber) {
         return;
       }
 
-      const tx = await upgradeGatekeeper.startUpgrade([
+      console.log(chalk.green('✅ rollback process started'));
+      await gnosisUpgradeGatekeeper.startUpgrade([
         previousVersionTargets.governance,
         previousVersionTargets.verifier,
         previousVersionTargets.zkbnb,
       ]);
-
-      const receipt = await tx.wait();
-      console.log(chalk.green('✅ rollback process started'));
-      console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
+      console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
+      console.log('after that, you still need to do preparation and finish step.');
     });
+}
+
+async function getGnosisupgradeGatekeeper() {
+  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
+  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const owner = await upgradeGatekeeper.getMaster();
+
+  const signerOrProvider = await ethers.getSigner();
+  const ethAdapter = new EthersAdapter({ ethers, signerOrProvider });
+
+  const safe = await Safe.create({
+    ethAdapter,
+    safeAddress: owner,
+  });
+
+  // https://docs.safe.global/learn/safe-core/safe-core-api/available-services
+  const safeService = new SafeService(process.env.GNOSIS_SERVICE);
+
+  const gnosisSigner = new SafeEthersSigner(safe, safeService, signerOrProvider);
+  const gnosisUpgradeGatekeeper = upgradeGatekeeper.connect(gnosisSigner);
+
+  return {
+    gnosisUpgradeGatekeeper,
+    upgradeGatekeeper,
+  };
 }
 
 main();

@@ -13,6 +13,7 @@ import "./interfaces/INFTFactory.sol";
 import "./Config.sol";
 import "./Storage.sol";
 import "./DesertVerifier.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
@@ -53,7 +54,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Checks if Desert mode must be entered. If true - enters desert mode and emits DesertMode event.
-  /// @dev Desert mode must be entered in case of current ethereum block number is higher than the oldest
+  /// @dev Desert mode must be entered in case of current L1 block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
   /// @return bool flag that is true if the desert mode must be entered.
   function activateDesertMode() public returns (bool) {
@@ -82,8 +83,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint256 _nftRoot,
     DesertVerifier.AssetExitData calldata _assetExitData,
     DesertVerifier.AccountExitData calldata _accountExitData,
-    uint256[16] calldata _assetMerkleProof,
-    uint256[32] calldata _accountMerkleProof
+    uint256[] memory _proofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
@@ -94,8 +94,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     uint256 _assetRoot,
     DesertVerifier.AccountExitData calldata _accountExitData,
     DesertVerifier.NftExitData[] memory _exitNfts,
-    uint256[32] calldata _accountMerkleProof,
-    uint256[40][] memory _nftMerkleProofs
+    uint256[] memory _proofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
@@ -155,13 +154,13 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  /// @notice Deposit Native Assets to Layer 2 - transfer ether from user into contract, validate it, register deposit
+  /// @notice Deposit Native Assets to Layer 2 - transfer BNB from user into contract, validate it, register deposit
   /// @param _to the receiver L1 address
   function depositBNB(address _to) external payable onlyActive {
     delegateAdditional();
   }
 
-  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer ERC20 tokens from user into contract, validate it, register deposit
+  /// @notice Deposit or Lock BEP20 token to Layer 2 - transfer BEP20 tokens from user into contract, validate it, register deposit
   /// @param _token Token address
   /// @param _amount Token amount
   /// @param _to the receiver L1 address
@@ -169,7 +168,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     delegateAdditional();
   }
 
-  /// @notice Deposit NFT to Layer 2, ERC721 is supported
+  /// @notice Deposit NFT to Layer 2, BEP721 is supported
   function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
     delegateAdditional();
   }
@@ -190,11 +189,11 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice  Withdraws NFT from zkBNB contract to the owner
   /// @param _nftIndex Id of NFT token
-  function withdrawPendingNFTBalance(uint40 _nftIndex) external {
+  function withdrawPendingNFTBalance(uint40 _nftIndex) external nonReentrant {
     TxTypes.WithdrawNft memory op = pendingWithdrawnNFTs[_nftIndex];
     // _nftIndex needs to be valid , check op.nftContentHash in order to check op is not null
     require(op.nftContentHash != bytes32(0), "6H");
-    withdrawOrStoreNFT(op);
+    require(withdrawOrStoreNFT(op, WITHDRAWAL_PENDING_NFT_GAS_LIMIT), "Fail to withdraw NFT");
     delete pendingWithdrawnNFTs[_nftIndex];
   }
 
@@ -202,9 +201,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _owner Address of the tokens owner
   /// @param _token Address of tokens, zero address is used for Native Asset
   /// @param _amount Amount to withdraw to request.
-  ///         NOTE: We will call ERC20.transfer(.., _amount), but if according to internal logic of ERC20 token ZkBNB contract
+  ///         NOTE: We will call BEP20.transfer(.., _amount), but if according to internal logic of BEP20 token ZkBNB contract
   ///         balance will be decreased by value more then _amount we will try to subtract this value from user pending balance
-  function withdrawPendingBalance(address payable _owner, address _token, uint128 _amount) external {
+  function withdrawPendingBalance(address payable _owner, address _token, uint128 _amount) external nonReentrant {
     uint16 _assetId = 0;
     if (_token != address(0)) {
       _assetId = governance.validateAssetAddress(_token);
@@ -245,11 +244,9 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     // can be called only from this contract as one "external" call (to revert all this function state changes if it is needed)
 
     uint256 balanceBefore = _token.balanceOf(address(this));
-    _token.transfer(_to, _amount);
+    SafeERC20.safeTransfer(_token, _to, _amount);
     uint256 balanceAfter = _token.balanceOf(address(this));
     uint256 balanceDiff = balanceBefore - balanceAfter;
-    //        require(balanceDiff > 0, "C");
-    // transfer is considered successful only if the balance of the contract decreased after transfer
     require(balanceDiff <= _maxAmount, "7");
     // rollup balance difference (before and after transfer) is bigger than `_maxAmount`
 
@@ -297,14 +294,6 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
     }
 
-    // padding zero transactions
-    if (_newBlock.publicData.length < _newBlock.blockSize * TxTypes.PACKED_TX_PUBDATA_BYTES) {
-      _newBlock.publicData = bytes.concat(
-        _newBlock.publicData,
-        new bytes(_newBlock.blockSize * TxTypes.PACKED_TX_PUBDATA_BYTES - _newBlock.publicData.length)
-      );
-    }
-
     // Check onchain operations
     (bytes32 pendingOnchainOpsHash, uint64 priorityReqCommitted) = collectOnchainOps(_newBlock);
 
@@ -328,7 +317,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     CommitBlockInfo memory _newBlockData
   ) internal pure returns (bytes32) {
     // uint256[] memory pubData = Utils.bytesToUint256Arr(_newBlockData.publicData);
-    bytes32 converted = keccak256(
+    bytes32 converted = sha256(
       abi.encodePacked(
         uint256(_newBlockData.blockNumber), // block number
         uint256(_newBlockData.timestamp), // time stamp
@@ -528,7 +517,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Reverts unverified blocks
-  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
+  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external onlyActive {
     delegateAdditional();
   }
 
@@ -547,28 +536,22 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     return governance.getNftTokenURI(nftContentType, nftContentHash);
   }
 
-  function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op) internal {
+  function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op, uint256 _gasLimit) internal returns (bool success) {
     require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
+
+    // return success when withdrawPendingNFT
+    success = false;
 
     // get nft factory
     address _factoryAddress = governance.getNFTFactory(op.creatorAddress, op.collectionId);
     // store into l2 nfts
     bytes32 nftKey = keccak256(abi.encode(_factoryAddress, op.nftIndex));
-    bool alreadyMintedFlag = false;
+
     if (mintedNfts[nftKey].nftContentHash != bytes32(0)) {
-      alreadyMintedFlag = true;
-    }
-    // get layer-1 address by account name hash
-    if (alreadyMintedFlag) {
       /// This is a NFT from layer 1, withdraw id directly
-      try
-        IERC721(_factoryAddress).safeTransferFrom{gas: WITHDRAWAL_NFT_GAS_LIMIT}(
-          address(this),
-          op.toAddress,
-          op.nftIndex
-        )
-      {
+      try IERC721(_factoryAddress).safeTransferFrom{gas: _gasLimit}(address(this), op.toAddress, op.nftIndex) {
         emit WithdrawNft(op.accountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+        success = true;
       } catch {
         storePendingNFT(op);
       }
@@ -586,6 +569,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
           collectionId: uint16(op.collectionId)
         });
         emit WithdrawNft(op.accountIndex, _factoryAddress, op.toAddress, op.nftIndex);
+        success = true;
       } catch {
         storePendingNFT(op);
       }
@@ -638,12 +622,12 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
             nftContentHash: _tx.nftContentHash,
             nftContentType: _tx.nftContentType
           });
-          withdrawOrStoreNFT(_withdrawNftTx);
+          withdrawOrStoreNFT(_withdrawNftTx, WITHDRAWAL_NFT_GAS_LIMIT);
         }
       } else if (txType == TxTypes.TxType.WithdrawNft) {
         TxTypes.WithdrawNft memory _tx = TxTypes.readWithdrawNftPubData(pubData);
         // withdraw NFT
-        withdrawOrStoreNFT(_tx);
+        withdrawOrStoreNFT(_tx, WITHDRAWAL_NFT_GAS_LIMIT);
       } else {
         // unsupported _tx in block verification
         revert("l");
@@ -665,8 +649,8 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
       sent = sendBNBNoRevert(payable(_recipient), _amount);
     } else {
       address tokenAddr = governance.assetAddresses(_assetId);
-      // We use `_transferERC20` here to check that `ERC20` token indeed transferred `_amount`
-      // and fail if token subtracted from ZkBNB balance more then `_amount` that was requested.
+      // We use `_transferERC20` here to check that `BEP20` token indeed transferred `_amount`
+      // and fail if token subtracted from ZkBNB balance more than `_amount` that was requested.
       // This can happen if token subtracts fee from sender while transferring `_amount` that was requested to transfer.
       try this.transferERC20{gas: WITHDRAWAL_GAS_LIMIT}(IERC20(tokenAddr), _recipient, _amount, _amount) {
         sent = true;
@@ -681,7 +665,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     }
   }
 
-  /// @notice Sends ETH
+  /// @notice Sends BNB
   /// @param _to Address of recipient
   /// @param _amount Amount of tokens to transfer
   /// @return bool flag indicating that transfer is successful

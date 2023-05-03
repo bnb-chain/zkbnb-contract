@@ -19,8 +19,8 @@ const config: HardhatUserConfig = {
   etherscan: {
     // Your API key for BSC. Obtain one at https://bscscan.com/
     apiKey: {
-      bscTestnet: process.env.BSCSCAN_APIKEY || '',
-      bsc: process.env.BSCSCAN_API_KEY || '',
+      bscTestnet: process.env.BSCSCAN_APIKEY || '00000000000000000000000000000000000000000',
+      bsc: process.env.BSCSCAN_API_KEY || '00000000000000000000000000000000000000000',
     },
   },
   solidity: {
@@ -60,7 +60,7 @@ const config: HardhatUserConfig = {
       timeout: 300000,
       gas: 1500000,
     },
-    bsc: {
+    BSCMainnet: {
       url: process.env.BSC_MAINNET_RPC || 'https://bsc-dataseed.binance.org',
       accounts: (
         process.env.BSC_MAINNET_PRIVATE_KEY || '0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1'

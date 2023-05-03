@@ -31,17 +31,22 @@ describe('NFT functionality', function () {
 
   before(async function () {
     [owner, acc1, acc2] = await ethers.getSigners();
-    const Governance = await ethers.getContractFactory('Governance');
+
+    const Utils = await ethers.getContractFactory('Utils');
+    utils = await Utils.deploy();
+    await utils.deployed();
+
+    const Governance = await ethers.getContractFactory('Governance', {
+      libraries: {
+        Utils: utils.address,
+      },
+    });
     governance = await Governance.deploy();
     await governance.deployed();
 
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
-
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
 
     const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
     additionalZkBNB = await AdditionalZkBNB.deploy();
@@ -216,10 +221,6 @@ describe('NFT functionality', function () {
     });
 
     it('the NFT should be minted after withdrawal', async function () {
-      mockNftFactory.mintFromZkBNB.returns();
-      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
-      await zkBNB.withdrawPendingNFTBalance(nftIndex);
-
       const nftKey = ethers.utils.keccak256(abi.encode(['address', 'uint256'], [mockNftFactory.address, nftIndex]));
       const result = await zkBNB.getMintedL2NftInfo(nftKey);
 
@@ -228,9 +229,6 @@ describe('NFT functionality', function () {
     });
 
     it('the NFT should not be pending after withdrawal', async function () {
-      mockNftFactory.mintFromZkBNB.returns();
-      await zkBNB.testWithdrawOrStoreNFT(withdrawOp2);
-      await zkBNB.withdrawPendingNFTBalance(nftIndex);
       const result = await zkBNB.getPendingWithdrawnNFT(nftIndex);
       assert.equal(result['nftContentHash'], 0);
       assert.equal(result['nftIndex'], 0);
@@ -297,11 +295,73 @@ describe('NFT functionality', function () {
       assert.equal(_txType, 3);
     });
 
+    it('should revert if deposit a NFT to zero address', async function () {
+      const mock721 = await smock.fake('ZkBNBRelatedERC721');
+      mock721.ownerOf.returns(zkBNB.address);
+
+      expect(zkBNB.depositNft('_accountName', ethers.constants.AddressZero, '2')).to.be.revertedWith('ib');
+    });
+
     it('should fail to deposit a NFT which is not created by layer2', async function () {
       const mock721 = await smock.fake('ZkBNBRelatedERC721');
       mock721.ownerOf.returns(zkBNB.address);
 
       expect(zkBNB.depositNft('_accountName', mock721.address, '2')).to.be.revertedWith('l1 nft is not allowed');
+    });
+  });
+
+  describe('withdraw NFT on transfer failure', async function () {
+    const nftIndex = 0;
+    let withdrawOp3;
+
+    before(async () => {
+      withdrawOp3 = {
+        accountIndex: 1,
+        creatorAccountIndex: 0,
+        creatorTreasuryRate: 5,
+        nftIndex,
+        collectionId: 0,
+        toAddress: acc2.address,
+        creatorAddress: owner.address,
+        nftContentHash: mockHash,
+        nftContentType: 0,
+      };
+    });
+
+    it('store NFT on transfer failure', async function () {
+      // safeTransferFrom fails
+      mockNftFactory['safeTransferFrom(address,address,uint256)'].reverts();
+
+      await expect(await zkBNB.testWithdrawOrStoreNFT(withdrawOp3))
+        .to.emit(zkBNB, 'WithdrawalNFTPending')
+        .withArgs(nftIndex);
+
+      const result = await zkBNB.getPendingWithdrawnNFT(nftIndex);
+
+      assert.deepStrictEqual(withdrawOp3, {
+        accountIndex: result['accountIndex'],
+        creatorAccountIndex: result['creatorAccountIndex'],
+        creatorTreasuryRate: result['creatorTreasuryRate'],
+        nftIndex: result['nftIndex'],
+        collectionId: result['collectionId'],
+        toAddress: result['toAddress'],
+        creatorAddress: result['creatorAddress'],
+        nftContentHash: result['nftContentHash'],
+        nftContentType: result['nftContentType'],
+      });
+    });
+
+    it('NFT should not be pending on successful withdrawal', async function () {
+      // safeTransferFrom succeed
+      mockNftFactory['safeTransferFrom(address,address,uint256)'].returns();
+
+      await expect(await zkBNB.withdrawPendingNFTBalance(nftIndex))
+        .to.emit(zkBNB, 'WithdrawNft')
+        .withArgs(1, mockNftFactory.address, acc2.address, nftIndex);
+
+      const result = await zkBNB.getPendingWithdrawnNFT(nftIndex);
+      assert.equal(result['nftContentHash'], 0);
+      assert.equal(result['nftIndex'], 0);
     });
   });
 

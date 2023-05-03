@@ -24,24 +24,50 @@ async function main() {
   }
   console.log(chalk.green('🔎 Validating contracts： \n'));
 
+  const results = [];
   for (const key in contracts) {
     const [contractAddress, constructorArgs] = contracts[key];
     if (contractAddress) {
-      console.log('[%s] %s', chalk.green(key), chalk.grey(`${bscscanURI}/${contractAddress}#code`));
-      await verifyContract(contractAddress, constructorArgs);
+      console.log('[%s] %s', chalk.yellow(key), chalk.grey(`${bscscanURI}/${contractAddress}#code`));
+      results.push(await verifyContract(key, contractAddress, constructorArgs));
     }
   }
+  for (const { key, address, result, reason } of results) {
+    if (result) {
+      console.log('✅[%s] %s', chalk.green(key), chalk.grey(`${bscscanURI}/${address}#code`));
+    } else {
+      console.log('❌[%s] %s\n %s', chalk.red(key), chalk.grey(`${bscscanURI}/${address}#code`), chalk.red(reason));
+    }
+  }
+  console.log('⚠️ %s', chalk.yellow('proxy need to verify manually'));
 }
 
-async function verifyContract(address, constructorArguments) {
+async function verifyContract(key, address, constructorArguments) {
+  let result = false;
+  let reason;
   try {
     await hardhat.run('verify:verify', {
       address,
       constructorArguments,
     });
+    result = true;
   } catch (error) {
-    console.log(chalk.red(error));
+    // console.log(chalk.red(error));
+    if (
+      error.toString().includes('Contract source code already verified') ||
+      error.toString().includes('Already Verified')
+    ) {
+      result = true;
+    } else {
+      reason = error;
+    }
   }
+  return {
+    key,
+    address,
+    result,
+    reason,
+  };
 }
 main()
   .then(() => process.exit(0))

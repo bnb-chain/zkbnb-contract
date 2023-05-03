@@ -21,7 +21,7 @@ contract Storage {
 
   /// @notice Priority Operation container
   /// @member hashedPubData Hashed priority operation public data
-  /// @member expirationBlock Expiration block number (ETH block) for this request (must be satisfied before)
+  /// @member expirationBlock Expiration block number (L1 block) for this request (must be satisfied before)
   /// @member opType Priority operation type
   struct PriorityTx {
     bytes20 hashedPubData;
@@ -43,7 +43,7 @@ contract Storage {
   /// @dev Governance contract. Contains the governor (the owner) of whole system, validators list, possible tokens list
   Governance internal governance;
 
-  uint8 internal constant FILLED_GAS_RESERVE_VALUE = 0xff; // we use it to set gas revert value so slot will not be emptied with 0 balance
+  uint8 internal constant FILLED_GAS_RESERVE_VALUE = 0xff; // we use it to set gas reserve value so slot will not be emptied with 0 balance
   struct PendingBalance {
     uint128 balanceToWithdraw;
     uint8 gasReserveValue; // gives user opportunity to fill storage slot with nonzero value
@@ -110,12 +110,12 @@ contract Storage {
   mapping(uint40 => TxTypes.WithdrawNft) internal pendingWithdrawnNFTs;
 
   struct L2NftInfo {
-    uint40 nftIndex;
-    uint32 creatorAccountIndex;
-    uint16 creatorTreasuryRate;
-    bytes32 nftContentHash;
     uint8 nftContentType;
     uint16 collectionId;
+    uint16 creatorTreasuryRate;
+    uint32 creatorAccountIndex;
+    uint40 nftIndex;
+    bytes32 nftContentHash;
   }
 
   mapping(bytes32 => L2NftInfo) internal mintedNfts;
