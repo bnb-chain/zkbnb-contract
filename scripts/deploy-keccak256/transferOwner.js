@@ -10,10 +10,9 @@ const { Wallet } = require('ethers');
 const { ethers } = hardhat;
 
 async function main() {
-  const gnosisOwner = process.env.GNOSIS_OWNER;
-  const gnosisOwnerPrivateKey = process.env.GNOSIS_OWNER_PRIVATE_KEY;
+  const gnosisOwner = process.env.OWNER;
 
-  if (!gnosisOwner || !gnosisOwnerPrivateKey) {
+  if (!gnosisOwner) {
     return;
   }
 
@@ -30,12 +29,6 @@ async function main() {
     gasLimit: 6721975,
   });
   await transferOwnershipTx.wait();
-
-  const wallet = new Wallet(gnosisOwnerPrivateKey, ethers.provider);
-  const acceptOwnershipTx = await defaultFactoryContract.connect(wallet).acceptOwnership({
-    gasLimit: 6721975,
-  });
-  await acceptOwnershipTx.wait();
 
   // Governance
   const governanceContract = contractFactories.Governance.attach(governance);
