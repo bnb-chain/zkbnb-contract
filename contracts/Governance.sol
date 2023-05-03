@@ -237,7 +237,7 @@ contract Governance is Config, Initializable {
   function addNFTFactory(address _factoryAddress, address _creatorAddress) external {
     requireGovernor(msg.sender);
     require(_factoryAddress != address(0), "Invalid address");
-    require(nftFactoryCreators[_factoryAddress] == address(0), "Factory address does not add");
+    require(nftFactoryCreators[_factoryAddress] == address(0), "Factory address already exists");
     nftFactoryCreators[_factoryAddress] = _creatorAddress;
   }
 
