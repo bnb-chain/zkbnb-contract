@@ -38,21 +38,6 @@ async function main() {
   await governanceContract.changeGovernor(gnosisOwner, {
     gasLimit: 6721975,
   });
-
-  // proxy
-  // const governanceProxy = await (await ethers.getContractFactory('Proxy')).attach(addrs.governance);
-  // const verifierProxy = await (await ethers.getContractFactory('Proxy')).attach(addrs.verifierProxy);
-  // const zkbnbProxy = await (await ethers.getContractFactory('Proxy')).attach(addrs.zkbnbProxy);
-  //
-  // await governanceProxy.transferMastership(gnosisOwner, {
-  //   gasLimit: 6721975,
-  // });
-  // await verifierProxy.transferMastership(gnosisOwner, {
-  //   gasLimit: 6721975,
-  // });
-  // await zkbnbProxy.transferMastership(gnosisOwner, {
-  //   gasLimit: 6721975,
-  // });
 }
 
 main()
