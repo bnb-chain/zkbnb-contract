@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./Config.sol";
 import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
@@ -10,7 +11,7 @@ import "./ZkBNBNFTFactory.sol";
 
 /// @title Governance Contract
 /// @author ZkBNB Team
-contract Governance is Config, Initializable {
+contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @notice Address which will exercise governance over the network i.e. add tokens, change validator set, conduct upgrades
   address public networkGovernor;
 
@@ -73,6 +74,8 @@ contract Governance is Config, Initializable {
   /// @param initializationParameters Encoded representation of initialization parameters:
   ///     _networkGovernor The address of network governor
   function initialize(bytes calldata initializationParameters) external initializer {
+    __ReentrancyGuard_init();
+
     address _networkGovernor = abi.decode(initializationParameters, (address));
 
     networkGovernor = _networkGovernor;
@@ -189,7 +192,11 @@ contract Governance is Config, Initializable {
   /// @param _collectionId L2 collection id
   /// @param _name NFT factory name
   /// @param _symbol NFT factory symbol
-  function deployAndRegisterNFTFactory(uint16 _collectionId, string memory _name, string memory _symbol) external {
+  function deployAndRegisterNFTFactory(
+    uint16 _collectionId,
+    string memory _name,
+    string memory _symbol
+  ) external nonReentrant {
     require(zkBNBAddress != address(0), "ZkBNB address does not set");
     ZkBNBNFTFactory _factory = new ZkBNBNFTFactory(_name, _symbol, zkBNBAddress, msg.sender);
     address _factoryAddress = address(_factory);
@@ -233,8 +240,7 @@ contract Governance is Config, Initializable {
   /// @notice Add new factoryAddress for creatorAddress
   /// @param _factoryAddress factory contract address
   /// @param _creatorAddress creator account address
-  function addNFTFactory(address _factoryAddress, address _creatorAddress) external {
-    requireGovernor(msg.sender);
+  function addNFTFactory(address _factoryAddress, address _creatorAddress) external onlyGovernor {
     require(_factoryAddress != address(0), "Invalid address");
     require(nftFactoryCreators[_factoryAddress] == address(0), "Factory address already exists");
     nftFactoryCreators[_factoryAddress] = _creatorAddress;

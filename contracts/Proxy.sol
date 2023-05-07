@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ZkBNBOwnable.sol";
-import "./interfaces/Upgradeable.sol";
+import "./interfaces/IUpgradeable.sol";
 
 /// @title Proxy Contract
 /// @author ZkBNB Team

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "./interfaces/Events.sol";
-import "./interfaces/Upgradeable.sol";
+import "./interfaces/IEvents.sol";
+import "./interfaces/IUpgradeable.sol";
 import "./ZkBNBOwnable.sol";
 import "./UpgradeableMaster.sol";
 
