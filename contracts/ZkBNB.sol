@@ -17,7 +17,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
-contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
+contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
   /// @notice Data needed to process onchain operation from block public data.
   /// @notice Onchain operations is operations that need some processing on L1: Deposits, Withdrawals, ChangePubKey.
   /// @param ethWitness Some external data that can be needed for operation processing

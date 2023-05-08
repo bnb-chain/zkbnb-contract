@@ -5,7 +5,7 @@ import "../lib/TxTypes.sol";
 
 /// @title ZkBNB events
 /// @author ZkBNB Team
-interface Events {
+interface IEvents {
   /// @notice Event emitted when a block is committed
   event BlockCommit(uint32 blockNumber);
 
@@ -84,7 +84,7 @@ interface Events {
 
 /// @title Upgrade events
 /// @author ZkBNB Team
-interface UpgradeEvents {
+interface IUpgradeEvents {
   /// @notice Event emitted when new upgradeable contract is added to upgrade gatekeeper's list of managed contracts
   event NewUpgradable(uint256 indexed versionId, address indexed upgradeable);
 

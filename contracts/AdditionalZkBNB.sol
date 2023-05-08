@@ -16,7 +16,7 @@ import "./DesertVerifier.sol";
 
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
-contract AdditionalZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable {
+contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable {
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
