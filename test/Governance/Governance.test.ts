@@ -283,6 +283,7 @@ describe('Governance', function () {
       await expect(await governance.connect(addr1).registerNFTFactory(collectionId2, factoryAddress))
         .to.emit(governance, 'NFTFactoryRegistered')
         .withArgs(addr1.address, factoryAddress, collectionId2);
+      expect(await governance.nftFactories(addr1.address, collectionId2)).to.equal(factoryAddress);
     });
 
     it('Register Default NFT factory', async function () {

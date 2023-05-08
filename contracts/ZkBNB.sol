@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import "./interfaces/Events.sol";
+import "./interfaces/IEvents.sol";
 import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
@@ -17,7 +17,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
-contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
+contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721Receiver {
   /// @notice Data needed to process onchain operation from block public data.
   /// @notice Onchain operations is operations that need some processing on L1: Deposits, Withdrawals, ChangePubKey.
   /// @param ethWitness Some external data that can be needed for operation processing
@@ -57,7 +57,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @dev Desert mode must be entered in case of current L1 block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
   /// @return bool flag that is true if the desert mode must be entered.
-  function activateDesertMode() public returns (bool) {
+  function activateDesertMode() external nonReentrant returns (bool) {
     // #if EASY_DESERT
     bool trigger = true;
     // #else
@@ -142,7 +142,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
-  function upgrade(bytes calldata upgradeParameters) external {
+  function upgrade(bytes calldata upgradeParameters) external nonReentrant {
     (address _additionalZkBNB, address _desertVerifier) = abi.decode(upgradeParameters, (address, address));
 
     if (_additionalZkBNB != address(0)) {
@@ -156,7 +156,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
 
   /// @notice Deposit Native Assets to Layer 2 - transfer BNB from user into contract, validate it, register deposit
   /// @param _to the receiver L1 address
-  function depositBNB(address _to) external payable onlyActive {
+  function depositBNB(address _to) external payable {
     delegateAdditional();
   }
 
@@ -164,26 +164,26 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @param _token Token address
   /// @param _amount Token amount
   /// @param _to the receiver L1 address
-  function depositBEP20(IERC20 _token, uint104 _amount, address _to) external onlyActive {
+  function depositBEP20(IERC20 _token, uint104 _amount, address _to) external {
     delegateAdditional();
   }
 
   /// @notice Deposit NFT to Layer 2, BEP721 is supported
-  function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external onlyActive {
+  function depositNft(address _to, address _nftL1Address, uint256 _nftL1TokenId) external {
     delegateAdditional();
   }
 
   /// @notice Register full exit request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(uint32 _accountIndex, address _asset) public onlyActive {
+  function requestFullExit(uint32 _accountIndex, address _asset) external {
     delegateAdditional();
   }
 
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public onlyActive {
+  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) external {
     delegateAdditional();
   }
 
@@ -239,7 +239,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
     address _to,
     uint128 _amount,
     uint128 _maxAmount
-  ) external returns (uint128 withdrawnAmount) {
+  ) external nonReentrant returns (uint128 withdrawnAmount) {
     require(msg.sender == address(this), "5");
     // can be called only from this contract as one "external" call (to revert all this function state changes if it is needed)
 
@@ -259,7 +259,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function commitBlocks(
     StoredBlockInfo memory _lastCommittedBlockData,
     CommitBlockInfo[] memory _newBlocksData
-  ) external onlyActive {
+  ) external nonReentrant onlyActive {
     governance.isActiveValidator(msg.sender);
     // Check that we commit blocks after last committed block
     // incorrect previous block data
@@ -450,7 +450,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function verifyAndExecuteBlocks(
     VerifyAndExecuteBlockInfo[] memory _blocks,
     uint256[] memory _proofs
-  ) external onlyActive {
+  ) external nonReentrant onlyActive {
     governance.isActiveValidator(msg.sender);
 
     uint64 priorityRequestsExecuted = 0;
@@ -517,7 +517,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   }
 
   /// @notice Reverts unverified blocks
-  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external onlyActive {
+  function revertBlocks(StoredBlockInfo[] memory _blocksToRevert) external {
     delegateAdditional();
   }
 

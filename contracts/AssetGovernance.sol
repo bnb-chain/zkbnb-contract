@@ -85,7 +85,7 @@ contract AssetGovernance is ReentrancyGuard {
 
   /// @notice Set new listing token and fee
   /// @notice Can be called only by ZkBNB governor
-  function setListingFeeAsset(IERC20 _newListingFeeAsset, uint256 _newListingFee) external onlyGovernor {
+  function setListingFeeAsset(IERC20 _newListingFeeAsset, uint256 _newListingFee) external nonReentrant onlyGovernor {
     listingFeeToken = _newListingFeeAsset;
     listingFee = _newListingFee;
 
@@ -94,7 +94,7 @@ contract AssetGovernance is ReentrancyGuard {
 
   /// @notice Set new listing fee
   /// @notice Can be called only by ZkBNB governor
-  function setListingFee(uint256 _newListingFee) external onlyGovernor {
+  function setListingFee(uint256 _newListingFee) external nonReentrant onlyGovernor {
     listingFee = _newListingFee;
 
     emit ListingFeeUpdate(_newListingFee);
@@ -102,7 +102,7 @@ contract AssetGovernance is ReentrancyGuard {
 
   /// @notice Enable or disable token lister. If enabled new tokens can be added by that address without payment
   /// @notice Can be called only by ZkBNB governor
-  function setLister(address _listerAddress, bool _active) external onlyGovernor {
+  function setLister(address _listerAddress, bool _active) external nonReentrant onlyGovernor {
     if (tokenLister[_listerAddress] != _active) {
       tokenLister[_listerAddress] = _active;
       emit TokenListerUpdate(_listerAddress, _active);
@@ -111,7 +111,7 @@ contract AssetGovernance is ReentrancyGuard {
 
   /// @notice Change maximum amount of tokens that can be listed using this method
   /// @notice Can be called only by ZkBNB governor
-  function setListingCap(uint16 _newListingCap) external onlyGovernor {
+  function setListingCap(uint16 _newListingCap) external nonReentrant onlyGovernor {
     listingCap = _newListingCap;
 
     emit ListingCapUpdate(_newListingCap);
@@ -119,7 +119,7 @@ contract AssetGovernance is ReentrancyGuard {
 
   /// @notice Change address that collects payments for listing tokens.
   /// @notice Can be called only by ZkBNB governor
-  function setTreasury(address _newTreasury) external onlyGovernor {
+  function setTreasury(address _newTreasury) external nonReentrant onlyGovernor {
     treasury = _newTreasury;
 
     emit TreasuryUpdate(_newTreasury);
