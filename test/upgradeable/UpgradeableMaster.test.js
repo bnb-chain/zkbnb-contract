@@ -96,14 +96,17 @@ describe('UpgradeableMaster', function () {
     it('Notice period can be cut by council members', async () => {
       await upgradeableMaster.upgradeNoticePeriodStarted();
 
-      await expect(upgradeableMaster.upgradePreparationStarted()).to.be.reverted;
-
-      await upgradeableMaster.connect(councilMember1).cutUpgradeNoticePeriod();
-      await upgradeableMaster.connect(councilMember2).cutUpgradeNoticePeriod();
+      const startTimestamp = await upgradeableMaster.upgradeStartTimestamp();
+      await expect(upgradeableMaster.connect(councilMember1).cutUpgradeNoticePeriod('1')).to.be.reverted;
 
       await expect(upgradeableMaster.upgradePreparationStarted()).to.be.reverted;
 
-      await upgradeableMaster.connect(councilMember3).cutUpgradeNoticePeriod();
+      await upgradeableMaster.connect(councilMember1).cutUpgradeNoticePeriod(startTimestamp);
+      await upgradeableMaster.connect(councilMember2).cutUpgradeNoticePeriod(startTimestamp);
+
+      await expect(upgradeableMaster.upgradePreparationStarted()).to.be.reverted;
+
+      await upgradeableMaster.connect(councilMember3).cutUpgradeNoticePeriod(startTimestamp);
 
       await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be.reverted;
     });

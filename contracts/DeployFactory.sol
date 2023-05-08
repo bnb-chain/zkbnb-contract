@@ -29,10 +29,6 @@ contract DeployFactory {
     uint16 listingCap;
   }
 
-  Proxy governance;
-  Proxy verifier;
-  Proxy zkbnb;
-
   event Addresses(
     address governance,
     address assetGovernance,
@@ -74,6 +70,10 @@ contract DeployFactory {
     DeployedContractAddress memory _contracts,
     AdditionalParams memory _additionalParams
   ) internal {
+    Proxy governance;
+    Proxy verifier;
+    Proxy zkbnb;
+
     governance = new Proxy(address(_contracts.governanceTarget), abi.encode(this));
     // Here temporarily give this contract the governor right.
     AssetGovernance assetGovernance = new AssetGovernance(
@@ -119,15 +119,23 @@ contract DeployFactory {
     );
 
     // finally set governance
-    finalizeGovernance(Governance(address(governance)), assetGovernance, _contracts.validator, _contracts.governor);
+    finalizeGovernance(
+      Governance(address(governance)),
+      assetGovernance,
+      address(zkbnb),
+      _contracts.validator,
+      _contracts.governor
+    );
   }
 
   function finalizeGovernance(
     Governance _governance,
     AssetGovernance _assetGovernance,
+    address _zkbnb,
     address _validator,
     address _governor
   ) internal {
+    _governance.setZkBNBAddress(_zkbnb);
     _governance.changeAssetGovernance(_assetGovernance);
     _governance.setValidator(_validator, true);
     _governance.changeGovernor(_governor);

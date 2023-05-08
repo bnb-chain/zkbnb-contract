@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "./interfaces/Events.sol";
-import "./interfaces/Upgradeable.sol";
+import "./interfaces/IEvents.sol";
+import "./interfaces/IUpgradeable.sol";
 import "./ZkBNBOwnable.sol";
 import "./UpgradeableMaster.sol";
 
 /// @title Upgrade Gatekeeper Contract
 /// @dev A UpgradeGateKeeper is a manager of a group of upgradable contract
 /// @author ZkBNB Team
-contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
+contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
   /// @notice Upgrade mode statuses
   enum UpgradeStatus {
     Idle,
@@ -18,7 +18,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
   }
 
   /// @notice Array of addresses of upgradeable contracts managed by the gatekeeper
-  Upgradeable[] public managedContracts;
+  IUpgradeable[] public managedContracts;
 
   UpgradeStatus public upgradeStatus;
 
@@ -50,7 +50,7 @@ contract UpgradeGatekeeper is UpgradeEvents, ZkBNBOwnable {
     require(upgradeStatus == UpgradeStatus.Idle, "apc11");
     /// apc11 - upgradeable contract can't be added during upgrade
 
-    managedContracts.push(Upgradeable(addr));
+    managedContracts.push(IUpgradeable(addr));
     emit NewUpgradable(versionId, addr);
   }
 

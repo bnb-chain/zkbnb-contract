@@ -231,7 +231,7 @@ describe('ZkBNB', function () {
           'signature should not be empty',
         );
         onchainOperations[0].ethWitness = ethers.utils.hexlify(ethers.utils.randomBytes(66));
-        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.revertedWith('D');
+        await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock])).to.be.revertedWith('R');
         onchainOperations[0].ethWitness = ethWitness;
         await expect(zkBNB.commitBlocks(genesisBlock, [commitBlock]))
           .to.emit(zkBNB, 'BlockCommit')

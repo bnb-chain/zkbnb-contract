@@ -58,10 +58,14 @@ library Utils {
       signV := byte(0, mload(add(_signature, 96)))
     }
 
-    return ecrecover(_messageHash, signV, signR, signS);
+    address recoveredAddress = ecrecover(_messageHash, signV, signR, signS);
+    require(recoveredAddress != address(0), "R");
+
+    return recoveredAddress;
   }
 
   /// @notice Returns new_hash = hash(old_hash + bytes)
+  /// @param _bytes Pubdata to be hashed; should not be used again once passed to this function since the length might change
   function concatHash(bytes32 _hash, bytes memory _bytes) internal pure returns (bytes32) {
     bytes32 result;
     assembly {
@@ -117,7 +121,7 @@ library Utils {
       )
     );
     address recoveredAddress = Utils.recoverAddressFromEthSignature(signature, messageHash);
-    return recoveredAddress == _changePk.owner && recoveredAddress != address(0);
+    return recoveredAddress == _changePk.owner;
   }
 
   /// @dev Converts hex string to base 58

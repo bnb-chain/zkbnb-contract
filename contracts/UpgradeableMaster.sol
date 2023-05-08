@@ -97,12 +97,13 @@ contract UpgradeableMaster is AccessControl {
   }
 
   /// @notice processing new approval of decrease upgrade notice period time to zero
-  function cutUpgradeNoticePeriod() external {
+  function cutUpgradeNoticePeriod(uint256 startTimestamp) external {
     require(!zkBNB.desertMode());
 
     for (uint256 id = 0; id < securityCouncilMembers.length; ++id) {
       if (securityCouncilMembers[id] == msg.sender) {
         require(_upgradeStartTimestamp != 0, "ust");
+        require(_upgradeStartTimestamp == startTimestamp, "upgrade StartTime mismatch");
         require(!_securityCouncilApproves[id], "scf");
         _securityCouncilApproves[id] = true;
         ++_numberOfApprovalsFromSecurityCouncil;
@@ -117,6 +118,10 @@ contract UpgradeableMaster is AccessControl {
         break;
       }
     }
+  }
+
+  function upgradeStartTimestamp() external view returns (uint256) {
+    return _upgradeStartTimestamp;
   }
 
   /// @notice Checks that contract is ready for upgrade

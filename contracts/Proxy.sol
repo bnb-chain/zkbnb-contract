@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "./ZkBNBOwnable.sol";
-import "./interfaces/Upgradeable.sol";
+import "./interfaces/IUpgradeable.sol";
 
 /// @title Proxy Contract
 /// @author ZkBNB Team
-contract Proxy is Upgradeable, ZkBNBOwnable {
+contract Proxy is IUpgradeable, ZkBNBOwnable {
   /// @dev Storage position of "target" (actual implementation address: keccak256('eip1967.proxy.implementation') - 1)
   bytes32 private constant TARGET_POSITION = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
