@@ -57,7 +57,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @dev Desert mode must be entered in case of current L1 block number is higher than the oldest
   /// @dev of existed priority requests expiration block number.
   /// @return bool flag that is true if the desert mode must be entered.
-  function activateDesertMode() public returns (bool) {
+  function activateDesertMode() external nonReentrant returns (bool) {
     // #if EASY_DESERT
     bool trigger = true;
     // #else
@@ -176,14 +176,14 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   /// @notice Register full exit request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(uint32 _accountIndex, address _asset) public {
+  function requestFullExit(uint32 _accountIndex, address _asset) external {
     delegateAdditional();
   }
 
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public {
+  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) external {
     delegateAdditional();
   }
 
@@ -259,7 +259,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function commitBlocks(
     StoredBlockInfo memory _lastCommittedBlockData,
     CommitBlockInfo[] memory _newBlocksData
-  ) external onlyActive {
+  ) external nonReentrant onlyActive {
     governance.isActiveValidator(msg.sender);
     // Check that we commit blocks after last committed block
     // incorrect previous block data
@@ -450,7 +450,7 @@ contract ZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable, IERC721Re
   function verifyAndExecuteBlocks(
     VerifyAndExecuteBlockInfo[] memory _blocks,
     uint256[] memory _proofs
-  ) external onlyActive {
+  ) external nonReentrant onlyActive {
     governance.isActiveValidator(msg.sender);
 
     uint64 priorityRequestsExecuted = 0;

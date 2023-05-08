@@ -91,14 +91,14 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
 
   /// @notice Change current governor
   /// @param _newGovernor Address of the new governor
-  function changeGovernor(address _newGovernor) external onlyGovernor {
+  function changeGovernor(address _newGovernor) external nonReentrant onlyGovernor {
     if (networkGovernor != _newGovernor) {
       networkGovernor = _newGovernor;
       emit NewGovernor(_newGovernor);
     }
   }
 
-  function changeAssetGovernance(AssetGovernance _newAssetGovernance) external onlyGovernor {
+  function changeAssetGovernance(AssetGovernance _newAssetGovernance) external nonReentrant onlyGovernor {
     if (assetGovernance != _newAssetGovernance) {
       assetGovernance = _newAssetGovernance;
       emit NewAssetGovernance(_newAssetGovernance);
@@ -107,7 +107,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
 
   /// @notice Add asset to the list of networks tokens
   /// @param _asset Token address
-  function addAsset(address _asset) external {
+  function addAsset(address _asset) external nonReentrant {
     require(msg.sender == address(assetGovernance), "1E");
     require(assetsList[_asset] == 0, "1e");
     // token exists
@@ -127,7 +127,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
     }
   }
 
-  function setAssetPaused(address _assetAddress, bool _assetPaused) external onlyGovernor {
+  function setAssetPaused(address _assetAddress, bool _assetPaused) external nonReentrant onlyGovernor {
     uint16 assetId = assetsList[_assetAddress];
     require(assetId != 0, "1i");
 
@@ -137,7 +137,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
     }
   }
 
-  function setValidator(address _validator, bool _active) external onlyGovernor {
+  function setValidator(address _validator, bool _active) external nonReentrant onlyGovernor {
     if (validators[_validator] != _active) {
       validators[_validator] = _active;
       emit ValidatorStatusUpdate(_validator, _active);
@@ -171,7 +171,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @notice Register collection corresponding to the default factory
   /// @param _creatorAddress L2 collection creator address
   /// @param _collectionId L2 collection id
-  function registerDefaultNFTFactory(address _creatorAddress, uint16 _collectionId) external {
+  function registerDefaultNFTFactory(address _creatorAddress, uint16 _collectionId) external nonReentrant {
     require(msg.sender == zkBNBAddress, "No access");
     if (nftFactories[_creatorAddress][_collectionId] == address(0)) {
       nftFactories[_creatorAddress][_collectionId] = defaultNFTFactory;
@@ -207,7 +207,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
 
   /// @notice Set ZkBNB address
   /// @param _zkBNBAddress ZkBNB address
-  function setZkBNBAddress(address _zkBNBAddress) external onlyGovernor {
+  function setZkBNBAddress(address _zkBNBAddress) external nonReentrant onlyGovernor {
     require(_zkBNBAddress != address(0), "Invalid address");
     require(zkBNBAddress != _zkBNBAddress, "Unchanged");
     zkBNBAddress = _zkBNBAddress;
@@ -216,7 +216,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
 
   /// @notice Set default factory for our contract. This factory will be used to mint an NFT token that has no factory
   /// @param _factoryAddress Address of NFT factory
-  function setDefaultNFTFactory(address _factoryAddress) external onlyGovernor {
+  function setDefaultNFTFactory(address _factoryAddress) external nonReentrant onlyGovernor {
     require(_factoryAddress != address(0), "mb1"); // Factory should be non zero
     require(defaultNFTFactory == address(0), "mb2"); // NFTFactory is already set
     defaultNFTFactory = _factoryAddress;
@@ -240,7 +240,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @notice Add new factoryAddress for creatorAddress
   /// @param _factoryAddress factory contract address
   /// @param _creatorAddress creator account address
-  function addNFTFactory(address _factoryAddress, address _creatorAddress) external onlyGovernor {
+  function addNFTFactory(address _factoryAddress, address _creatorAddress) external nonReentrant onlyGovernor {
     require(_factoryAddress != address(0), "Invalid address");
     require(nftFactoryCreators[_factoryAddress] == address(0), "Factory address already exists");
     nftFactoryCreators[_factoryAddress] = _creatorAddress;
@@ -249,7 +249,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @notice update nftBaseURIs mapping
   /// @param nftContentType which protocol to store nft content
   /// @param baseURI nft baseURI, used to generate tokenURI of nft
-  function updateBaseURI(uint8 nftContentType, string memory baseURI) external onlyGovernor {
+  function updateBaseURI(uint8 nftContentType, string memory baseURI) external nonReentrant onlyGovernor {
     nftBaseURIs[nftContentType] = baseURI;
   }
 

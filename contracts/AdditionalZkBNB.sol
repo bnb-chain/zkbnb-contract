@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -16,7 +16,7 @@ import "./DesertVerifier.sol";
 
 /// @title ZkBNB additional main contract
 /// @author ZkBNB
-contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard {
+contract AdditionalZkBNB is Events, Storage, Config, ReentrancyGuardUpgradeable {
   function increaseBalanceToWithdraw(bytes22 _packedBalanceKey, uint128 _amount) internal {
     uint128 balance = pendingBalances[_packedBalanceKey].balanceToWithdraw;
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
@@ -197,14 +197,8 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard {
     require(mintedNfts[nftKey].nftContentHash != bytes32(0), "l1 nft is not allowed");
 
     // Transfer the tokens to this contract
-    bool success;
-    try IERC721(_nftL1Address).safeTransferFrom(msg.sender, address(this), _nftL1TokenId) {
-      success = true;
-    } catch {
-      success = false;
-    }
-    require(success, "nft transfer failed");
-    // check if the NFT has arrived
+    IERC721(_nftL1Address).safeTransferFrom(msg.sender, address(this), _nftL1TokenId);
+    // double check if the NFT has arrived
     require(IERC721(_nftL1Address).ownerOf(_nftL1TokenId) == address(this), "i");
 
     bytes32 nftContentHash = mintedNfts[nftKey].nftContentHash;
@@ -261,7 +255,7 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard {
   /// @notice Register full exit request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _asset Token address, 0 address for BNB
-  function requestFullExit(uint32 _accountIndex, address _asset) public nonReentrant onlyActive {
+  function requestFullExit(uint32 _accountIndex, address _asset) external nonReentrant onlyActive {
     require(_accountIndex <= MAX_ACCOUNT_INDEX, "e");
 
     uint16 assetId;
@@ -290,7 +284,7 @@ contract AdditionalZkBNB is Storage, Config, Events, ReentrancyGuard {
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) public nonReentrant onlyActive {
+  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) external nonReentrant onlyActive {
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
       accountIndex: _accountIndex,
