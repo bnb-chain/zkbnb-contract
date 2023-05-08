@@ -12,6 +12,11 @@ const abi = ethers.utils.defaultAbiCoder;
 
 async function main() {
   console.log(chalk.yellow(figlet.textSync('zkBNB Deploy tool')));
+
+  console.log(chalk.green('\t📦 Clean building target...'));
+  await hardhat.run('clean');
+  await hardhat.run('compile');
+
   const network = hardhat.network.name;
   const isMainnet = network === 'BSCMainnet';
 
