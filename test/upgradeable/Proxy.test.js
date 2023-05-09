@@ -6,6 +6,7 @@ const { expect } = chai;
 chai.use(smock.matchers);
 
 describe('Proxy', function () {
+  let Proxy;
   let mockGovernance;
   let mockZkBNBVerifier;
   let mockZkBNB;
@@ -47,7 +48,7 @@ describe('Proxy', function () {
     mockZkBNB = await MockZkBNB.deploy();
     await mockZkBNB.deployed();
 
-    const Proxy = await ethers.getContractFactory('Proxy');
+    Proxy = await ethers.getContractFactory('Proxy');
 
     mockGovernance.initialize.returns();
     mockZkBNBVerifier.initialize.returns();
@@ -194,6 +195,79 @@ describe('Proxy', function () {
     it('intercept `ZkBNB` upgrade', async function () {
       const zkBNBImplement = mockZkBNB.attach(proxyZkBNB.address);
       expect(zkBNBImplement.upgrade(addr3.address)).to.be.revertedWith('upg11');
+    });
+  });
+
+  describe('Destruct logic contract with `upgrade` method', function () {
+    let proxy, zkBNB;
+    let mockAdditionalZkBNB, mockDesertVerifier;
+
+    it('deploy ZkBNB', async function () {
+      const MockAdditionalZkBNB = await smock.mock('AdditionalZkBNB');
+
+      mockAdditionalZkBNB = await MockAdditionalZkBNB.deploy();
+      await mockAdditionalZkBNB.deployed();
+
+      const ZkBNB = await ethers.getContractFactory('ZkBNB', {
+        libraries: {
+          Utils: utils.address,
+        },
+      });
+      zkBNB = await ZkBNB.deploy();
+      await zkBNB.deployed();
+
+      mockDesertVerifier = await smock.fake('DesertVerifier');
+
+      const initParams = ethers.utils.defaultAbiCoder.encode(
+        ['address', 'address', 'address', 'address', 'bytes32'],
+        [
+          mockGovernance.address,
+          mockZkBNBVerifier.address,
+          mockAdditionalZkBNB.address,
+          mockDesertVerifier.address,
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ],
+      );
+      proxy = await Proxy.deploy(zkBNB.address, initParams);
+
+      expect(await proxy.getTarget()).to.equal(zkBNB.address);
+    });
+
+    it('invoking `upgrade` bypassing proxy should be intercepted', async function () {
+      const attackerContract = await smock.fake('AdditionalZkBNB');
+      const upgradeParams = ethers.utils.defaultAbiCoder.encode(
+        ['address', 'address'],
+        [attackerContract.address, mockDesertVerifier.address],
+      );
+
+      await zkBNB.upgrade(upgradeParams);
+
+      mockGovernance.isActiveValidator.returns();
+      // calls bypassing proxy contract should be intercepted
+      await expect(zkBNB.revertBlocks([])).to.be.revertedWith('Can not dirctly call by zkbnbImplementation');
+    });
+
+    it('legitimate calls should not be affected by malicious `upgrade`', async function () {
+      const attackerContract = await smock.fake('AdditionalZkBNB');
+      const upgradeParams = ethers.utils.defaultAbiCoder.encode(
+        ['address', 'address'],
+        [attackerContract.address, mockDesertVerifier.address],
+      );
+
+      await zkBNB.upgrade(upgradeParams);
+
+      // use ZkBNB abi to call function in proxy address
+      const zkBNBProxy = new ethers.Contract(proxy.address, zkBNB.interface, owner);
+
+      // deposit BNB works fine
+      expect(await zkBNBProxy.depositBNB(owner.address, { value: 100 }))
+        .to.emit(zkBNBProxy.address, 'Deposit')
+        .withArgs(0, owner.address, 100);
+
+      // calls via Proxy still goes to `mockAdditionalZkBNB` after malicious `upgrade` made
+      // `zkBNBProxy` -> `zkBNB` -> `mockAdditionalZkBNB`
+      expect(mockAdditionalZkBNB.depositBNB).to.be.delegatedFrom(zkBNBProxy.address);
+      expect(mockAdditionalZkBNB.depositBNB).to.have.been.calledOnce;
     });
   });
 });
