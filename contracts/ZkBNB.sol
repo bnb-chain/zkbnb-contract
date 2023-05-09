@@ -239,7 +239,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
     address _to,
     uint128 _amount,
     uint128 _maxAmount
-  ) external nonReentrant returns (uint128 withdrawnAmount) {
+  ) external returns (uint128 withdrawnAmount) {
     require(msg.sender == address(this), "5");
     // can be called only from this contract as one "external" call (to revert all this function state changes if it is needed)
 
