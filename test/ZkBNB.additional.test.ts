@@ -72,8 +72,8 @@ describe('ZkBNB', function () {
         Utils: utils.address,
       },
     });
-    zkBNB = await ZkBNB.deploy();
-    await zkBNB.deployed();
+    const zkBNBTestImpl = await ZkBNB.deploy();
+    await zkBNBTestImpl.deployed();
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -85,7 +85,12 @@ describe('ZkBNB', function () {
         genesisStateRoot,
       ],
     );
-    await zkBNB.initialize(initParams);
+    await zkBNBTestImpl.initialize(initParams);
+
+    const Proxy = await ethers.getContractFactory('Proxy');
+    const zkBNBProxy = await Proxy.deploy(zkBNBTestImpl.address, initParams);
+    await zkBNBProxy.deployed();
+    zkBNB = await ZkBNB.attach(zkBNBProxy.address);
 
     // mock functions
     mockGovernance.getNFTFactory.returns(mockNftFactory.address);
