@@ -19,15 +19,15 @@ exports.saveConstructorArgumentsForVerify = function (path, args) {
 };
 
 exports.getZkBNBProxy = async function (addr) {
-  // Get utils contract
-  const Utils = await ethers.getContractFactory('Utils');
-  const utils = await Utils.deploy();
-  await utils.deployed();
+  // Get txTypes contract
+  const TxTypes = await ethers.getContractFactory('TxTypes');
+  const txTypes = await TxTypes.deploy();
+  await txTypes.deployed();
 
   // zkbnb
   const ZkBNB = await ethers.getContractFactory('ZkBNB', {
     libraries: {
-      Utils: utils.address,
+      TxTypes: txTypes.address,
     },
   });
 
