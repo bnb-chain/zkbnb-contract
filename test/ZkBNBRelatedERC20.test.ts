@@ -41,8 +41,8 @@ describe('ZkBNBRelatedERC20', async function () {
         Utils: utils.address,
       },
     });
-    zkBNB = await ZkBNB.deploy();
-    await zkBNB.deployed();
+    const zkBNBImpl = await ZkBNB.deploy();
+    await zkBNBImpl.deployed();
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -54,7 +54,12 @@ describe('ZkBNBRelatedERC20', async function () {
         '0x0000000000000000000000000000000000000000000000000000000000000000',
       ],
     );
-    await zkBNB.initialize(initParams);
+    await zkBNBImpl.initialize(initParams);
+
+    const Proxy = await ethers.getContractFactory('Proxy');
+    const zkBNBProxy = await Proxy.deploy(zkBNBImpl.address, initParams);
+    await zkBNBProxy.deployed();
+    zkBNB = await ZkBNB.attach(zkBNBProxy.address);
   });
 
   it('create ZkBNBRelatedERC20', async function () {

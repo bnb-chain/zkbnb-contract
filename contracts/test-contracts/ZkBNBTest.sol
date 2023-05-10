@@ -8,12 +8,19 @@ import "../Storage.sol";
 import "../Config.sol";
 
 contract ZkBNBTest is ZkBNB {
+  address private immutable zkbnbImplementation;
+
+  constructor() {
+    zkbnbImplementation = address(this);
+  }
+
   /// @notice Same as fallback but called when calldata is empty
   receive() external payable {
     _fallback();
   }
 
   function _fallback() internal {
+    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
     address _target = address(additionalZkBNB);
     assembly {
       // The pointer to the free memory slot

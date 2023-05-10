@@ -59,8 +59,8 @@ describe('NFT functionality', function () {
         Utils: utils.address,
       },
     });
-    zkBNB = await ZkBNBTest.deploy();
-    await zkBNB.deployed();
+    const zkBNBTestImpl = await ZkBNBTest.deploy();
+    await zkBNBTestImpl.deployed();
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -72,7 +72,12 @@ describe('NFT functionality', function () {
         ethers.utils.formatBytes32String('genesisStateRoot'),
       ],
     );
-    await zkBNB.initialize(initParams);
+    await zkBNBTestImpl.initialize(initParams);
+
+    const Proxy = await ethers.getContractFactory('Proxy');
+    const zkBNBProxy = await Proxy.deploy(zkBNBTestImpl.address, initParams);
+    await zkBNBProxy.deployed();
+    zkBNB = await ZkBNBTest.attach(zkBNBProxy.address);
 
     const ZkBNBNFTFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
     zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', zkBNB.address, owner.address);
