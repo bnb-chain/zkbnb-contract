@@ -61,9 +61,13 @@ async function main() {
   const _genesisStateRoot = '0x1bb54bd4586b34192cd80ca2b19d3579b68509c2a9302405fa8758ba905765c4';
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
-  const _listingToken = isMainnet
+  const BUSDToken = isMainnet
     ? '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
-    : '0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee'; // Listing fee should be BUSD
+    : '0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee';
+
+  // Listing fee should be BUSD
+  const _listingToken = BUSDToken;
+
   // deploy DeployFactory
   console.log(chalk.blue('🚛 Run DeployFactory'));
 
@@ -112,6 +116,10 @@ async function main() {
 
   const assetGovernance = contractFactories.AssetGovernance.attach(assetGovernanceEntryAddress);
 
+  // BUSD should be added at first place
+  const addAssetTx = await assetGovernance.addAsset(BUSDToken);
+  await addAssetTx.wait();
+
   // deploy default nft factory
   console.log(chalk.blue('⚙️ Setting ZkBNB DefaultNftFactory'));
   console.log('\t🚀Deploy DefaultNftFactory...');
@@ -148,13 +156,7 @@ async function main() {
 
   // Save addresses into JSON
   console.log(chalk.blue('📥 Save deployed contract addresses and arguments'));
-  const ERC20ForTestnet = isMainnet
-    ? {}
-    : {
-        BUSDToken: isMainnet
-          ? '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
-          : '0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee',
-      };
+
   saveDeployedAddresses(
     'info/addresses.json',
     Object.assign({
@@ -168,6 +170,7 @@ async function main() {
       DefaultNftFactory: DefaultNftFactory.address,
       upgradeableMaster: upgradeableMaster.address,
       utils: contractFactories.Utils.address,
+      BUSDToken,
     }),
   );
 
