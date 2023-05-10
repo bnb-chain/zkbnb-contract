@@ -1,6 +1,7 @@
 const chai = require('chai');
 const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
+const { deployZkBNB, deployMockZkBNB, deployMockGovernance } = require('../util');
 
 const { expect } = chai;
 chai.use(smock.matchers);
@@ -10,9 +11,6 @@ describe('Proxy', function () {
   let mockGovernance;
   let mockZkBNBVerifier;
   let mockZkBNB;
-
-  // `ZkBNB` needs to link to library `Utils` before deployed
-  let utils;
 
   let proxyGovernance;
   let proxyZkBNBVerifier;
@@ -24,29 +22,13 @@ describe('Proxy', function () {
   beforeEach(async function () {
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-
-    const MockGovernance = await smock.mock('Governance', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    mockGovernance = await MockGovernance.deploy();
-    await mockGovernance.deployed();
+    mockGovernance = await deployMockGovernance();
 
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
 
-    const MockZkBNB = await smock.mock('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    mockZkBNB = await MockZkBNB.deploy();
-    await mockZkBNB.deployed();
+    mockZkBNB = await deployMockZkBNB();
 
     Proxy = await ethers.getContractFactory('Proxy');
 
@@ -79,13 +61,7 @@ describe('Proxy', function () {
 
   describe('Proxy contract should upgrade new target', function () {
     it('upgrade new `Governance` target', async function () {
-      const MockGovernance = await smock.mock('Governance', {
-        libraries: {
-          Utils: utils.address,
-        },
-      });
-      const mockGovernanceNew = await MockGovernance.deploy();
-      await mockGovernanceNew.deployed();
+      const mockGovernanceNew = await deployMockGovernance();
 
       await proxyGovernance.upgradeTarget(mockGovernanceNew.address, ethers.constants.HashZero);
       expect(mockGovernanceNew.upgrade).to.be.delegatedFrom(proxyGovernance.address);
@@ -93,13 +69,7 @@ describe('Proxy', function () {
     });
 
     it('upgradeTarget event', async function () {
-      const MockGovernance = await smock.mock('Governance', {
-        libraries: {
-          Utils: utils.address,
-        },
-      });
-      const mockGovernanceNew = await MockGovernance.deploy();
-      await mockGovernanceNew.deployed();
+      const mockGovernanceNew = await deployMockGovernance();
 
       const upgrade = await proxyGovernance.upgradeTarget(mockGovernanceNew.address, addr1.address);
       const receipt = await upgrade.wait();
@@ -121,13 +91,7 @@ describe('Proxy', function () {
     });
 
     it('upgrade new `ZkBNB` target', async function () {
-      const MockZkBNB = await smock.mock('ZkBNB', {
-        libraries: {
-          Utils: utils.address,
-        },
-      });
-      const mockZkBNBNew = await MockZkBNB.deploy();
-      await mockZkBNBNew.deployed();
+      const mockZkBNBNew = await deployMockZkBNB();
       mockZkBNBNew.upgrade.returns(true);
 
       await proxyZkBNB.upgradeTarget(mockZkBNBNew.address, ethers.constants.AddressZero);
@@ -208,12 +172,7 @@ describe('Proxy', function () {
       mockAdditionalZkBNB = await MockAdditionalZkBNB.deploy();
       await mockAdditionalZkBNB.deployed();
 
-      const ZkBNB = await ethers.getContractFactory('ZkBNB', {
-        libraries: {
-          Utils: utils.address,
-        },
-      });
-      zkBNB = await ZkBNB.deploy();
+      zkBNB = await deployZkBNB('ZkBNB');
       await zkBNB.deployed();
 
       mockDesertVerifier = await smock.fake('DesertVerifier');

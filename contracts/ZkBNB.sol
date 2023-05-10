@@ -359,7 +359,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
         TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
         bytes memory ethWitness = _newBlockData.onchainOperations[i].ethWitness;
         require(ethWitness.length != 0, "signature should not be empty");
-        bool valid = Utils.verifyChangePubkey(ethWitness, changePubKeyData);
+        bool valid = TxTypes.verifyChangePubkey(ethWitness, changePubKeyData);
         require(valid, "D"); // failed to verify change pubkey hash signature
       } else if (txType == TxTypes.TxType.Deposit) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);

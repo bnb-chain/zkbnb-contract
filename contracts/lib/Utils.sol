@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "./Bytes.sol";
-import "./TxTypes.sol";
-import "../Storage.sol";
 
 library Utils {
   bytes constant SHA256_MULTI_HASH = hex"1220";
@@ -90,38 +85,6 @@ library Utils {
       pubData[i] = uint256(result) % q;
     }
     return pubData;
-  }
-
-  /// @notice Checks that signature is valid for pubkey change message
-  /// @param _ethWitness Version(1 byte) and signature (65 bytes)
-  /// @param _changePk Parsed change pubkey tx type
-  function verifyChangePubkey(
-    bytes memory _ethWitness,
-    TxTypes.ChangePubKey memory _changePk
-  ) external pure returns (bool) {
-    (, bytes memory signature) = Bytes.read(_ethWitness, 1, 65); // offset is 1 because we skip type of ChangePubkey
-
-    bytes32 messageHash = keccak256(
-      abi.encodePacked(
-        "\x19Ethereum Signed Message:\n265",
-        "Register zkBNB Account\n\n",
-        "pubkeyX: 0x",
-        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyX)),
-        "\n",
-        "pubkeyY: 0x",
-        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyY)),
-        "\n",
-        "nonce: 0x",
-        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
-        "\n",
-        "account index: 0x",
-        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.accountIndex)),
-        "\n\n",
-        "Only sign this message for a trusted client!"
-      )
-    );
-    address recoveredAddress = Utils.recoverAddressFromEthSignature(signature, messageHash);
-    return recoveredAddress == _changePk.owner;
   }
 
   /// @dev Converts hex string to base 58

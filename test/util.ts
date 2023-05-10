@@ -1,7 +1,8 @@
-import { utils } from 'ethers';
+import { Contract, utils } from 'ethers';
 
 import { ethers } from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { smock } from '@defi-wonderland/smock';
 
 export const getKeccak256 = (name) => {
   return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(name));
@@ -168,4 +169,88 @@ export function getChangePubkeyMessage(
     `account index: ${msgAccountIndex}\n\n` +
     `Only sign this message for a trusted client!`;
   return utils.toUtf8Bytes(message);
+}
+
+export async function deployZkBNB(contractName: string) {
+  const TxTypes = await ethers.getContractFactory('TxTypes');
+  const txTypes = await TxTypes.deploy();
+  await txTypes.deployed();
+
+  const ZkBNB = await ethers.getContractFactory(contractName, {
+    libraries: {
+      TxTypes: txTypes.address,
+    },
+  });
+
+  const zkBNB = await ZkBNB.deploy();
+  await zkBNB.deployed();
+
+  return zkBNB;
+}
+
+export async function deployMockZkBNB() {
+  const TxTypes = await ethers.getContractFactory('TxTypes');
+  const txTypes = await TxTypes.deploy();
+  await txTypes.deployed();
+
+  const MockZkBNB = await smock.mock('ZkBNB', {
+    libraries: {
+      TxTypes: txTypes.address,
+    },
+  });
+  const mockZkBNB = await MockZkBNB.deploy();
+  await mockZkBNB.deployed();
+
+  return mockZkBNB;
+}
+
+export async function deployGovernance() {
+  const Utils = await ethers.getContractFactory('Utils');
+  const utils = await Utils.deploy();
+  await utils.deployed();
+
+  const Governance = await ethers.getContractFactory('Governance', {
+    libraries: {
+      Utils: utils.address,
+    },
+  });
+  const governance = await Governance.deploy();
+  await governance.deployed();
+
+  return governance;
+}
+
+export async function deployMockGovernance() {
+  const Utils = await ethers.getContractFactory('Utils');
+  const utils = await Utils.deploy();
+  await utils.deployed();
+
+  const MockGovernance = await smock.mock('Governance', {
+    libraries: {
+      Utils: utils.address,
+    },
+  });
+  const mockGovernance = await MockGovernance.deploy();
+  await mockGovernance.deployed();
+
+  return mockGovernance;
+}
+
+export async function deployZkBNBProxy(initParams: string, implContract: Contract) {
+  const Proxy = await ethers.getContractFactory('Proxy');
+  const zkBNBProxy = await Proxy.deploy(implContract.address, initParams);
+  await zkBNBProxy.deployed();
+
+  const TxTypes = await ethers.getContractFactory('TxTypes');
+  const txTypes = await TxTypes.deploy();
+  await txTypes.deployed();
+
+  const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
+    libraries: {
+      TxTypes: txTypes.address,
+    },
+  });
+  const zkBNB = ZkBNB.attach(zkBNBProxy.address);
+
+  return zkBNB;
 }

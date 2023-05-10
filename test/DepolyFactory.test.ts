@@ -1,6 +1,7 @@
 import chai, { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { smock } from '@defi-wonderland/smock';
+import { deployMockZkBNB } from './util';
 
 /* eslint-disable */
 const namehash = require('eth-ens-namehash');
@@ -9,7 +10,6 @@ chai.use(smock.matchers);
 
 describe('DeployFactory', function () {
   let DeployFactory;
-  let utils;
   let mockGovernanceTarget;
   let mockVerifierTarget;
   let mockZkbnbTarget;
@@ -29,20 +29,11 @@ describe('DeployFactory', function () {
   beforeEach(async function () {
     [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-
     DeployFactory = await ethers.getContractFactory('DeployFactory');
 
     mockGovernanceTarget = await smock.fake('Governance');
     mockVerifierTarget = await smock.fake('ZkBNBVerifier');
-    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    mockZkbnbTarget = await smock.fake(ZkBNB);
+    mockZkbnbTarget = await deployMockZkBNB();
 
     mockValidator = addr1;
     mockGovernor = addr2;

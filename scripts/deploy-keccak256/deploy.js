@@ -199,6 +199,10 @@ async function main() {
 }
 
 async function getContractFactories() {
+  const TxTypes = await ethers.getContractFactory('TxTypes');
+  const txTypes = await TxTypes.deploy();
+  await txTypes.deployed();
+
   const Utils = await ethers.getContractFactory('Utils');
   const utils = await Utils.deploy();
   await utils.deployed();
@@ -215,7 +219,7 @@ async function getContractFactories() {
     Verifier: await ethers.getContractFactory('ZkBNBVerifier'),
     ZkBNB: await ethers.getContractFactory('ZkBNB', {
       libraries: {
-        Utils: utils.address,
+        TxTypes: txTypes.address,
       },
     }),
     DeployFactory: await ethers.getContractFactory('DeployFactory'),

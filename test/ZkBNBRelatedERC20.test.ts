@@ -2,6 +2,7 @@ import chai from 'chai';
 import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { smock } from '@defi-wonderland/smock';
+import { deployZkBNB, deployZkBNBProxy } from './util';
 
 chai.use(smock.matchers);
 
@@ -15,7 +16,7 @@ describe('ZkBNBRelatedERC20', async function () {
   let mockGovernance;
   let mockZkBNBVerifier;
   let mockDesertVerifier;
-  let zkBNB, additionalZkBNB, utils;
+  let zkBNB, additionalZkBNB;
 
   let owner;
 
@@ -26,23 +27,11 @@ describe('ZkBNBRelatedERC20', async function () {
     mockZkBNBVerifier = await smock.fake('ZkBNBVerifier');
     mockDesertVerifier = await smock.fake('DesertVerifier');
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-
-    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB', {
-      libraries: {},
-    });
+    const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    const zkBNBImpl = await ZkBNB.deploy();
-    await zkBNBImpl.deployed();
+    const zkBNBImpl = await deployZkBNB('ZkBNBTest');
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -56,10 +45,7 @@ describe('ZkBNBRelatedERC20', async function () {
     );
     await zkBNBImpl.initialize(initParams);
 
-    const Proxy = await ethers.getContractFactory('Proxy');
-    const zkBNBProxy = await Proxy.deploy(zkBNBImpl.address, initParams);
-    await zkBNBProxy.deployed();
-    zkBNB = await ZkBNB.attach(zkBNBProxy.address);
+    zkBNB = await deployZkBNBProxy(initParams, zkBNBImpl);
   });
 
   it('create ZkBNBRelatedERC20', async function () {

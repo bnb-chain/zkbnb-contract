@@ -1,8 +1,7 @@
 const chai = require('chai');
 const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
-const { PubDataType, encodePubData, PubDataTypeMap } = require('./util');
-
+const { PubDataType, encodePubData, PubDataTypeMap, deployZkBNB, deployZkBNBProxy } = require('./util');
 const { expect } = chai;
 chai.use(smock.matchers);
 
@@ -15,9 +14,6 @@ describe('ZkBNB', function () {
   let zkBNB;
   let owner;
 
-  // `ZkBNB` needs to link to library `Utils` before deployed
-  let utils;
-
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
@@ -28,23 +24,13 @@ describe('ZkBNB', function () {
     mockDesertVerifier = await smock.fake('DesertVerifier');
     mockERC20 = await smock.fake('ERC20');
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-
     const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB', {
       libraries: {},
     });
     additionalZkBNB = await AdditionalZkBNB.deploy();
     await additionalZkBNB.deployed();
 
-    const ZkBNB = await ethers.getContractFactory('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    const zkBNBImpl = await ZkBNB.deploy();
-    await zkBNBImpl.deployed();
+    const zkBNBImpl = await deployZkBNB('ZkBNB');
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -58,10 +44,7 @@ describe('ZkBNB', function () {
     );
     await zkBNBImpl.initialize(initParams);
 
-    const Proxy = await ethers.getContractFactory('Proxy');
-    const zkBNBProxy = await Proxy.deploy(zkBNBImpl.address, initParams);
-    await zkBNBProxy.deployed();
-    zkBNB = await ZkBNB.attach(zkBNBProxy.address);
+    zkBNB = await deployZkBNBProxy(initParams, zkBNBImpl);
   });
 
   describe('Deposit', function () {

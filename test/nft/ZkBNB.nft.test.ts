@@ -2,7 +2,8 @@ import { ethers } from 'hardhat';
 import chai, { expect } from 'chai';
 import { smock } from '@defi-wonderland/smock';
 import assert from 'assert';
-import CID = require('cids');
+import CID from 'cids';
+import { deployGovernance, deployZkBNB, deployZkBNBProxy } from '../util';
 
 chai.use(smock.matchers);
 const abi = ethers.utils.defaultAbiCoder;
@@ -19,8 +20,6 @@ describe('NFT functionality', function () {
 
   let owner, acc1, acc2;
 
-  let utils;
-
   const mockHash = ethers.utils.hexZeroPad(
     '0x3579B1273F940172FEBE72B0BFB51C15F49F23E558CA7F03DFBA2D97D8287A30'.toLowerCase(),
     32,
@@ -32,17 +31,7 @@ describe('NFT functionality', function () {
   before(async function () {
     [owner, acc1, acc2] = await ethers.getSigners();
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-
-    const Governance = await ethers.getContractFactory('Governance', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    governance = await Governance.deploy();
-    await governance.deployed();
+    governance = await deployGovernance();
 
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
@@ -54,13 +43,7 @@ describe('NFT functionality', function () {
 
     mockDesertVerifier = await smock.fake('DesertVerifier');
 
-    const ZkBNBTest = await ethers.getContractFactory('ZkBNBTest', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    const zkBNBTestImpl = await ZkBNBTest.deploy();
-    await zkBNBTestImpl.deployed();
+    const zkBNBTestImpl = await deployZkBNB('ZkBNBTest');
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -74,10 +57,7 @@ describe('NFT functionality', function () {
     );
     await zkBNBTestImpl.initialize(initParams);
 
-    const Proxy = await ethers.getContractFactory('Proxy');
-    const zkBNBProxy = await Proxy.deploy(zkBNBTestImpl.address, initParams);
-    await zkBNBProxy.deployed();
-    zkBNB = await ZkBNBTest.attach(zkBNBProxy.address);
+    zkBNB = await deployZkBNBProxy(initParams, zkBNBTestImpl);
 
     const ZkBNBNFTFactory = await ethers.getContractFactory('ZkBNBNFTFactory');
     zkBNBNFTFactory = await ZkBNBNFTFactory.deploy('ZkBNBNft', 'Zk', zkBNB.address, owner.address);
