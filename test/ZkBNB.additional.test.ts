@@ -75,7 +75,6 @@ describe('ZkBNB', function () {
         genesisStateRoot,
       ],
     );
-    await zkBNBTestImpl.initialize(initParams);
 
     zkBNB = await deployZkBNBProxy(initParams, zkBNBTestImpl);
 
