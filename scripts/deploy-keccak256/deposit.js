@@ -3,6 +3,9 @@ const { getDeployedAddresses, getZkBNBProxy } = require('./utils');
 const { ethers } = hardhat;
 
 async function main() {
+  const network = hardhat.network.name;
+  const isLocal = network === 'local' || 'hardhat';
+
   const addrs = getDeployedAddresses('info/addresses.json');
   const zkbnb = await getZkBNBProxy(addrs.zkbnbProxy);
 
@@ -14,7 +17,7 @@ async function main() {
 
   // tokens
   const TokenFactory = await ethers.getContractFactory('ZkBNBRelatedERC20');
-  const BUSDToken = await TokenFactory.attach(addrs.BUSDToken);
+  const BUSDToken = TokenFactory.attach(addrs.BUSDToken);
 
   // deposit bnb
   console.log('Deposit BNB...');
@@ -35,12 +38,20 @@ async function main() {
 
   // deposit bep20
   console.log('Deposit BEP20...');
-  const depositBEP20 = await zkbnb.depositBEP20(
-    BUSDToken.address,
-    ethers.utils.parseEther('100'),
-    treasuryAccountAddress,
-  );
-  await depositBEP20.wait();
+  let depositBEP20Tx;
+  if (isLocal) {
+    const LEGToken = await TokenFactory.deploy(100, 'LEGToken', 'LEG');
+    await LEGToken.deployed();
+
+    depositBEP20Tx = await zkbnb.depositBEP20(LEGToken.address, ethers.utils.parseEther('100'), treasuryAccountAddress);
+  } else {
+    depositBEP20Tx = await zkbnb.depositBEP20(
+      BUSDToken.address,
+      ethers.utils.parseEther('100'),
+      treasuryAccountAddress,
+    );
+  }
+  await depositBEP20Tx.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
