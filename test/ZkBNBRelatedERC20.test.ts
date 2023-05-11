@@ -43,7 +43,6 @@ describe('ZkBNBRelatedERC20', async function () {
         '0x0000000000000000000000000000000000000000000000000000000000000000',
       ],
     );
-    await zkBNBImpl.initialize(initParams);
 
     zkBNB = await deployZkBNBProxy(initParams, zkBNBImpl);
   });

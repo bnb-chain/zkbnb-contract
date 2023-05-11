@@ -56,6 +56,8 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   /// @dev _verifierAddress The address of Verifier contract
   /// @dev _genesisStateHash Genesis blocks (first block) state tree root hash
   function initialize(bytes calldata initializationParameters) external initializer {
+    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
+
     __ReentrancyGuard_init();
 
     (
@@ -88,6 +90,8 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external nonReentrant {
+    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
+
     (address _additionalZkBNB, address _desertVerifier) = abi.decode(upgradeParameters, (address, address));
 
     if (_additionalZkBNB != address(0)) {

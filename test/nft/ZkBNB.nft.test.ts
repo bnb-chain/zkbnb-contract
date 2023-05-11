@@ -55,7 +55,6 @@ describe('NFT functionality', function () {
         ethers.utils.formatBytes32String('genesisStateRoot'),
       ],
     );
-    await zkBNBTestImpl.initialize(initParams);
 
     zkBNB = await deployZkBNBProxy(initParams, zkBNBTestImpl);
 
