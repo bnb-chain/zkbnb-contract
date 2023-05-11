@@ -10,6 +10,8 @@ import {
   PubDataTypeMap,
   StoredBlockInfo,
   VerifyAndExecuteBlockInfo,
+  deployZkBNB,
+  deployZkBNBProxy,
   encodePackPubData,
   encodePubData,
   getChangePubkeyMessage,
@@ -43,8 +45,6 @@ describe('ZkBNB', function () {
     commitment,
   };
 
-  // `ZkBNB` needs to link to library `Utils` before deployed
-  let utils;
   const newStateRoot = ethers.utils.formatBytes32String('newStateRoot');
 
   // `beforeEach` will run before each test, re-deploying the contract every
@@ -59,21 +59,11 @@ describe('ZkBNB', function () {
 
     mockNftFactory = await smock.fake('ZkBNBNFTFactory');
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-
     const AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNBTest');
     additionalZkBNB = await AdditionalZkBNB.deploy(ethers.constants.AddressZero);
     await additionalZkBNB.deployed();
 
-    const ZkBNB = await ethers.getContractFactory('ZkBNBTest', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    zkBNB = await ZkBNB.deploy();
-    await zkBNB.deployed();
+    const zkBNBTestImpl = await deployZkBNB('ZkBNBTest');
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -85,7 +75,8 @@ describe('ZkBNB', function () {
         genesisStateRoot,
       ],
     );
-    await zkBNB.initialize(initParams);
+
+    zkBNB = await deployZkBNBProxy(initParams, zkBNBTestImpl);
 
     // mock functions
     mockGovernance.getNFTFactory.returns(mockNftFactory.address);

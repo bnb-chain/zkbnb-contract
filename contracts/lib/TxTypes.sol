@@ -374,4 +374,33 @@ library TxTypes {
   function checkFullExitNftInPriorityQueue(FullExitNft memory _tx, bytes20 hashedPubData) internal pure returns (bool) {
     return Utils.hashBytesToBytes20(writeFullExitNftPubDataForPriorityQueue(_tx)) == hashedPubData;
   }
+
+  /// @notice Checks that signature is valid for pubkey change message
+  /// @param _ethWitness Version(1 byte) and signature (65 bytes)
+  /// @param _changePk Parsed change pubkey tx type
+  function verifyChangePubkey(bytes memory _ethWitness, ChangePubKey memory _changePk) external pure returns (bool) {
+    (, bytes memory signature) = Bytes.read(_ethWitness, 1, 65); // offset is 1 because we skip type of ChangePubkey
+
+    bytes32 messageHash = keccak256(
+      abi.encodePacked(
+        "\x19Ethereum Signed Message:\n265",
+        "Register zkBNB Account\n\n",
+        "pubkeyX: 0x",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyX)),
+        "\n",
+        "pubkeyY: 0x",
+        Bytes.bytesToHexASCIIBytes(abi.encodePacked(_changePk.pubkeyY)),
+        "\n",
+        "nonce: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.nonce)),
+        "\n",
+        "account index: 0x",
+        Bytes.bytesToHexASCIIBytes(Bytes.toBytesFromUInt32(_changePk.accountIndex)),
+        "\n\n",
+        "Only sign this message for a trusted client!"
+      )
+    );
+    address recoveredAddress = Utils.recoverAddressFromEthSignature(signature, messageHash);
+    return recoveredAddress == _changePk.owner;
+  }
 }

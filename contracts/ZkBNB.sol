@@ -44,6 +44,65 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1052.md
   bytes32 private constant EMPTY_STRING_KECCAK = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
+  address private immutable zkbnbImplementation;
+
+  constructor() {
+    zkbnbImplementation = address(this);
+  }
+
+  /// @notice ZkBNB contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
+  /// @param initializationParameters Encoded representation of initialization parameters:
+  /// @dev _governanceAddress The address of Governance contract
+  /// @dev _verifierAddress The address of Verifier contract
+  /// @dev _genesisStateHash Genesis blocks (first block) state tree root hash
+  function initialize(bytes calldata initializationParameters) external initializer {
+    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
+
+    __ReentrancyGuard_init();
+
+    (
+      address _governanceAddress,
+      address _verifierAddress,
+      address _additionalZkBNB,
+      address _desertVerifier,
+      bytes32 _genesisStateRoot
+    ) = abi.decode(initializationParameters, (address, address, address, address, bytes32));
+
+    verifier = ZkBNBVerifier(_verifierAddress);
+    governance = Governance(_governanceAddress);
+    additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
+    desertVerifier = DesertVerifier(_desertVerifier);
+
+    StoredBlockInfo memory zeroStoredBlockInfo = StoredBlockInfo(
+      0,
+      0,
+      0,
+      EMPTY_STRING_KECCAK,
+      0,
+      _genesisStateRoot,
+      bytes32(0)
+    );
+    stateRoot = _genesisStateRoot;
+    storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
+  }
+
+  /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+  /// @param upgradeParameters Encoded representation of upgrade parameters
+  // solhint-disable-next-line no-empty-blocks
+  function upgrade(bytes calldata upgradeParameters) external nonReentrant {
+    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
+
+    (address _additionalZkBNB, address _desertVerifier) = abi.decode(upgradeParameters, (address, address));
+
+    if (_additionalZkBNB != address(0)) {
+      additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
+    }
+
+    if (_desertVerifier != address(0)) {
+      desertVerifier = DesertVerifier(_desertVerifier);
+    }
+  }
+
   function onERC721Received(
     address operator,
     address from,
@@ -103,55 +162,6 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   function cancelOutstandingDepositsForDesertMode(uint64 _n, bytes[] memory _depositsPubData) external {
     /// All functions delegated to additional should NOT be nonReentrant
     delegateAdditional();
-  }
-
-  /// @notice ZkBNB contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
-  /// @param initializationParameters Encoded representation of initialization parameters:
-  /// @dev _governanceAddress The address of Governance contract
-  /// @dev _verifierAddress The address of Verifier contract
-  /// @dev _genesisStateHash Genesis blocks (first block) state tree root hash
-  function initialize(bytes calldata initializationParameters) external initializer {
-    __ReentrancyGuard_init();
-
-    (
-      address _governanceAddress,
-      address _verifierAddress,
-      address _additionalZkBNB,
-      address _desertVerifier,
-      bytes32 _genesisStateRoot
-    ) = abi.decode(initializationParameters, (address, address, address, address, bytes32));
-
-    verifier = ZkBNBVerifier(_verifierAddress);
-    governance = Governance(_governanceAddress);
-    additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
-    desertVerifier = DesertVerifier(_desertVerifier);
-
-    StoredBlockInfo memory zeroStoredBlockInfo = StoredBlockInfo(
-      0,
-      0,
-      0,
-      EMPTY_STRING_KECCAK,
-      0,
-      _genesisStateRoot,
-      bytes32(0)
-    );
-    stateRoot = _genesisStateRoot;
-    storedBlockHashes[0] = hashStoredBlockInfo(zeroStoredBlockInfo);
-  }
-
-  /// @notice ZkBNB contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
-  /// @param upgradeParameters Encoded representation of upgrade parameters
-  // solhint-disable-next-line no-empty-blocks
-  function upgrade(bytes calldata upgradeParameters) external nonReentrant {
-    (address _additionalZkBNB, address _desertVerifier) = abi.decode(upgradeParameters, (address, address));
-
-    if (_additionalZkBNB != address(0)) {
-      additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
-    }
-
-    if (_desertVerifier != address(0)) {
-      desertVerifier = DesertVerifier(_desertVerifier);
-    }
   }
 
   /// @notice Deposit Native Assets to Layer 2 - transfer BNB from user into contract, validate it, register deposit
@@ -239,7 +249,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
     address _to,
     uint128 _amount,
     uint128 _maxAmount
-  ) external nonReentrant returns (uint128 withdrawnAmount) {
+  ) external returns (uint128 withdrawnAmount) {
     require(msg.sender == address(this), "5");
     // can be called only from this contract as one "external" call (to revert all this function state changes if it is needed)
 
@@ -353,7 +363,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
         TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
         bytes memory ethWitness = _newBlockData.onchainOperations[i].ethWitness;
         require(ethWitness.length != 0, "signature should not be empty");
-        bool valid = Utils.verifyChangePubkey(ethWitness, changePubKeyData);
+        bool valid = TxTypes.verifyChangePubkey(ethWitness, changePubKeyData);
         require(valid, "D"); // failed to verify change pubkey hash signature
       } else if (txType == TxTypes.TxType.Deposit) {
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
@@ -683,6 +693,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   /// @notice Should be only use to delegate the external calls as it passes the calldata
   /// @notice All functions delegated to additional contract should NOT be nonReentrant
   function delegateAdditional() internal {
+    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
     address _target = address(additionalZkBNB);
     assembly {
       // The pointer to the free memory slot

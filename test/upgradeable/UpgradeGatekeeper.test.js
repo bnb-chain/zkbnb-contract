@@ -2,6 +2,8 @@ const chai = require('chai');
 const { ethers } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
 
+const { deployMockZkBNB, deployMockGovernance } = require('../util');
+
 const { expect } = chai;
 chai.use(smock.matchers);
 
@@ -23,25 +25,13 @@ describe('UpgradeGatekeeper', function () {
   let mockUpgradeableMaster;
   let upgradeGatekeeper;
 
-  // `ZkBNB` needs to link to library `Utils` before deployed
-  let utils;
   let owner, addr1;
 
   before(async function () {
     [owner, addr1] = await ethers.getSigners();
 
     // 1. deploy logic contracts
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-
-    const MockGovernance = await smock.mock('Governance', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    mockGovernance = await MockGovernance.deploy();
-    await mockGovernance.deployed();
+    mockGovernance = await deployMockGovernance();
 
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
@@ -55,15 +45,9 @@ describe('UpgradeGatekeeper', function () {
     mockPublicResolver = await MockPublicResolver.deploy();
     await mockPublicResolver.deployed();
 
-    const MockZkBNB = await smock.mock('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    mockZkBNB = await MockZkBNB.deploy();
-    await mockZkBNB.deployed();
-    mockZkBNBNew = await MockZkBNB.deploy();
-    await mockZkBNBNew.deployed();
+    mockZkBNB = await deployMockZkBNB();
+    mockZkBNBNew = await deployMockZkBNB();
+
     newTargets = [
       ethers.constants.AddressZero,
       ethers.constants.AddressZero,

@@ -1,6 +1,7 @@
 const chai = require('chai');
 const { ethers, network } = require('hardhat');
 const { smock } = require('@defi-wonderland/smock');
+const { deployMockZkBNB } = require('../util');
 
 const { expect } = chai;
 chai.use(smock.matchers);
@@ -9,22 +10,13 @@ describe('UpgradeableMaster', function () {
   let mockZkBNB;
   let upgradeableMaster;
   let owner, councilMember1, councilMember2, councilMember3;
-  let utils;
   let UPGRADE_GATEKEEPER_ROLE;
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
     [owner, councilMember1, councilMember2, councilMember3] = await ethers.getSigners();
 
-    const Utils = await ethers.getContractFactory('Utils');
-    utils = await Utils.deploy();
-    await utils.deployed();
-    const MockZkBNB = await smock.mock('ZkBNB', {
-      libraries: {
-        Utils: utils.address,
-      },
-    });
-    mockZkBNB = await MockZkBNB.deploy();
+    mockZkBNB = await deployMockZkBNB();
     await mockZkBNB.deployed();
 
     const UpgradeableMaster = await ethers.getContractFactory('UpgradeableMaster');
