@@ -8,4 +8,7 @@ contract AdditionalZkBNBTest is AdditionalZkBNB {
   constructor(address _governanceAddress) {
     governance = Governance(_governanceAddress);
   }
+
+  // avoid same bytecode as AdditionalZkBNB
+  function nouse() external {}
 }

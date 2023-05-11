@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     // Your API key for BSC. Obtain one at https://bscscan.com/
     apiKey: {
-      bscTestnet: process.env.BSCSCAN_APIKEY || '00000000000000000000000000000000000000000',
+      bscTestnet: process.env.BSCSCAN_API_KEY || '00000000000000000000000000000000000000000',
       bsc: process.env.BSCSCAN_API_KEY || '00000000000000000000000000000000000000000',
     },
   },
@@ -28,7 +28,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 1500,
+        runs: 1000,
       },
       outputSelection: {
         '*': {

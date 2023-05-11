@@ -46,7 +46,7 @@ function main() {
         type: 'list',
         name: 'operator',
         message: 'What do you want?',
-        choices: ['start', 'preparation', 'cut period(only local)', 'cancel', 'finish', 'rollback'],
+        choices: ['start', 'preparation', 'cut period', 'cancel', 'finish', 'rollback'],
       },
     ])
     .then(async (answers) => {
@@ -129,15 +129,11 @@ async function start() {
         let deployContract, additionalZkBNB, desertVerifier;
         let Governance, ZkBNBVerifier, ZkBNB, AdditionalZkBNB;
 
-        const Utils = await ethers.getContractFactory('Utils');
-        const utils = await Utils.deploy();
-        await utils.deployed();
-
         switch (contract) {
           case 'governance':
             Governance = await ethers.getContractFactory('Governance', {
               libraries: {
-                Utils: utils.address,
+                Utils: addrs.utils,
               },
             });
             deployContract = await Governance.deploy();
@@ -149,7 +145,7 @@ async function start() {
           case 'zkbnb':
             ZkBNB = await ethers.getContractFactory('ZkBNB', {
               libraries: {
-                Utils: utils.address,
+                TxTypes: addrs.txTypes,
               },
             });
             deployContract = await ZkBNB.deploy();
@@ -257,37 +253,6 @@ async function cancel() {
 
 async function cutPeriod() {
   console.log(chalk.red('🚀 Please invoke contract function in BSCScan'));
-
-  // const securityCouncil1 = new ethers.Wallet(
-  //   '0x689af8efa8c651a91ad287602527f3af2fe9f6501a7ac4b061667b5a93e037fd',
-  //   ethers.provider,
-  // );
-  // const securityCouncil2 = new ethers.Wallet(
-  //   '0xde9be858da4a475276426320d5e9262ecfc3ba460bfac56360bfa6c4c28b4ee0',
-  //   ethers.provider,
-  // );
-  // const securityCouncil3 = new ethers.Wallet(
-  //   '0xdf57089febbacf7ba0bc227dafbffa9fc08a93fdc68e1e42411a14efcf23656e',
-  //   ethers.provider,
-  // );
-
-  // const addrs = getDeployedAddresses('info/addresses.json');
-
-  // const UpgradeableMaster = await ethers.getContractFactory('UpgradeableMaster');
-  // const upgradeableMaster = await UpgradeableMaster.attach(addrs.upgradeableMaster);
-  // console.log(chalk.green('🚀 Approve Upgrade'));
-  // await approve(securityCouncil1);
-  // await approve(securityCouncil2);
-  // await approve(securityCouncil3);
-  // console.log(chalk.green('✅ Approved'));
-  // async function approve(security) {
-  //   const tx = await upgradeableMaster.connect(security).cutUpgradeNoticePeriod();
-  //   const receipt = await tx.wait();
-  //   console.log(
-  //     'number Of approvals from security council %s',
-  //     receipt.events[0].args.numberOfApprovalsFromSecurityCouncil,
-  //   );
-  // }
 }
 
 async function finish() {
