@@ -39,7 +39,6 @@ async function main() {
       console.log('❌[%s] %s\n %s', chalk.red(key), chalk.grey(`${bscscanURI}/${address}#code`), chalk.red(reason));
     }
   }
-  console.log('⚠️ %s', chalk.yellow('proxy need to verify manually'));
 }
 
 async function verifyContract(key, address, constructorArguments) {

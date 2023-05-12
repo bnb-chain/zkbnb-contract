@@ -86,7 +86,9 @@ async function main() {
     _genesisStateRoot,
     _listingFee,
     _listingCap,
-    { gasLimit: 13000000 },
+    {
+      gasLimit: 13000000,
+    },
   );
   await deployFactory.deployed();
 
@@ -111,7 +113,7 @@ async function main() {
     verifierEntryAddress,
     zkbnbEntryAddress,
     upgradeGatekeeperEntryAddress,
-    additionalZkBNBEntryAddress,
+    additionalZkBNBLogicAddress,
   ] = event;
 
   const assetGovernance = contractFactories.AssetGovernance.attach(assetGovernanceEntryAddress);
@@ -165,11 +167,12 @@ async function main() {
       verifierProxy: verifierEntryAddress,
       zkbnbProxy: zkbnbEntryAddress,
       upgradeGateKeeper: upgradeGatekeeperEntryAddress,
-      additionalZkBNB: additionalZkBNBEntryAddress,
+      additionalZkBNB: additionalZkBNBLogicAddress,
       ERC721: ERC721.address,
       DefaultNftFactory: DefaultNftFactory.address,
       upgradeableMaster: upgradeableMaster.address,
       utils: contractFactories.Utils.address,
+      txTypes: contractFactories.TxTypes.address,
       BUSDToken,
     }),
   );
@@ -188,16 +191,32 @@ async function main() {
       ],
     ],
     utils: [contractFactories.Utils.address],
+    txTypes: [contractFactories.TxTypes.address],
     verifierLogic: [verifier.address],
     zkbnbLogic: [zkbnb.address],
     upgradeGateKeeper: [upgradeGatekeeperEntryAddress, [upgradeableMaster.address]],
-    additionalZkBNB: [additionalZkBNBEntryAddress],
+    additionalZkBNB: [additionalZkBNBLogicAddress],
     ERC721: [ERC721.address, ['zkBNB', 'zkBNB', 0]],
     DefaultNftFactory: [DefaultNftFactory.address, ['zkBNB', 'zkBNB', zkbnbEntryAddress, governor]],
     upgradeableMaster: [upgradeableMaster.address, upgradeableMasterParams],
     governanceProxy: [governanceEntryAddress, [governance.address, abi.encode(['address'], [deployFactory.address])]],
-    verifierProxy: [verifierEntryAddress],
-    zkbnbProxy: [zkbnbEntryAddress],
+    verifierProxy: [verifierEntryAddress, [verifier.address, '0x']],
+    zkbnbProxy: [
+      zkbnbEntryAddress,
+      [
+        zkbnb.address,
+        abi.encode(
+          ['address', 'address', 'address', 'address', 'bytes32'],
+          [
+            governanceEntryAddress,
+            verifierEntryAddress,
+            additionalZkBNBLogicAddress,
+            desertVerifier.address,
+            _genesisStateRoot,
+          ],
+        ),
+      ],
+    ],
   });
 }
 
@@ -229,6 +248,7 @@ async function getContractFactories() {
     DefaultNftFactory: await ethers.getContractFactory('ZkBNBNFTFactory'),
     UpgradeableMaster: await ethers.getContractFactory('UpgradeableMaster'),
     Utils: utils,
+    TxTypes: txTypes,
   };
 }
 
