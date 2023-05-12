@@ -3,17 +3,20 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "./interfaces/IEvents.sol";
+import "./interfaces/INFTFactory.sol";
+
 import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./interfaces/INFTFactory.sol";
+
 import "./Config.sol";
 import "./Storage.sol";
 import "./DesertVerifier.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title ZkBNB main contract
 /// @author ZkBNB Team
@@ -56,7 +59,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   /// @dev _verifierAddress The address of Verifier contract
   /// @dev _genesisStateHash Genesis blocks (first block) state tree root hash
   function initialize(bytes calldata initializationParameters) external initializer {
-    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
+    require(address(this) != zkbnbImplementation, "1A");
 
     __ReentrancyGuard_init();
 
@@ -90,7 +93,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   /// @param upgradeParameters Encoded representation of upgrade parameters
   // solhint-disable-next-line no-empty-blocks
   function upgrade(bytes calldata upgradeParameters) external nonReentrant {
-    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
+    require(address(this) != zkbnbImplementation, "2A");
 
     (address _additionalZkBNB, address _desertVerifier) = abi.decode(upgradeParameters, (address, address));
 
@@ -203,7 +206,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
     TxTypes.WithdrawNft memory op = pendingWithdrawnNFTs[_nftIndex];
     // _nftIndex needs to be valid , check op.nftContentHash in order to check op is not null
     require(op.nftContentHash != bytes32(0), "6H");
-    require(withdrawOrStoreNFT(op, WITHDRAWAL_PENDING_NFT_GAS_LIMIT), "Fail to withdraw NFT");
+    require(withdrawOrStoreNFT(op, WITHDRAWAL_PENDING_NFT_GAS_LIMIT), "3A");
     delete pendingWithdrawnNFTs[_nftIndex];
   }
 
@@ -362,7 +365,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
         bytes memory txPubData = Bytes.slice(pubData, pubdataOffset, TxTypes.PACKED_TX_PUBDATA_BYTES);
         TxTypes.ChangePubKey memory changePubKeyData = TxTypes.readChangePubKeyPubData(txPubData);
         bytes memory ethWitness = _newBlockData.onchainOperations[i].ethWitness;
-        require(ethWitness.length != 0, "signature should not be empty");
+        require(ethWitness.length != 0, "4A");
         bool valid = TxTypes.verifyChangePubkey(ethWitness, changePubKeyData);
         require(valid, "D"); // failed to verify change pubkey hash signature
       } else if (txType == TxTypes.TxType.Deposit) {
@@ -547,7 +550,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   }
 
   function withdrawOrStoreNFT(TxTypes.WithdrawNft memory op, uint256 _gasLimit) internal returns (bool success) {
-    require(op.nftIndex <= MAX_NFT_INDEX, "invalid nft index");
+    require(op.nftIndex <= MAX_NFT_INDEX, "5A");
 
     // return success when withdrawPendingNFT
     success = false;
@@ -610,12 +613,9 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
 
       if (txType == TxTypes.TxType.Withdraw) {
         TxTypes.Withdraw memory _tx = TxTypes.readWithdrawPubData(pubData);
-        // Circuit guarantees that partial exits are available only for fungible tokens
-        //                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "A");
         withdrawOrStore(uint16(_tx.assetId), _tx.toAddress, _tx.assetAmount);
       } else if (txType == TxTypes.TxType.FullExit) {
         TxTypes.FullExit memory _tx = TxTypes.readFullExitPubData(pubData);
-        //                require(_tx.assetId <= MAX_FUNGIBLE_ASSET_ID, "B");
         withdrawOrStore(uint16(_tx.assetId), _tx.owner, _tx.assetAmount);
       } else if (txType == TxTypes.TxType.FullExitNft) {
         TxTypes.FullExitNft memory _tx = TxTypes.readFullExitNftPubData(pubData);
@@ -693,7 +693,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   /// @notice Should be only use to delegate the external calls as it passes the calldata
   /// @notice All functions delegated to additional contract should NOT be nonReentrant
   function delegateAdditional() internal {
-    require(address(this) != zkbnbImplementation, "Can not dirctly call by zkbnbImplementation");
+    require(address(this) != zkbnbImplementation, "6A");
     address _target = address(additionalZkBNB);
     assembly {
       // The pointer to the free memory slot

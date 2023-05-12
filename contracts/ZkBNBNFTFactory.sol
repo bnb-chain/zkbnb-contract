@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/INFTFactory.sol";
-import "./lib/Bytes.sol";
 import "./lib/Ownable2Step.sol";
 
 interface IZkBNB {

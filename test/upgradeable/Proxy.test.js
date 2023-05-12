@@ -199,7 +199,7 @@ describe('Proxy', function () {
         [attackerContract.address, mockDesertVerifier.address],
       );
 
-      await expect(zkBNB.upgrade(upgradeParams)).to.be.revertedWith('Can not dirctly call by zkbnbImplementation');
+      await expect(zkBNB.upgrade(upgradeParams)).to.be.revertedWith('2A');
       await proxy.upgradeTarget(zkBNB.address, upgradeParams);
     });
 
@@ -210,11 +210,11 @@ describe('Proxy', function () {
         [attackerContract.address, mockDesertVerifier.address],
       );
 
-      await expect(zkBNB.upgrade(upgradeParams)).to.be.revertedWith('Can not dirctly call by zkbnbImplementation');
+      await expect(zkBNB.upgrade(upgradeParams)).to.be.revertedWith('2A');
 
       mockGovernance.isActiveValidator.returns();
       // calls bypassing proxy contract should be intercepted
-      await expect(zkBNB.revertBlocks([])).to.be.revertedWith('Can not dirctly call by zkbnbImplementation');
+      await expect(zkBNB.revertBlocks([])).to.be.revertedWith('6A');
     });
 
     // await zkBNB.upgrade(upgradeParams) will fail

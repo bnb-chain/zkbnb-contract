@@ -158,8 +158,8 @@ library Bytes {
   // Returns the newly created 'bytes memory'
   // NOTE: theoretically possible overflow of (_start + _length)
   function slice(bytes memory _bytes, uint256 _start, uint256 _length) internal pure returns (bytes memory) {
-    require(_length + 31 >= _length, "slice_overflow");
-    require(_bytes.length >= _start + _length, "slice_outOfBounds");
+    require(_length + 31 >= _length, "1B");
+    require(_bytes.length >= _start + _length, "1S");
 
     bytes memory tempBytes;
 

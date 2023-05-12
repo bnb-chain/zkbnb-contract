@@ -2,8 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./Config.sol";
-import "./Storage.sol";
 import "./interfaces/IZkBNBDesertMode.sol";
 
 /// @title upgradeable master contract (defines notice period duration and allows finish upgrade during preparation of it)
