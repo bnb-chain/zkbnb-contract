@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "./Config.sol";
 import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
+import "./Config.sol";
 import "./AssetGovernance.sol";
 import "./ZkBNBNFTFactory.sol";
 

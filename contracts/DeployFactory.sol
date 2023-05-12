@@ -8,7 +8,6 @@ import "./UpgradeGatekeeper.sol";
 import "./UpgradeableMaster.sol";
 import "./ZkBNB.sol";
 import "./ZkBNBVerifier.sol";
-import "./Config.sol";
 
 contract DeployFactory {
   // This struct is used for avoiding StackTooDeep

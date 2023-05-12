@@ -6,12 +6,15 @@ import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./lib/Utils.sol";
-import "./Storage.sol";
-import "./Config.sol";
+
 import "./interfaces/IEvents.sol";
+
+import "./lib/Utils.sol";
 import "./lib/Bytes.sol";
 import "./lib/TxTypes.sol";
+
+import "./Storage.sol";
+import "./Config.sol";
 import "./DesertVerifier.sol";
 
 /// @title ZkBNB additional main contract
