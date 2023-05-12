@@ -44,12 +44,12 @@ describe('ZkBNB', function () {
         '0x0000000000000000000000000000000000000000000000000000000000000000',
       ],
     );
-    await expect(zkBNBImpl.initialize(initParams)).to.be.revertedWith('Can not dirctly call by zkbnbImplementation');
+    await expect(zkBNBImpl.initialize(initParams)).to.be.revertedWith('1A');
     upgradeParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address'],
       [additionalZkBNB.address, additionalZkBNB.address],
     );
-    await expect(zkBNBImpl.upgrade(upgradeParams)).to.be.revertedWith('Can not dirctly call by zkbnbImplementation');
+    await expect(zkBNBImpl.upgrade(upgradeParams)).to.be.revertedWith('2A');
 
     zkBNB = await deployZkBNBProxy(initParams, zkBNBImpl);
   });

@@ -3,14 +3,12 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/INFTFactory.sol";
+import "./lib/TxTypes.sol";
 
-import "./Config.sol";
 import "./Governance.sol";
 import "./ZkBNBVerifier.sol";
-import "./lib/TxTypes.sol";
 import "./AdditionalZkBNB.sol";
-import "./interfaces/INFTFactory.sol";
 import "./DesertVerifier.sol";
 
 /// @title zkbnb storage contract
