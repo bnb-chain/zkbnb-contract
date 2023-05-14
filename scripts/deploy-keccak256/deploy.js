@@ -173,6 +173,7 @@ async function main() {
       upgradeableMaster: upgradeableMaster.address,
       utils: contractFactories.Utils.address,
       txTypes: contractFactories.TxTypes.address,
+      desertVerifier: desertVerifier.address,
       BUSDToken,
     }),
   );
@@ -196,6 +197,7 @@ async function main() {
     zkbnbLogic: [zkbnb.address],
     upgradeGateKeeper: [upgradeGatekeeperEntryAddress, [upgradeableMaster.address]],
     additionalZkBNB: [additionalZkBNBLogicAddress],
+    desertVerifier: [desertVerifier.address],
     ERC721: [ERC721.address, ['zkBNB', 'zkBNB', 0]],
     DefaultNftFactory: [DefaultNftFactory.address, ['zkBNB', 'zkBNB', zkbnbEntryAddress, governor]],
     upgradeableMaster: [upgradeableMaster.address, upgradeableMasterParams],
