@@ -1,5 +1,6 @@
 const hardhat = require('hardhat');
-const { getDeployedAddresses, deployDesertVerifier } = require('../deploy-keccak256/utils');
+const { getDeployedAddresses } = require('../deploy-keccak256/utils');
+const { startUpgrade, finishUpgrade } = require('./utils');
 const { ethers } = hardhat;
 const { EthersAdapter } = require('@safe-global/protocol-kit');
 const Safe = require('@safe-global/safe-core-sdk').default;
@@ -10,21 +11,7 @@ const inquirer = require('inquirer');
 const figlet = require('figlet');
 const chalk = require('chalk');
 
-const AddressZero = ethers.constants.AddressZero;
-
-let targetContracts;
 const addrs = getDeployedAddresses('info/addresses.json');
-
-const targetContractsDeployed = {
-  governance: AddressZero,
-  verifier: AddressZero,
-  zkbnb: AddressZero,
-};
-
-const zkBNBUpgradeParameter = {
-  additionalZkBNB: AddressZero,
-  desertVerifier: AddressZero,
-};
 
 Object.defineProperty(String.prototype, 'capitalize', {
   value() {
@@ -33,8 +20,11 @@ Object.defineProperty(String.prototype, 'capitalize', {
   enumerable: false,
 });
 
-function main() {
+async function main() {
   console.log(chalk.green(figlet.textSync('zkBNB upgradeable tool')));
+
+  const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
+  const owner = await upgradeGatekeeper.getMaster();
 
   if (!hardhat.network.name) {
     console.log(chalk.red(`🙃 Contract not deploy in ${hardhat.network.name}`));
@@ -52,7 +42,8 @@ function main() {
     .then(async (answers) => {
       switch (answers.operator) {
         case 'start':
-          start();
+          await startUpgrade(owner, upgradeGatekeeper, gnosisUpgradeGatekeeper);
+          console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
           break;
         case 'cancel':
           cancel();
@@ -64,7 +55,8 @@ function main() {
           cutPeriod();
           break;
         case 'finish':
-          finish();
+          await finishUpgrade(upgradeGatekeeper, gnosisUpgradeGatekeeper);
+          console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
           break;
         case 'rollback':
           inquirer
@@ -95,142 +87,6 @@ function main() {
     });
 }
 
-async function start() {
-  const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
-  const owner = await upgradeGatekeeper.getMaster();
-
-  const status = await upgradeGatekeeper.upgradeStatus();
-  if (status !== 0 /* idle */) {
-    console.log(chalk.red(`🙃 Update flow is in progress`));
-    return;
-  }
-
-  inquirer
-    .prompt([
-      {
-        type: 'checkbox',
-        name: 'target',
-        message: 'Which contracts do you want to upgrade?',
-        choices: ['governance', 'verifier', 'zkbnb'],
-
-        validate(answer) {
-          if (answer.length < 1) {
-            return 'You must choose at least one topping.';
-          }
-
-          return true;
-        },
-      },
-    ])
-    .then(async (answers) => {
-      targetContracts = answers.target;
-      console.log(chalk.green('🚀 Deploy new contract'));
-      for (const contract of targetContracts) {
-        let deployContract, additionalZkBNB, desertVerifier;
-        let Governance, ZkBNBVerifier, ZkBNB, AdditionalZkBNB;
-
-        switch (contract) {
-          case 'governance':
-            Governance = await ethers.getContractFactory('Governance', {
-              libraries: {
-                Utils: addrs.utils,
-              },
-            });
-            deployContract = await Governance.deploy();
-            break;
-          case 'verifier':
-            ZkBNBVerifier = await ethers.getContractFactory('ZkBNBVerifier');
-            deployContract = await ZkBNBVerifier.deploy();
-            break;
-          case 'zkbnb':
-            ZkBNB = await ethers.getContractFactory('ZkBNB', {
-              libraries: {
-                TxTypes: addrs.txTypes,
-              },
-            });
-            deployContract = await ZkBNB.deploy();
-
-            await inquirer
-              .prompt([
-                {
-                  type: 'list',
-                  name: 'zkbnbParams',
-                  message: 'Do you want to update additionalZkBNB and/or desertVerifier addresses?',
-                  choices: ['No', 'Yes only additionalZkBNB', 'Yes only desertVerifier', 'Yes both'],
-                },
-              ])
-              .then(async (answer) => {
-                switch (answer.zkbnbParams) {
-                  case 'No':
-                    break;
-                  case 'Yes only additionalZkBNB':
-                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
-                    additionalZkBNB = await AdditionalZkBNB.deploy();
-                    await additionalZkBNB.deployed();
-
-                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
-                    break;
-                  case 'Yes only desertVerifier':
-                    desertVerifier = await deployDesertVerifier(owner);
-                    await desertVerifier.deployed();
-
-                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
-                    break;
-                  case 'Yes both':
-                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
-                    additionalZkBNB = await AdditionalZkBNB.deploy();
-                    await additionalZkBNB.deployed();
-
-                    desertVerifier = await deployDesertVerifier(owner);
-                    await desertVerifier.deployed();
-
-                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
-                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
-                    break;
-
-                  default:
-                    break;
-                }
-                console.log(
-                  'zkBNB upgrade parameters: [%s, %s]',
-                  additionalZkBNB ? additionalZkBNB.address : AddressZero,
-                  desertVerifier ? desertVerifier.address : AddressZero,
-                );
-              });
-            break;
-
-          default:
-            break;
-        }
-        await deployContract.deployed();
-        targetContractsDeployed[contract] = deployContract.address;
-        console.log('%s deployed \t in %s', contract.capitalize(), deployContract.address);
-      }
-
-      await inquirer
-        .prompt([
-          {
-            type: 'confirm',
-            name: 'confirm',
-            message: 'Above contract will be upgrade. \n Do you want continue?',
-          },
-        ])
-        .then(async (answers) => {
-          if (!answers.confirm) {
-            return;
-          }
-
-          console.log(chalk.green('🚚 Start Upgrade'));
-          await gnosisUpgradeGatekeeper.startUpgrade([
-            targetContractsDeployed.governance,
-            targetContractsDeployed.verifier,
-            targetContractsDeployed.zkbnb,
-          ]);
-          console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
-        });
-    });
-}
-
 async function preparation() {
   const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
 
@@ -253,26 +109,6 @@ async function cancel() {
 
 async function cutPeriod() {
   console.log(chalk.red('🚀 Please invoke contract function in BSCScan'));
-}
-
-async function finish() {
-  const { gnosisUpgradeGatekeeper, upgradeGatekeeper } = await getGnosisupgradeGatekeeper();
-
-  const upgradeStatus = await upgradeGatekeeper.upgradeStatus();
-  if (upgradeStatus !== 2) {
-    console.log(chalk.red('🙃 Already in the preparation stage'));
-    return;
-  }
-  console.log(chalk.green('🚀 Finish Upgrade'));
-  await gnosisUpgradeGatekeeper.finishUpgrade([
-    '0x00',
-    '0x00',
-    ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address'], // newAdditionalZkBNB.addresss, newDesertVerifier.addresss
-      [zkBNBUpgradeParameter['additionalZkBNB'], zkBNBUpgradeParameter['desertVerifier']],
-    ),
-  ]);
-  console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
 }
 
 async function rollback(startBlockNumber) {
@@ -344,7 +180,10 @@ async function getGnosisupgradeGatekeeper() {
   const owner = await upgradeGatekeeper.getMaster();
 
   const signerOrProvider = await ethers.getSigner();
-  const ethAdapter = new EthersAdapter({ ethers, signerOrProvider });
+  const ethAdapter = new EthersAdapter({
+    ethers,
+    signerOrProvider,
+  });
 
   const safe = await Safe.create({
     ethAdapter,

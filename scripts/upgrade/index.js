@@ -1,27 +1,13 @@
 const hardhat = require('hardhat');
-const { getDeployedAddresses, deployDesertVerifier } = require('../deploy-keccak256/utils');
-const { getUpgradeableContractImplement } = require('./utils');
+const { getDeployedAddresses } = require('../deploy-keccak256/utils');
+const { startUpgrade, finishUpgrade } = require('./utils');
 const { ethers } = hardhat;
 
 const inquirer = require('inquirer');
 const figlet = require('figlet');
 const chalk = require('chalk');
 
-const AddressZero = ethers.constants.AddressZero;
-
-let targetContracts;
 const addrs = getDeployedAddresses('info/addresses.json');
-
-const targetContractsDeployed = {
-  governance: AddressZero,
-  verifier: AddressZero,
-  zkbnb: AddressZero,
-};
-
-const zkBNBUpgradeParameter = {
-  additionalZkBNB: AddressZero,
-  desertVerifier: AddressZero,
-};
 
 Object.defineProperty(String.prototype, 'capitalize', {
   value() {
@@ -30,13 +16,18 @@ Object.defineProperty(String.prototype, 'capitalize', {
   enumerable: false,
 });
 
-function main() {
+async function main() {
   console.log(chalk.green(figlet.textSync('zkBNB upgradeable tool')));
 
   if (!hardhat.network.name) {
     console.log(chalk.red(`🙃 Contract not deploy in ${hardhat.network.name}`));
     return;
   }
+
+  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
+  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
+  const [owner] = await ethers.getSigners();
+
   inquirer
     .prompt([
       {
@@ -49,7 +40,7 @@ function main() {
     .then(async (answers) => {
       switch (answers.operator) {
         case 'start':
-          start();
+          startUpgrade(owner, upgradeGatekeeper, upgradeGatekeeper);
           break;
         case 'cancel':
           cancel();
@@ -61,7 +52,7 @@ function main() {
           cutPeriod();
           break;
         case 'finish':
-          finish();
+          finishUpgrade(upgradeGatekeeper, upgradeGatekeeper);
           break;
         case 'rollback':
           inquirer
@@ -89,148 +80,6 @@ function main() {
         default:
           break;
       }
-    });
-}
-
-async function start() {
-  const [owner] = await ethers.getSigners();
-
-  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
-  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
-
-  const status = await upgradeGatekeeper.upgradeStatus();
-  if (status !== 0 /* idle */) {
-    console.log(chalk.red(`🙃 Update flow is in progress`));
-    return;
-  }
-
-  await inquirer
-    .prompt([
-      {
-        type: 'checkbox',
-        name: 'target',
-        message: 'Which contracts do you want to upgrade?',
-        choices: ['governance', 'verifier', 'zkbnb'],
-
-        validate(answer) {
-          if (answer.length < 1) {
-            return 'You must choose at least one topping.';
-          }
-
-          return true;
-        },
-      },
-    ])
-    .then(async (answers) => {
-      targetContracts = answers.target;
-      console.log(chalk.green('🚀 Deploy new contract'));
-      for (const contract of targetContracts) {
-        let deployContract, additionalZkBNB, desertVerifier;
-        let Governance, ZkBNBVerifier, ZkBNB, AdditionalZkBNB;
-
-        switch (contract) {
-          case 'governance':
-            Governance = await ethers.getContractFactory('Governance', {
-              libraries: {
-                Utils: addrs.utils,
-              },
-            });
-            deployContract = await Governance.deploy();
-            break;
-          case 'verifier':
-            ZkBNBVerifier = await ethers.getContractFactory('ZkBNBVerifier');
-            deployContract = await ZkBNBVerifier.deploy();
-            break;
-          case 'zkbnb':
-            ZkBNB = await ethers.getContractFactory('ZkBNB', {
-              libraries: {
-                TxTypes: addrs.txTypes,
-              },
-            });
-            deployContract = await ZkBNB.deploy();
-
-            await inquirer
-              .prompt([
-                {
-                  type: 'list',
-                  name: 'zkbnbParams',
-                  message: 'Do you want to update additionalZkBNB and/or desertVerifier addresses?',
-                  choices: ['No', 'Yes only additionalZkBNB', 'Yes only desertVerifier', 'Yes both'],
-                },
-              ])
-              .then(async (answer) => {
-                switch (answer.zkbnbParams) {
-                  case 'No':
-                    break;
-                  case 'Yes only additionalZkBNB':
-                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
-                    additionalZkBNB = await AdditionalZkBNB.deploy();
-                    await additionalZkBNB.deployed();
-
-                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
-                    break;
-                  case 'Yes only desertVerifier':
-                    desertVerifier = await deployDesertVerifier(owner);
-                    await desertVerifier.deployed();
-
-                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
-                    break;
-                  case 'Yes both':
-                    AdditionalZkBNB = await ethers.getContractFactory('AdditionalZkBNB');
-                    additionalZkBNB = await AdditionalZkBNB.deploy();
-                    await additionalZkBNB.deployed();
-
-                    desertVerifier = await deployDesertVerifier(owner);
-                    await desertVerifier.deployed();
-
-                    zkBNBUpgradeParameter['additionalZkBNB'] = additionalZkBNB.address;
-                    zkBNBUpgradeParameter['desertVerifier'] = desertVerifier.address;
-                    break;
-
-                  default:
-                    break;
-                }
-                console.log(
-                  'zkBNB upgrade parameters: [%s, %s]',
-                  additionalZkBNB ? additionalZkBNB.address : AddressZero,
-                  desertVerifier ? desertVerifier.address : AddressZero,
-                );
-              });
-            break;
-
-          default:
-            break;
-        }
-        await deployContract.deployed();
-        targetContractsDeployed[contract] = deployContract.address;
-        console.log('%s deployed \t in %s', contract.capitalize(), deployContract.address);
-      }
-
-      await inquirer
-        .prompt([
-          {
-            type: 'confirm',
-            name: 'confirm',
-            message: 'Above contract will be upgrade. \n Do you want continue?',
-          },
-        ])
-        .then(async (answers) => {
-          if (!answers.confirm) {
-            return;
-          }
-
-          console.log(chalk.green('🚚 Start Upgrade'));
-          const tx = await upgradeGatekeeper.startUpgrade([
-            targetContractsDeployed.governance,
-            targetContractsDeployed.verifier,
-            targetContractsDeployed.zkbnb,
-          ]);
-
-          const receipt = await tx.wait();
-          console.log(chalk.green('✅ Upgrade process started'));
-
-          console.log('🏷️  Current version is %s', receipt.events[0].args.versionId);
-        });
     });
 }
 
@@ -286,35 +135,6 @@ async function cutPeriod() {
       'number Of approvals from security council %s',
       receipt.events[0].args.numberOfApprovalsFromSecurityCouncil,
     );
-  }
-}
-
-async function finish() {
-  /* ------------------------- Check upgrade status ------------------------ */
-  const UpgradeGatekeeper = await ethers.getContractFactory('UpgradeGatekeeper');
-  const upgradeGatekeeper = await UpgradeGatekeeper.attach(addrs.upgradeGateKeeper);
-
-  const upgradeStatus = await upgradeGatekeeper.upgradeStatus();
-
-  if (upgradeStatus !== 2) {
-    console.log(chalk.red('🙃 Already in the preparation stage'));
-    return;
-  }
-  console.log(chalk.green('🚀 Finish Upgrade'));
-  const tx = await upgradeGatekeeper.finishUpgrade([
-    '0x00',
-    '0x00',
-    ethers.utils.defaultAbiCoder.encode(
-      ['address', 'address'], // newAdditionalZkBNB.addresss, newDesertVerifier.addresss
-      [zkBNBUpgradeParameter['additionalZkBNB'], zkBNBUpgradeParameter['desertVerifier']],
-    ),
-  ]);
-  const receipt = await tx.wait();
-  console.log(chalk.green('✅ Finished'));
-  for (const event of receipt.events) {
-    if (event.topics[0] == '0x48bc8be43b04d57da4f0d65c05db98278a94d9e90b7348d5d2705cc78c9a9d2e') {
-      console.log('Current version is %s', event.args.versionId);
-    }
   }
 }
 
