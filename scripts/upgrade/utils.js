@@ -238,14 +238,14 @@ async function finishUpgrade(upgradeGatekeeper, upgradeGatekeeperActor) {
   const versionId = await upgradeGatekeeper.versionId();
   const upgradeJson = getDeployedAddresses(`info/upgrade-${versionId}.json`);
   const zkBNBUpgradeParameter = {
-    additionalZkBNB: upgradeJson.additionalZkBNB ? upgradeJson.additionalZkBNB[0] : zeroAddress,
-    desertVerifier: upgradeJson.desertVerifier ? upgradeJson.desertVerifier[0] : zeroAddress,
+    additionalZkBNB: upgradeJson.additionalZkBNB ? upgradeJson.additionalZkBNB[0] : zeroAddress(),
+    desertVerifier: upgradeJson.desertVerifier ? upgradeJson.desertVerifier[0] : zeroAddress(),
   };
 
   const upgradeTargets = {
     governance: upgradeJson.governance[0],
     verifier: upgradeJson.verifier[0],
-    zkbnb: upgradeJson.verifier[0],
+    zkbnb: upgradeJson.zkbnb[0],
     zkBNBUpgradeParameter,
   };
 
