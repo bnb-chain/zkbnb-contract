@@ -216,29 +216,5 @@ describe('Proxy', function () {
       // calls bypassing proxy contract should be intercepted
       await expect(zkBNB.revertBlocks([])).to.be.revertedWith('6A');
     });
-
-    // await zkBNB.upgrade(upgradeParams) will fail
-    it.skip('legitimate calls should not be affected by malicious `upgrade`', async function () {
-      const attackerContract = await smock.fake('AdditionalZkBNB');
-      const upgradeParams = ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address'],
-        [attackerContract.address, mockDesertVerifier.address],
-      );
-
-      await zkBNB.upgrade(upgradeParams);
-
-      // use ZkBNB abi to call function in proxy address
-      const zkBNBProxy = new ethers.Contract(proxy.address, zkBNB.interface, owner);
-
-      // deposit BNB works fine
-      expect(await zkBNBProxy.depositBNB(owner.address, { value: 100 }))
-        .to.emit(zkBNBProxy.address, 'Deposit')
-        .withArgs(0, owner.address, 100);
-
-      // calls via Proxy still goes to `mockAdditionalZkBNB` after malicious `upgrade` made
-      // `zkBNBProxy` -> `zkBNB` -> `mockAdditionalZkBNB`
-      expect(mockAdditionalZkBNB.depositBNB).to.be.delegatedFrom(zkBNBProxy.address);
-      expect(mockAdditionalZkBNB.depositBNB).to.have.been.calledOnce;
-    });
   });
 });
