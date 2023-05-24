@@ -11,7 +11,7 @@ contract UpgradeableMaster is AccessControl {
   bytes32 public constant UPGRADE_GATEKEEPER_ROLE = keccak256("UPGRADE_GATEKEEPER_ROLE");
 
   /// @dev Configurable notice period
-  uint256 public constant UPGRADE_NOTICE_PERIOD = 4 weeks;
+  uint256 public constant UPGRADE_NOTICE_PERIOD = 3 weeks;
   /// @dev Shortest notice period
   uint256 public constant SHORTEST_UPGRADE_NOTICE_PERIOD = 0;
 

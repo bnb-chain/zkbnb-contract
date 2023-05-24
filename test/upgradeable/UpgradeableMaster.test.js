@@ -11,6 +11,9 @@ describe('UpgradeableMaster', function () {
   let upgradeableMaster;
   let owner, councilMember1, councilMember2, councilMember3;
   let UPGRADE_GATEKEEPER_ROLE;
+
+  const threeWeeks = 3 * 7 * 24 * 60 * 60;
+
   // `beforeEach` will run before each test, re-deploying the contract every
   // time. It receives a callback, which can be async.
   beforeEach(async function () {
@@ -77,9 +80,7 @@ describe('UpgradeableMaster', function () {
       await upgradeableMaster.upgradeNoticePeriodStarted();
       await expect(upgradeableMaster.upgradePreparationStarted()).to.be.reverted;
 
-      const fourWeeks = 4 * 7 * 24 * 60 * 60;
-
-      await network.provider.send('evm_increaseTime', [fourWeeks]);
+      await network.provider.send('evm_increaseTime', [threeWeeks]);
       await network.provider.send('evm_mine');
 
       await expect(upgradeableMaster.upgradePreparationStarted()).not.to.be.reverted;
@@ -116,20 +117,18 @@ describe('UpgradeableMaster', function () {
     context('Clear upgrade status', () => {
       it('Clear upgrade status when cancelled', async () => {
         await upgradeableMaster.upgradeNoticePeriodStarted();
-        const fourWeeks = 4 * 7 * 24 * 60 * 60;
 
         await expect(upgradeableMaster.upgradeCanceled())
           .to.emit(upgradeableMaster, 'NoticePeriodChange')
-          .withArgs(fourWeeks);
+          .withArgs(threeWeeks);
       });
 
       it('Clear upgrade status when finishes', async () => {
         await upgradeableMaster.upgradeNoticePeriodStarted();
-        const fourWeeks = 4 * 7 * 24 * 60 * 60;
 
         await expect(upgradeableMaster.upgradeFinishes())
           .to.emit(upgradeableMaster, 'NoticePeriodChange')
-          .withArgs(fourWeeks);
+          .withArgs(threeWeeks);
       });
     });
   });
