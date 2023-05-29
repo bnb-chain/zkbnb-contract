@@ -51,7 +51,7 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
 
     // create commitment
     bytes32 commitment = createExitCommitment(uint256(stateRoot), _pubdata);
-    uint256[1] memory inputs = [uint256(commitment)];
+    uint256[1] memory inputs = [uint256(commitment) % desertVerifier.ScalarField()];
 
     // verify proof
     bool proofCorrect = desertVerifier.verifyProof(_proofs, inputs);
@@ -99,55 +99,6 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
       revert("F");
     }
   }
-
-  /* /// @notice perform desert nfts */
-  /* function performDesertNft( */
-  /*   StoredBlockInfo memory _storedBlockInfo, */
-  /*   uint256 _assetRoot, */
-  /*   DesertVerifier.AccountExitData calldata _accountExitData, */
-  /*   DesertVerifier.NftExitData[] memory _exitNfts, */
-  /*   uint256[] memory _proofs */
-  /* ) external nonReentrant { */
-  /*   require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e"); */
-  /*   require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v"); */
-  /*   require(_exitNfts.length >= 1, "Z"); */
-
-  /*   // must be in desert mode */
-  /*   require(desertMode, "s"); */
-  /*   // stored block info should be consistent */
-  /*   require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u"); */
-
-  /*   bool proofCorrect = desertVerifier.verifyExitNftProof( */
-  /*     uint256(stateRoot), */
-  /*     _assetRoot, */
-  /*     _accountExitData, */
-  /*     _exitNfts, */
-  /*     _proofs */
-  /*   ); */
-  /*   require(proofCorrect, "x"); */
-
-  /*   for (uint256 i = 0; i < _exitNfts.length; ++i) { */
-  /*     DesertVerifier.NftExitData memory nft = _exitNfts[i]; */
-  /*     // already exited */
-  /*     require(!performedDesertNfts[nft.nftIndex], "t"); */
-
-  /*     TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({ */
-  /*       accountIndex: _accountExitData.accountId, */
-  /*       creatorAccountIndex: nft.creatorAccountIndex, */
-  /*       creatorTreasuryRate: nft.creatorTreasuryRate, */
-  /*       nftIndex: nft.nftIndex, */
-  /*       collectionId: nft.collectionId, */
-  /*       toAddress: _accountExitData.l1Address, */
-  /*       creatorAddress: address(0), */
-  /*       nftContentHash: bytes32(bytes.concat(nft.nftContentHash1, nft.nftContentHash2)), */
-  /*       nftContentType: nft.nftContentType */
-  /*     }); */
-  /*     pendingWithdrawnNFTs[nft.nftIndex] = _withdrawNftTx; */
-  /*     emit WithdrawalNFTPending(nft.nftIndex); */
-
-  /*     performedDesertNfts[nft.nftIndex] = true; */
-  /*   } */
-  /* } */
 
   /// @param _n Supposed number of requests to cancel (if there are fewer requests than the provided number - all of the requests will be canceled); but actual cancelled number could be smaller than _n because there could be `FullExit` request.
   /// @param _depositsPubData The array of the pubdata for the deposits to be cancelled.
