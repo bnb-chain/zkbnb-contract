@@ -81,7 +81,7 @@ library TxTypes {
     uint16 creatorTreasuryRate;
     uint40 nftIndex;
     uint16 collectionId;
-    address owner; // accountNameHahsh => owner
+    address owner; // l1Address
     address creatorAddress; // creatorAccountNameHash => creatorAddress
     bytes32 nftContentHash;
     uint8 nftContentType; // New added
@@ -93,7 +93,7 @@ library TxTypes {
     uint16 creatorTreasuryRate;
     uint40 nftIndex;
     uint16 collectionId;
-    address owner; // accountNameHahsh => owner
+    address owner; // l1Address
     bytes32 nftContentHash;
     uint8 nftContentType; // New added
   }

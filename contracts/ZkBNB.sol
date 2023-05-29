@@ -142,20 +142,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
 
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
-    uint256 _nftRoot,
-    DesertVerifier.AssetExitData calldata _assetExitData,
-    DesertVerifier.AccountExitData calldata _accountExitData,
-    uint256[] memory _proofs
-  ) external {
-    /// All functions delegated to additional should NOT be nonReentrant
-    delegateAdditional();
-  }
-
-  function performDesertNft(
-    StoredBlockInfo memory _storedBlockInfo,
-    uint256 _assetRoot,
-    DesertVerifier.AccountExitData calldata _accountExitData,
-    DesertVerifier.NftExitData[] memory _exitNfts,
+    bytes memory _pubdata,
     uint256[] memory _proofs
   ) external {
     /// All functions delegated to additional should NOT be nonReentrant
