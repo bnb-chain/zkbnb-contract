@@ -25,87 +25,78 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
     pendingBalances[_packedBalanceKey] = PendingBalance(balance + _amount, FILLED_GAS_RESERVE_VALUE);
   }
 
+  function createExitCommitment(uint256 stateRoot, bytes memory publicData) internal returns (bytes32) {
+    bytes32 converted = sha256(
+      abi.encodePacked(
+        stateRoot, // state root
+        publicData // pub data
+      )
+    );
+    return converted;
+  }
+
   /// @notice perform desert assets
   function performDesert(
     StoredBlockInfo memory _storedBlockInfo,
-    uint256 _nftRoot,
-    DesertVerifier.AssetExitData calldata _assetExitData,
-    DesertVerifier.AccountExitData calldata _accountExitData,
+    bytes memory _pubdata,
     uint256[] memory _proofs
   ) external nonReentrant {
-    require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
-    require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
-
     // must be in desert mode
     require(desertMode, "s");
     // already exited
-    require(!performedDesert[_accountExitData.accountId][_assetExitData.assetId], "t");
 
     // stored block info should be consistent
     require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
+    require(_pubdata.length == TxTypes.PACKED_TX_PUBDATA_BYTES, "B");
 
-    bool proofCorrect = desertVerifier.verifyExitProofBalance(
-      uint256(stateRoot),
-      _nftRoot,
-      _assetExitData,
-      _accountExitData,
-      _proofs
-    );
+    // create commitment
+    bytes32 commitment = createExitCommitment(uint256(stateRoot), _pubdata);
+    uint256[1] memory inputs = [uint256(commitment) % desertVerifier.ScalarField()];
+
+    // verify proof
+    bool proofCorrect = desertVerifier.verifyProof(_proofs, inputs);
+
     require(proofCorrect, "x");
 
-    bytes22 packedBalanceKey = packAddressAndAssetId(_accountExitData.l1Address, _assetExitData.assetId);
-    increaseBalanceToWithdraw(packedBalanceKey, _assetExitData.amount);
-    emit WithdrawalPending(_assetExitData.assetId, _accountExitData.l1Address, _assetExitData.amount);
+    DesertVerifier.DesertType exitType = DesertVerifier.DesertType(uint8(_pubdata[0]));
 
-    performedDesert[_accountExitData.accountId][_assetExitData.assetId] = true;
-  }
+    if (exitType == DesertVerifier.DesertType.ExitAsset) {
+      TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(_pubdata);
 
-  /// @notice perform desert nfts
-  function performDesertNft(
-    StoredBlockInfo memory _storedBlockInfo,
-    uint256 _assetRoot,
-    DesertVerifier.AccountExitData calldata _accountExitData,
-    DesertVerifier.NftExitData[] memory _exitNfts,
-    uint256[] memory _proofs
-  ) external nonReentrant {
-    require(_accountExitData.accountId <= MAX_ACCOUNT_INDEX, "e");
-    require(_accountExitData.accountId != SPECIAL_ACCOUNT_ID, "v");
-    require(_exitNfts.length >= 1, "Z");
+      require(!performedDesert[fullExitData.accountIndex][fullExitData.assetId], "t");
+      require(fullExitData.accountIndex <= MAX_ACCOUNT_INDEX, "e");
+      require(fullExitData.accountIndex != SPECIAL_ACCOUNT_ID, "v");
 
-    // must be in desert mode
-    require(desertMode, "s");
-    // stored block info should be consistent
-    require(storedBlockHashes[totalBlocksVerified] == hashStoredBlockInfo(_storedBlockInfo), "u");
+      bytes22 packedBalanceKey = packAddressAndAssetId(fullExitData.owner, fullExitData.assetId);
+      increaseBalanceToWithdraw(packedBalanceKey, fullExitData.assetAmount);
+      emit WithdrawalPending(fullExitData.assetId, fullExitData.owner, fullExitData.assetAmount);
 
-    bool proofCorrect = desertVerifier.verifyExitNftProof(
-      uint256(stateRoot),
-      _assetRoot,
-      _accountExitData,
-      _exitNfts,
-      _proofs
-    );
-    require(proofCorrect, "x");
+      performedDesert[fullExitData.accountIndex][fullExitData.assetId] = true;
+    } else if (exitType == DesertVerifier.DesertType.ExitNft) {
+      TxTypes.FullExitNft memory fullExitNftData = TxTypes.readFullExitNftPubData(_pubdata);
 
-    for (uint256 i = 0; i < _exitNfts.length; ++i) {
-      DesertVerifier.NftExitData memory nft = _exitNfts[i];
-      // already exited
-      require(!performedDesertNfts[nft.nftIndex], "t");
+      require(fullExitNftData.accountIndex <= MAX_ACCOUNT_INDEX, "e");
+      require(fullExitNftData.accountIndex != SPECIAL_ACCOUNT_ID, "v");
+      require(!performedDesertNfts[fullExitNftData.nftIndex], "t");
 
-      TxTypes.WithdrawNft memory _withdrawNftTx = TxTypes.WithdrawNft({
-        accountIndex: _accountExitData.accountId,
-        creatorAccountIndex: nft.creatorAccountIndex,
-        creatorTreasuryRate: nft.creatorTreasuryRate,
-        nftIndex: nft.nftIndex,
-        collectionId: nft.collectionId,
-        toAddress: _accountExitData.l1Address,
-        creatorAddress: address(0),
-        nftContentHash: bytes32(bytes.concat(nft.nftContentHash1, nft.nftContentHash2)),
-        nftContentType: nft.nftContentType
+      TxTypes.WithdrawNft memory _withdrawNft = TxTypes.WithdrawNft({
+        accountIndex: fullExitNftData.accountIndex,
+        creatorAccountIndex: fullExitNftData.creatorAccountIndex,
+        creatorTreasuryRate: fullExitNftData.creatorTreasuryRate,
+        nftIndex: fullExitNftData.nftIndex,
+        collectionId: fullExitNftData.collectionId,
+        toAddress: fullExitNftData.owner,
+        creatorAddress: fullExitNftData.creatorAddress,
+        nftContentHash: fullExitNftData.nftContentHash,
+        nftContentType: fullExitNftData.nftContentType
       });
-      pendingWithdrawnNFTs[nft.nftIndex] = _withdrawNftTx;
-      emit WithdrawalNFTPending(nft.nftIndex);
+      pendingWithdrawnNFTs[fullExitNftData.nftIndex] = _withdrawNft;
+      emit WithdrawalNFTPending(fullExitNftData.nftIndex);
 
-      performedDesertNfts[nft.nftIndex] = true;
+      performedDesertNfts[fullExitNftData.nftIndex] = true;
+    } else {
+      // unsupported _tx
+      revert("F");
     }
   }
 
