@@ -58,9 +58,9 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
 
     require(proofCorrect, "x");
 
-    TxTypes.TxType txType = TxTypes.TxType(uint8(_pubdata[0]));
+    DesertVerifier.DesertType exitType = DesertVerifier.DesertType(uint8(_pubdata[0]));
 
-    if (txType == TxTypes.TxType.FullExit) {
+    if (exitType == DesertVerifier.DesertType.ExitAsset) {
       TxTypes.FullExit memory fullExitData = TxTypes.readFullExitPubData(_pubdata);
 
       require(!performedDesert[fullExitData.accountIndex][fullExitData.assetId], "t");
@@ -72,7 +72,7 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
       emit WithdrawalPending(fullExitData.assetId, fullExitData.owner, fullExitData.assetAmount);
 
       performedDesert[fullExitData.accountIndex][fullExitData.assetId] = true;
-    } else if (txType == TxTypes.TxType.FullExitNft) {
+    } else if (exitType == DesertVerifier.DesertType.ExitNft) {
       TxTypes.FullExitNft memory fullExitNftData = TxTypes.readFullExitNftPubData(_pubdata);
 
       require(fullExitNftData.accountIndex <= MAX_ACCOUNT_INDEX, "e");
