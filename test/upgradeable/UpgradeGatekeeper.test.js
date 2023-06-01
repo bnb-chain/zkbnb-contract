@@ -194,6 +194,9 @@ describe('UpgradeGatekeeper', function () {
       // upgradeStatus.NoticePeriod == 0
       expect(await upgradeGatekeeper.noticePeriodFinishTimestamp()).to.equal(0);
 
+      // targetsUpgradeParametersHash == 0
+      expect(await upgradeGatekeeper.targetsUpgradeParametersHash()).to.equal(ethers.constants.HashZero);
+
       // nextTargets.length == 0
       expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3)).eq(0)).to.equal(
         true,
@@ -218,7 +221,9 @@ describe('UpgradeGatekeeper', function () {
       // upgradeStatus.NoticePeriod == 0
       expect(await upgradeGatekeeper.upgradeStatus()).to.equal(0);
 
-      // upgradeStatus.NoticePeriod == 0
+      // targetsUpgradeParametersHash == 0
+      expect(await upgradeGatekeeper.targetsUpgradeParametersHash()).to.equal(ethers.constants.HashZero);
+
       expect(await upgradeGatekeeper.noticePeriodFinishTimestamp()).to.equal(0);
 
       // nextTargets.length == 0
@@ -240,6 +245,9 @@ describe('UpgradeGatekeeper', function () {
 
       // upgradeStatus.NoticePeriod == 0
       expect(await upgradeGatekeeper.noticePeriodFinishTimestamp()).to.equal(0);
+
+      // targetsUpgradeParametersHash == 0
+      expect(await upgradeGatekeeper.targetsUpgradeParametersHash()).to.equal(ethers.constants.HashZero);
 
       // nextTargets.length == 0
       expect(ethers.BigNumber.from(await ethers.provider.getStorageAt(upgradeGatekeeper.address, 3)).eq(0)).to.equal(

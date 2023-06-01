@@ -90,6 +90,7 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
     upgradeStatus = UpgradeStatus.Idle;
     noticePeriodFinishTimestamp = 0;
     delete nextTargets;
+    targetsUpgradeParametersHash = bytes32(0);
     emit UpgradeCancel(versionId);
   }
 
@@ -129,6 +130,7 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
 
     upgradeStatus = UpgradeStatus.Idle;
     noticePeriodFinishTimestamp = 0;
+    targetsUpgradeParametersHash = bytes32(0);
     delete nextTargets;
   }
 }
