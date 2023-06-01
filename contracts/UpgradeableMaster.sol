@@ -20,14 +20,6 @@ contract UpgradeableMaster is AccessControl {
   IZkBNBDesertMode public zkBNB;
   address[] public securityCouncilMembers;
 
-  /// @dev Flag indicates that upgrade preparation status is active
-  /// @dev Will store false in case of not active upgrade mode
-  bool internal upgradePreparationActive;
-
-  /// @dev Upgrade preparation activation timestamp (as seconds since unix epoch)
-  /// @dev Will be equal to zero in case of not active upgrade mode
-  uint256 internal _upgradePreparationActivationTime;
-
   /// @dev Upgrade notice period, possibly shorten by the security council
   uint256 internal _approvedUpgradeNoticePeriod;
 
@@ -55,6 +47,7 @@ contract UpgradeableMaster is AccessControl {
 
     _approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
     emit NoticePeriodChange(_approvedUpgradeNoticePeriod);
+    emit SecurityCouncilChanged(_securityCouncilMembers);
   }
 
   function changeSecurityCouncilMembers(
@@ -78,8 +71,6 @@ contract UpgradeableMaster is AccessControl {
 
   /// @notice Notification that upgrade preparation status is activated
   function upgradePreparationStarted() external onlyRole(UPGRADE_GATEKEEPER_ROLE) {
-    upgradePreparationActive = true;
-    _upgradePreparationActivationTime = block.timestamp;
     // Check if the _approvedUpgradeNoticePeriod is passed
     require(block.timestamp >= _upgradeStartTimestamp + _approvedUpgradeNoticePeriod, "upf");
   }
@@ -137,8 +128,6 @@ contract UpgradeableMaster is AccessControl {
 
   /// @dev When upgrade is finished or canceled we must clean upgrade-related state.
   function clearUpgradeStatus() internal {
-    upgradePreparationActive = false;
-    _upgradePreparationActivationTime = 0;
     _approvedUpgradeNoticePeriod = UPGRADE_NOTICE_PERIOD;
     emit NoticePeriodChange(_approvedUpgradeNoticePeriod);
     _upgradeStartTimestamp = 0;

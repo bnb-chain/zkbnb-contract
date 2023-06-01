@@ -82,6 +82,8 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
 
     // initialize nftBaseURIs
     nftBaseURIs[0] = "ipfs://f01701220";
+
+    emit NewGovernor(_networkGovernor);
   }
 
   /// @notice Governance contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.

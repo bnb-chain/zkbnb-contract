@@ -53,7 +53,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
     zkbnbImplementation = address(this);
   }
 
-  /// @notice ZkBNB contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
+  /// @notice ZkBNB contract initialization.
   /// @param initializationParameters Encoded representation of initialization parameters:
   /// @dev _governanceAddress The address of Governance contract
   /// @dev _verifierAddress The address of Verifier contract
