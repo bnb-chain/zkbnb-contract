@@ -231,8 +231,6 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
     require(_amount != 0, "I");
     // Get asset id by its address
     uint16 assetId = governance.validateAssetAddress(address(_token));
-    require(!governance.pausedAssets(assetId), "b");
-    // token deposits are paused
 
     uint256 balanceBefore = _token.balanceOf(address(this));
     SafeERC20.safeTransferFrom(_token, msg.sender, address(this), SafeCast.toUint128(_amount));

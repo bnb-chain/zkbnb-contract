@@ -41,14 +41,14 @@ describe('Governance', function () {
   it('should be able to initialize with a EOA Governer', async function () {
     const abi = ethers.utils.defaultAbiCoder;
     const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
-    await governance.initialize(byteAddr);
+    expect(await governance.initialize(byteAddr)).to.emit(governance, await governerWallet.getAddress());
     expect(await governance.networkGovernor()).to.equal(await governerWallet.getAddress());
   });
 
   it('BNB asset should have null address and have Id 0', async function () {
     const abi = ethers.utils.defaultAbiCoder;
     const byteAddr = abi.encode(['address'], [await governerWallet.getAddress()]);
-    await governance.initialize(byteAddr);
+    expect(await governance.initialize(byteAddr)).to.emit(governance, await governerWallet.getAddress());
     expect(await governance.networkGovernor()).to.equal(await governerWallet.getAddress());
     expect(await governance.assetAddresses(0)).to.equal(NULL_ADDRESS);
     expect(await governance.assetsList(NULL_ADDRESS)).to.equal(0);

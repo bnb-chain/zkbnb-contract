@@ -4,6 +4,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/INFTFactory.sol";
+import "./interfaces/IZkBNBDesertMode.sol";
 import "./lib/TxTypes.sol";
 
 import "./Governance.sol";
@@ -13,7 +14,7 @@ import "./DesertVerifier.sol";
 
 /// @title zkbnb storage contract
 /// @author ZkBNB Labs
-contract Storage {
+contract Storage is IZkBNBDesertMode {
   // account root
   bytes32 public stateRoot;
 
