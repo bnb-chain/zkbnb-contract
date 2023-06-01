@@ -152,9 +152,10 @@ describe('UpgradeGatekeeper', function () {
   });
 
   describe('Check normal upgrade', function () {
+    const mockParamters = ['0x3a', '0x44', '0x3d', '0x83', '0x81'];
     it('start upgrade', async function () {
       // verisonId == 0, noticePeriod == 0
-      await expect(upgradeGatekeeper.startUpgrade(newTargets))
+      await expect(upgradeGatekeeper.startUpgrade(newTargets, mockParamters))
         .to.emit(upgradeGatekeeper, 'NoticePeriodStart')
         .withArgs(0, newTargets, 0);
 
@@ -176,7 +177,9 @@ describe('UpgradeGatekeeper', function () {
       mockUpgradeableMaster.upgradeFinishes.returns();
       proxyMockZkBNB.upgradeTarget.returns();
 
-      const mockParamters = ['0x3a', '0x44', '0x3d', '0x83', '0x81'];
+      const wrongParamters = ['0x3a', '0x44', '0x3d', '0x83', '0x00'];
+      await expect(upgradeGatekeeper.finishUpgrade(wrongParamters)).to.be.revertedWith('fpu14');
+
       await expect(upgradeGatekeeper.finishUpgrade(mockParamters))
         .to.emit(upgradeGatekeeper, 'UpgradeComplete')
         .withArgs(1, newTargets);
@@ -199,12 +202,14 @@ describe('UpgradeGatekeeper', function () {
   });
 
   describe('Check upgrade cancellation', function () {
+    const mockParamters = ['0x3a', '0x44', '0x3d', '0x83', '0x81'];
+
     it('should fail to cancel before upgrade', async function () {
       await expect(upgradeGatekeeper.cancelUpgrade()).to.be.revertedWith('cpu11');
     });
 
     it('cancel after start upgrade', async function () {
-      await upgradeGatekeeper.startUpgrade(newTargets);
+      await upgradeGatekeeper.startUpgrade(newTargets, mockParamters);
       mockUpgradeableMaster.upgradeCanceled.returns();
 
       // verisonId == 1
@@ -225,7 +230,7 @@ describe('UpgradeGatekeeper', function () {
     it('cancel after start preparation', async function () {
       mockUpgradeableMaster.upgradePreparationStarted.returns();
 
-      await upgradeGatekeeper.startUpgrade(newTargets);
+      await upgradeGatekeeper.startUpgrade(newTargets, mockParamters);
       await upgradeGatekeeper.startPreparation();
 
       // verisonId == 1
@@ -245,12 +250,14 @@ describe('UpgradeGatekeeper', function () {
     it('should fail to cancel after finish upgrade', async function () {
       mockUpgradeableMaster.upgradePreparationStarted.returns();
 
-      await upgradeGatekeeper.startUpgrade(newTargets);
+      await upgradeGatekeeper.startUpgrade(newTargets, mockParamters);
       await upgradeGatekeeper.startPreparation();
       mockUpgradeableMaster.upgradeFinishes.returns();
       proxyMockZkBNB.upgradeTarget.returns();
 
-      const mockParamters = ['0x3a', '0x44', '0x3d', '0x83', '0x81'];
+      await expect(upgradeGatekeeper.finishUpgrade(['0x00', '0x01', '0x02', '0x03', '0x04'])).to.be.revertedWith(
+        'fpu14',
+      );
       await upgradeGatekeeper.finishUpgrade(mockParamters);
       await expect(upgradeGatekeeper.cancelUpgrade()).to.be.revertedWith('cpu11');
     });

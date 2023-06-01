@@ -36,6 +36,9 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
   /// @notice Contract which defines notice period duration and allows finish upgrade during preparation of it
   UpgradeableMaster public masterContract;
 
+  /// @notice The hash of targetsUpgradeParameters to ensure parameters are locked when invoking `finishUpgrade`
+  bytes32 public targetsUpgradeParametersHash;
+
   /// @notice Contract constructor
   /// @param _masterContract Contract which defines notice period duration and allows finish upgrade during preparation of it
   /// @dev Calls Ownable contract constructor
@@ -56,12 +59,14 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
 
   /// @notice Starts upgrade (activates notice period)
   /// @param newTargets New managed contracts targets (if element of this array is equal to zero address it means that appropriate upgradeable contract wouldn't be upgraded this time)
-  function startUpgrade(address[] calldata newTargets) external onlyMaster {
+  /// @param targetsUpgradeParameters Parameters need to upgrade targets
+  function startUpgrade(address[] calldata newTargets, bytes[] calldata targetsUpgradeParameters) external onlyMaster {
     require(upgradeStatus == UpgradeStatus.Idle, "spu11");
     // spu11 - unable to activate active upgrade mode
     require(newTargets.length == managedContracts.length, "spu12");
     // spu12 - number of new targets must be equal to the number of managed contracts
 
+    targetsUpgradeParametersHash = hashUpgradeParams(targetsUpgradeParameters);
     // this noticePeriod is a configurable shortest notice period
     uint256 noticePeriod = masterContract.getNoticePeriod();
     masterContract.upgradeNoticePeriodStarted();
@@ -69,6 +74,11 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
     noticePeriodFinishTimestamp = block.timestamp + noticePeriod;
     nextTargets = newTargets;
     emit NoticePeriodStart(versionId, newTargets, noticePeriod);
+  }
+
+  /// @notice calc the hash of targetUpgradeParameters to make sure parameters are locked during notice period
+  function hashUpgradeParams(bytes[] calldata targetsUpgradeParameters) internal pure returns (bytes32) {
+    return keccak256(abi.encode(targetsUpgradeParameters));
   }
 
   /// @notice Cancels upgrade
@@ -104,6 +114,8 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
     // fpu12 - number of new targets upgrade parameters must be equal to the number of managed contracts
     require(masterContract.isReadyForUpgrade(), "fpu13");
     // fpu13 - main contract is not ready for upgrade
+    require(targetsUpgradeParametersHash == hashUpgradeParams(targetsUpgradeParameters), "fpu14");
+    // fpu14 - upgrade parameters are different from locked parameters
     masterContract.upgradeFinishes();
 
     for (uint64 i = 0; i < managedContracts.length; ++i) {
