@@ -17,6 +17,21 @@ const targetContractsDeployed = {
 };
 let targetContracts;
 
+const targetsUpgradeParameter = (upgradeJson) => {
+  const zkBNBUpgradeParameter = {
+    additionalZkBNB: upgradeJson.additionalZkBNB ? upgradeJson.additionalZkBNB[0] : zeroAddress(),
+    desertVerifier: upgradeJson.desertVerifier ? upgradeJson.desertVerifier[0] : zeroAddress(),
+  };
+  return [
+    '0x00',
+    '0x00',
+    ethers.utils.defaultAbiCoder.encode(
+      ['address', 'address'], // newAdditionalZkBNB.addresss, newDesertVerifier.addresss
+      [zkBNBUpgradeParameter['additionalZkBNB'], zkBNBUpgradeParameter['desertVerifier']],
+    ),
+  ];
+};
+
 async function getUpgradeableContractImplement() {
   const addrs = getDeployedAddresses('info/addresses.json');
   const contractFactories = await getContractFactories();
@@ -210,19 +225,24 @@ async function startUpgrade(owner, upgradeGatekeeper, upgradeGatekeeperActor) {
 
           const versionId = Number(await upgradeGatekeeper.versionId());
           console.log(chalk.green('🚚 Start Upgrade'));
-          const tx = await upgradeGatekeeperActor.startUpgrade([
-            targetContractsDeployed.governance,
-            targetContractsDeployed.verifier,
-            targetContractsDeployed.zkbnb,
-          ]);
-
-          console.log('please check explorer. txid: ', tx.hash);
-
           const constructorJson = {};
           for (const item in targetContractsDeployed) {
             constructorJson[item] = [targetContractsDeployed[item]];
           }
           saveConstructorArgumentsForVerify(`info/upgrade-${versionId}.json`, constructorJson);
+          const upgradeJson = getDeployedAddresses(`info/upgrade-${versionId}.json`);
+          const upgradeParameters = targetsUpgradeParameter(upgradeJson);
+
+          try {
+            const tx = await upgradeGatekeeperActor.startUpgrade(
+              [targetContractsDeployed.governance, targetContractsDeployed.verifier, targetContractsDeployed.zkbnb],
+              upgradeParameters,
+            );
+
+            console.log('✅ startUpgrade done. Please check explorer. txid: ', tx.hash);
+          } catch (error) {
+            console.log('❌ startUpgrade failed. ', error);
+          }
         });
     });
 }
@@ -237,16 +257,13 @@ async function finishUpgrade(upgradeGatekeeper, upgradeGatekeeperActor) {
 
   const versionId = await upgradeGatekeeper.versionId();
   const upgradeJson = getDeployedAddresses(`info/upgrade-${versionId}.json`);
-  const zkBNBUpgradeParameter = {
-    additionalZkBNB: upgradeJson.additionalZkBNB ? upgradeJson.additionalZkBNB[0] : zeroAddress(),
-    desertVerifier: upgradeJson.desertVerifier ? upgradeJson.desertVerifier[0] : zeroAddress(),
-  };
+  const upgradeParameters = targetsUpgradeParameter(upgradeJson);
 
   const upgradeTargets = {
     governance: upgradeJson.governance[0],
     verifier: upgradeJson.verifier[0],
     zkbnb: upgradeJson.zkbnb[0],
-    zkBNBUpgradeParameter,
+    upgradeParameters,
   };
 
   console.log(upgradeTargets);
@@ -263,15 +280,8 @@ async function finishUpgrade(upgradeGatekeeper, upgradeGatekeeperActor) {
         return;
       }
       console.log(chalk.green('🚀 Finish Upgrade'));
-      const tx = await upgradeGatekeeperActor.finishUpgrade([
-        '0x00',
-        '0x00',
-        ethers.utils.defaultAbiCoder.encode(
-          ['address', 'address'], // newAdditionalZkBNB.addresss, newDesertVerifier.addresss
-          [zkBNBUpgradeParameter['additionalZkBNB'], zkBNBUpgradeParameter['desertVerifier']],
-        ),
-      ]);
-      console.log('please check explorer. txid: ', tx.hash);
+      const tx = await upgradeGatekeeperActor.finishUpgrade(upgradeParameters);
+      console.log('✅ finishUpgrade done. Please check explorer. txid: ', tx.hash);
     });
 }
 
