@@ -1,9 +1,8 @@
-const chai = require('chai');
-const { ethers, network } = require('hardhat');
-const { smock } = require('@defi-wonderland/smock');
-const { deployMockZkBNB } = require('../util');
+import chai, { expect } from 'chai';
+import { ethers } from 'hardhat';
+import { smock } from '@defi-wonderland/smock';
+import { deployMockZkBNB } from '../util';
 
-const { expect } = chai;
 chai.use(smock.matchers);
 
 describe('UpgradeableMaster', function () {
@@ -24,11 +23,22 @@ describe('UpgradeableMaster', function () {
 
     const UpgradeableMaster = await ethers.getContractFactory('UpgradeableMaster');
 
-    upgradeableMaster = await UpgradeableMaster.deploy(
-      [councilMember1.address, councilMember2.address, councilMember3.address],
-      mockZkBNB.address,
-    );
+    const councilMembers = [councilMember1.address, councilMember2.address, councilMember3.address];
+
+    upgradeableMaster = await UpgradeableMaster.deploy(councilMembers, mockZkBNB.address);
+
     await upgradeableMaster.deployed();
+    const deployTx = await upgradeableMaster.deployTransaction;
+    const receipt = await deployTx.wait();
+    const event = receipt.events?.filter(({ event }) => {
+      return event == 'SecurityCouncilChanged';
+    });
+
+    expect(event).to.not.be.null;
+    expect(event[0].args.securityCouncilMembers[0]).to.equal(councilMember1.address);
+    expect(event[0].args.securityCouncilMembers[1]).to.equal(councilMember2.address);
+    expect(event[0].args.securityCouncilMembers[2]).to.equal(councilMember3.address);
+
     UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
     upgradeableMaster.grantRole(UPGRADE_GATEKEEPER_ROLE, owner.address);
   });

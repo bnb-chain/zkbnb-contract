@@ -98,11 +98,11 @@ describe('ZkBNB', function () {
         await expect(zkBNB.depositBEP20(mockERC20.address, 0, toAddress)).to.be.revertedWith('I');
 
         // assets must exist
-        mockGovernance.validateAssetAddress.returns(2);
-        mockGovernance.pausedAssets.returns(true);
-        await expect(zkBNB.depositBEP20(mockERC20.address, 10, toAddress)).to.be.revertedWith('b');
+        mockGovernance.validateAssetAddress.reverts('2i');
+        await expect(zkBNB.depositBEP20(mockERC20.address, 10, toAddress)).to.be.reverted;
 
         // insufficient
+        mockGovernance.validateAssetAddress.returns(2);
         mockGovernance.pausedAssets.returns(false);
         mockERC20.transferFrom.returns(true);
         mockERC20.balanceOf.returnsAtCall(0, 100);
@@ -199,11 +199,11 @@ describe('ZkBNB', function () {
         await expect(zkBNB.depositBEP20(mockERC20.address, 0, toAddress)).to.be.revertedWith('I');
 
         // assets must exist
-        mockGovernance.validateAssetAddress.returns(2);
-        mockGovernance.pausedAssets.returns(true);
-        await expect(zkBNB.depositBEP20(mockERC20.address, 10, toAddress)).to.be.revertedWith('b');
+        mockGovernance.validateAssetAddress.reverts('2i');
+        await expect(zkBNB.depositBEP20(mockERC20.address, 10, toAddress)).to.be.reverted;
 
         // insufficient
+        mockGovernance.validateAssetAddress.returns(2);
         mockGovernance.pausedAssets.returns(false);
         mockERC20.transferFrom.returns(true);
         mockERC20.balanceOf.returnsAtCall(0, 100);
