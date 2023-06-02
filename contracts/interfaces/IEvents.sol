@@ -102,5 +102,5 @@ interface IUpgradeEvents {
   event PreparationStart(uint256 indexed versionId);
 
   /// @notice Upgrade mode complete event
-  event UpgradeComplete(uint256 indexed versionId, address[] newTargets);
+  event UpgradeComplete(uint256 indexed versionId, address[] newTargets, bytes[] targetsUpgradeParameters);
 }

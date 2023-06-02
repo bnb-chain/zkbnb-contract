@@ -254,3 +254,23 @@ export async function deployZkBNBProxy(initParams: string, implContract: Contrac
 
   return zkBNB;
 }
+
+export async function deployGovernanceProxy(initParams: string, implContract: Contract) {
+  const Utils = await ethers.getContractFactory('Utils');
+  const utils = await Utils.deploy();
+  await utils.deployed();
+
+  const Governance = await ethers.getContractFactory('Governance', {
+    libraries: {
+      Utils: utils.address,
+    },
+  });
+  const Proxy = await ethers.getContractFactory('Proxy');
+
+  const governanceProxy = await Proxy.deploy(implContract.address, initParams);
+  await governanceProxy.deployed();
+
+  const governance = Governance.attach(governanceProxy.address);
+
+  return governance;
+}

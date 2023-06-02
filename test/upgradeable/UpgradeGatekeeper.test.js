@@ -182,7 +182,7 @@ describe('UpgradeGatekeeper', function () {
 
       await expect(upgradeGatekeeper.finishUpgrade(mockParamters))
         .to.emit(upgradeGatekeeper, 'UpgradeComplete')
-        .withArgs(1, newTargets);
+        .withArgs(1, newTargets, mockParamters);
 
       // Check states are cleared
       // versionId == 1
