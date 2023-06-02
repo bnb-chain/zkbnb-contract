@@ -49,8 +49,16 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
 
   address private immutable zkbnbImplementation;
 
+  // OpenZeppelin Contracts (last updated v4.9.0) (proxy/utils/Initializable.sol)
+  // * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure */
+  // * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity. */
+  // * Avoid leaving a contract uninitialized. */
+  // * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation */
+  // * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke */
+  // * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed: */
   constructor() {
     zkbnbImplementation = address(this);
+    _disableInitializers();
   }
 
   /// @notice ZkBNB contract initialization.
@@ -290,9 +298,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
 
     // Check timestamp of the new block
     // Block should be after previous block
-    {
-      require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
-    }
+    require(_newBlock.timestamp >= _previousBlock.timestamp, "g");
 
     // Check onchain operations
     (bytes32 pendingOnchainOpsHash, uint64 priorityReqCommitted) = collectOnchainOps(_newBlock);
