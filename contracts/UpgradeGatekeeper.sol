@@ -126,7 +126,7 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
       }
     }
     ++versionId;
-    emit UpgradeComplete(versionId, nextTargets);
+    emit UpgradeComplete(versionId, nextTargets, targetsUpgradeParameters);
 
     upgradeStatus = UpgradeStatus.Idle;
     noticePeriodFinishTimestamp = 0;
