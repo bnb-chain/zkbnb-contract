@@ -44,7 +44,7 @@ describe('ZkBNB', function () {
         '0x0000000000000000000000000000000000000000000000000000000000000000',
       ],
     );
-    await expect(zkBNBImpl.initialize(initParams)).to.be.revertedWith('1A');
+    await expect(zkBNBImpl.initialize(initParams)).to.be.revertedWith('Initializable: contract is already initialized');
     upgradeParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address'],
       [additionalZkBNB.address, additionalZkBNB.address],

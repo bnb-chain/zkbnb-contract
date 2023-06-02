@@ -3,7 +3,7 @@ import chai, { expect } from 'chai';
 import { smock } from '@defi-wonderland/smock';
 import assert from 'assert';
 import CID from 'cids';
-import { deployGovernance, deployZkBNB, deployZkBNBProxy } from '../util';
+import { deployGovernance, deployGovernanceProxy, deployZkBNB, deployZkBNBProxy } from '../util';
 
 chai.use(smock.matchers);
 const abi = ethers.utils.defaultAbiCoder;
@@ -31,8 +31,6 @@ describe('NFT functionality', function () {
   before(async function () {
     [owner, acc1, acc2] = await ethers.getSigners();
 
-    governance = await deployGovernance();
-
     const MockZkBNBVerifier = await smock.mock('ZkBNBVerifier');
     mockZkBNBVerifier = await MockZkBNBVerifier.deploy();
     await mockZkBNBVerifier.deployed();
@@ -44,6 +42,11 @@ describe('NFT functionality', function () {
     mockDesertVerifier = await smock.fake('DesertVerifier');
 
     const zkBNBTestImpl = await deployZkBNB('ZkBNBTest');
+    const governanceImpl = await deployGovernance();
+
+    const abi = ethers.utils.defaultAbiCoder;
+    const byteAddr = abi.encode(['address'], [owner.address]);
+    governance = await deployGovernanceProxy(byteAddr, governanceImpl);
 
     const initParams = ethers.utils.defaultAbiCoder.encode(
       ['address', 'address', 'address', 'address', 'bytes32'],
@@ -68,9 +71,6 @@ describe('NFT functionality', function () {
     mockNftFactory = await MockNftFactory.deploy('FooNft', 'FOO', zkBNB.address, owner.address);
     await mockNftFactory.deployed();
 
-    const abi = ethers.utils.defaultAbiCoder;
-    const byteAddr = abi.encode(['address'], [owner.address]);
-    await governance.initialize(byteAddr);
     await governance.setZkBNBAddress(zkBNB.address);
     await governance.updateBaseURI(0, baseURI);
 

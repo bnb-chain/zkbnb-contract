@@ -70,7 +70,18 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @notice ZkBNB address has set
   event SetZkBNB(address indexed zkBNBAddress);
 
-  /// @notice Governance contract initialization. Can be external because Proxy contract intercepts illegal calls of this function.
+  // OpenZeppelin Contracts (last updated v4.9.0) (proxy/utils/Initializable.sol)
+  // * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure */
+  // * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity. */
+  // * Avoid leaving a contract uninitialized. */
+  // * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation */
+  // * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke */
+  // * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed: */
+  constructor() {
+    _disableInitializers();
+  }
+
+  /// @notice Governance contract initialization.
   /// @param initializationParameters Encoded representation of initialization parameters:
   ///     _networkGovernor The address of network governor
   function initialize(bytes calldata initializationParameters) external initializer {
