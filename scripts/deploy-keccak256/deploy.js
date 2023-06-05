@@ -1,5 +1,10 @@
 const hardhat = require('hardhat');
-const { saveDeployedAddresses, saveConstructorArgumentsForVerify, deployDesertVerifier } = require('./utils');
+const {
+  saveDeployedAddresses,
+  saveConstructorArgumentsForVerify,
+  saveVersionZeroInfo,
+  deployDesertVerifier,
+} = require('./utils');
 require('dotenv').config();
 const figlet = require('figlet');
 const chalk = require('chalk');
@@ -175,6 +180,27 @@ async function main() {
       txTypes: contractFactories.TxTypes.address,
       desertVerifier: desertVerifier.address,
       BUSDToken,
+    }),
+  );
+
+  saveVersionZeroInfo(
+    'info/version-0.json',
+    Object.assign({
+      targetAddresses: [governance.address, verifier.address, zkbnb.address],
+      targetParameters: [
+        '0x',
+        '0x',
+        abi.encode(
+          ['address', 'address', 'address', 'address', 'bytes32'],
+          [
+            governanceEntryAddress,
+            verifierEntryAddress,
+            additionalZkBNBLogicAddress,
+            desertVerifier.address,
+            _genesisStateRoot,
+          ],
+        ),
+      ],
     }),
   );
 

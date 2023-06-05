@@ -18,6 +18,11 @@ exports.saveConstructorArgumentsForVerify = function (path, args) {
   fs.writeFileSync(path, data);
 };
 
+exports.saveVersionZeroInfo = function (path, info) {
+  const data = JSON.stringify(info, null, 2);
+  fs.writeFileSync(path, data);
+};
+
 exports.getZkBNBProxy = async function (addr) {
   // Get txTypes contract
   const TxTypes = await ethers.getContractFactory('TxTypes');

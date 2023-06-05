@@ -1,3 +1,4 @@
+const fs = require('fs');
 const hardhat = require('hardhat');
 const {
   getDeployedAddresses,
@@ -15,6 +16,7 @@ const targetContractsDeployed = {
   verifier: AddressZero,
   zkbnb: AddressZero,
 };
+
 let targetContracts;
 
 const targetsUpgradeParameter = (upgradeJson) => {
@@ -285,9 +287,15 @@ async function finishUpgrade(upgradeGatekeeper, upgradeGatekeeperActor) {
     });
 }
 
+const getVersionZeroInfo = () => {
+  const raw = fs.readFileSync('info/version-0.json');
+  return JSON.parse(raw);
+};
+
 module.exports = {
   getContractFactories,
   getUpgradeableContractImplement,
   startUpgrade,
   finishUpgrade,
+  getVersionZeroInfo,
 };
