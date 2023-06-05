@@ -1,6 +1,6 @@
 const hardhat = require('hardhat');
 const { getDeployedAddresses } = require('../deploy-keccak256/utils');
-const { startUpgrade, finishUpgrade } = require('./utils');
+const { startUpgrade, finishUpgrade, getVersionZeroInfo } = require('./utils');
 const { ethers } = hardhat;
 const { EthersAdapter } = require('@safe-global/protocol-kit');
 const Safe = require('@safe-global/safe-core-sdk').default;
@@ -124,23 +124,41 @@ async function rollback(startBlockNumber) {
   const versionId = await upgradeGatekeeper.versionId();
   console.log(`current version is ${chalk.red(versionId)}`);
 
-  console.log(chalk.green('🔍 search old version...'));
   let previousVersionTargets;
-  // If it is the first version, should get the implementation contract address directly from the proxy contract
+  let previousVersionParameters;
   if (versionId == 0) {
+    console.log(chalk.green('☕️ nothing to rollback, current version is the first version'));
+    return;
+  } else if (versionId == 1) {
+    // target addresses and parameters are provided via `info/verson-0.json` file
+    const verionZeroInfo = getVersionZeroInfo();
     previousVersionTargets = {
-      governance: await (await ethers.getContractFactory('Proxy')).attach(addrs.governance).getTarget(),
-      verifier: await (await ethers.getContractFactory('Proxy')).attach(addrs.verifierProxy).getTarget(),
-      zkbnb: await (await ethers.getContractFactory('Proxy')).attach(addrs.zkbnbProxy).getTarget(),
+      governance: verionZeroInfo.targetAddresses[0],
+      verifier: verionZeroInfo.targetAddresses[1],
+      zkbnb: verionZeroInfo.targetAddresses[2],
     };
+    previousVersionParameters = {
+      governanceParams: verionZeroInfo.targetParameters[0],
+      verifierParams: verionZeroInfo.targetParameters[1],
+      zkbnbParams: verionZeroInfo.targetParameters[2],
+    };
+
+    console.log('rolling back to version 0');
   } else {
+    console.log(chalk.green('🔍 search old version...'));
     const filter = upgradeGatekeeper.filters.UpgradeComplete(versionId - 1);
     const event = await upgradeGatekeeper.queryFilter(filter, startBlockNumber - 1, startBlockNumber + 100);
     const targets = event[0].args.newTargets;
+    const targetParameters = event[0].args.targetsUpgradeParameters;
     previousVersionTargets = {
       governance: targets[0],
       verifier: targets[1],
       zkbnb: targets[2],
+    };
+    previousVersionParameters = {
+      governanceParams: targetParameters[0],
+      verifierParams: targetParameters[1],
+      zkbnbParams: targetParameters[2],
     };
   }
 
@@ -148,6 +166,7 @@ async function rollback(startBlockNumber) {
 
   console.log('**** Old implement Contract ****');
   console.table(previousVersionTargets);
+  console.table(previousVersionParameters);
   console.log('********************************');
 
   inquirer
@@ -164,11 +183,14 @@ async function rollback(startBlockNumber) {
       }
 
       console.log(chalk.green('✅ rollback process started'));
-      await gnosisUpgradeGatekeeper.startUpgrade([
-        previousVersionTargets.governance,
-        previousVersionTargets.verifier,
-        previousVersionTargets.zkbnb,
-      ]);
+      await gnosisUpgradeGatekeeper.startUpgrade(
+        [previousVersionTargets.governance, previousVersionTargets.verifier, previousVersionTargets.zkbnb],
+        [
+          previousVersionParameters.governanceParams,
+          previousVersionParameters.verifierParams,
+          previousVersionParameters.zkbnbParams,
+        ],
+      );
       console.log(chalk.green('💻 Go to the Safe Web App [https://app.safe.global] to confirm the transaction'));
       console.log('after that, you still need to do preparation and finish step.');
     });

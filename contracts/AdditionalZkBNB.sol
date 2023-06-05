@@ -166,9 +166,7 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
 
     totalBlocksCommitted = blocksCommitted;
     totalCommittedPriorityRequests -= revertedPriorityRequests;
-    if (totalBlocksCommitted < totalBlocksVerified) {
-      totalBlocksVerified = totalBlocksCommitted;
-    }
+    require(totalBlocksCommitted >= totalBlocksVerified, "ob");
 
     emit BlocksRevert(totalBlocksVerified, blocksCommitted);
   }
