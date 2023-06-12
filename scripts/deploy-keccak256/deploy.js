@@ -63,7 +63,7 @@ async function main() {
   // get ERC721
   const ERC721 = await contractFactories.ERC721Factory.deploy('zkBNB', 'zkBNB', '0');
   await ERC721.deployed();
-  const _genesisStateRoot = '0x1bb54bd4586b34192cd80ca2b19d3579b68509c2a9302405fa8758ba905765c4';
+  const _genesisStateRoot = '0x0af639bcfe67d6d32c8cbe4d6e5c6048a77930bd6e696241fe465a608646f0da';
   const _listingFee = ethers.utils.parseEther('100');
   const _listingCap = 2 ** 16 - 1;
   const BUSDToken = isMainnet
