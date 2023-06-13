@@ -4,7 +4,10 @@ const { ethers } = hardhat;
 
 async function main() {
   const network = hardhat.network.name;
-  const isLocal = network === 'local' || 'hardhat';
+  isLocal = false;
+  if (network === 'local' || network == 'hardhat') {
+    isLocal = true;
+  }
 
   const addrs = getDeployedAddresses('info/addresses.json');
   const zkbnb = await getZkBNBProxy(addrs.zkbnbProxy);
@@ -39,9 +42,18 @@ async function main() {
   // deposit bep20
   console.log('Deposit BEP20...');
   let depositBEP20Tx;
+  const AssetGovernance =  await ethers.getContractFactory('AssetGovernance');
+  const assetGovernance = AssetGovernance.attach(addrs.assetGovernance);
+  
   if (isLocal) {
-    const LEGToken = await TokenFactory.deploy(100, 'LEGToken', 'LEG');
+    const LEGToken = await TokenFactory.deploy(ethers.utils.parseEther('100000000000'), 'LEGToken', 'LEG');
     await LEGToken.deployed();
+
+    const addAssetTx = await assetGovernance.addAsset(LEGToken.address);
+    await addAssetTx.wait();
+
+    const setBEP20AllowanceTx = await LEGToken.approve(zkbnb.address, ethers.utils.parseEther('100000000000'));
+    await setBEP20AllowanceTx.wait()
 
     depositBEP20Tx = await zkbnb.depositBEP20(LEGToken.address, ethers.utils.parseEther('100'), treasuryAccountAddress);
   } else {
