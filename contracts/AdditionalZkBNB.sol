@@ -65,7 +65,6 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
 
       require(!performedDesert[fullExitData.accountIndex][fullExitData.assetId], "t");
       require(fullExitData.accountIndex <= MAX_ACCOUNT_INDEX, "e");
-      require(fullExitData.accountIndex != SPECIAL_ACCOUNT_ID, "v");
 
       bytes22 packedBalanceKey = packAddressAndAssetId(fullExitData.owner, fullExitData.assetId);
       increaseBalanceToWithdraw(packedBalanceKey, fullExitData.assetAmount);
@@ -76,7 +75,6 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
       TxTypes.FullExitNft memory fullExitNftData = TxTypes.readFullExitNftPubData(_pubdata);
 
       require(fullExitNftData.accountIndex <= MAX_ACCOUNT_INDEX, "e");
-      require(fullExitNftData.accountIndex != SPECIAL_ACCOUNT_ID, "v");
       require(!performedDesertNfts[fullExitNftData.nftIndex], "t");
 
       TxTypes.WithdrawNft memory _withdrawNft = TxTypes.WithdrawNft({

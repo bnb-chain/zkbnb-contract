@@ -148,18 +148,22 @@ async function main() {
   if (process.env.VALIDATORS) {
     const validators = process.env.VALIDATORS.split(',');
     for (const validator of validators) {
-      await proxyGovernance.setValidator(validator, true);
+      const setVTx = await proxyGovernance.setValidator(validator, true);
+      await setVTx.wait();
+      console.log("set validator hash is ", setVTx.hash)
       console.log(chalk.blue(`\t📦 Added validator ${validator}`));
     }
   }
 
   console.log(chalk.blue('🔐 Granted permission...'));
   const UPGRADE_GATEKEEPER_ROLE = await upgradeableMaster.UPGRADE_GATEKEEPER_ROLE();
-  await upgradeableMaster.grantRole(
+  const grantRoleTx = await upgradeableMaster.grantRole(
     UPGRADE_GATEKEEPER_ROLE,
     upgradeGatekeeperEntryAddress /* upgradeGateKeeper.address */,
   );
-  await upgradeableMaster.changeZkBNBAddress(zkbnbEntryAddress /* zkbnb.address */);
+  await grantRoleTx.wait();
+  const changeZkBNBAddressTx = await upgradeableMaster.changeZkBNBAddress(zkbnbEntryAddress /* zkbnb.address */);
+  await changeZkBNBAddressTx.wait()
 
   // Save addresses into JSON
   console.log(chalk.blue('📥 Save deployed contract addresses and arguments'));

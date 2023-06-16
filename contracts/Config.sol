@@ -32,7 +32,5 @@ contract Config {
   /// @dev otherwise incorrect block with priority op could not be reverted.
   uint256 internal constant PRIORITY_EXPIRATION = PRIORITY_EXPIRATION_PERIOD / BLOCK_PERIOD;
 
-  uint32 public constant SPECIAL_ACCOUNT_ID = 0;
-
   uint40 public constant MAX_NFT_INDEX = (2 ** 40) - 2;
 }
