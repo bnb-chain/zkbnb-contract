@@ -50,6 +50,10 @@ contract AssetGovernance is ReentrancyGuard {
     uint16 _listingCap,
     address _treasury
   ) {
+    require(_governance != address(0), "governance address cannot be 0");
+    require(_listingFeeToken != address(0), "listing fee token address cannot be 0");
+    require(_treasury != address(0), "treasury address cannot be 0");
+
     governance = Governance(_governance);
     listingFeeToken = IERC20(_listingFeeToken);
     listingFee = _listingFee;

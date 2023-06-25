@@ -88,7 +88,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
     __ReentrancyGuard_init();
 
     address _networkGovernor = abi.decode(initializationParameters, (address));
-
+    require(_networkGovernor != address(0), "nz");
     networkGovernor = _networkGovernor;
 
     // initialize nftBaseURIs
@@ -105,6 +105,8 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @notice Change current governor
   /// @param _newGovernor Address of the new governor
   function changeGovernor(address _newGovernor) external nonReentrant onlyGovernor {
+    require(_newGovernor != address(0), "nz");
+
     if (networkGovernor != _newGovernor) {
       networkGovernor = _newGovernor;
       emit NewGovernor(_newGovernor);

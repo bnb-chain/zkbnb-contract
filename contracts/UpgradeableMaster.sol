@@ -40,6 +40,7 @@ contract UpgradeableMaster is AccessControl {
   constructor(address[3] memory _securityCouncilMembers, address _zkBNB) {
     securityCouncilMembers = _securityCouncilMembers;
 
+    require(_zkBNB != address(0), "nz");
     zkBNB = IZkBNBDesertMode(_zkBNB);
 
     // Set default admin
