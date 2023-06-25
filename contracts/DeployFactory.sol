@@ -61,8 +61,6 @@ contract DeployFactory {
     });
 
     deployProxyContracts(contracts, params);
-
-    selfdestruct(payable(msg.sender));
   }
 
   function deployProxyContracts(
