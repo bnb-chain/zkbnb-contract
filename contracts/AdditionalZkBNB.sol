@@ -230,7 +230,7 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
 
     uint256 balanceBefore = _token.balanceOf(address(this));
     SafeERC20.safeTransferFrom(_token, msg.sender, address(this), SafeCast.toUint128(_amount));
-    // TODO check success of transferFrom , but we check depositAmount > 0 , maybe do not need
+
     // token transfer failed deposit
     uint256 balanceAfter = _token.balanceOf(address(this));
     uint128 depositAmount = SafeCast.toUint128(balanceAfter - balanceBefore);
