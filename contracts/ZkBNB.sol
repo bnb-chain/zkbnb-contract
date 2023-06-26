@@ -464,6 +464,8 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
     VerifyAndExecuteBlockInfo[] memory _blocks,
     uint256[] memory _proofs
   ) external nonReentrant onlyActive {
+    require(_blocks.length <= type(uint16).max, "_blocks length overflow");
+
     governance.isActiveValidator(msg.sender);
 
     uint64 priorityRequestsExecuted = 0;
