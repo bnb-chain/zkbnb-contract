@@ -40,6 +40,8 @@ contract DeployFactory {
   /// @dev Doing development in constructor method costs lower gas fee,
   ///      giving us simplicity and atomicity of our deployment.
   constructor(address[] memory addrs, bytes32 _genesisAccountRoot, uint256 _listingFee, uint16 _listingCap) {
+    require(addrs.length == 8, "wrong addrs length");
+
     for (uint256 i = 0; i < addrs.length; i++) {
       require(addrs[i] != address(0), "nz");
     }
