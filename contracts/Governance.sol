@@ -124,6 +124,8 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @param _asset Token address
   function addAsset(address _asset) external nonReentrant {
     require(msg.sender == address(assetGovernance), "1E");
+
+    require(_isContract(_asset), "asset not contract");
     require(assetsList[_asset] == 0, "1e");
     // token exists
     require(totalAssets < MAX_AMOUNT_OF_REGISTERED_ASSETS, "1f");
@@ -197,6 +199,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @param _collectionId L2 collection id
   /// @param _factoryAddress NFT factor address
   function registerNFTFactory(uint16 _collectionId, address _factoryAddress) public {
+    require(_isContract(_factoryAddress), "_factoryAddress not contract");
     require(nftFactories[msg.sender][_collectionId] == address(0), "Q");
     require(nftFactoryCreators[_factoryAddress] == msg.sender, "ws");
     nftFactories[msg.sender][_collectionId] = _factoryAddress;
@@ -223,6 +226,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @notice Set ZkBNB address
   /// @param _zkBNBAddress ZkBNB address
   function setZkBNBAddress(address _zkBNBAddress) external nonReentrant onlyGovernor {
+    require(_isContract(_zkBNBAddress), "_zkBNBAddress not contract");
     require(_zkBNBAddress != address(0), "Invalid address");
     require(zkBNBAddress != _zkBNBAddress, "Unchanged");
     zkBNBAddress = _zkBNBAddress;
@@ -233,6 +237,7 @@ contract Governance is Config, Initializable, ReentrancyGuardUpgradeable {
   /// @param _factoryAddress Address of NFT factory
   function setDefaultNFTFactory(address _factoryAddress) external nonReentrant onlyGovernor {
     require(_factoryAddress != address(0), "mb1"); // Factory should be non zero
+    require(_isContract(_factoryAddress), "_factoryAddress not contract");
     require(defaultNFTFactory == address(0), "mb2"); // NFTFactory is already set
     defaultNFTFactory = _factoryAddress;
     emit SetDefaultNFTFactory(_factoryAddress);

@@ -50,6 +50,7 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
   /// @notice Adds a new upgradeable contract to the list of contracts managed by the gatekeeper
   /// @param addr Address of upgradeable contract to add
   function addUpgradeable(address addr) external onlyMaster {
+    require(_isContract(addr), "addr not contract");
     require(upgradeStatus == UpgradeStatus.Idle, "apc11");
     /// apc11 - upgradeable contract can't be added during upgrade
 
@@ -132,5 +133,9 @@ contract UpgradeGatekeeper is IUpgradeEvents, ZkBNBOwnable {
     noticePeriodFinishTimestamp = 0;
     targetsUpgradeParametersHash = bytes32(0);
     delete nextTargets;
+  }
+
+  function _isContract(address account) internal view returns (bool) {
+    return account.code.length > 0;
   }
 }

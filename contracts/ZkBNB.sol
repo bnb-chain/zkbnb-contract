@@ -79,6 +79,11 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
       bytes32 _genesisStateRoot
     ) = abi.decode(initializationParameters, (address, address, address, address, bytes32));
 
+    require(_isContract(_governanceAddress), "_governanceAddress not contract");
+    require(_isContract(_verifierAddress), "_verifierAddress not contract");
+    require(_isContract(_additionalZkBNB), "_additionalZkBNB not contract");
+    require(_isContract(_desertVerifier), "_desertVerifier not contract");
+
     verifier = ZkBNBVerifier(_verifierAddress);
     governance = Governance(_governanceAddress);
     additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
@@ -106,10 +111,12 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
     (address _additionalZkBNB, address _desertVerifier) = abi.decode(upgradeParameters, (address, address));
 
     if (_additionalZkBNB != address(0)) {
+      require(_isContract(_additionalZkBNB), "_additionalZkBNB not contract");
       additionalZkBNB = AdditionalZkBNB(_additionalZkBNB);
     }
 
     if (_desertVerifier != address(0)) {
+      require(_isContract(_desertVerifier), "_desertVerifier not contract");
       desertVerifier = DesertVerifier(_desertVerifier);
     }
   }

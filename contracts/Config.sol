@@ -33,4 +33,8 @@ contract Config {
   uint256 internal constant PRIORITY_EXPIRATION = PRIORITY_EXPIRATION_PERIOD / BLOCK_PERIOD;
 
   uint40 public constant MAX_NFT_INDEX = (2 ** 40) - 2;
+
+  function _isContract(address account) internal view returns (bool) {
+    return account.code.length > 0;
+  }
 }
