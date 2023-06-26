@@ -272,7 +272,10 @@ contract AdditionalZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) external nonReentrant onlyActive {
+  function requestFullExitNft(uint32 _accountIndex, uint40 _nftIndex) external nonReentrant onlyActive {
+    require(_accountIndex <= MAX_ACCOUNT_INDEX, "invalid account index");
+    require(_nftIndex <= MAX_NFT_INDEX, "invalid nft index");
+
     // Priority Queue request
     TxTypes.FullExitNft memory _tx = TxTypes.FullExitNft({
       accountIndex: _accountIndex,
