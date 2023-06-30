@@ -198,7 +198,7 @@ contract ZkBNB is IEvents, Storage, Config, ReentrancyGuardUpgradeable, IERC721R
   /// @notice Register full exit nft request - pack pubdata, add priority request
   /// @param _accountIndex Numerical id of the account
   /// @param _nftIndex account NFT index in zkbnb network
-  function requestFullExitNft(uint32 _accountIndex, uint32 _nftIndex) external {
+  function requestFullExitNft(uint32 _accountIndex, uint40 _nftIndex) external {
     delegateAdditional();
   }
 

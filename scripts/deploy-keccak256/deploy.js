@@ -124,8 +124,8 @@ async function main() {
   const assetGovernance = contractFactories.AssetGovernance.attach(assetGovernanceEntryAddress);
 
   // BUSD should be added at first place
-  const addAssetTx = await assetGovernance.addAsset(BUSDToken);
-  await addAssetTx.wait();
+  //const addAssetTx = await assetGovernance.addAsset(BUSDToken);
+  //await addAssetTx.wait();
 
   // deploy default nft factory
   console.log(chalk.blue('⚙️ Setting ZkBNB DefaultNftFactory'));
